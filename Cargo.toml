@@ -8,6 +8,7 @@ swc_common = "17"
 swc_ecma_ast = "18"
 swc_ecma_parser = "27"
 swc_ecma_visit = "18"
+regex = "1"
 
 [profile.dev]
 split-debuginfo = "unpacked"

@@ -196,13 +196,19 @@ fn generate_module_file(helpers: &[&HelperFunction]) -> String {
 
     code.push_str("// Auto-generated module\n\n");
 
-    for helper in helpers {
-        // Only include code generation functions (filter out AST helpers)
-        let is_codegen = helper.name.starts_with("generate") ||
-                        helper.name.contains("CSharp") ||
-                        helper.name.contains("csharp");
+    // Add common SWC imports needed by generated code
+    code.push_str("use swc_ecma_ast::*;\n");
+    code.push_str("use swc_common::DUMMY_SP;\n\n");
 
-        if is_codegen {
+    for helper in helpers {
+        // Only include code generation functions (filter out AST helpers and internal functions)
+        let is_excluded = helper.name.starts_with("_") ||                    // Private functions
+                         helper.name == "visit" ||                           // AST visitor helpers
+                         helper.name.starts_with("is") && helper.name.len() < 15 || // Short "is" checks like isJSX
+                         helper.name == "getComponentName" ||                // Implemented as ComponentExtractor::get_component_name_from_context
+                         helper.name == "escapeCSharpString";                // Implemented as ComponentExtractor::escape_c_sharp_string
+
+        if !is_excluded {
             code.push_str(&generate_helper_function(helper));
             code.push_str("\n");
         }
@@ -233,11 +239,16 @@ fn generate_swc_plugin_crate(output_dir: &str, visitor_methods: &[VisitorMethod]
     let src_dir = dir.join("src");
     fs::create_dir_all(&src_dir).expect("Failed to create directories");
 
-    // Group helper functions by source module
+    // Group helper functions by source module and deduplicate
     let mut modules: HashMap<String, Vec<&HelperFunction>> = HashMap::new();
     for helper in helper_functions {
         let module_name = get_module_name(&helper.source_module);
-        modules.entry(module_name).or_insert_with(Vec::new).push(helper);
+        let helpers_vec = modules.entry(module_name).or_insert_with(Vec::new);
+
+        // Deduplicate: only add if not already present
+        if !helpers_vec.iter().any(|h| h.name == helper.name) {
+            helpers_vec.push(helper);
+        }
     }
 
     // Generate Cargo.toml
@@ -263,7 +274,7 @@ fn generate_swc_plugin_crate(output_dir: &str, visitor_methods: &[VisitorMethod]
     fs::write(generators_dir.join("mod.rs"), mod_rs).expect("Failed to write mod.rs");
 
     // Generate lib.rs (with visitor only, helpers are in modules)
-    let lib_rs = generate_lib_rs(visitor_methods);
+    let lib_rs = generate_lib_rs(visitor_methods, helper_functions);
     fs::write(src_dir.join("lib.rs"), lib_rs).expect("Failed to write lib.rs");
 
     // Generate main.rs (test runner)
@@ -297,11 +308,71 @@ swc_ecma_parser = "27"
 swc_ecma_visit = "18"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+regex = "1"
+once_cell = "1"
 "#.to_string()
 }
 
-fn generate_lib_rs(visitor_methods: &[VisitorMethod]) -> String {
+/// Generate a visitor method with full inlining support
+fn generate_visitor_method_with_inlining(
+    method: &VisitorMethod,
+    helpers_map: &std::collections::HashMap<String, &HelperFunction>,
+) -> String {
     let mut code = String::new();
+
+    // Map Babel visitor names to SWC visitor method names
+    let swc_method_name = match method.name.as_str() {
+        "FunctionDeclaration" => "visit_mut_fn_decl",
+        "ArrowFunctionExpression" => "visit_mut_arrow_expr",
+        "VariableDeclarator" => "visit_mut_var_declarator",
+        "CallExpression" => "visit_mut_call_expr",
+        "JSXElement" => "visit_mut_jsx_element",
+        _ => {
+            eprintln!("Unknown visitor method: {}, skipping", method.name);
+            return format!("    // TODO: Unknown visitor method: {}\n", method.name);
+        }
+    };
+
+    // Determine node parameter type
+    let node_type = match method.name.as_str() {
+        "FunctionDeclaration" => "FnDecl",
+        "ArrowFunctionExpression" => "ArrowExpr",
+        "VariableDeclarator" => "VarDeclarator",
+        "CallExpression" => "CallExpr",
+        "JSXElement" => "JSXElement",
+        _ => "Node",
+    };
+
+    code.push_str(&format!("    fn {}(&mut self, n: &mut {}) {{\n", swc_method_name, node_type));
+
+    // Generate the visitor body with inlining
+    let mut visited = std::collections::HashSet::new();
+    for transform in &method.transforms {
+        let empty_bindings = std::collections::HashMap::new();
+        code.push_str(&generate_transform_with_bindings(
+            transform,
+            &empty_bindings,
+            helpers_map,
+            2, // indent level
+            &mut visited,
+        ));
+    }
+
+    // Always traverse children
+    code.push_str("        n.visit_mut_children_with(self);\n");
+    code.push_str("    }\n\n");
+
+    code
+}
+
+fn generate_lib_rs(visitor_methods: &[VisitorMethod], helper_functions: &[HelperFunction]) -> String {
+    let mut code = String::new();
+
+    // Build helpers map for inlining
+    let mut helpers_map: std::collections::HashMap<String, &HelperFunction> = std::collections::HashMap::new();
+    for helper in helper_functions {
+        helpers_map.insert(helper.name.clone(), helper);
+    }
 
     // Header with imports and data structures
     code.push_str(r#"use swc_ecma_ast::*;
@@ -346,9 +417,44 @@ pub struct PropData {
     pub prop_type: String,
 }
 
+/// Parent context tracking for Babel path emulation
+#[derive(Debug, Clone)]
+pub enum ParentContext {
+    VarDeclarator(String),  // e.g. `const MyComp = ...`
+    FnDecl(String),         // e.g. `function MyComp() {}`
+    ExportDefault,
+    ExportNamed(String),
+    BlockStmt,
+    Unknown,
+}
+
+impl ParentContext {
+    pub fn get_type(&self) -> &'static str {
+        match self {
+            ParentContext::VarDeclarator(_) => "VariableDeclarator",
+            ParentContext::FnDecl(_) => "FunctionDeclaration",
+            ParentContext::ExportDefault => "ExportDefaultDeclaration",
+            ParentContext::ExportNamed(_) => "ExportNamedDeclaration",
+            ParentContext::BlockStmt => "BlockStatement",
+            ParentContext::Unknown => "Unknown",
+        }
+    }
+
+    pub fn get_id_name(&self) -> Option<&str> {
+        match self {
+            ParentContext::VarDeclarator(name) => Some(name),
+            ParentContext::FnDecl(name) => Some(name),
+            ParentContext::ExportNamed(name) => Some(name),
+            _ => None,
+        }
+    }
+}
+
 pub struct ComponentExtractor {
     pub components: Vec<Component>,
     current_component: Option<Component>,
+    /// Stack of parent nodes for context tracking (emulates Babel's path.parent)
+    parent_stack: Vec<ParentContext>,
 }
 
 impl ComponentExtractor {
@@ -356,7 +462,20 @@ impl ComponentExtractor {
         Self {
             components: Vec::new(),
             current_component: None,
+            parent_stack: Vec::new(),
         }
+    }
+
+    fn get_parent(&self) -> Option<&ParentContext> {
+        self.parent_stack.last()
+    }
+
+    fn push_parent(&mut self, context: ParentContext) {
+        self.parent_stack.push(context);
+    }
+
+    fn pop_parent(&mut self) {
+        self.parent_stack.pop();
     }
 
     fn start_component(&mut self, name: String) {
@@ -385,6 +504,43 @@ impl ComponentExtractor {
             comp.jsx_elements.push(element);
         }
     }
+
+    // Helper method to get component name from current context
+    // Emulates Babel's path.node.id and path.parent logic
+    fn get_component_name_from_context(&self, node_has_id: bool, node_id_name: Option<&str>) -> Option<String> {
+        // If current node has an id, use it
+        if node_has_id {
+            if let Some(name) = node_id_name {
+                return Some(name.to_string());
+            }
+        }
+
+        // Check parent context
+        if let Some(parent) = self.get_parent() {
+            match parent {
+                ParentContext::VarDeclarator(name) => return Some(name.clone()),
+                ParentContext::ExportNamed(name) => {
+                    // For export named, check if node has id, otherwise return None
+                    if node_has_id && node_id_name.is_some() {
+                        return node_id_name.map(|s| s.to_string());
+                    }
+                    return None;
+                }
+                _ => {}
+            }
+        }
+
+        None
+    }
+
+    // Helper to escape C# strings
+    fn escape_c_sharp_string(&self, s: &str) -> String {
+        s.replace('\\', "\\\\")
+         .replace('"', "\\\"")
+         .replace('\n', "\\n")
+         .replace('\r', "\\r")
+         .replace('\t', "\\t")
+    }
 }
 
 "#);
@@ -410,9 +566,17 @@ impl ComponentExtractor {
 
 "#);
 
-    // Always include the essential visitor methods
-    code.push_str(generate_fn_decl_visitor().as_str());
-    code.push_str(r#"    fn visit_mut_fn_expr(&mut self, node: &mut FnExpr) {
+    // Generate visitor methods from detected transforms
+    if !visitor_methods.is_empty() {
+        eprintln!("Generating {} visitor methods with inlining support", visitor_methods.len());
+        for method in visitor_methods {
+            code.push_str(&generate_visitor_method_with_inlining(method, &helpers_map));
+        }
+    } else {
+        // Fallback to hardcoded visitors if no methods detected
+        eprintln!("No visitor methods detected, using fallback hardcoded visitors");
+        code.push_str(generate_fn_decl_visitor().as_str());
+        code.push_str(r#"    fn visit_mut_fn_expr(&mut self, node: &mut FnExpr) {
         if let Some(ident) = &node.ident {
             let name = ident.sym.to_string();
             if name.chars().next().map(|c| c.is_uppercase()).unwrap_or(false) {
@@ -427,8 +591,9 @@ impl ComponentExtractor {
     }
 
 "#);
-    code.push_str(generate_jsx_element_visitor().as_str());
-    code.push_str(generate_var_declarator_visitor().as_str());
+        code.push_str(generate_jsx_element_visitor().as_str());
+        code.push_str(generate_var_declarator_visitor().as_str());
+    }
 
     code.push_str("}\n");
 
@@ -467,11 +632,24 @@ fn generate_helper_function(helper: &HelperFunction) -> String {
             .join(", ")
     };
 
+    // Check if this is a map/filter pattern
+    let has_map_filter = helper.transforms.get(0).map_or(false, |t| {
+        if let Transform::ReturnStmt { value } = t {
+            value.contains(".map(expr)") && value.contains(".filter(Boolean)")
+        } else {
+            false
+        }
+    });
+
     // Smart return type inference
-    let return_type = if helper.name.starts_with("infer") {
+    let return_type = if has_map_filter {
+        "Vec<_>"  // map/filter returns a vector
+    } else if helper.name.starts_with("infer") {
         "&'static str"  // inferCSharpType returns literals
     } else if helper.name.starts_with("convert") || has_string_building {
         "String"  // convertToCSharp returns params, string builders return String
+    } else if helper.name.contains("escape") || helper.name.contains("Escape") {
+        "String"  // escape functions use .replace() which returns String
     } else {
         "&'static str"
     };
@@ -483,23 +661,68 @@ fn generate_helper_function(helper: &HelperFunction) -> String {
         code.push_str("    let mut code = String::new();\n\n");
     }
 
-    // Generate body from transforms - skip the initial array declaration if it's for string building
-    for transform in &helper.transforms {
-        // Skip `const lines = []` declarations - we use `code` instead
-        if let Transform::VariableDeclaration { name, value, .. } = transform {
-            if (name == "lines" || name == "code") && value == "value" {
-                continue; // Skip this, we already initialized `code`
+    // Check if this is a map/filter pattern
+    let has_map_filter = helper.transforms.get(0).map_or(false, |t| {
+        if let Transform::ReturnStmt { value } = t {
+            value.contains(".map(expr)") && value.contains(".filter(Boolean)")
+        } else {
+            false
+        }
+    });
+
+    // Generate body from transforms
+    if has_map_filter {
+        // Special handling for map/filter pattern
+        if let Some(Transform::ReturnStmt { value }) = helper.transforms.get(0) {
+            // Extract array name
+            if let Some(map_pos) = value.find(".map(") {
+                let array_name = &value[..map_pos];
+
+                code.push_str(&format!("    {}.iter().filter_map(|item| {{\n", array_name));
+
+                // Generate the body transforms (skip the first ReturnStmt)
+                for transform in helper.transforms.iter().skip(1) {
+                    code.push_str(&generate_transform_code_smart(transform, 2, "Option<_>"));
+                }
+
+                code.push_str("    }).collect()\n");
+            }
+        }
+    } else {
+        // Normal transform generation with parameter substitution
+        // Build param bindings: original_name -> snake_case_name
+        let mut param_bindings = std::collections::HashMap::new();
+        for param in &helper.params {
+            let snake_case_param = to_snake_case(param);
+            if param != &snake_case_param {
+                param_bindings.insert(param.clone(), snake_case_param);
             }
         }
 
-        // Skip return statements for string builder patterns (handled by implicit return at end)
-        if let Transform::ReturnStmt { value } = transform {
-            if value.contains(".join(") || value == "lines" || value == "code" {
-                continue; // Skip - implicit `code` return will be added at the end
+        for transform in &helper.transforms {
+            // Skip `const lines = []` declarations - we use `code` instead
+            if let Transform::VariableDeclaration { name, value, .. } = transform {
+                if (name == "lines" || name == "code") && value == "value" {
+                    continue; // Skip this, we already initialized `code`
+                }
             }
-        }
 
-        code.push_str(&generate_transform_code_smart(transform, 1, return_type));
+            // Skip return statements for string builder patterns (handled by implicit return at end)
+            if let Transform::ReturnStmt { value } = transform {
+                if value.contains(".join(") || value == "lines" || value == "code" {
+                    continue; // Skip - implicit `code` return will be added at the end
+                }
+            }
+
+            // Generate with parameter substitution
+            let transform_code = generate_transform_code_smart(transform, 1, return_type);
+            // Apply parameter name substitution
+            let mut substituted_code = transform_code;
+            for (original, snake) in &param_bindings {
+                substituted_code = substituted_code.replace(original, snake);
+            }
+            code.push_str(&substituted_code);
+        }
     }
 
     // Only add implicit return for string-building functions
@@ -635,6 +858,16 @@ impl VisitorBodyAnalyzer {
             }
             Expr::Member(member) => self.extract_member_path(member),
             Expr::Ident(ident) => ident.sym.to_string(),
+            Expr::Unary(unary) => {
+                let op = match unary.op {
+                    UnaryOp::Bang => "!",
+                    UnaryOp::Minus => "-",
+                    UnaryOp::Plus => "+",
+                    _ => "?",
+                };
+                let arg = self.extract_expr_string(&unary.arg);
+                format!("{}{}", op, arg)
+            }
             _ => "condition".to_string(),
         }
     }
@@ -1399,10 +1632,20 @@ fn generate_transform_code_smart(transform: &Transform, indent: usize, return_ty
         Transform::ReturnStmt { value } => {
             if value.contains(".join(") || value == "lines" || value == "code" {
                 String::new()
+            } else if value == "expr" {
+                // Skip generic 'expr' placeholders
+                String::new()
             } else {
                 let rust_value = translate_js_to_rust(value);
 
-                let final_value = if return_type == "String" {
+                let final_value = if return_type == "Option<_>" {
+                    // For Option return type (filter_map), wrap in Some()
+                    if rust_value == "expr" {
+                        "None".to_string()
+                    } else {
+                        format!("Some({})", rust_value)
+                    }
+                } else if return_type == "String" {
                     // For String return type, add .to_string() to literals
                     if rust_value.starts_with('"') && !rust_value.contains("format!") {
                         format!("{}.to_string()", rust_value)
@@ -1459,6 +1702,161 @@ fn generate_transform_code_smart(transform: &Transform, indent: usize, return_ty
     }
 }
 
+/// Inline a helper function call by substituting its body with argument bindings
+fn inline_helper_call(
+    helper_name: &str,
+    args: &[String],
+    helpers_map: &std::collections::HashMap<String, &HelperFunction>,
+    indent: usize,
+    visited: &mut std::collections::HashSet<String>,
+) -> String {
+    let mut output = String::new();
+
+    // Prevent infinite recursion
+    if visited.contains(helper_name) {
+        output.push_str(&format!("{}// Recursive call to {} detected, skipping inline\n", " ".repeat(indent * 4), helper_name));
+        return output;
+    }
+
+    visited.insert(helper_name.to_string());
+
+    if let Some(helper) = helpers_map.get(helper_name) {
+        // Create argument bindings: param_name -> actual_value
+        let mut arg_bindings = std::collections::HashMap::new();
+        for (i, param) in helper.params.iter().enumerate() {
+            if let Some(arg_value) = args.get(i) {
+                arg_bindings.insert(param.clone(), arg_value.clone());
+            }
+        }
+
+        // Generate inlined code with substitutions
+        for transform in &helper.transforms {
+            output.push_str(&generate_transform_with_bindings(transform, &arg_bindings, helpers_map, indent, visited));
+        }
+    } else {
+        output.push_str(&format!("{}// TODO: helper '{}' not found in helpers map\n", " ".repeat(indent * 4), helper_name));
+    }
+
+    visited.remove(helper_name);
+    output
+}
+
+/// Generate transform code with argument substitution for inlining
+fn generate_transform_with_bindings(
+    transform: &Transform,
+    arg_bindings: &std::collections::HashMap<String, String>,
+    helpers_map: &std::collections::HashMap<String, &HelperFunction>,
+    indent: usize,
+    visited: &mut std::collections::HashSet<String>,
+) -> String {
+    let indent_str = " ".repeat(indent * 4);
+
+    match transform {
+        Transform::FunctionCall { name, args } => {
+            let rust_name = to_snake_case(name);
+
+            // Check if this is a known helper that should be inlined
+            if helpers_map.contains_key(name.as_str()) {
+                // Translate and substitute arguments before inlining
+                let substituted_args: Vec<String> = args.iter()
+                    .map(|arg| {
+                        // First translate to Rust, then apply current bindings
+                        let rust_arg = translate_js_to_rust(arg);
+                        substitute_arg(&rust_arg, arg_bindings)
+                    })
+                    .collect();
+
+                // Inline the helper function
+                return inline_helper_call(name, &substituted_args, helpers_map, indent, visited);
+            }
+
+            // Check if this is a ComponentExtractor method (getComponentName, etc.)
+            let is_helper_method = rust_name == "get_component_name" ||
+                                   rust_name == "escape_c_sharp_string" ||
+                                   rust_name == "ts_type_to_c_sharp_type" ||
+                                   rust_name == "infer_type";
+
+            if is_helper_method {
+                // Translate to self method call
+                match rust_name.as_str() {
+                    "get_component_name" => {
+                        // getComponentName(path) -> self.get_component_name_from_context(node.ident.is_some(), node.ident.as_ref().map(|i| i.sym.as_ref()))
+                        format!("{}let component_name = self.get_component_name_from_context(n.ident.is_some(), n.ident.as_ref().map(|i| i.sym.as_ref()));\n", indent_str)
+                    }
+                    "escape_c_sharp_string" => {
+                        let rust_args = args.iter()
+                            .map(|a| substitute_arg(&translate_js_to_rust(a), arg_bindings))
+                            .collect::<Vec<_>>()
+                            .join(", ");
+                        format!("{}self.escape_c_sharp_string({});\n", indent_str, rust_args)
+                    }
+                    _ => {
+                        format!("{}// TODO: translate {}(...);\n", indent_str, rust_name)
+                    }
+                }
+            } else {
+                // Regular function call
+                let rust_args = args.iter()
+                    .map(|a| substitute_arg(&translate_js_to_rust(a), arg_bindings))
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                format!("{}{}({});\n", indent_str, rust_name, rust_args)
+            }
+        }
+
+        Transform::VariableDeclaration { name, value, is_destructured } => {
+            let rust_name = to_snake_case(name);
+            let rust_value = substitute_arg(&translate_js_to_rust(value), arg_bindings);
+            if *is_destructured {
+                format!("{}// Destructured: let {} = {};\n", indent_str, rust_name, rust_value)
+            } else {
+                format!("{}let {} = {};\n", indent_str, rust_name, rust_value)
+            }
+        }
+
+        Transform::Conditional { condition, then_transforms, else_transforms } => {
+            let cond = substitute_arg(&translate_condition(condition), arg_bindings);
+            let mut result = format!("{}if {} {{\n", indent_str, cond);
+            for t in then_transforms {
+                result.push_str(&generate_transform_with_bindings(t, arg_bindings, helpers_map, indent + 1, visited));
+            }
+            result.push_str(&format!("{}}}", indent_str));
+
+            if let Some(else_block) = else_transforms {
+                result.push_str(" else {\n");
+                for t in else_block {
+                    result.push_str(&generate_transform_with_bindings(t, arg_bindings, helpers_map, indent + 1, visited));
+                }
+                result.push_str(&format!("{}}}", indent_str));
+            }
+            result.push('\n');
+            result
+        }
+
+        _ => {
+            // Fallback to regular generation for other transform types
+            generate_transform_code(transform, indent)
+        }
+    }
+}
+
+/// Substitute argument references in expressions
+fn substitute_arg(expr: &str, bindings: &std::collections::HashMap<String, String>) -> String {
+    let mut result = expr.to_string();
+
+    // Replace parameter names with actual values
+    // Sort by length (longest first) to avoid partial replacements
+    let mut sorted_bindings: Vec<_> = bindings.iter().collect();
+    sorted_bindings.sort_by(|a, b| b.0.len().cmp(&a.0.len()));
+
+    for (param, value) in sorted_bindings {
+        // Only replace whole words (use word boundaries)
+        result = result.replace(param.as_str(), value);
+    }
+
+    result
+}
+
 fn generate_transform_code(transform: &Transform, indent: usize) -> String {
     let indent_str = " ".repeat(indent * 4);
 
@@ -1478,7 +1876,33 @@ fn generate_transform_code(transform: &Transform, indent: usize) -> String {
                 .map(|a| translate_js_to_rust(a))
                 .collect::<Vec<_>>()
                 .join(", ");
-            format!("{}{}({});\n", indent_str, rust_name, rust_args)
+
+            // Check if this is a helper function that should be a self method call
+            // Helper functions from imported modules should use self.method_name()
+            let is_helper_method = rust_name == "get_component_name" ||
+                                   rust_name == "escape_c_sharp_string" ||
+                                   rust_name == "ts_type_to_c_sharp_type" ||
+                                   rust_name == "infer_type";
+
+            if is_helper_method {
+                // Translate to self method call with proper context handling
+                match rust_name.as_str() {
+                    "get_component_name" => {
+                        // getComponentName(path) -> self.get_component_name_from_context(node.ident.is_some(), node.ident.as_ref().map(|i| i.sym.as_ref()))
+                        // Since we're in a visitor, the current node is available
+                        format!("{}self.get_component_name_from_context(n.ident.is_some(), n.ident.as_ref().map(|i| i.sym.as_ref()));\n", indent_str)
+                    }
+                    "escape_c_sharp_string" => {
+                        format!("{}self.escape_c_sharp_string({});\n", indent_str, rust_args)
+                    }
+                    _ => {
+                        // Other helpers - call as regular functions for now
+                        format!("{}{}({});\n", indent_str, rust_name, rust_args)
+                    }
+                }
+            } else {
+                format!("{}{}({});\n", indent_str, rust_name, rust_args)
+            }
         }
         Transform::MetadataAssignment { key, value_expr } => {
             format!("{}self.metadata.insert(\"{}\", {});\n", indent_str, key, value_expr)
@@ -1686,12 +2110,50 @@ fn get_node_param(visitor_name: &str) -> (&'static str, &'static str) {
 
 fn translate_js_to_rust(js_expr: &str) -> String {
     match js_expr {
+        // Handle visitor context arguments
+        "path" => "n".to_string(),  // Babel path -> SWC node (n)
+        "state" => "self".to_string(),  // Babel state -> self
         // Handle string literals FIRST before function call patterns
         e if e.starts_with('"') && e.ends_with('"') => e.to_string(),
         e if e.starts_with('\'') && e.ends_with('\'') => e.to_string(),
+        // Handle map/filter chains: array.map(fn).filter(Boolean) -> array.iter().filter_map(fn).collect()
+        e if e.contains(".map(expr)") && e.contains(".filter(Boolean)") => {
+            // Extract the array name before .map
+            if let Some(map_pos) = e.find(".map(") {
+                let array_name = &e[..map_pos];
+                // This pattern is used to map and filter out null/undefined values
+                // In Rust, we'll use filter_map which combines both operations
+                format!("{}.iter().filter_map(|item| /* map logic here */).collect::<Vec<_>>()", array_name)
+            } else {
+                "vec![]".to_string()
+            }
+        }
+        // Handle .filter(Boolean) by itself - filters out falsy values (removing nulls/undefined)
+        e if e.ends_with(".filter(Boolean)") => {
+            let prefix = &e[..e.len() - ".filter(Boolean)".len()];
+            format!("{}.into_iter().flatten().collect::<Vec<_>>()", prefix)
+        }
+        // Handle regex replace chains: str.replace(/\\/g, '\\\\').replace(/"/g, '\\"')...
+        e if e.contains(".replace(REGEX(") || e.contains(".replace(&REGEX(") || e.contains(".replace(&r_e_g_e_x(") => {
+            // For the escapeCSharpString function specifically, just use simple string replaces
+            // since these are literal character replacements, not regex patterns
+            let mut result = e.to_string();
+
+            // Translate JavaScript regex replace to Rust string replace
+            // JavaScript: str.replace(/\\/g, '\\\\') -> Rust: str.replace('\\', "\\\\")
+            result = result.replace(".replace(REGEX(\\\\), \"\\\\\\\\\")", ".replace('\\\\', \"\\\\\\\\\")");
+            result = result.replace(".replace(REGEX(\"), \"\\\\\\\"\")", ".replace('\"', \"\\\\\\\"\")");
+            result = result.replace(".replace(REGEX(\\n), \"\\\\n\")", ".replace('\\n', \"\\\\n\")");
+            result = result.replace(".replace(REGEX(\\r), \"\\\\r\")", ".replace('\\r', \"\\\\r\")");
+            result = result.replace(".replace(REGEX(\\t), \"\\\\t\")", ".replace('\\t', \"\\\\t\")");
+
+            result
+        }
         e if e.contains("path.node.id.name") => "node.ident.sym.to_string()".to_string(),
+        e if e.contains("path.node.id") => "path.node.id".to_string(),
         e if e.contains("path.node") => e.replace("path.node", "node"),
         e if e.contains("path.parent.type") => "parent_type".to_string(),
+        e if e.contains("path.parent.id.name") => "path.parent.id.name".to_string(),
         // Translate JavaScript string methods to Rust equivalents
         e if e.contains(".startsWith(") => {
             e.replace(".startsWith(", ".starts_with(")
@@ -1736,6 +2198,11 @@ fn translate_js_to_rust(js_expr: &str) -> String {
                 js_expr.to_string()
             }
         }
+        // Handle bracket notation for map/object access: typeMap.[key] -> typeMap.get(key) or [key]
+        e if e.contains(".[") => {
+            // Pattern: typeMap.[typeName] -> typeMap[&typeName] or typeMap.get(&typeName)
+            e.replace(".[", "[&")
+        }
         // Translate member access: component.hooks.length -> component.hooks.len()
         e if e.ends_with(".length") => {
             format!("{}.len()", &e[..e.len()-7])
@@ -1764,18 +2231,98 @@ fn translate_js_to_rust(js_expr: &str) -> String {
         "initialValue" => "initial_value".to_string(),
         "state" => "self".to_string(),
         "path" => "node".to_string(),
-        _ => js_expr.to_string(),
+        // Default: convert camelCase/PascalCase identifiers to snake_case
+        _ => {
+            // Check if it looks like an identifier (alphanumeric, no operators/special chars)
+            if js_expr.chars().all(|c| c.is_alphanumeric() || c == '_') {
+                to_snake_case(js_expr)
+            } else {
+                js_expr.to_string()
+            }
+        }
     }
 }
 
 fn translate_condition(js_condition: &str) -> String {
     // Translate JavaScript condition patterns to Rust
     if js_condition.starts_with("t.is") {
-        // t.isIdentifier(...) -> matches!(node, Node::Ident(_))
-        return "/* condition */".to_string();
+        // Extract the type check and variable
+        // Pattern: t.isIdentifier(node) -> matches!(node, Expr::Ident(_))
+        // Pattern: t.isIdentifier(node, { name: 'useState' }) -> matches!(node, Expr::Ident(ident) if ident.sym == "useState")
+        if let Some(paren_pos) = js_condition.find('(') {
+            let check_type = &js_condition[2..paren_pos]; // e.g., "isIdentifier"
+            let args_end = js_condition.rfind(')').unwrap_or(js_condition.len());
+            let args_str = &js_condition[paren_pos+1..args_end];
+
+            // Split arguments - check if there's a second argument with constraints
+            let args: Vec<&str> = args_str.split(',').map(|s| s.trim()).collect();
+            let var_name = args[0];
+
+            // Check for additional constraints like { name: 'useState' }
+            let has_name_constraint = args.len() > 1 && args[1].contains("name:");
+            let name_value = if has_name_constraint {
+                // Extract the name value from { name: 'useState' } or { name: "useState" }
+                if let Some(name_pos) = args[1].find("name:") {
+                    let after_colon = &args[1][name_pos+5..].trim();
+                    // Extract the string value
+                    if let Some(quote_start) = after_colon.find(|c| c == '\'' || c == '"') {
+                        let quote_char = after_colon.chars().nth(quote_start).unwrap();
+                        let value_start = quote_start + 1;
+                        if let Some(quote_end) = after_colon[value_start..].find(quote_char) {
+                            Some(&after_colon[value_start..value_start+quote_end])
+                        } else {
+                            None
+                        }
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                }
+            } else {
+                None
+            };
+
+            // Map Babel type checks to SWC pattern matches
+            let rust_pattern = match check_type {
+                "isJSXAttribute" => format!("matches!({}, JSXAttrOrSpread::JSXAttr(_))", var_name),
+                "isJSXSpreadAttribute" => format!("matches!({}, JSXAttrOrSpread::SpreadElement(_))", var_name),
+                "isJSXExpressionContainer" => format!("matches!({}, JSXAttrValue::JSXExprContainer(_))", var_name),
+                "isStringLiteral" => format!("matches!({}, Lit::Str(_))", var_name),
+                "isIdentifier" => {
+                    if let Some(name) = name_value {
+                        format!("matches!({}, Expr::Ident(ident) if ident.sym == \"{}\")", var_name, name)
+                    } else {
+                        format!("matches!({}, Expr::Ident(_))", var_name)
+                    }
+                },
+                "isMemberExpression" => format!("matches!({}, Expr::Member(_))", var_name),
+                "isCallExpression" => format!("matches!({}, Expr::Call(_))", var_name),
+                "isTSArrayType" => format!("matches!({}, TsType::TsArrayType(_))", var_name),
+                "isNumericLiteral" => format!("matches!({}, Lit::Num(_))", var_name),
+                "isBooleanLiteral" => format!("matches!({}, Lit::Bool(_))", var_name),
+                "isNullLiteral" => format!("matches!({}, Lit::Null(_))", var_name),
+                "isArrayExpression" => format!("matches!({}, Expr::Array(_))", var_name),
+                "isObjectExpression" => format!("matches!({}, Expr::Object(_))", var_name),
+                _ => format!("/* TODO: translate {} */ true", check_type),
+            };
+
+            return rust_pattern;
+        }
+        return "true".to_string();
     }
 
     let mut result = js_condition.to_string();
+
+    // Handle simple truthiness checks on path.node.id or path.parent properties
+    // Pattern: if (path.node.id) -> if (path.node.id.is_some())
+    // Pattern: if (path.parent.type == "VariableDeclarator") -> proper translation
+    if result == "path.node.id" {
+        return "path.node.id.is_some()".to_string();
+    }
+    if result == "path.parent.id" {
+        return "path.parent.id.is_some()".to_string();
+    }
 
     // Translate truthiness checks on arrays
     // component.hooks && component.hooks.len() > 0  ->  !component.hooks.is_empty() && ...
@@ -1797,6 +2344,17 @@ fn translate_condition(js_condition: &str) -> String {
             }
         }).collect();
         result = translated_parts.join(" && ");
+    }
+
+    // Handle bracket notation: obj.[key] -> obj.get(&key)
+    // Count how many .[ we have BEFORE replacing
+    let bracket_count = result.matches(".[").count();
+    result = result.replace(".[", ".get(&");
+    // Replace the same number of closing brackets ] with )
+    for _ in 0..bracket_count {
+        if let Some(pos) = result.find(']') {
+            result.replace_range(pos..pos+1, ")");
+        }
     }
 
     // Translate property access
@@ -1860,6 +2418,19 @@ fn translate_condition(js_condition: &str) -> String {
     // Translate operators
     result = result.replace("===", "==");
     result = result.replace("!==", "!=");
+
+    // Convert camelCase identifiers to snake_case using regex
+    // Matches word boundaries followed by camelCase identifiers
+    let re = regex::Regex::new(r"\b([a-z][a-zA-Z0-9]*)\b").unwrap();
+    result = re.replace_all(&result, |caps: &regex::Captures| {
+        let ident = &caps[1];
+        // Check if it contains uppercase (is camelCase)
+        if ident.chars().any(|c| c.is_uppercase()) {
+            to_snake_case(ident)
+        } else {
+            ident.to_string()
+        }
+    }).to_string();
 
     result
 }

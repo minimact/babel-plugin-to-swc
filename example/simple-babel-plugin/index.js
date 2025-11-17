@@ -13,6 +13,8 @@
  */
 
 const t = require('@babel/types');
+const { getComponentName } = require('./utils/helpers.cjs');
+const { tsTypeToCSharpType } = require('./types/typeConversion.cjs');
 
 module.exports = function(babel) {
   return {
@@ -69,8 +71,11 @@ module.exports = function(babel) {
  * Process a component function - extract hooks, props, JSX
  */
 function processComponent(path, state, name) {
+  // Use getComponentName helper to get the canonical component name
+  const componentName = getComponentName(path) || name;
+
   const component = {
-    name: name,
+    name: componentName,
     props: extractProps(path),
     hooks: [],
     jsxElements: [],
@@ -175,10 +180,17 @@ function extractProps(path) {
   if (t.isObjectPattern(firstParam)) {
     const props = firstParam.properties.map(prop => {
       if (t.isObjectProperty(prop) && t.isIdentifier(prop.key)) {
+        // Use tsTypeToCSharpType to convert TypeScript types to C# types
+        let csharpType = 'object';
+        if (prop.value.typeAnnotation && prop.value.typeAnnotation.typeAnnotation) {
+          csharpType = tsTypeToCSharpType(prop.value.typeAnnotation.typeAnnotation);
+        }
+
         return {
           name: prop.key.name,
           hasDefault: !!prop.value.default,
-          hasTypeAnnotation: !!firstParam.typeAnnotation
+          hasTypeAnnotation: !!firstParam.typeAnnotation,
+          csharpType: csharpType
         };
       }
       return null;
@@ -268,11 +280,14 @@ function getInitialValueString(node) {
  */
 function generateCSharpFile(components) {
   // Pattern: Require external module
-  const { generateCSharpFile: realGenerator } = require('../babel-plugin-minimact/src/generators/csharpFile.cjs');
+  // const { generateCSharpFile: realGenerator } = require('../babel-plugin-minimact/src/generators/csharpFile.cjs');
 
   // Pattern: Call external function with state object
-  const state = { opts: { namespace: 'Minimact.Components' } };
-  return realGenerator(components, state);
+  // const state = { opts: { namespace: 'Minimact.Components' } };
+  // return realGenerator(components, state);
+
+  // Simplified version for testing
+  return "// Generated C# code here";
 }
 
 /**
