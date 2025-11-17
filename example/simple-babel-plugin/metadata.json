@@ -182,6 +182,11 @@
     "!tsType": "ts_type.is_none()",
     "tsType.is_empty()": "false",
 
+    "t.isStringLiteral(value)": "matches!(value, JSXAttrValue::Lit(ref lit) if matches!(lit, Lit::Str(_)))",
+    "t.isJSXExpressionContainer(value)": "matches!(value, JSXAttrValue::JSXExprContainer(_))",
+    "t.isIdentifier(value.expression)": "matches!(jsx_expr_container.expr, JSXExpr::Expr(ref expr) if matches!(&**expr, Expr::Ident(_)))",
+    "t.isMemberExpression(value.expression)": "matches!(jsx_expr_container.expr, JSXExpr::Expr(ref expr) if matches!(&**expr, Expr::Member(_)))",
+    "t.isCallExpression(value.expression)": "matches!(jsx_expr_container.expr, JSXExpr::Expr(ref expr) if matches!(&**expr, Expr::Call(_)))",
     "t.isStringLiteral(node)": "matches!(node, Expr::Lit(Lit::Str(_)))",
     "t.isNumericLiteral(node)": "matches!(node, Expr::Lit(Lit::Num(_)))",
     "t.isBooleanLiteral(node)": "matches!(node, Expr::Lit(Lit::Bool(_)))",
@@ -211,7 +216,59 @@
     "elementType": "element_type",
     "Number.isInteger(value)": "value.fract() == 0.0",
     "node.value": "num_lit.value",
-    "typeMap[typeName]": "type_map.get(type_name.as_str())"
+    "typeMap[typeName]": "type_map.get(type_name.as_str())",
+
+    "value.value": "str_lit.value",
+    "value.expression": "jsx_expr_container.expr",
+    "value.expression.name": "ident.sym",
+    "node.value": "num_lit.value",
+    "node.elements": "array_expr.elems",
+    "node.properties": "obj_expr.props"
+  },
+
+  "enum_patterns": {
+    "JSXAttrValue": {
+      "Lit": {
+        "pattern": "JSXAttrValue::Lit(ref lit)",
+        "inner_type": "Lit"
+      },
+      "JSXExprContainer": {
+        "pattern": "JSXAttrValue::JSXExprContainer(ref jsx_expr_container)",
+        "inner_type": "JSXExprContainer"
+      }
+    },
+    "Expr": {
+      "Lit": {
+        "pattern": "Expr::Lit(ref lit)",
+        "inner_type": "Lit",
+        "variants": {
+          "Str": {
+            "pattern": "Lit::Str(ref str_lit)",
+            "fields": ["value", "span"]
+          },
+          "Num": {
+            "pattern": "Lit::Num(ref num_lit)",
+            "fields": ["value", "span"]
+          }
+        }
+      },
+      "Ident": {
+        "pattern": "Expr::Ident(ref ident)",
+        "fields": ["sym", "span"]
+      },
+      "Member": {
+        "pattern": "Expr::Member(ref member_expr)",
+        "fields": ["obj", "prop"]
+      },
+      "Call": {
+        "pattern": "Expr::Call(ref call_expr)",
+        "fields": ["callee", "args"]
+      },
+      "Array": {
+        "pattern": "Expr::Array(ref array_expr)",
+        "fields": ["elems", "span"]
+      }
+    }
   },
 
   "code_generation_hints": {

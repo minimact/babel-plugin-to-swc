@@ -12,9 +12,19 @@ pub struct PluginMetadata {
     pub functions: HashMap<String, FunctionDef>,
     #[serde(default)]
     pub babel_to_swc_mappings: HashMap<String, String>,
+    #[serde(default)]
+    pub enum_patterns: HashMap<String, HashMap<String, EnumVariant>>,
     pub visitor_context: Option<VisitorContext>,
     #[serde(default)]
     pub code_generation_hints: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct EnumVariant {
+    pub pattern: String,
+    pub inner_type: Option<String>,
+    pub fields: Option<Vec<String>>,
+    pub variants: Option<HashMap<String, EnumVariant>>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -80,5 +90,9 @@ impl PluginMetadata {
 
     pub fn get_struct(&self, struct_name: &str) -> Option<&StructDef> {
         self.structs.get(struct_name)
+    }
+
+    pub fn get_enum_variant(&self, enum_name: &str, variant_name: &str) -> Option<&EnumVariant> {
+        self.enum_patterns.get(enum_name)?.get(variant_name)
     }
 }

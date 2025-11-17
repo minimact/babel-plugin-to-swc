@@ -2041,24 +2041,79 @@ fn generate_transform_code_smart(transform: &Transform, indent: usize, return_ty
         Transform::Conditional { condition, then_transforms, else_transforms } => {
             let cond = translate_condition(condition, metadata);
 
+            // Check if this is a matches!() pattern that should use if let instead
+            // Pattern: matches!(value, Expr::Lit(_))
+            let use_if_let = cond.starts_with("matches!(");
+            let (if_let_pattern, var_name) = if use_if_let {
+                // Extract: matches!(value, Expr::Lit(_)) -> ("Expr::Lit(ref lit)", "value")
+                if let Some(start) = cond.find('(') {
+                    if let Some(comma) = cond[start..].find(',') {
+                        let var = cond[start+1..start+comma].trim();
+                        let pattern_start = start + comma + 1;
+                        if let Some(end) = cond[pattern_start..].rfind(')') {
+                            let pattern = cond[pattern_start..pattern_start+end].trim();
+                            // Simply replace wildcards with ref bindings - don't nest!
+                            // matches!(value, JSXAttrValue::Lit(Lit::Str(_))) stays JSXAttrValue::Lit(Lit::Str(ref str_lit))
+                            let enhanced_pattern = pattern
+                                .replace("Lit::Str(_)", "Lit::Str(ref str_lit)")
+                                .replace("Lit::Num(_)", "Lit::Num(ref num_lit)")
+                                .replace("Lit::Bool(_)", "Lit::Bool(ref bool_lit)")
+                                .replace("Lit::Null(_)", "Lit::Null(_)")
+                                .replace("Expr::Ident(_)", "Expr::Ident(ref ident)")
+                                .replace("Expr::Member(_)", "Expr::Member(ref member_expr)")
+                                .replace("Expr::Call(_)", "Expr::Call(ref call_expr)")
+                                .replace("Expr::Array(_)", "Expr::Array(ref array_expr)")
+                                .replace("Expr::Object(_)", "Expr::Object(ref obj_expr)")
+                                .replace("JSXAttrValue::JSXExprContainer(_)", "JSXAttrValue::JSXExprContainer(ref jsx_expr_container)")
+                                .replace("(_)", "(ref lit)");
+                            (Some(enhanced_pattern), Some(var.to_string()))
+                        } else {
+                            (None, None)
+                        }
+                    } else {
+                        (None, None)
+                    }
+                } else {
+                    (None, None)
+                }
+            } else {
+                (None, None)
+            };
+
             // Check if this is an is_none() check on an Option parameter
-            // If so, use if let Some pattern instead
             let is_none_check = cond.ends_with(".is_none()");
-            let var_name = if is_none_check {
+            let none_var_name = if is_none_check {
                 cond.trim_end_matches(".is_none()").trim()
             } else {
                 ""
             };
 
-            let mut result = if is_none_check && !var_name.is_empty() {
+            let mut result = if is_none_check && !none_var_name.is_empty() {
                 // Generate early return for None case
-                let mut s = format!("{}if {}.is_none() {{\n", indent_str, var_name);
+                let mut s = format!("{}if {}.is_none() {{\n", indent_str, none_var_name);
                 for t in then_transforms {
                     s.push_str(&generate_transform_code_smart(t, indent + 1, return_type, metadata));
                 }
                 s.push_str(&format!("{}}}\n", indent_str));
                 // Add unwrap after the None check
-                s.push_str(&format!("{}let {} = {}.unwrap();\n", indent_str, var_name, var_name));
+                s.push_str(&format!("{}let {} = {}.unwrap();\n", indent_str, none_var_name, none_var_name));
+                s
+            } else if let (Some(pattern), Some(var)) = (if_let_pattern, var_name) {
+                // Use if let instead of matches!
+                let mut s = format!("{}if let {} = {} {{\n", indent_str, pattern, var);
+                for t in then_transforms {
+                    s.push_str(&generate_transform_code_smart(t, indent + 1, return_type, metadata));
+                }
+                s.push_str(&format!("{}}}", indent_str));
+
+                if let Some(else_block) = else_transforms {
+                    s.push_str(" else {\n");
+                    for t in else_block {
+                        s.push_str(&generate_transform_code_smart(t, indent + 1, return_type, metadata));
+                    }
+                    s.push_str(&format!("{}}}", indent_str));
+                }
+                s.push('\n');
                 s
             } else {
                 let mut s = format!("{}if {} {{\n", indent_str, cond);
@@ -2539,13 +2594,18 @@ fn translate_js_to_rust_with_metadata(js_expr: &str, metadata: Option<&PluginMet
             return mapped.to_string();
         }
 
-        // If no exact match and expression contains '.', try mapping just the base variable
+        // If no exact match and expression contains '.', try mapping progressively shorter prefixes
+        // For "node.value.toString()", try "node.value.toString", then "node.value", then "node"
         if js_expr.contains('.') {
-            let base_var = js_expr.split('.').next().unwrap();
-            if let Some(mapped_base) = meta.translate_babel_pattern(base_var) {
-                let suffix = &js_expr[base_var.len()..];
-                eprintln!("  translate_js_to_rust: Mapped {} -> {}", base_var, mapped_base);
-                return format!("{}{}", mapped_base, suffix);
+            let parts: Vec<&str> = js_expr.split('.').collect();
+            // Try from longest to shortest prefix
+            for i in (1..=parts.len()).rev() {
+                let prefix = parts[..i].join(".");
+                if let Some(mapped_prefix) = meta.translate_babel_pattern(&prefix) {
+                    let suffix = &js_expr[prefix.len()..];
+                    eprintln!("  translate_js_to_rust: Mapped {} -> {}", prefix, mapped_prefix);
+                    return format!("{}{}", mapped_prefix, suffix);
+                }
             }
         }
     }
