@@ -1,0 +1,12 @@
+{
+  "name": "babel-to-swc",
+  "version": "0.1.0",
+  "description": "Babel to SWC Transpiler with Testing Framework",
+  "scripts": {
+    "test": "node tests/test-runner.js"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.23.0",
+    "@babel/types": "^7.23.0"
+  }
+}
