@@ -1,0 +1,202 @@
+{
+  "version": "1.0",
+  "plugin": {
+    "name": "simple-babel-plugin",
+    "description": "Simplified test plugin for babel-to-swc transpiler"
+  },
+
+  "structs": {
+    "Component": {
+      "description": "Represents a React component",
+      "fields": {
+        "name": { "type": "String", "required": true },
+        "props": { "type": "Vec<Prop>", "default": "vec![]" },
+        "hooks": { "type": "Vec<Hook>", "default": "vec![]" },
+        "jsx_elements": { "type": "Vec<JsxElement>", "default": "vec![]" },
+        "local_variables": { "type": "Vec<Variable>", "default": "vec![]" },
+        "helper_functions": { "type": "Vec<HelperFunc>", "default": "vec![]" }
+      }
+    },
+
+    "Prop": {
+      "description": "Component prop information",
+      "fields": {
+        "name": { "type": "String", "required": true },
+        "has_default": { "type": "bool", "default": "false" },
+        "has_type_annotation": { "type": "bool", "default": "false" },
+        "csharp_type": { "type": "String", "default": "\"object\".to_string()" }
+      }
+    },
+
+    "Hook": {
+      "description": "React hook information",
+      "fields": {
+        "hook_type": { "type": "String", "required": true },
+        "state_name": { "type": "String", "required": true },
+        "setter_name": { "type": "String", "required": true },
+        "initial_value": { "type": "String", "default": "\"undefined\".to_string()" }
+      }
+    },
+
+    "JsxElement": {
+      "description": "JSX element information",
+      "fields": {
+        "tag_name": { "type": "String", "required": true },
+        "is_self_closing": { "type": "bool", "default": "false" }
+      }
+    },
+
+    "Variable": {
+      "description": "Local variable information",
+      "fields": {
+        "name": { "type": "String", "required": true },
+        "has_initializer": { "type": "bool", "default": "false" }
+      }
+    },
+
+    "HelperFunc": {
+      "description": "Helper function information",
+      "fields": {
+        "name": { "type": "String", "required": true }
+      }
+    },
+
+    "TypeMap": {
+      "description": "Type mapping for TypeScript to C# type conversion",
+      "fields": {
+        "decimal": { "type": "&'static str", "default": "\"decimal\"" },
+        "int": { "type": "&'static str", "default": "\"int\"" },
+        "string": { "type": "&'static str", "default": "\"string\"" },
+        "bool": { "type": "&'static str", "default": "\"bool\"" }
+      }
+    },
+
+    "AttrInfo": {
+      "description": "JSX attribute information",
+      "fields": {
+        "name": { "type": "String", "required": true },
+        "value": { "type": "String", "required": true },
+        "is_expression": { "type": "bool", "default": "false" }
+      }
+    }
+  },
+
+  "functions": {
+    "processComponent": {
+      "description": "Process a component function - extract hooks, props, JSX",
+      "params": [
+        { "name": "path", "type": "&str" },
+        { "name": "state", "type": "&str" },
+        { "name": "name", "type": "&str" }
+      ],
+      "returns": "String",
+      "uses_string_builder": true
+    },
+
+    "extractProps": {
+      "description": "Extract props from component parameters",
+      "params": [
+        { "name": "path", "type": "&str" }
+      ],
+      "returns": "Vec<Prop>"
+    },
+
+    "extractUseState": {
+      "description": "Extract useState hook information",
+      "params": [
+        { "name": "call_path", "type": "&str" }
+      ],
+      "returns": "Option<Hook>"
+    },
+
+    "extractAttributes": {
+      "description": "Extract JSX attributes",
+      "params": [
+        { "name": "attributes", "type": "&[JSXAttrOrSpread]" }
+      ],
+      "returns": "Vec<AttrInfo>"
+    },
+
+    "getAttributeValue": {
+      "description": "Get attribute value as string",
+      "params": [
+        { "name": "value", "type": "&JSXAttrValue" }
+      ],
+      "returns": "String"
+    },
+
+    "tsTypeToCSharpType": {
+      "description": "Convert TypeScript type to C# type",
+      "params": [
+        { "name": "ts_type", "type": "&TsType" }
+      ],
+      "returns": "&'static str"
+    },
+
+    "inferType": {
+      "description": "Infer C# type from JavaScript value",
+      "params": [
+        { "name": "node", "type": "&Expr" }
+      ],
+      "returns": "&'static str"
+    },
+
+    "formatProperty": {
+      "description": "Format a C# property declaration",
+      "params": [
+        { "name": "name", "type": "&str" },
+        { "name": "type", "type": "&str" },
+        { "name": "value", "type": "&str" }
+      ],
+      "returns": "String",
+      "uses_string_builder": true
+    }
+  },
+
+  "babel_to_swc_mappings": {
+    "path.node": "node",
+    "path.parent.type": "parent_type",
+    "t.isIdentifier(node)": "matches!(node, Expr::Ident(_))",
+    "t.isObjectPattern(node)": "matches!(node, Pat::Object(_))",
+
+    "callPath": "call_path",
+    "varPath": "var_path",
+    "funcPath": "func_path",
+    "jsxPath": "jsx_path",
+    "componentName": "component_name",
+    "openingElement": "opening_element",
+    "varInfo": "var_info",
+    "elemName": "elem_name",
+    "elementName": "element_name",
+    "stateId": "state_id",
+    "setStateId": "set_state_id",
+    "typeName": "type_name",
+    "typeMap": "type_map",
+    "attrInfo": "attr_info",
+    "firstParam": "first_param",
+    "elementType": "element_type",
+    "Number.isInteger": "value.fract() == 0.0"
+  },
+
+  "code_generation_hints": {
+    "variables_needing_declaration": [
+      "code",
+      "call_path",
+      "var_path",
+      "func_path",
+      "jsx_path",
+      "expr",
+      "state_id",
+      "set_state_id",
+      "node",
+      "attr",
+      "prop"
+    ],
+    "path_traverse_variables": {
+      "CallExpression": "call_path",
+      "VariableDeclaration": "var_path",
+      "FunctionDeclaration": "func_path",
+      "JSXElement": "jsx_path"
+    }
+  }
+}
