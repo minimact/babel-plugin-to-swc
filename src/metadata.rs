@@ -13,6 +13,8 @@ pub struct PluginMetadata {
     #[serde(default)]
     pub babel_to_swc_mappings: HashMap<String, String>,
     pub visitor_context: Option<VisitorContext>,
+    #[serde(default)]
+    pub code_generation_hints: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]

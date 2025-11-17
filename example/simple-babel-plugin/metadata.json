@@ -120,7 +120,15 @@
     "getAttributeValue": {
       "description": "Get attribute value as string",
       "params": [
-        { "name": "value", "type": "&JSXAttrValue" }
+        { "name": "value", "type": "Option<&JSXAttrValue>" }
+      ],
+      "returns": "String"
+    },
+
+    "getInitialValueString": {
+      "description": "Get initial value as string",
+      "params": [
+        { "name": "node", "type": "Option<&Expr>" }
       ],
       "returns": "String"
     },
@@ -130,7 +138,8 @@
       "params": [
         { "name": "ts_type", "type": "&TsType" }
       ],
-      "returns": "&'static str"
+      "returns": "String",
+      "requires_pattern_matching": true
     },
 
     "inferType": {
@@ -138,7 +147,8 @@
       "params": [
         { "name": "node", "type": "&Expr" }
       ],
-      "returns": "&'static str"
+      "returns": "&'static str",
+      "requires_pattern_matching": true
     },
 
     "formatProperty": {
@@ -159,6 +169,30 @@
     "t.isIdentifier(node)": "matches!(node, Expr::Ident(_))",
     "t.isObjectPattern(node)": "matches!(node, Pat::Object(_))",
 
+    "t.isTSStringKeyword(tsType)": "matches!(ts_type, TsType::TsKeywordType(TsKeywordType { kind: TsKeywordTypeKind::TsStringKeyword, .. }))",
+    "t.isTSNumberKeyword(tsType)": "matches!(ts_type, TsType::TsKeywordType(TsKeywordType { kind: TsKeywordTypeKind::TsNumberKeyword, .. }))",
+    "t.isTSBooleanKeyword(tsType)": "matches!(ts_type, TsType::TsKeywordType(TsKeywordType { kind: TsKeywordTypeKind::TsBooleanKeyword, .. }))",
+    "t.isTSAnyKeyword(tsType)": "matches!(ts_type, TsType::TsKeywordType(TsKeywordType { kind: TsKeywordTypeKind::TsAnyKeyword, .. }))",
+    "t.isTSArrayType(tsType)": "matches!(ts_type, TsType::TsArrayType(_))",
+    "t.isTSTypeLiteral(tsType)": "matches!(ts_type, TsType::TsTypeLit(_))",
+    "t.isTSTypeReference(tsType)": "matches!(ts_type, TsType::TsTypeRef(_))",
+    "t.isIdentifier(tsType.typeName)": "matches!(type_ref.type_name, TsEntityName::Ident(_))",
+    "tsType.typeName.name": "type_name_ident.sym.to_string()",
+    "tsType.elementType": "array_type.elem_type",
+    "!tsType": "ts_type.is_none()",
+    "tsType.is_empty()": "false",
+
+    "t.isStringLiteral(node)": "matches!(node, Expr::Lit(Lit::Str(_)))",
+    "t.isNumericLiteral(node)": "matches!(node, Expr::Lit(Lit::Num(_)))",
+    "t.isBooleanLiteral(node)": "matches!(node, Expr::Lit(Lit::Bool(_)))",
+    "t.isNullLiteral(node)": "matches!(node, Expr::Lit(Lit::Null(_)))",
+    "t.isArrayExpression(node)": "matches!(node, Expr::Array(_))",
+    "t.isObjectExpression(node)": "matches!(node, Expr::Object(_))",
+    "!node": "node.is_none()",
+    "!value": "value.is_none()",
+    "node.is_empty()": "false",
+    "value.is_empty()": "value.is_none()",
+
     "callPath": "call_path",
     "varPath": "var_path",
     "funcPath": "func_path",
@@ -175,7 +209,9 @@
     "attrInfo": "attr_info",
     "firstParam": "first_param",
     "elementType": "element_type",
-    "Number.isInteger": "value.fract() == 0.0"
+    "Number.isInteger(value)": "value.fract() == 0.0",
+    "node.value": "num_lit.value",
+    "typeMap[typeName]": "type_map.get(type_name.as_str())"
   },
 
   "code_generation_hints": {
@@ -197,6 +233,14 @@
       "VariableDeclaration": "var_path",
       "FunctionDeclaration": "func_path",
       "JSXElement": "jsx_path"
-    }
+    },
+    "skip_helper_generation": [
+      "processComponent",
+      "extractUseState",
+      "extractProps",
+      "extractAttributes",
+      "tsTypeToCSharpType",
+      "inferType"
+    ]
   }
 }

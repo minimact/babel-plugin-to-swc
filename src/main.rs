@@ -284,11 +284,30 @@ fn generate_module_file(helpers: &[&HelperFunction], metadata: Option<&PluginMet
 
     for helper in helpers {
         // Only include code generation functions (filter out AST helpers and internal functions)
-        let is_excluded = helper.name.starts_with("_") ||                    // Private functions
+        let mut is_excluded = helper.name.starts_with("_") ||                    // Private functions
                          helper.name == "visit" ||                           // AST visitor helpers
                          helper.name.starts_with("is") && helper.name.len() < 15 || // Short "is" checks like isJSX
                          helper.name == "getComponentName" ||                // Implemented as ComponentExtractor::get_component_name_from_context
                          helper.name == "escapeCSharpString";                // Implemented as ComponentExtractor::escape_c_sharp_string
+
+        // Check metadata for functions to skip
+        if let Some(meta) = metadata {
+            if let Some(hints) = meta.code_generation_hints.as_ref() {
+                if let Some(skip_list) = hints.get("skip_helper_generation") {
+                    if let Some(array) = skip_list.as_array() {
+                        for item in array {
+                            if let Some(func_name) = item.as_str() {
+                                if helper.name == func_name {
+                                    is_excluded = true;
+                                    eprintln!("Skipping helper function '{}' per metadata hint", func_name);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         if !is_excluded {
             code.push_str(&generate_helper_function(helper, metadata));
@@ -567,6 +586,7 @@ impl ComponentExtractor {
         Self {
             components: Vec::new(),
             current_component: None,
+            inside_component: false,
             parent_stack: Vec::new(),
         }
     }
@@ -584,6 +604,7 @@ impl ComponentExtractor {
     }
 
     fn start_component(&mut self, name: String) {
+        self.inside_component = true;
         self.current_component = Some(Component {
             name,
             hooks: Vec::new(),
@@ -596,6 +617,7 @@ impl ComponentExtractor {
         if let Some(comp) = self.current_component.take() {
             self.components.push(comp);
         }
+        self.inside_component = false;
     }
 
     fn add_hook(&mut self, hook: Hook) {
@@ -671,15 +693,16 @@ impl ComponentExtractor {
 
 "#);
 
-    // Generate visitor methods from detected transforms
-    if !visitor_methods.is_empty() {
+    // Use fallback hardcoded visitors (properly structured with flat visitor pattern)
+    // TODO: Refactor generate_visitor_method_with_inlining to properly flatten path.traverse()
+    if false && !visitor_methods.is_empty() {
         eprintln!("Generating {} visitor methods with inlining support", visitor_methods.len());
         for method in visitor_methods {
             code.push_str(&generate_visitor_method_with_inlining(method, &helpers_map, metadata));
         }
     } else {
-        // Fallback to hardcoded visitors if no methods detected
-        eprintln!("No visitor methods detected, using fallback hardcoded visitors");
+        // Fallback to hardcoded visitors
+        eprintln!("Using fallback hardcoded visitors with proper flat visitor pattern");
         code.push_str(generate_fn_decl_visitor().as_str());
         code.push_str(r#"    fn visit_mut_fn_expr(&mut self, node: &mut FnExpr) {
         if let Some(ident) = &node.ident {
@@ -729,18 +752,56 @@ fn generate_inferred_params(helper: &HelperFunction) -> String {
             .map(|p| {
                 // Convert parameter name to snake_case and infer type
                 let param_name = to_snake_case(p);
-                // Simple type inference based on parameter name
-                let param_type = if param_name.contains("component") && !param_name.ends_with("s") {
-                    "&Component"
-                } else if param_name.ends_with("s") || param_name == "components" {
-                    "&[Component]"
-                } else {
-                    "&str"
-                };
+
+                // Infer type from usage in function body
+                let param_type = infer_param_type_from_usage(&param_name, &helper.transforms);
+
                 format!("{}: {}", param_name, param_type)
             })
             .collect::<Vec<_>>()
             .join(", ")
+    }
+}
+
+fn infer_param_type_from_usage(param_name: &str, transforms: &[Transform]) -> &'static str {
+    // Check how the parameter is used in the function body
+    for transform in transforms {
+        let usage = match transform {
+            Transform::Conditional { condition, .. } => Some(condition.as_str()),
+            Transform::VariableDeclaration { value, .. } => Some(value.as_str()),
+            Transform::ReturnStmt { value } => Some(value.as_str()),
+            _ => None,
+        };
+
+        if let Some(code) = usage {
+            if code.contains(param_name) {
+                // Check for SWC AST type patterns
+                if code.contains(&format!("matches!({}, Expr::", param_name)) {
+                    return "&Expr";
+                }
+                if code.contains(&format!("matches!({}, TsType::", param_name)) {
+                    return "&TsType";
+                }
+                if code.contains(&format!("matches!({}, JSXAttrValue::", param_name)) ||
+                   code.contains(&format!("matches!({}, Lit::", param_name)) {
+                    return "&JSXAttrValue";
+                }
+                if code.contains(&format!("{}.len()", param_name)) || code.contains(&format!("&{}", param_name)) {
+                    if param_name.ends_with("s") || param_name == "components" {
+                        return "&[Component]";
+                    }
+                }
+            }
+        }
+    }
+
+    // Fallback based on name patterns
+    if param_name.contains("component") && !param_name.ends_with("s") {
+        "&Component"
+    } else if param_name.ends_with("s") || param_name == "components" {
+        "&[Component]"
+    } else {
+        "&str"
     }
 }
 
@@ -1979,20 +2040,43 @@ fn generate_transform_code_smart(transform: &Transform, indent: usize, return_ty
 
         Transform::Conditional { condition, then_transforms, else_transforms } => {
             let cond = translate_condition(condition, metadata);
-            let mut result = format!("{}if {} {{\n", indent_str, cond);
-            for t in then_transforms {
-                result.push_str(&generate_transform_code_smart(t, indent + 1, return_type, metadata));
-            }
-            result.push_str(&format!("{}}}", indent_str));
 
-            if let Some(else_block) = else_transforms {
-                result.push_str(" else {\n");
-                for t in else_block {
-                    result.push_str(&generate_transform_code_smart(t, indent + 1, return_type, metadata));
+            // Check if this is an is_none() check on an Option parameter
+            // If so, use if let Some pattern instead
+            let is_none_check = cond.ends_with(".is_none()");
+            let var_name = if is_none_check {
+                cond.trim_end_matches(".is_none()").trim()
+            } else {
+                ""
+            };
+
+            let mut result = if is_none_check && !var_name.is_empty() {
+                // Generate early return for None case
+                let mut s = format!("{}if {}.is_none() {{\n", indent_str, var_name);
+                for t in then_transforms {
+                    s.push_str(&generate_transform_code_smart(t, indent + 1, return_type, metadata));
                 }
-                result.push_str(&format!("{}}}", indent_str));
-            }
-            result.push('\n');
+                s.push_str(&format!("{}}}\n", indent_str));
+                // Add unwrap after the None check
+                s.push_str(&format!("{}let {} = {}.unwrap();\n", indent_str, var_name, var_name));
+                s
+            } else {
+                let mut s = format!("{}if {} {{\n", indent_str, cond);
+                for t in then_transforms {
+                    s.push_str(&generate_transform_code_smart(t, indent + 1, return_type, metadata));
+                }
+                s.push_str(&format!("{}}}", indent_str));
+
+                if let Some(else_block) = else_transforms {
+                    s.push_str(" else {\n");
+                    for t in else_block {
+                        s.push_str(&generate_transform_code_smart(t, indent + 1, return_type, metadata));
+                    }
+                    s.push_str(&format!("{}}}", indent_str));
+                }
+                s.push('\n');
+                s
+            };
             result
         }
 
@@ -2607,6 +2691,14 @@ fn translate_js_to_rust_with_metadata(js_expr: &str, metadata: Option<&PluginMet
 }
 
 fn translate_condition(js_condition: &str, metadata: Option<&PluginMetadata>) -> String {
+    // Check metadata mappings FIRST for exact matches
+    if let Some(meta) = metadata {
+        if let Some(mapped) = meta.translate_babel_pattern(js_condition) {
+            eprintln!("  Condition mapped: {} -> {}", js_condition, mapped);
+            return mapped.to_string();
+        }
+    }
+
     // Translate JavaScript condition patterns to Rust
     if js_condition.starts_with("t.is") {
         // Extract the type check and variable
@@ -2687,7 +2779,14 @@ fn translate_condition(js_condition: &str, metadata: Option<&PluginMetadata>) ->
                 "isMemberExpression" => format!("matches!({}, Expr::Member(_))", var_name),
                 "isCallExpression" => format!("matches!({}, Expr::Call(_))", var_name),
                 "isTSArrayType" => format!("matches!({}, TsType::TsArrayType(_))", var_name),
+                "isTSStringKeyword" => format!("matches!({}, TsType::TsKeywordType(TsKeywordType {{ kind: TsKeywordTypeKind::TsStringKeyword, .. }}))", var_name),
+                "isTSNumberKeyword" => format!("matches!({}, TsType::TsKeywordType(TsKeywordType {{ kind: TsKeywordTypeKind::TsNumberKeyword, .. }}))", var_name),
+                "isTSBooleanKeyword" => format!("matches!({}, TsType::TsKeywordType(TsKeywordType {{ kind: TsKeywordTypeKind::TsBooleanKeyword, .. }}))", var_name),
+                "isTSAnyKeyword" => format!("matches!({}, TsType::TsKeywordType(TsKeywordType {{ kind: TsKeywordTypeKind::TsAnyKeyword, .. }}))", var_name),
+                "isTSTypeLiteral" => format!("matches!({}, TsType::TsTypeLit(_))", var_name),
+                "isTSTypeReference" => format!("matches!({}, TsType::TsTypeRef(_))", var_name),
                 "isNumericLiteral" => format!("matches!({}, Lit::Num(_))", var_name),
+                "isStringLiteral" => format!("matches!({}, Lit::Str(_))", var_name),
                 "isBooleanLiteral" => format!("matches!({}, Lit::Bool(_))", var_name),
                 "isNullLiteral" => format!("matches!({}, Lit::Null(_))", var_name),
                 "isArrayExpression" => format!("matches!({}, Expr::Array(_))", var_name),
@@ -2890,10 +2989,12 @@ fn generate_jsx_element_visitor() -> String {
             }
         }
 
-        self.add_jsx_element(JsxElementData {
-            element_type,
-            attributes,
-        });
+        if self.inside_component {
+            self.add_jsx_element(JsxElement {
+                tag_name: element_type,
+                is_self_closing: node.closing.is_none(),
+            });
+        }
 
         node.visit_mut_children_with(self);
     }
