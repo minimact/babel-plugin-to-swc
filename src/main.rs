@@ -6,6 +6,9 @@ use swc_ecma_visit::{Visit, VisitWith};
 use std::fs;
 use std::path::{Path, PathBuf};
 
+mod metadata;
+use metadata::PluginMetadata;
+
 /// Resolve a relative module path to an absolute path
 fn resolve_module_path(current_file: &str, module_path: &str) -> String {
     let current_path = Path::new(current_file);
@@ -48,6 +51,7 @@ fn parse_required_modules(analyzer: &mut BabelVisitorDetector, processed_files: 
                 // Create a new analyzer for this module
                 let mut module_analyzer = BabelVisitorDetector {
                     current_file_path: module_path.clone(),
+                    metadata: analyzer.metadata,
                     ..Default::default()
                 };
                 module.visit_with(&mut module_analyzer);
@@ -95,6 +99,21 @@ fn main() {
         println!("Analyzing: {}", plugin_path);
     }
 
+    // Try to load metadata file
+    let metadata_path = format!("{}/metadata.json",
+        Path::new(plugin_path).parent().unwrap().display());
+    let metadata = PluginMetadata::load(&metadata_path).ok();
+
+    if let Some(ref meta) = metadata {
+        if !json_output {
+            println!("✓ Loaded metadata for: {}", meta.plugin.name);
+            println!("  {} structs, {} functions",
+                meta.structs.len(), meta.functions.len());
+        }
+    } else if !json_output {
+        println!("ℹ No metadata found at {}, using inference mode", metadata_path);
+    }
+
     let code = fs::read_to_string(plugin_path)
         .expect(&format!("Failed to read {}", plugin_path));
 
@@ -113,6 +132,7 @@ fn main() {
 
     let mut analyzer = BabelVisitorDetector {
         current_file_path: plugin_path.to_string(),
+        metadata: metadata.as_ref(),
         ..Default::default()
     };
     module.visit_with(&mut analyzer);
@@ -170,7 +190,7 @@ fn main() {
             println!("\n=== Generating SWC Plugin Crate ===\n");
 
             let output_dir = "generated-plugin";
-            generate_swc_plugin_crate(output_dir, &analyzer.visitor_methods, &analyzer.helper_functions);
+            generate_swc_plugin_crate(output_dir, &analyzer.visitor_methods, &analyzer.helper_functions, metadata.as_ref());
 
             println!("✓ Generated plugin at: {}/", output_dir);
             println!("✓ To use: cd {} && cargo build", output_dir);
@@ -191,14 +211,76 @@ fn get_module_name(source_path: &str) -> String {
 }
 
 /// Generate a module file with helper functions
-fn generate_module_file(helpers: &[&HelperFunction]) -> String {
+/// Generate Rust struct definitions from metadata
+fn generate_structs_from_metadata(metadata: &PluginMetadata) -> String {
+    let mut code = String::new();
+
+    for (struct_name, struct_def) in &metadata.structs {
+        // Add description if available
+        if let Some(desc) = &struct_def.description {
+            code.push_str(&format!("/// {}\n", desc));
+        }
+
+        code.push_str("#[derive(Debug, Clone, Serialize, Deserialize)]\n");
+        code.push_str(&format!("pub struct {} {{\n", struct_name));
+
+        for (field_name, field_def) in &struct_def.fields {
+            let snake_name = to_snake_case(field_name);
+            code.push_str(&format!("    pub {}: {},\n", snake_name, field_def.field_type));
+        }
+
+        code.push_str("}\n\n");
+
+        // Generate impl with Default
+        code.push_str(&format!("impl Default for {} {{\n", struct_name));
+        code.push_str("    fn default() -> Self {\n");
+        code.push_str("        Self {\n");
+
+        for (field_name, field_def) in &struct_def.fields {
+            let snake_name = to_snake_case(field_name);
+            let default_value = if let Some(default) = &field_def.default {
+                default.clone()
+            } else {
+                match field_def.field_type.as_str() {
+                    "String" => "String::new()".to_string(),
+                    s if s.starts_with("Vec<") => "vec![]".to_string(),
+                    "bool" => "false".to_string(),
+                    s if s.starts_with("Option<") => "None".to_string(),
+                    _ => "Default::default()".to_string(),
+                }
+            };
+
+            code.push_str(&format!("            {}: {},\n", snake_name, default_value));
+        }
+
+        code.push_str("        }\n");
+        code.push_str("    }\n");
+        code.push_str("}\n\n");
+    }
+
+    code
+}
+
+fn generate_module_file(helpers: &[&HelperFunction], metadata: Option<&PluginMetadata>) -> String {
     let mut code = String::new();
 
     code.push_str("// Auto-generated module\n\n");
 
     // Add common SWC imports needed by generated code
     code.push_str("use swc_ecma_ast::*;\n");
-    code.push_str("use swc_common::DUMMY_SP;\n\n");
+    code.push_str("use swc_common::DUMMY_SP;\n");
+
+    // Import metadata structs if available
+    if let Some(meta) = metadata {
+        if !meta.structs.is_empty() {
+            code.push_str("use crate::{");
+            let struct_names: Vec<String> = meta.structs.keys().cloned().collect();
+            code.push_str(&struct_names.join(", "));
+            code.push_str("};\n");
+        }
+    }
+
+    code.push_str("\n");
 
     for helper in helpers {
         // Only include code generation functions (filter out AST helpers and internal functions)
@@ -209,7 +291,7 @@ fn generate_module_file(helpers: &[&HelperFunction]) -> String {
                          helper.name == "escapeCSharpString";                // Implemented as ComponentExtractor::escape_c_sharp_string
 
         if !is_excluded {
-            code.push_str(&generate_helper_function(helper));
+            code.push_str(&generate_helper_function(helper, metadata));
             code.push_str("\n");
         }
     }
@@ -230,7 +312,12 @@ fn generate_mod_rs(module_names: &[String]) -> String {
     code
 }
 
-fn generate_swc_plugin_crate(output_dir: &str, visitor_methods: &[VisitorMethod], helper_functions: &[HelperFunction]) {
+fn generate_swc_plugin_crate(
+    output_dir: &str,
+    visitor_methods: &[VisitorMethod],
+    helper_functions: &[HelperFunction],
+    metadata: Option<&PluginMetadata>
+) {
     use std::path::Path;
     use std::collections::HashMap;
 
@@ -262,7 +349,7 @@ fn generate_swc_plugin_crate(output_dir: &str, visitor_methods: &[VisitorMethod]
     // Generate module files
     let mut module_names = Vec::new();
     for (module_name, helpers) in &modules {
-        let module_rs = generate_module_file(helpers);
+        let module_rs = generate_module_file(helpers, metadata);
         let file_path = generators_dir.join(format!("{}.rs", module_name));
         fs::write(&file_path, module_rs).expect("Failed to write module file");
         module_names.push(module_name.clone());
@@ -274,7 +361,7 @@ fn generate_swc_plugin_crate(output_dir: &str, visitor_methods: &[VisitorMethod]
     fs::write(generators_dir.join("mod.rs"), mod_rs).expect("Failed to write mod.rs");
 
     // Generate lib.rs (with visitor only, helpers are in modules)
-    let lib_rs = generate_lib_rs(visitor_methods, helper_functions);
+    let lib_rs = generate_lib_rs(visitor_methods, helper_functions, metadata);
     fs::write(src_dir.join("lib.rs"), lib_rs).expect("Failed to write lib.rs");
 
     // Generate main.rs (test runner)
@@ -365,7 +452,11 @@ fn generate_visitor_method_with_inlining(
     code
 }
 
-fn generate_lib_rs(visitor_methods: &[VisitorMethod], helper_functions: &[HelperFunction]) -> String {
+fn generate_lib_rs(
+    visitor_methods: &[VisitorMethod],
+    helper_functions: &[HelperFunction],
+    metadata: Option<&PluginMetadata>
+) -> String {
     let mut code = String::new();
 
     // Build helpers map for inlining
@@ -374,7 +465,7 @@ fn generate_lib_rs(visitor_methods: &[VisitorMethod], helper_functions: &[Helper
         helpers_map.insert(helper.name.clone(), helper);
     }
 
-    // Header with imports and data structures
+    // Header with imports
     code.push_str(r#"use swc_ecma_ast::*;
 use swc_ecma_visit::{VisitMut, VisitMutWith};
 use serde::{Serialize, Deserialize};
@@ -382,7 +473,15 @@ use std::collections::HashMap;
 
 pub mod generators;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+"#);
+
+    // Generate struct definitions from metadata or use defaults
+    if let Some(meta) = metadata {
+        code.push_str("// Structs from metadata\n");
+        code.push_str(&generate_structs_from_metadata(meta));
+    } else {
+        code.push_str("// Default structs (no metadata provided)\n");
+        code.push_str(r#"#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Component {
     pub name: String,
     pub hooks: Vec<Hook>,
@@ -416,7 +515,10 @@ pub struct PropData {
     #[serde(rename = "type")]
     pub prop_type: String,
 }
+"#);
+    }
 
+    code.push_str(r#"
 /// Parent context tracking for Babel path emulation
 #[derive(Debug, Clone)]
 pub enum ParentContext {
@@ -600,18 +702,24 @@ impl ComponentExtractor {
     code
 }
 
-/// Generate a Rust helper function from detected transforms
-fn generate_helper_function(helper: &HelperFunction) -> String {
-    let mut code = String::new();
-    let func_name = to_snake_case(&helper.name);
+/// Infer return type when no metadata available
+fn infer_return_type(helper: &HelperFunction, has_map_filter: bool, has_string_building: bool) -> String {
+    if has_map_filter {
+        "Vec<_>".to_string()  // map/filter returns a vector
+    } else if helper.name.starts_with("infer") {
+        "&'static str".to_string()  // inferCSharpType returns literals
+    } else if helper.name.starts_with("convert") || has_string_building {
+        "String".to_string()  // convertToCSharp returns params, string builders return String
+    } else if helper.name.contains("escape") || helper.name.contains("Escape") {
+        "String".to_string()  // escape functions use .replace() which returns String
+    } else {
+        "&'static str".to_string()
+    }
+}
 
-    // Detect if this function builds a string (has ArrayPush transforms)
-    let has_string_building = helper.transforms.iter().any(|t| {
-        matches!(t, Transform::ArrayPush { .. } | Transform::ArrayPushSpread { .. } | Transform::ArrayJoin { .. })
-    });
-
-    // Generate Rust parameters from JavaScript parameters
-    let rust_params = if helper.params.is_empty() {
+/// Generate inferred parameters when no metadata available
+fn generate_inferred_params(helper: &HelperFunction) -> String {
+    if helper.params.is_empty() {
         String::new()
     } else {
         helper.params.iter()
@@ -630,6 +738,33 @@ fn generate_helper_function(helper: &HelperFunction) -> String {
             })
             .collect::<Vec<_>>()
             .join(", ")
+    }
+}
+
+/// Generate a Rust helper function from detected transforms
+fn generate_helper_function(helper: &HelperFunction, metadata: Option<&PluginMetadata>) -> String {
+    let mut code = String::new();
+    let func_name = to_snake_case(&helper.name);
+
+    // Detect if this function builds a string (has ArrayPush transforms)
+    let has_string_building = helper.transforms.iter().any(|t| {
+        matches!(t, Transform::ArrayPush { .. } | Transform::ArrayPushSpread { .. } | Transform::ArrayJoin { .. })
+    });
+
+    // Generate Rust parameters from JavaScript parameters, using metadata if available
+    let rust_params = if let Some(meta) = metadata {
+        if let Some(func_def) = meta.get_function_signature(&helper.name) {
+            // Use metadata signature
+            func_def.params.iter()
+                .map(|p| format!("{}: {}", to_snake_case(&p.name), p.param_type))
+                .collect::<Vec<_>>()
+                .join(", ")
+        } else {
+            // Fallback to inference
+            generate_inferred_params(helper)
+        }
+    } else {
+        generate_inferred_params(helper)
     };
 
     // Check if this is a map/filter pattern
@@ -641,17 +776,15 @@ fn generate_helper_function(helper: &HelperFunction) -> String {
         }
     });
 
-    // Smart return type inference
-    let return_type = if has_map_filter {
-        "Vec<_>"  // map/filter returns a vector
-    } else if helper.name.starts_with("infer") {
-        "&'static str"  // inferCSharpType returns literals
-    } else if helper.name.starts_with("convert") || has_string_building {
-        "String"  // convertToCSharp returns params, string builders return String
-    } else if helper.name.contains("escape") || helper.name.contains("Escape") {
-        "String"  // escape functions use .replace() which returns String
+    // Get return type from metadata or infer it
+    let return_type = if let Some(meta) = metadata {
+        if let Some(func_def) = meta.get_function_signature(&helper.name) {
+            func_def.returns.clone()
+        } else {
+            infer_return_type(helper, has_map_filter, has_string_building)
+        }
     } else {
-        "&'static str"
+        infer_return_type(helper, has_map_filter, has_string_building)
     };
 
     // Generate function signature (public for C# generation functions)
@@ -682,7 +815,7 @@ fn generate_helper_function(helper: &HelperFunction) -> String {
 
                 // Generate the body transforms (skip the first ReturnStmt)
                 for transform in helper.transforms.iter().skip(1) {
-                    code.push_str(&generate_transform_code_smart(transform, 2, "Option<_>"));
+                    code.push_str(&generate_transform_code_smart(transform, 2, "Option<_>", metadata));
                 }
 
                 code.push_str("    }).collect()\n");
@@ -715,7 +848,7 @@ fn generate_helper_function(helper: &HelperFunction) -> String {
             }
 
             // Generate with parameter substitution
-            let transform_code = generate_transform_code_smart(transform, 1, return_type);
+            let transform_code = generate_transform_code_smart(transform, 1, &return_type, metadata);
             // Apply parameter name substitution
             let mut substituted_code = transform_code;
             for (original, snake) in &param_bindings {
@@ -782,31 +915,120 @@ struct RequiredModule {
 }
 
 #[derive(Debug, Default)]
-struct BabelVisitorDetector {
+struct BabelVisitorDetector<'a> {
     visitor_methods: Vec<VisitorMethod>,
     helper_functions: Vec<HelperFunction>,
     required_modules: Vec<RequiredModule>,
     current_file_path: String,
     current_method: Option<String>,
+    metadata: Option<&'a PluginMetadata>,
 }
 
-#[derive(Debug, Default)]
-struct VisitorBodyAnalyzer {
+#[derive(Debug)]
+struct VisitorBodyAnalyzer<'a> {
     transforms: Vec<Transform>,
+    metadata: Option<&'a PluginMetadata>,
 }
 
-impl VisitorBodyAnalyzer {
+impl<'a> Default for VisitorBodyAnalyzer<'a> {
+    fn default() -> Self {
+        Self {
+            transforms: Vec::new(),
+            metadata: None,
+        }
+    }
+}
+
+impl<'a> VisitorBodyAnalyzer<'a> {
+    /// Infer struct name from variable name and fields, using metadata if available
+    fn infer_struct_name(&self, var_name: &str, fields: &[String]) -> String {
+        // Try metadata first - find struct that has matching fields
+        if let Some(meta) = self.metadata {
+            // Extract field names from "field: value" format
+            let field_names: Vec<String> = fields.iter()
+                .filter_map(|f| f.split(':').next().map(|s| s.trim().to_string()))
+                .collect();
+
+            // Find best matching struct in metadata
+            let mut best_match = None;
+            let mut best_score = 0;
+
+            for (struct_name, struct_def) in &meta.structs {
+                let meta_fields: Vec<String> = struct_def.fields.keys()
+                    .map(|k| to_snake_case(k))
+                    .collect();
+
+                // Count how many fields match
+                let score = field_names.iter()
+                    .filter(|f| meta_fields.contains(f))
+                    .count();
+
+                if score > best_score {
+                    best_score = score;
+                    best_match = Some(struct_name.as_str());
+                }
+            }
+
+            if let Some(matched) = best_match {
+                if best_score > 0 {
+                    return matched.to_string();
+                }
+            }
+        }
+
+        // Fallback to heuristic matching
+        let normalized = var_name.to_lowercase().replace("_", "");
+
+        let struct_name = match normalized.as_str() {
+            "component" | "comp" => "Component",
+            "hook" | "hookinfo" => "Hook",
+            "prop" | "propdata" => "Prop",
+            "variable" | "varinfo" | "localvariable" => "Variable",
+            "helper" | "helperfunc" | "helperfunction" => "HelperFunc",
+            "element" | "jsxelement" | "jsx" => "JsxElement",
+            _ => {
+                // Try to infer from fields
+                if fields.iter().any(|f| f.starts_with("hook_type:")) {
+                    "Hook"
+                } else if fields.iter().any(|f| f.starts_with("props:") || f.starts_with("hooks:")) {
+                    "Component"
+                } else if fields.iter().any(|f| f.starts_with("has_initializer:")) {
+                    "Variable"
+                } else {
+                    // Capitalize first letter as fallback
+                    return var_name.chars().next()
+                        .map(|c| c.to_uppercase().collect::<String>())
+                        .unwrap_or_default() + &var_name[1..];
+                }
+            }
+        };
+
+        struct_name.to_string()
+    }
+
     fn extract_init_value(&mut self, init: &Option<Box<Expr>>) -> String {
+        self.extract_init_value_with_context(init, "value")
+    }
+
+    fn extract_init_value_with_context(&mut self, init: &Option<Box<Expr>>, var_name: &str) -> String {
         if let Some(init) = init {
             match &**init {
                 Expr::Member(member) => self.extract_member_path(member),
                 Expr::Call(call) => {
                     // Extract full function call with arguments
                     if let Some(Transform::FunctionCall { name, args }) = self.detect_function_call(call) {
+                        let rust_name = to_snake_case(&name);
                         if args.is_empty() {
-                            format!("{}()", name)
+                            format!("{}()", rust_name)
                         } else {
-                            format!("{}({})", name, args.join(", "))
+                            // Translate args to snake_case and add & for references
+                            let rust_args: Vec<String> = args.iter()
+                                .map(|arg| {
+                                    let translated = to_snake_case(arg);
+                                    format!("&{}", translated)
+                                })
+                                .collect();
+                            format!("{}({})", rust_name, rust_args.join(", "))
                         }
                     } else {
                         "call()".to_string()
@@ -814,8 +1036,78 @@ impl VisitorBodyAnalyzer {
                 }
                 Expr::Lit(Lit::Str(s)) => format!("{:?}", s.value),
                 Expr::Lit(Lit::Num(n)) => n.value.to_string(),
-                Expr::Ident(ident) => ident.sym.to_string(),
-                _ => "value".to_string(),
+                Expr::Lit(Lit::Bool(b)) => b.value.to_string(),
+                Expr::Ident(ident) => to_snake_case(&ident.sym.to_string()),
+                Expr::Object(obj) => {
+                    // Translate object literal to Rust struct initialization
+                    // For now, we'll generate a simplified struct literal
+                    let mut fields = Vec::new();
+                    for prop in &obj.props {
+                        if let PropOrSpread::Prop(prop) = prop {
+                            if let Prop::KeyValue(kv) = &**prop {
+                                let mut key = match &kv.key {
+                                    PropName::Ident(id) => to_snake_case(&String::from_utf8_lossy(id.sym.as_bytes())),
+                                    PropName::Str(s) => to_snake_case(&String::from_utf8_lossy(s.value.as_bytes())),
+                                    _ => "unknown".to_string(),
+                                };
+                                // Avoid Rust keywords
+                                if key == "type" {
+                                    key = "hook_type".to_string();
+                                }
+                                let value = self.extract_init_value_with_context(&Some(kv.value.clone()), &key);
+                                fields.push(format!("{}: {}", key, value));
+                            }
+                        }
+                    }
+                    if fields.is_empty() {
+                        "Default::default()".to_string()
+                    } else {
+                        let struct_name = self.infer_struct_name(var_name, &fields);
+
+                        // Filter fields based on metadata for this struct
+                        let filtered_fields = if let Some(meta) = self.metadata {
+                            if let Some(struct_def) = meta.structs.get(&struct_name) {
+                                let valid_fields: std::collections::HashSet<String> = struct_def.fields.keys()
+                                    .map(|k| to_snake_case(k))
+                                    .collect();
+
+                                fields.into_iter()
+                                    .filter(|f| {
+                                        let field_name = f.split(':').next().unwrap_or("").trim();
+                                        valid_fields.contains(field_name)
+                                    })
+                                    .collect::<Vec<_>>()
+                            } else {
+                                fields
+                            }
+                        } else {
+                            fields
+                        };
+
+                        if filtered_fields.is_empty() {
+                            format!("{}::default()", struct_name)
+                        } else {
+                            format!("{} {{ {} }}", struct_name, filtered_fields.join(", "))
+                        }
+                    }
+                },
+                Expr::Array(arr) => {
+                    // Translate array literal to Rust vec![]
+                    if arr.elems.is_empty() {
+                        "vec![]".to_string()
+                    } else {
+                        let elements: Vec<String> = arr.elems.iter()
+                            .filter_map(|elem| elem.as_ref())
+                            .map(|elem| self.extract_init_value(&Some(Box::new((*elem.expr).clone()))))
+                            .collect();
+                        format!("vec![{}]", elements.join(", "))
+                    }
+                },
+                Expr::Bin(_) => "/* TODO: binary expression */false".to_string(),
+                Expr::Unary(_) => "/* TODO: unary expression */false".to_string(),
+                Expr::Cond(_) => "/* TODO: conditional expression */Default::default()".to_string(),
+                _ => format!("/* TODO: unsupported expr type {} */Default::default()",
+                           std::any::type_name::<Expr>()),
             }
         } else {
             "undefined".to_string()
@@ -1172,7 +1464,7 @@ impl VisitorBodyAnalyzer {
     }
 }
 
-impl Visit for VisitorBodyAnalyzer {
+impl<'a> Visit for VisitorBodyAnalyzer<'a> {
     fn visit_expr_stmt(&mut self, stmt: &ExprStmt) {
         match &*stmt.expr {
             Expr::Assign(assign) => {
@@ -1196,7 +1488,7 @@ impl Visit for VisitorBodyAnalyzer {
                 // Simple identifier: const name = value
                 Pat::Ident(ident) => {
                     let var_name = ident.id.sym.to_string();
-                    let value = self.extract_init_value(&decl.init);
+                    let value = self.extract_init_value_with_context(&decl.init, &var_name);
 
                     self.transforms.push(Transform::VariableDeclaration {
                         name: var_name,
@@ -1316,7 +1608,10 @@ impl Visit for VisitorBodyAnalyzer {
         };
 
         // Analyze loop body
-        let mut body_analyzer = VisitorBodyAnalyzer::default();
+        let mut body_analyzer = VisitorBodyAnalyzer {
+            transforms: Vec::new(),
+            metadata: self.metadata,
+        };
         for_of.body.visit_with(&mut body_analyzer);
 
         self.transforms.push(Transform::ForOfLoop {
@@ -1332,11 +1627,17 @@ impl Visit for VisitorBodyAnalyzer {
     fn visit_if_stmt(&mut self, if_stmt: &IfStmt) {
         let condition = self.extract_condition_expr(&if_stmt.test);
 
-        let mut then_analyzer = VisitorBodyAnalyzer::default();
+        let mut then_analyzer = VisitorBodyAnalyzer {
+            transforms: Vec::new(),
+            metadata: self.metadata,
+        };
         if_stmt.cons.visit_with(&mut then_analyzer);
 
         let else_transforms = if let Some(alt) = &if_stmt.alt {
-            let mut else_analyzer = VisitorBodyAnalyzer::default();
+            let mut else_analyzer = VisitorBodyAnalyzer {
+                transforms: Vec::new(),
+                metadata: self.metadata,
+            };
             alt.visit_with(&mut else_analyzer);
             Some(else_analyzer.transforms)
         } else {
@@ -1453,7 +1754,7 @@ fn translate_type_check(check_type: &str, target: &str) -> String {
     }
 }
 
-impl Visit for BabelVisitorDetector {
+impl<'a> Visit for BabelVisitorDetector<'a> {
     fn visit_var_decl(&mut self, var_decl: &VarDecl) {
         // Detect require() calls: const { generateCSharpFile } = require('../path/to/module.cjs')
         for decl in &var_decl.decls {
@@ -1525,7 +1826,10 @@ impl Visit for BabelVisitorDetector {
                 })
                 .collect();
 
-            let mut body_analyzer = VisitorBodyAnalyzer::default();
+            let mut body_analyzer = VisitorBodyAnalyzer {
+                transforms: Vec::new(),
+                metadata: self.metadata,
+            };
 
             if let Some(body) = &func.function.body {
                 body.visit_with(&mut body_analyzer);
@@ -1555,7 +1859,10 @@ impl Visit for BabelVisitorDetector {
                                             Prop::KeyValue(method_kv) => {
                                                 if let PropName::Ident(method_ident) = &method_kv.key {
                                                     let method_name = method_ident.sym.to_string();
-                                                    let mut body_analyzer = VisitorBodyAnalyzer::default();
+                                                    let mut body_analyzer = VisitorBodyAnalyzer {
+                                                        transforms: Vec::new(),
+                                                        metadata: self.metadata,
+                                                    };
 
                                                     // Analyze the method body (function expression)
                                                     method_kv.value.visit_with(&mut body_analyzer);
@@ -1569,7 +1876,10 @@ impl Visit for BabelVisitorDetector {
                                             Prop::Method(method_prop) => {
                                                 if let PropName::Ident(method_ident) = &method_prop.key {
                                                     let method_name = method_ident.sym.to_string();
-                                                    let mut body_analyzer = VisitorBodyAnalyzer::default();
+                                                    let mut body_analyzer = VisitorBodyAnalyzer {
+                                                        transforms: Vec::new(),
+                                                        metadata: self.metadata,
+                                                    };
 
                                                     // Analyze the method body
                                                     if let Some(body) = &method_prop.function.body {
@@ -1625,7 +1935,7 @@ r#"impl Visit for MyTranspiler {{
     )
 }
 
-fn generate_transform_code_smart(transform: &Transform, indent: usize, return_type: &str) -> String {
+fn generate_transform_code_smart(transform: &Transform, indent: usize, return_type: &str, metadata: Option<&PluginMetadata>) -> String {
     let indent_str = " ".repeat(indent * 4);
 
     match transform {
@@ -1636,7 +1946,7 @@ fn generate_transform_code_smart(transform: &Transform, indent: usize, return_ty
                 // Skip generic 'expr' placeholders
                 String::new()
             } else {
-                let rust_value = translate_js_to_rust(value);
+                let rust_value = translate_js_to_rust_with_metadata(value, metadata);
 
                 let final_value = if return_type == "Option<_>" {
                     // For Option return type (filter_map), wrap in Some()
@@ -1668,14 +1978,14 @@ fn generate_transform_code_smart(transform: &Transform, indent: usize, return_ty
             let cond = translate_condition(condition);
             let mut result = format!("{}if {} {{\n", indent_str, cond);
             for t in then_transforms {
-                result.push_str(&generate_transform_code_smart(t, indent + 1, return_type));
+                result.push_str(&generate_transform_code_smart(t, indent + 1, return_type, metadata));
             }
             result.push_str(&format!("{}}}", indent_str));
 
             if let Some(else_block) = else_transforms {
                 result.push_str(" else {\n");
                 for t in else_block {
-                    result.push_str(&generate_transform_code_smart(t, indent + 1, return_type));
+                    result.push_str(&generate_transform_code_smart(t, indent + 1, return_type, metadata));
                 }
                 result.push_str(&format!("{}}}", indent_str));
             }
@@ -1691,7 +2001,7 @@ fn generate_transform_code_smart(transform: &Transform, indent: usize, return_ty
             };
             let mut result = format!("{}for {} in {} {{\n", indent_str, iterator, iterable_ref);
             for t in body_transforms {
-                result.push_str(&generate_transform_code_smart(t, indent + 1, return_type));
+                result.push_str(&generate_transform_code_smart(t, indent + 1, return_type, metadata));
             }
             result.push_str(&format!("{}}}\n", indent_str));
             result
@@ -2108,14 +2418,32 @@ fn get_node_param(visitor_name: &str) -> (&'static str, &'static str) {
     }
 }
 
+// Wrapper for backwards compatibility
 fn translate_js_to_rust(js_expr: &str) -> String {
+    translate_js_to_rust_with_metadata(js_expr, None)
+}
+
+fn translate_js_to_rust_with_metadata(js_expr: &str, metadata: Option<&PluginMetadata>) -> String {
+    // Check metadata mappings FIRST
+    if let Some(meta) = metadata {
+        if let Some(mapped) = meta.translate_babel_pattern(js_expr) {
+            return mapped.to_string();
+        }
+    }
+
     match js_expr {
         // Handle visitor context arguments
         "path" => "n".to_string(),  // Babel path -> SWC node (n)
         "state" => "self".to_string(),  // Babel state -> self
+
         // Handle string literals FIRST before function call patterns
         e if e.starts_with('"') && e.ends_with('"') => e.to_string(),
         e if e.starts_with('\'') && e.ends_with('\'') => e.to_string(),
+        // Handle struct literals - don't re-translate already formatted Rust code
+        // Pattern: Component { field: value, ... } - starts with uppercase letter and has " {"
+        e if e.contains(" {") && e.chars().next().map(|c| c.is_uppercase()).unwrap_or(false) => e.to_string(),
+        // Handle vec![] macro - already valid Rust
+        e if e.trim() == "vec![]" => e.to_string(),
         // Handle map/filter chains: array.map(fn).filter(Boolean) -> array.iter().filter_map(fn).collect()
         e if e.contains(".map(expr)") && e.contains(".filter(Boolean)") => {
             // Extract the array name before .map
