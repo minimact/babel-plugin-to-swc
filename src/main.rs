@@ -610,6 +610,8 @@ impl ComponentExtractor {
             hooks: Vec::new(),
             jsx_elements: Vec::new(),
             props: Vec::new(),
+            local_variables: Vec::new(),
+            helper_functions: Vec::new(),
         });
     }
 
@@ -2100,9 +2102,36 @@ fn generate_transform_code_smart(transform: &Transform, indent: usize, return_ty
                 s
             } else if let (Some(pattern), Some(var)) = (if_let_pattern, var_name) {
                 // Use if let instead of matches!
+                // Extract the innermost variable name from pattern for substitution
+                // Pattern like "Expr::Lit(Lit::Bool(ref bool_lit))" -> extract "bool_lit"
+                let inner_var = if let Some(ref_pos) = pattern.rfind("ref ") {
+                    let after_ref = &pattern[ref_pos + 4..];
+                    if let Some(paren_pos) = after_ref.find(')') {
+                        after_ref[..paren_pos].trim()
+                    } else {
+                        ""
+                    }
+                } else {
+                    ""
+                };
+
                 let mut s = format!("{}if let {} = {} {{\n", indent_str, pattern, var);
                 for t in then_transforms {
-                    s.push_str(&generate_transform_code_smart(t, indent + 1, return_type, metadata));
+                    let mut code = generate_transform_code_smart(t, indent + 1, return_type, metadata);
+                    // Substitute var.field with inner_var.field
+                    // Also fix metadata-mapped variable names that are wrong for this context
+                    if !inner_var.is_empty() {
+                        code = code.replace(&format!("{}.value", var), &format!("{}.value", inner_var));
+                        code = code.replace(&format!("{}.elements", var), &format!("{}.elems", inner_var));
+                        code = code.replace(&format!("{}.properties", var), &format!("{}.props", inner_var));
+                        // Fix wrongly-mapped variable names (e.g., num_lit in bool block should be bool_lit)
+                        code = code.replace("num_lit.value", &format!("{}.value", inner_var));
+                        code = code.replace("str_lit.value", &format!("{}.value", inner_var));
+                        code = code.replace("bool_lit.value", &format!("{}.value", inner_var));
+                        // Convert JavaScript .toString() to Rust .to_string()
+                        code = code.replace(".toString()", ".to_string()");
+                    }
+                    s.push_str(&code);
                 }
                 s.push_str(&format!("{}}}", indent_str));
 
@@ -2447,7 +2476,7 @@ fn generate_transform_code(transform: &Transform, indent: usize, metadata: Optio
                 .join("");
 
             let rust_exprs = exprs.iter()
-                .map(|e| translate_js_to_rust(e))
+                .map(|e| translate_js_to_rust_with_metadata(e, metadata))
                 .collect::<Vec<_>>()
                 .join(", ");
 
@@ -2707,8 +2736,25 @@ fn translate_js_to_rust_with_metadata(js_expr: &str, metadata: Option<&PluginMet
         }
         // Handle bracket notation for map/object access: typeMap.[key] -> typeMap.get(key) or [key]
         e if e.contains(".[") => {
-            // Pattern: typeMap.[typeName] -> typeMap[&typeName] or typeMap.get(&typeName)
-            e.replace(".[", "[&")
+            // Pattern: typeMap.[typeName] -> typeMap[&typeName]
+            // But for numeric indices like .[0], just remove the dot: .[0] -> [0]
+            let result = e.replace(".[", "[");
+            // Check if it's a numeric index by seeing if the char after [ is a digit
+            if let Some(bracket_pos) = result.find('[') {
+                if let Some(next_char) = result.chars().nth(bracket_pos + 1) {
+                    if next_char.is_ascii_digit() {
+                        // Numeric index - just use [0] without &
+                        result
+                    } else {
+                        // Variable index - add &
+                        result.replace("[", "[&")
+                    }
+                } else {
+                    result
+                }
+            } else {
+                result
+            }
         }
         // Translate member access: component.hooks.length -> component.hooks.len()
         e if e.ends_with(".length") => {

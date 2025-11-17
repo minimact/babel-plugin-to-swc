@@ -260,6 +260,13 @@ function getAttributeValue(value) {
 }
 
 /**
+ * Simple JSX code generation stub
+ */
+function generateJSX(element) {
+  return `new ${element.tagName}()`;
+}
+
+/**
  * Pattern: Get initial value as string
  */
 function getInitialValueString(node) {

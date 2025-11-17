@@ -160,6 +160,14 @@
       ],
       "returns": "String",
       "uses_string_builder": true
+    },
+
+    "generateJSX": {
+      "description": "Generate JSX code from element",
+      "params": [
+        { "name": "element", "type": "&JsxElement" }
+      ],
+      "returns": "String"
     }
   },
 
@@ -223,7 +231,9 @@
     "value.expression.name": "ident.sym",
     "node.value": "num_lit.value",
     "node.elements": "array_expr.elems",
-    "node.properties": "obj_expr.props"
+    "node.properties": "obj_expr.props",
+    "element.tagName": "element.tag_name",
+    "tagName": "tag_name"
   },
 
   "enum_patterns": {
