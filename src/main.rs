@@ -132,7 +132,7 @@ fn main() {
 
     let mut analyzer = BabelVisitorDetector {
         current_file_path: plugin_path.to_string(),
-        metadata: metadata.as_ref(),
+        metadata: metadata.as_ref().map(|m| m as &_),
         ..Default::default()
     };
     module.visit_with(&mut analyzer);
@@ -190,7 +190,7 @@ fn main() {
             println!("\n=== Generating SWC Plugin Crate ===\n");
 
             let output_dir = "generated-plugin";
-            generate_swc_plugin_crate(output_dir, &analyzer.visitor_methods, &analyzer.helper_functions, metadata.as_ref());
+            generate_swc_plugin_crate(output_dir, &analyzer.visitor_methods, &analyzer.helper_functions, metadata.as_ref().map(|m| m as &_));
 
             println!("✓ Generated plugin at: {}/", output_dir);
             println!("✓ To use: cd {} && cargo build", output_dir);
@@ -361,7 +361,7 @@ fn generate_swc_plugin_crate(
     fs::write(generators_dir.join("mod.rs"), mod_rs).expect("Failed to write mod.rs");
 
     // Generate lib.rs (with visitor only, helpers are in modules)
-    let lib_rs = generate_lib_rs(visitor_methods, helper_functions, metadata);
+    let lib_rs = generate_lib_rs(visitor_methods, helper_functions, metadata.as_ref().map(|m| m as &_));
     fs::write(src_dir.join("lib.rs"), lib_rs).expect("Failed to write lib.rs");
 
     // Generate main.rs (test runner)
@@ -404,6 +404,7 @@ once_cell = "1"
 fn generate_visitor_method_with_inlining(
     method: &VisitorMethod,
     helpers_map: &std::collections::HashMap<String, &HelperFunction>,
+    metadata: Option<&PluginMetadata>,
 ) -> String {
     let mut code = String::new();
 
@@ -442,6 +443,7 @@ fn generate_visitor_method_with_inlining(
             helpers_map,
             2, // indent level
             &mut visited,
+            metadata,
         ));
     }
 
@@ -555,9 +557,9 @@ impl ParentContext {
 pub struct ComponentExtractor {
     pub components: Vec<Component>,
     current_component: Option<Component>,
+    inside_component: bool,
     /// Stack of parent nodes for context tracking (emulates Babel's path.parent)
     parent_stack: Vec<ParentContext>,
-    metadata: Option<PluginMetadata>,
 }
 
 impl ComponentExtractor {
@@ -566,16 +568,6 @@ impl ComponentExtractor {
             components: Vec::new(),
             current_component: None,
             parent_stack: Vec::new(),
-            metadata: None,
-        }
-    }
-
-    pub fn with_metadata(metadata: Option<PluginMetadata>) -> Self {
-        Self {
-            components: Vec::new(),
-            current_component: None,
-            parent_stack: Vec::new(),
-            metadata,
         }
     }
 
@@ -612,7 +604,7 @@ impl ComponentExtractor {
         }
     }
 
-    fn add_jsx_element(&mut self, element: JsxElementData) {
+    fn add_jsx_element(&mut self, element: JsxElement) {
         if let Some(ref mut comp) = self.current_component {
             comp.jsx_elements.push(element);
         }
@@ -683,7 +675,7 @@ impl ComponentExtractor {
     if !visitor_methods.is_empty() {
         eprintln!("Generating {} visitor methods with inlining support", visitor_methods.len());
         for method in visitor_methods {
-            code.push_str(&generate_visitor_method_with_inlining(method, &helpers_map));
+            code.push_str(&generate_visitor_method_with_inlining(method, &helpers_map, metadata));
         }
     } else {
         // Fallback to hardcoded visitors if no methods detected
@@ -1028,14 +1020,14 @@ impl<'a> VisitorBodyAnalyzer<'a> {
                 Expr::Call(call) => {
                     // Extract full function call with arguments
                     if let Some(Transform::FunctionCall { name, args }) = self.detect_function_call(call) {
-                        let rust_name = convert_identifier(&name, self.metadata.as_deref());
+                        let rust_name = convert_identifier(&name, self.metadata.as_ref().map(|m| m as &_));
                         if args.is_empty() {
                             format!("{}()", rust_name)
                         } else {
                             // Translate args and add & for references
                             let rust_args: Vec<String> = args.iter()
                                 .map(|arg| {
-                                    let translated = convert_identifier(arg, self.metadata.as_deref());
+                                    let translated = convert_identifier(arg, self.metadata.as_ref().map(|m| m as &_));
                                     format!("&{}", translated)
                                 })
                                 .collect();
@@ -1048,7 +1040,7 @@ impl<'a> VisitorBodyAnalyzer<'a> {
                 Expr::Lit(Lit::Str(s)) => format!("{:?}", s.value),
                 Expr::Lit(Lit::Num(n)) => n.value.to_string(),
                 Expr::Lit(Lit::Bool(b)) => b.value.to_string(),
-                Expr::Ident(ident) => convert_identifier(&ident.sym.to_string(), self.metadata.as_deref()),
+                Expr::Ident(ident) => convert_identifier(&ident.sym.to_string(), self.metadata.as_ref().map(|m| m as &_)),
                 Expr::Object(obj) => {
                     // Translate object literal to Rust struct initialization
                     // For now, we'll generate a simplified struct literal
@@ -1057,8 +1049,8 @@ impl<'a> VisitorBodyAnalyzer<'a> {
                         if let PropOrSpread::Prop(prop) = prop {
                             if let Prop::KeyValue(kv) = &**prop {
                                 let mut key = match &kv.key {
-                                    PropName::Ident(id) => convert_identifier(&String::from_utf8_lossy(id.sym.as_bytes()), self.metadata.as_deref()),
-                                    PropName::Str(s) => convert_identifier(&String::from_utf8_lossy(s.value.as_bytes()), self.metadata.as_deref()),
+                                    PropName::Ident(id) => convert_identifier(&String::from_utf8_lossy(id.sym.as_bytes()), self.metadata.as_ref().map(|m| m as &_)),
+                                    PropName::Str(s) => convert_identifier(&String::from_utf8_lossy(s.value.as_bytes()), self.metadata.as_ref().map(|m| m as &_)),
                                     _ => "unknown".to_string(),
                                 };
                                 // Avoid Rust keywords
@@ -1924,7 +1916,7 @@ fn generate_rust_visitor_with_transforms(visitor_name: &str, transforms: &[Trans
 
     // Generate code for each transform
     for transform in transforms {
-        body_code.push_str(&generate_transform_code(transform, 2));
+        body_code.push_str(&generate_transform_code(transform, 2, None));
     }
 
     // If no transforms, add a placeholder comment
@@ -1986,7 +1978,7 @@ fn generate_transform_code_smart(transform: &Transform, indent: usize, return_ty
         }
 
         Transform::Conditional { condition, then_transforms, else_transforms } => {
-            let cond = translate_condition(condition);
+            let cond = translate_condition(condition, metadata);
             let mut result = format!("{}if {} {{\n", indent_str, cond);
             for t in then_transforms {
                 result.push_str(&generate_transform_code_smart(t, indent + 1, return_type, metadata));
@@ -2005,10 +1997,12 @@ fn generate_transform_code_smart(transform: &Transform, indent: usize, return_ty
         }
 
         Transform::ForOfLoop { iterator, iterable, body_transforms } => {
-            let iterable_ref = if iterable.contains('.') {
-                format!("&{}", iterable)
+            // Apply metadata mapping to iterable
+            let mapped_iterable = translate_js_to_rust_with_metadata(iterable, metadata);
+            let iterable_ref = if mapped_iterable.contains('.') {
+                format!("&{}", mapped_iterable)
             } else {
-                iterable.clone()
+                mapped_iterable.clone()
             };
             let mut result = format!("{}for {} in {} {{\n", indent_str, iterator, iterable_ref);
             for t in body_transforms {
@@ -2019,7 +2013,7 @@ fn generate_transform_code_smart(transform: &Transform, indent: usize, return_ty
         }
 
         // Fallback to legacy for other types
-        _ => generate_transform_code(transform, indent)
+        _ => generate_transform_code(transform, indent, metadata)
     }
 }
 
@@ -2030,6 +2024,7 @@ fn inline_helper_call(
     helpers_map: &std::collections::HashMap<String, &HelperFunction>,
     indent: usize,
     visited: &mut std::collections::HashSet<String>,
+    metadata: Option<&PluginMetadata>,
 ) -> String {
     let mut output = String::new();
 
@@ -2052,7 +2047,7 @@ fn inline_helper_call(
 
         // Generate inlined code with substitutions
         for transform in &helper.transforms {
-            output.push_str(&generate_transform_with_bindings(transform, &arg_bindings, helpers_map, indent, visited));
+            output.push_str(&generate_transform_with_bindings(transform, &arg_bindings, helpers_map, indent, visited, metadata));
         }
     } else {
         output.push_str(&format!("{}// TODO: helper '{}' not found in helpers map\n", " ".repeat(indent * 4), helper_name));
@@ -2069,6 +2064,7 @@ fn generate_transform_with_bindings(
     helpers_map: &std::collections::HashMap<String, &HelperFunction>,
     indent: usize,
     visited: &mut std::collections::HashSet<String>,
+    metadata: Option<&PluginMetadata>,
 ) -> String {
     let indent_str = " ".repeat(indent * 4);
 
@@ -2088,7 +2084,7 @@ fn generate_transform_with_bindings(
                     .collect();
 
                 // Inline the helper function
-                return inline_helper_call(name, &substituted_args, helpers_map, indent, visited);
+                return inline_helper_call(name, &substituted_args, helpers_map, indent, visited, metadata);
             }
 
             // Check if this is a ComponentExtractor method (getComponentName, etc.)
@@ -2126,8 +2122,17 @@ fn generate_transform_with_bindings(
         }
 
         Transform::VariableDeclaration { name, value, is_destructured } => {
-            let rust_name = to_snake_case(name);
-            let rust_value = substitute_arg(&translate_js_to_rust(value), arg_bindings);
+            // Check metadata mappings first, then fall back to snake_case
+            let rust_name = if let Some(meta) = metadata {
+                if let Some(mapped) = meta.translate_babel_pattern(name) {
+                    mapped.to_string()
+                } else {
+                    to_snake_case(name)
+                }
+            } else {
+                to_snake_case(name)
+            };
+            let rust_value = substitute_arg(&translate_js_to_rust_with_metadata(value, metadata), arg_bindings);
             if *is_destructured {
                 format!("{}// Destructured: let {} = {};\n", indent_str, rust_name, rust_value)
             } else {
@@ -2136,17 +2141,17 @@ fn generate_transform_with_bindings(
         }
 
         Transform::Conditional { condition, then_transforms, else_transforms } => {
-            let cond = substitute_arg(&translate_condition(condition), arg_bindings);
+            let cond = substitute_arg(&translate_condition(condition, metadata), arg_bindings);
             let mut result = format!("{}if {} {{\n", indent_str, cond);
             for t in then_transforms {
-                result.push_str(&generate_transform_with_bindings(t, arg_bindings, helpers_map, indent + 1, visited));
+                result.push_str(&generate_transform_with_bindings(t, arg_bindings, helpers_map, indent + 1, visited, metadata));
             }
             result.push_str(&format!("{}}}", indent_str));
 
             if let Some(else_block) = else_transforms {
                 result.push_str(" else {\n");
                 for t in else_block {
-                    result.push_str(&generate_transform_with_bindings(t, arg_bindings, helpers_map, indent + 1, visited));
+                    result.push_str(&generate_transform_with_bindings(t, arg_bindings, helpers_map, indent + 1, visited, metadata));
                 }
                 result.push_str(&format!("{}}}", indent_str));
             }
@@ -2156,7 +2161,7 @@ fn generate_transform_with_bindings(
 
         _ => {
             // Fallback to regular generation for other transform types
-            generate_transform_code(transform, indent)
+            generate_transform_code(transform, indent, None)
         }
     }
 }
@@ -2178,13 +2183,21 @@ fn substitute_arg(expr: &str, bindings: &std::collections::HashMap<String, Strin
     result
 }
 
-fn generate_transform_code(transform: &Transform, indent: usize) -> String {
+fn generate_transform_code(transform: &Transform, indent: usize, metadata: Option<&PluginMetadata>) -> String {
     let indent_str = " ".repeat(indent * 4);
 
     match transform {
         Transform::VariableDeclaration { name, value, is_destructured } => {
-            let rust_name = to_snake_case(name);
-            let rust_value = translate_js_to_rust(value);
+            let rust_name = if let Some(meta) = metadata {
+                if let Some(mapped) = meta.translate_babel_pattern(name) {
+                    mapped.to_string()
+                } else {
+                    to_snake_case(name)
+                }
+            } else {
+                to_snake_case(name)
+            };
+            let rust_value = translate_js_to_rust_with_metadata(value, metadata);
             if *is_destructured {
                 format!("{}// Destructured: let {} = {};\n", indent_str, rust_name, rust_value)
             } else {
@@ -2229,17 +2242,17 @@ fn generate_transform_code(transform: &Transform, indent: usize) -> String {
             format!("{}self.metadata.insert(\"{}\", {});\n", indent_str, key, value_expr)
         }
         Transform::Conditional { condition, then_transforms, else_transforms } => {
-            let rust_condition = translate_condition(condition);
+            let rust_condition = translate_condition(condition, metadata);
             let mut result = format!("{}if {} {{\n", indent_str, rust_condition);
             for t in then_transforms {
-                result.push_str(&generate_transform_code(t, indent + 1));
+                result.push_str(&generate_transform_code(t, indent + 1, metadata));
             }
             result.push_str(&format!("{}}}", indent_str));
 
             if let Some(else_t) = else_transforms {
                 result.push_str(" else {\n");
                 for t in else_t {
-                    result.push_str(&generate_transform_code(t, indent + 1));
+                    result.push_str(&generate_transform_code(t, indent + 1, metadata));
                 }
                 result.push_str(&format!("{}}}", indent_str));
             }
@@ -2271,7 +2284,7 @@ fn generate_transform_code(transform: &Transform, indent: usize) -> String {
             format!("{}// Logical chain: {:?} {} {:?}\n", indent_str, left, op, right)
         }
         Transform::TernaryExpr { condition, then_expr, else_expr } => {
-            let rust_condition = translate_condition(condition);
+            let rust_condition = translate_condition(condition, metadata);
             let rust_then = translate_js_to_rust(then_expr);
             let rust_else = translate_js_to_rust(else_expr);
             format!("{}let result = if {} {{ {} }} else {{ {} }};\n",
@@ -2394,7 +2407,7 @@ fn generate_transform_code(transform: &Transform, indent: usize) -> String {
             };
             let mut result = format!("{}for {} in {} {{\n", indent_str, iterator, iterable_ref);
             for t in body_transforms {
-                result.push_str(&generate_transform_code(t, indent + 1));
+                result.push_str(&generate_transform_code(t, indent + 1, metadata));
             }
             result.push_str(&format!("{}}}\n", indent_str));
             result
@@ -2436,9 +2449,20 @@ fn translate_js_to_rust(js_expr: &str) -> String {
 
 fn translate_js_to_rust_with_metadata(js_expr: &str, metadata: Option<&PluginMetadata>) -> String {
     // Check metadata mappings FIRST
+    // Try exact match first
     if let Some(meta) = metadata {
         if let Some(mapped) = meta.translate_babel_pattern(js_expr) {
             return mapped.to_string();
+        }
+
+        // If no exact match and expression contains '.', try mapping just the base variable
+        if js_expr.contains('.') {
+            let base_var = js_expr.split('.').next().unwrap();
+            if let Some(mapped_base) = meta.translate_babel_pattern(base_var) {
+                let suffix = &js_expr[base_var.len()..];
+                eprintln!("  translate_js_to_rust: Mapped {} -> {}", base_var, mapped_base);
+                return format!("{}{}", mapped_base, suffix);
+            }
         }
     }
 
@@ -2582,7 +2606,7 @@ fn translate_js_to_rust_with_metadata(js_expr: &str, metadata: Option<&PluginMet
     }
 }
 
-fn translate_condition(js_condition: &str) -> String {
+fn translate_condition(js_condition: &str, metadata: Option<&PluginMetadata>) -> String {
     // Translate JavaScript condition patterns to Rust
     if js_condition.starts_with("t.is") {
         // Extract the type check and variable
@@ -2595,7 +2619,32 @@ fn translate_condition(js_condition: &str) -> String {
 
             // Split arguments - check if there's a second argument with constraints
             let args: Vec<&str> = args_str.split(',').map(|s| s.trim()).collect();
-            let var_name = args[0];
+            let original_var_name = args[0];
+
+            // Extract just the variable name (before any dots)
+            let base_var_name = original_var_name.split('.').next().unwrap_or(original_var_name);
+            let suffix = if original_var_name.contains('.') {
+                &original_var_name[base_var_name.len()..]
+            } else {
+                ""
+            };
+
+            // Apply metadata mapping to the base variable name only
+            let mapped_base = if let Some(meta) = metadata {
+                if let Some(mapped) = meta.translate_babel_pattern(base_var_name) {
+                    eprintln!("  Mapped {} -> {}", base_var_name, mapped);
+                    mapped
+                } else {
+                    eprintln!("  No mapping for {}", base_var_name);
+                    base_var_name
+                }
+            } else {
+                eprintln!("  No metadata available for {}", base_var_name);
+                base_var_name
+            };
+
+            // Reconstruct with suffix
+            let var_name = format!("{}{}", mapped_base, suffix);
 
             // Check for additional constraints like { name: 'useState' }
             let has_name_constraint = args.len() > 1 && args[1].contains("name:");
