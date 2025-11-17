@@ -1,0 +1,160 @@
+'vswhere.exe' is not recognized as an internal or external command,
+operable program or batch file.
+**********************************************************************
+** Visual Studio 2022 Developer Command Prompt v17.0
+** Copyright (c) 2022 Microsoft Corporation
+**********************************************************************
+[vcvarsall.bat] Environment initialized for: 'x64'
+   Compiling babel-to-swc v0.1.0 (J:\projects\babel-plugin-to-swc\babel-plugin-to-swc)
+warning: unused import: `PathBuf`
+ --> src\main.rs:7:23
+  |
+7 | use std::path::{Path, PathBuf};
+  |                       ^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+error[E0308]: mismatched types
+    --> src\main.rs:1031:67
+     |
+1031 |                         let rust_name = convert_identifier(&name, self.metadata.as_ref());
+     |                                         ------------------        ^^^^^^^^^^^^^^^^^^^^^^ expected `Option<&PluginMetadata>`, found `Option<&&PluginMetadata>`
+     |                                         |
+     |                                         arguments to this function are incorrect
+     |
+     = note: expected enum `std::option::Option<&PluginMetadata>`
+                found enum `std::option::Option<&&PluginMetadata>`
+note: function defined here
+    --> src\main.rs:2789:4
+     |
+2789 | fn convert_identifier(name: &str, metadata: Option<&PluginMetadata>) -> String {
+     |    ^^^^^^^^^^^^^^^^^^             ---------------------------------
+help: try removing the method call
+     |
+1031 -                         let rust_name = convert_identifier(&name, self.metadata.as_ref());
+1031 +                         let rust_name = convert_identifier(&name, self.metadata);
+     |
+
+error[E0308]: mismatched types
+    --> src\main.rs:1038:78
+     |
+1038 | ...                   let translated = convert_identifier(arg, self.metadata.as_ref());
+     |                                        ------------------      ^^^^^^^^^^^^^^^^^^^^^^ expected `Option<&PluginMetadata>`, found `Option<&&PluginMetadata>`
+     |                                        |
+     |                                        arguments to this function are incorrect
+     |
+     = note: expected enum `std::option::Option<&PluginMetadata>`
+                found enum `std::option::Option<&&PluginMetadata>`
+note: function defined here
+    --> src\main.rs:2789:4
+     |
+2789 | fn convert_identifier(name: &str, metadata: Option<&PluginMetadata>) -> String {
+     |    ^^^^^^^^^^^^^^^^^^             ---------------------------------
+help: try removing the method call
+     |
+1038 -                                     let translated = convert_identifier(arg, self.metadata.as_ref());
+1038 +                                     let translated = convert_identifier(arg, self.metadata);
+     |
+
+error[E0308]: mismatched types
+    --> src\main.rs:1051:82
+     |
+1051 |                 Expr::Ident(ident) => convert_identifier(&ident.sym.to_string(), self.metadata.as_ref()),
+     |                                       ------------------                         ^^^^^^^^^^^^^^^^^^^^^^ expected `Option<&PluginMetadata>`, found `Option<&&PluginMetadata>`
+     |                                       |
+     |                                       arguments to this function are incorrect
+     |
+     = note: expected enum `std::option::Option<&PluginMetadata>`
+                found enum `std::option::Option<&&PluginMetadata>`
+note: function defined here
+    --> src\main.rs:2789:4
+     |
+2789 | fn convert_identifier(name: &str, metadata: Option<&PluginMetadata>) -> String {
+     |    ^^^^^^^^^^^^^^^^^^             ---------------------------------
+help: try removing the method call
+     |
+1051 -                 Expr::Ident(ident) => convert_identifier(&ident.sym.to_string(), self.metadata.as_ref()),
+1051 +                 Expr::Ident(ident) => convert_identifier(&ident.sym.to_string(), self.metadata),
+     |
+
+error[E0308]: mismatched types
+    --> src\main.rs:1060:124
+     |
+1060 | ...                   PropName::Ident(id) => convert_identifier(&String::from_utf8_lossy(id.sym.as_bytes()), self.metadata.as_ref()),
+     |                                              ------------------ arguments to this function are incorrect     ^^^^^^^^^^^^^^^^^^^^^^ expected `Option<&PluginMetadata>`, found `Option<&&PluginMetadata>`
+     |
+     = note: expected enum `std::option::Option<&PluginMetadata>`
+                found enum `std::option::Option<&&PluginMetadata>`
+note: function defined here
+    --> src\main.rs:2789:4
+     |
+2789 | fn convert_identifier(name: &str, metadata: Option<&PluginMetadata>) -> String {
+     |    ^^^^^^^^^^^^^^^^^^             ---------------------------------
+help: try removing the method call
+     |
+1060 -                                     PropName::Ident(id) => convert_identifier(&String::from_utf8_lossy(id.sym.as_bytes()), self.metadata.as_ref()),
+1060 +                                     PropName::Ident(id) => convert_identifier(&String::from_utf8_lossy(id.sym.as_bytes()), self.metadata),
+     |
+
+error[E0308]: mismatched types
+    --> src\main.rs:1061:122
+     |
+1061 | ...                   PropName::Str(s) => convert_identifier(&String::from_utf8_lossy(s.value.as_bytes()), self.metadata.as_ref()),
+     |                                           ------------------ arguments to this function are incorrect      ^^^^^^^^^^^^^^^^^^^^^^ expected `Option<&PluginMetadata>`, found `Option<&&PluginMetadata>`
+     |
+     = note: expected enum `std::option::Option<&PluginMetadata>`
+                found enum `std::option::Option<&&PluginMetadata>`
+note: function defined here
+    --> src\main.rs:2789:4
+     |
+2789 | fn convert_identifier(name: &str, metadata: Option<&PluginMetadata>) -> String {
+     |    ^^^^^^^^^^^^^^^^^^             ---------------------------------
+help: try removing the method call
+     |
+1061 -                                     PropName::Str(s) => convert_identifier(&String::from_utf8_lossy(s.value.as_bytes()), self.metadata.as_ref()),
+1061 +                                     PropName::Str(s) => convert_identifier(&String::from_utf8_lossy(s.value.as_bytes()), self.metadata),
+     |
+
+warning: unused variable: `call`
+    --> src\main.rs:1142:24
+     |
+1142 |             Expr::Call(call) => {
+     |                        ^^^^ help: if this is intentional, prefix it with an underscore: `_call`
+     |
+     = note: `#[warn(unused_variables)]` on by default
+
+warning: unused variable: `bin`
+    --> src\main.rs:1683:34
+     |
+1683 |     fn visit_bin_expr(&mut self, bin: &BinExpr) {
+     |                                  ^^^ help: if this is intentional, prefix it with an underscore: `_bin`
+
+warning: unused variable: `target`
+    --> src\main.rs:2328:44
+     |
+2328 |         Transform::TypeCheck { check_type, target, rust_pattern } => {
+     |                                            ^^^^^^ help: try ignoring the field: `target: _`
+
+warning: unreachable pattern
+    --> src\main.rs:2571:9
+     |
+2448 |         "state" => "self".to_string(),  // Babel state -> self
+     |         ------- matches all the relevant values
+...
+2571 |         "state" => "self".to_string(),
+     |         ^^^^^^^ no value can reach this
+     |
+     = note: `#[warn(unreachable_patterns)]` on by default
+
+warning: unreachable pattern
+    --> src\main.rs:2572:9
+     |
+2447 |         "path" => "n".to_string(),  // Babel path -> SWC node (n)
+     |         ------ matches all the relevant values
+...
+2572 |         "path" => "node".to_string(),
+     |         ^^^^^^ no value can reach this
+
+For more information about this error, try `rustc --explain E0308`.
+warning: `babel-to-swc` (bin "babel-to-swc") generated 6 warnings
+error: could not compile `babel-to-swc` (bin "babel-to-swc") due to 5 previous errors; 6 warnings emitted

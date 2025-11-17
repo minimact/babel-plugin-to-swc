@@ -557,6 +557,7 @@ pub struct ComponentExtractor {
     current_component: Option<Component>,
     /// Stack of parent nodes for context tracking (emulates Babel's path.parent)
     parent_stack: Vec<ParentContext>,
+    metadata: Option<PluginMetadata>,
 }
 
 impl ComponentExtractor {
@@ -565,6 +566,16 @@ impl ComponentExtractor {
             components: Vec::new(),
             current_component: None,
             parent_stack: Vec::new(),
+            metadata: None,
+        }
+    }
+
+    pub fn with_metadata(metadata: Option<PluginMetadata>) -> Self {
+        Self {
+            components: Vec::new(),
+            current_component: None,
+            parent_stack: Vec::new(),
+            metadata,
         }
     }
 
@@ -1017,14 +1028,14 @@ impl<'a> VisitorBodyAnalyzer<'a> {
                 Expr::Call(call) => {
                     // Extract full function call with arguments
                     if let Some(Transform::FunctionCall { name, args }) = self.detect_function_call(call) {
-                        let rust_name = to_snake_case(&name);
+                        let rust_name = convert_identifier(&name, self.metadata.as_deref());
                         if args.is_empty() {
                             format!("{}()", rust_name)
                         } else {
-                            // Translate args to snake_case and add & for references
+                            // Translate args and add & for references
                             let rust_args: Vec<String> = args.iter()
                                 .map(|arg| {
-                                    let translated = to_snake_case(arg);
+                                    let translated = convert_identifier(arg, self.metadata.as_deref());
                                     format!("&{}", translated)
                                 })
                                 .collect();
@@ -1037,7 +1048,7 @@ impl<'a> VisitorBodyAnalyzer<'a> {
                 Expr::Lit(Lit::Str(s)) => format!("{:?}", s.value),
                 Expr::Lit(Lit::Num(n)) => n.value.to_string(),
                 Expr::Lit(Lit::Bool(b)) => b.value.to_string(),
-                Expr::Ident(ident) => to_snake_case(&ident.sym.to_string()),
+                Expr::Ident(ident) => convert_identifier(&ident.sym.to_string(), self.metadata.as_deref()),
                 Expr::Object(obj) => {
                     // Translate object literal to Rust struct initialization
                     // For now, we'll generate a simplified struct literal
@@ -1046,8 +1057,8 @@ impl<'a> VisitorBodyAnalyzer<'a> {
                         if let PropOrSpread::Prop(prop) = prop {
                             if let Prop::KeyValue(kv) = &**prop {
                                 let mut key = match &kv.key {
-                                    PropName::Ident(id) => to_snake_case(&String::from_utf8_lossy(id.sym.as_bytes())),
-                                    PropName::Str(s) => to_snake_case(&String::from_utf8_lossy(s.value.as_bytes())),
+                                    PropName::Ident(id) => convert_identifier(&String::from_utf8_lossy(id.sym.as_bytes()), self.metadata.as_deref()),
+                                    PropName::Str(s) => convert_identifier(&String::from_utf8_lossy(s.value.as_bytes()), self.metadata.as_deref()),
                                     _ => "unknown".to_string(),
                                 };
                                 // Avoid Rust keywords
@@ -2772,6 +2783,18 @@ fn to_snake_case(s: &str) -> String {
         result.push(ch.to_lowercase().next().unwrap());
     }
     result
+}
+
+/// Convert identifier to Rust, checking metadata mappings first
+fn convert_identifier(name: &str, metadata: Option<&PluginMetadata>) -> String {
+    // Check if metadata has an explicit mapping
+    if let Some(meta) = metadata {
+        if let Some(mapped) = meta.translate_babel_pattern(name) {
+            return mapped.to_string();
+        }
+    }
+    // Fall back to snake_case conversion
+    to_snake_case(name)
 }
 
 fn generate_fn_decl_visitor() -> String {
