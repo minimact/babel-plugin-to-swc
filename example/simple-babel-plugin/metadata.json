@@ -172,8 +172,18 @@
   },
 
   "babel_to_swc_mappings": {
+    "str.charAt(0).toUpperCase() + str.slice(1)": "format!(\"{}{}\", str.chars().next().unwrap().to_uppercase(), &str[1..])",
+    "value.expression.name": "ident.sym",
+    "node.arguments": "node.args",
+    "callback.async": "callback.is_async",
+    "fetch_function.async": "fetch_function.is_async",
+    "async_function.async": "async_function.is_async",
+    "asyncFunction.async": "async_function.is_async",
+    "fetchFunction.async": "fetch_function.is_async",
     "path.node": "node",
     "path.parent.type": "parent_type",
+    "t.isTSTypeReference(actualType) && t.isIdentifier(actual_type.type_name)": "matches!(actual_type, TsType::TsTypeRef(TsTypeRef { type_name: TsEntityName::Ident(_), .. }))",
+    "t.isTSTypeReference(returnType) && t.isIdentifier(return_type.type_name) && return_type.type_name.name == \"Promise\"": "matches!(return_type, TsType::TsTypeRef(TsTypeRef { type_name: TsEntityName::Ident(ref ident), .. }) if ident.sym == \"Promise\")",
     "t.isIdentifier(node)": "matches!(node, Expr::Ident(_))",
     "t.isObjectPattern(node)": "matches!(node, Pat::Object(_))",
 

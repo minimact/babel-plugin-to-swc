@@ -1474,7 +1474,22 @@ impl<'a> VisitorBodyAnalyzer<'a> {
             }
         }
 
-        parts.join(".")
+        // Join parts, but don't add `.` before bracket notation
+        let mut result = String::new();
+        for (i, part) in parts.iter().enumerate() {
+            if i == 0 {
+                result.push_str(part);
+            } else if part.starts_with('[') {
+                // Bracket notation - no dot needed
+                result.push_str(part);
+            } else {
+                result.push('.');
+                result.push_str(part);
+            }
+        }
+
+        // Apply metadata mappings to the full path
+        convert_identifier(&result, self.metadata.as_ref().map(|m| m as &_))
     }
 
     fn extract_arg_name(&self, expr: &Expr) -> String {
@@ -2063,7 +2078,8 @@ fn generate_transform_code_smart(transform: &Transform, indent: usize, return_ty
 
             // Check if this is a matches!() pattern that should use if let instead
             // Pattern: matches!(value, Expr::Lit(_))
-            let use_if_let = cond.starts_with("matches!(");
+            // BUT: If there are multiple matches!() with &&, keep as matches!()
+            let use_if_let = cond.starts_with("matches!(") && !cond.contains(" && ");
             let (if_let_pattern, var_name) = if use_if_let {
                 // Extract: matches!(value, Expr::Lit(_)) -> ("Expr::Lit(ref lit)", "value")
                 if let Some(start) = cond.find('(') {
@@ -2152,7 +2168,10 @@ fn generate_transform_code_smart(transform: &Transform, indent: usize, return_ty
                         code = code.replace("str_lit.value", &format!("String::from_utf8_lossy({}.value.as_bytes())", inner_var));
                         code = code.replace("bool_lit.value", &format!("{}.value", inner_var));
                         // Fix variables that should reference the destructured inner variable
-                        code = code.replace("ident.sym", &format!("String::from_utf8_lossy({}.sym.as_bytes())", inner_var));
+                        // But only if not already wrapped in String::from_utf8_lossy
+                        if !code.contains("String::from_utf8_lossy(ident.sym.as_bytes())") {
+                            code = code.replace("ident.sym", &format!("String::from_utf8_lossy({}.sym.as_bytes())", inner_var));
+                        }
                         code = code.replace("array_expr.elems", &format!("{}.elems", inner_var));
                         code = code.replace("obj_expr.props", &format!("{}.props", inner_var));
                         // Convert JavaScript .toString() to Rust .to_string()
@@ -2671,6 +2690,15 @@ fn translate_js_to_rust(js_expr: &str) -> String {
 }
 
 fn translate_js_to_rust_with_metadata(js_expr: &str, metadata: Option<&PluginMetadata>) -> String {
+    // If the expression already looks like Rust code, don't translate it again
+    if js_expr.contains("::") ||
+       js_expr.starts_with("String::") ||
+       js_expr.starts_with("format!(") ||
+       js_expr.contains(".sym.as_bytes()") ||
+       js_expr.contains(".to_string()") {
+        return js_expr.to_string();
+    }
+
     // Check metadata mappings FIRST
     // Try exact match first
     if let Some(meta) = metadata {
@@ -2680,7 +2708,8 @@ fn translate_js_to_rust_with_metadata(js_expr: &str, metadata: Option<&PluginMet
 
         // If no exact match and expression contains '.', try mapping progressively shorter prefixes
         // For "node.value.toString()", try "node.value.toString", then "node.value", then "node"
-        if js_expr.contains('.') {
+        // BUT skip this for expressions that look like function calls or Rust code
+        if js_expr.contains('.') && !js_expr.contains('(') && !js_expr.contains("::") {
             let parts: Vec<&str> = js_expr.split('.').collect();
             // Try from longest to shortest prefix
             for i in (1..=parts.len()).rev() {
@@ -2977,6 +3006,18 @@ fn translate_condition(js_condition: &str, metadata: Option<&PluginMetadata>) ->
     // We need to be careful with the order here
     if result.contains(" && ") {
         let parts: Vec<&str> = result.split(" && ").collect();
+
+        // Special case: multiple t.is type checks combined with &&
+        // Pattern: t.isTSTypeReference(actualType) && t.isIdentifier(actualType.typeName)
+        // This needs to be handled recursively
+        if parts.iter().all(|p| p.trim().starts_with("t.is")) {
+            // Recursively translate each type check and combine
+            let translated_parts: Vec<String> = parts.iter()
+                .map(|part| translate_condition(part.trim(), metadata))
+                .collect();
+            return translated_parts.join(" && ");
+        }
+
         let translated_parts: Vec<String> = parts.iter().map(|part| {
             let trimmed = part.trim();
             // Check if this is a simple array/vec reference (no operators)
