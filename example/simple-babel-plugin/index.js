@@ -15,6 +15,7 @@
 const t = require('@babel/types');
 const { getComponentName } = require('./utils/helpers.cjs');
 const { tsTypeToCSharpType } = require('./types/typeConversion.cjs');
+const { extractHook } = require('./extractors/hooks.cjs');
 
 module.exports = function(babel) {
   return {
@@ -146,6 +147,14 @@ function processComponent(path, state, name) {
  * Example: const [count, setCount] = useState(0)
  */
 function extractUseState(callPath) {
+  // Use extractHook helper from the extractors module
+  const hookData = extractHook(callPath);
+
+  if (hookData) {
+    return hookData;
+  }
+
+  // Fallback to original implementation
   const parent = callPath.parent;
 
   // Pattern: const [state, setState] = useState(initialValue)
