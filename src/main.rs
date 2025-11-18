@@ -890,12 +890,25 @@ fn generate_helper_function(helper: &HelperFunction, metadata: Option<&PluginMet
     } else {
         // Normal transform generation with parameter substitution
         // Build param bindings: original_name -> snake_case_name
+        // SKIP parameters that have metadata mappings (they're handled in translate_js_to_rust_with_metadata)
         let mut param_bindings = std::collections::HashMap::new();
+
         for param in &helper.params {
-            let snake_case_param = to_snake_case(param);
-            if param != &snake_case_param {
-                param_bindings.insert(param.clone(), snake_case_param);
+            // Check if metadata has a mapping for this parameter
+            let has_metadata_mapping = if let Some(meta) = metadata {
+                meta.translate_babel_pattern(param).is_some()
+            } else {
+                false
+            };
+
+            if !has_metadata_mapping {
+                // No metadata mapping, use snake_case conversion
+                let snake_case_param = to_snake_case(param);
+                if param != &snake_case_param {
+                    param_bindings.insert(param.clone(), snake_case_param);
+                }
             }
+            // If has_metadata_mapping, skip - translation already handled
         }
 
         for transform in &helper.transforms {
@@ -2043,6 +2056,11 @@ fn generate_transform_code_smart(transform: &Transform, indent: usize, return_ty
         Transform::Conditional { condition, then_transforms, else_transforms } => {
             let cond = translate_condition(condition, metadata);
 
+            // Skip conditionals with false conditions (dead code)
+            if cond == "false" {
+                return String::new();
+            }
+
             // Check if this is a matches!() pattern that should use if let instead
             // Pattern: matches!(value, Expr::Lit(_))
             let use_if_let = cond.starts_with("matches!(");
@@ -2125,9 +2143,18 @@ fn generate_transform_code_smart(transform: &Transform, indent: usize, return_ty
                         code = code.replace(&format!("{}.elements", var), &format!("{}.elems", inner_var));
                         code = code.replace(&format!("{}.properties", var), &format!("{}.props", inner_var));
                         // Fix wrongly-mapped variable names (e.g., num_lit in bool block should be bool_lit)
-                        code = code.replace("num_lit.value", &format!("{}.value", inner_var));
-                        code = code.replace("str_lit.value", &format!("{}.value", inner_var));
+                        // For str_lit, also ensure we have the utf8 conversion
+                        if inner_var == "str_lit" {
+                            code = code.replace("num_lit.value", &format!("String::from_utf8_lossy({}.value.as_bytes())", inner_var));
+                        } else {
+                            code = code.replace("num_lit.value", &format!("{}.value", inner_var));
+                        }
+                        code = code.replace("str_lit.value", &format!("String::from_utf8_lossy({}.value.as_bytes())", inner_var));
                         code = code.replace("bool_lit.value", &format!("{}.value", inner_var));
+                        // Fix variables that should reference the destructured inner variable
+                        code = code.replace("ident.sym", &format!("String::from_utf8_lossy({}.sym.as_bytes())", inner_var));
+                        code = code.replace("array_expr.elems", &format!("{}.elems", inner_var));
+                        code = code.replace("obj_expr.props", &format!("{}.props", inner_var));
                         // Convert JavaScript .toString() to Rust .to_string()
                         code = code.replace(".toString()", ".to_string()");
                     }
@@ -2304,7 +2331,12 @@ fn generate_transform_with_bindings(
             if *is_destructured {
                 format!("{}// Destructured: let {} = {};\n", indent_str, rust_name, rust_value)
             } else {
-                format!("{}let {} = {};\n", indent_str, rust_name, rust_value)
+                // Add type annotation for empty vecs
+                if rust_value == "vec![]" {
+                    format!("{}let {}: Vec<String> = {};\n", indent_str, rust_name, rust_value)
+                } else {
+                    format!("{}let {} = {};\n", indent_str, rust_name, rust_value)
+                }
             }
         }
 
@@ -2464,26 +2496,44 @@ fn generate_transform_code(transform: &Transform, indent: usize, metadata: Optio
         Transform::TemplateLiteral { parts, exprs } => {
             // Generate format!() call for template literals
             // `Hello ${name}!` becomes format!("Hello {}!", name)
+
+            // Escape quotes and braces in parts (but not the {} placeholders we add)
             let format_str = parts.iter().enumerate()
                 .map(|(i, part)| {
+                    // Escape backslashes, quotes, and braces in the user's string content
+                    let escaped_part = part
+                        .replace("\\", "\\\\")
+                        .replace("\"", "\\\"")
+                        .replace("{", "{{{{")  // {{ in source becomes {{{{ in format string to produce {{
+                        .replace("}", "}}}}"); // }} in source becomes }}}} in format string to produce }}
                     if i < exprs.len() {
-                        format!("{}{{}}", part)
+                        // Add format placeholder {} after this part
+                        format!("{}{{}}", escaped_part)
                     } else {
-                        part.clone()
+                        escaped_part
                     }
                 })
                 .collect::<Vec<_>>()
                 .join("");
 
             let rust_exprs = exprs.iter()
-                .map(|e| translate_js_to_rust_with_metadata(e, metadata))
+                .map(|e| {
+                    let translated = translate_js_to_rust_with_metadata(e, metadata);
+                    // If the expression contains .value and it's an atom type, wrap with utf8_lossy
+                    if translated.contains("str_lit.value") || translated.contains("ident.sym") {
+                        format!("String::from_utf8_lossy({}.as_bytes())", translated)
+                    } else {
+                        translated
+                    }
+                })
                 .collect::<Vec<_>>()
                 .join(", ");
 
+            // Always generate return statements for template literals (safer default)
             if exprs.is_empty() {
-                format!("{}let result = \"{}\";\n", indent_str, format_str)
+                format!("{}return \"{}\";\n", indent_str, format_str)
             } else {
-                format!("{}let result = format!(\"{}\", {});\n", indent_str, format_str, rust_exprs)
+                format!("{}return format!(\"{}\", {});\n", indent_str, format_str, rust_exprs)
             }
         }
         Transform::ReturnStmt { value } => {
@@ -3036,7 +3086,19 @@ fn to_snake_case(s: &str) -> String {
         }
         result.push(ch.to_lowercase().next().unwrap());
     }
-    result
+    escape_rust_keyword(&result)
+}
+
+/// Escape Rust keywords by appending underscore suffix
+fn escape_rust_keyword(s: &str) -> String {
+    match s {
+        "type" | "ref" | "match" | "const" | "static" | "mut" | "impl" | "trait" |
+        "fn" | "let" | "if" | "else" | "while" | "for" | "loop" | "return" | "break" |
+        "continue" | "as" | "use" | "mod" | "pub" | "crate" | "self" | "super" | "in" => {
+            format!("{}_", s)
+        }
+        _ => s.to_string()
+    }
 }
 
 /// Convert identifier to Rust, checking metadata mappings first
@@ -3127,10 +3189,9 @@ fn generate_var_declarator_visitor() -> String {
                                 };
 
                                 let setter_name = if let Some(Some(Pat::Ident(id))) = array_pat.elems.get(1) {
-                                    Some(id.id.sym.to_string()
-)
+                                    id.id.sym.to_string()
                                 } else {
-                                    None
+                                    "setState".to_string()
                                 };
 
                                 let initial_value = if let Some(arg) = call.args.get(0) {

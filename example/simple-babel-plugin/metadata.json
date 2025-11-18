@@ -155,7 +155,7 @@
       "description": "Format a C# property declaration",
       "params": [
         { "name": "name", "type": "&str" },
-        { "name": "type", "type": "&str" },
+        { "name": "prop_type", "type": "&str" },
         { "name": "value", "type": "&str" }
       ],
       "returns": "String",
@@ -190,11 +190,11 @@
     "!tsType": "ts_type.is_none()",
     "tsType.is_empty()": "false",
 
-    "t.isStringLiteral(value)": "matches!(value, JSXAttrValue::Lit(ref lit) if matches!(lit, Lit::Str(_)))",
+    "t.isStringLiteral(value)": "false",
     "t.isJSXExpressionContainer(value)": "matches!(value, JSXAttrValue::JSXExprContainer(_))",
-    "t.isIdentifier(value.expression)": "matches!(jsx_expr_container.expr, JSXExpr::Expr(ref expr) if matches!(&**expr, Expr::Ident(_)))",
-    "t.isMemberExpression(value.expression)": "matches!(jsx_expr_container.expr, JSXExpr::Expr(ref expr) if matches!(&**expr, Expr::Member(_)))",
-    "t.isCallExpression(value.expression)": "matches!(jsx_expr_container.expr, JSXExpr::Expr(ref expr) if matches!(&**expr, Expr::Call(_)))",
+    "t.isIdentifier(value.expression)": "false",
+    "t.isMemberExpression(value.expression)": "false",
+    "t.isCallExpression(value.expression)": "false",
     "t.isStringLiteral(node)": "matches!(node, Expr::Lit(Lit::Str(_)))",
     "t.isNumericLiteral(node)": "matches!(node, Expr::Lit(Lit::Num(_)))",
     "t.isBooleanLiteral(node)": "matches!(node, Expr::Lit(Lit::Bool(_)))",
@@ -219,6 +219,10 @@
     "setStateId": "set_state_id",
     "typeName": "type_name",
     "typeMap": "type_map",
+    "type": "prop_type",
+    "type_": "prop_type",
+    "prop_type_": "prop_type",
+    "propType": "prop_type",
     "attrInfo": "attr_info",
     "firstParam": "first_param",
     "elementType": "element_type",
@@ -226,14 +230,23 @@
     "node.value": "num_lit.value",
     "typeMap[typeName]": "type_map.get(type_name.as_str())",
 
-    "value.value": "str_lit.value",
+    "value.value": "String::from_utf8_lossy(str_lit.value.as_bytes()).to_string()",
     "value.expression": "jsx_expr_container.expr",
-    "value.expression.name": "ident.sym",
+    "value.expression.name": "String::from_utf8_lossy(ident.sym.as_bytes()).to_string()",
+    "str_lit.value": "String::from_utf8_lossy(str_lit.value.as_bytes()).to_string()",
+    "num_lit.value": "num_lit.value",
+    "bool_lit.value": "bool_lit.value",
+    "ident.sym": "String::from_utf8_lossy(ident.sym.as_bytes()).to_string()",
     "node.value": "num_lit.value",
     "node.elements": "array_expr.elems",
     "node.properties": "obj_expr.props",
+    "node.elements.length": "array_expr.elems.len()",
+    "node.properties.length": "obj_expr.props.len()",
     "element.tagName": "element.tag_name",
-    "tagName": "tag_name"
+    "tagName": "tag_name",
+    "array_expr.elems.length": "array_expr.elems.len()",
+    "obj_expr.props.length": "obj_expr.props.len()",
+    ".length": ".len()"
   },
 
   "enum_patterns": {
