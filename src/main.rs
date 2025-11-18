@@ -2401,7 +2401,12 @@ fn generate_transform_code(transform: &Transform, indent: usize, metadata: Optio
             if *is_destructured {
                 format!("{}// Destructured: let {} = {};\n", indent_str, rust_name, rust_value)
             } else {
-                format!("{}let {} = {};\n", indent_str, rust_name, rust_value)
+                // Add type annotation for empty vec![] to avoid type inference errors
+                if rust_value == "vec![]" {
+                    format!("{}let {}: Vec<String> = {};\n", indent_str, rust_name, rust_value)
+                } else {
+                    format!("{}let {} = {};\n", indent_str, rust_name, rust_value)
+                }
             }
         }
         Transform::FunctionCall { name, args } => {
@@ -3246,6 +3251,7 @@ use swc_ecma_ast::*;
 use swc_ecma_parser::{lexer::Lexer, Parser, Syntax, TsSyntax};
 use swc_ecma_visit::VisitMutWith;
 use swc_generated_plugin::ComponentExtractor;
+use swc_generated_plugin::generators::index::generate_c_sharp_file;
 use std::env;
 use std::fs;
 
@@ -3286,7 +3292,7 @@ fn main() {
 
     // Generate C# code if components were found
     if !extractor.components.is_empty() {
-        let csharp_code = swc_generated_plugin::generate_c_sharp_file(&extractor.components);
+        let csharp_code = generate_c_sharp_file(&extractor.components);
 
         // Write to .cs file
         let cs_path = file_path.replace(".tsx", ".cs").replace(".ts", ".cs").replace(".jsx", ".cs").replace(".js", ".cs");
