@@ -2079,7 +2079,8 @@ fn generate_transform_code_smart(transform: &Transform, indent: usize, return_ty
             // Check if this is a matches!() pattern that should use if let instead
             // Pattern: matches!(value, Expr::Lit(_))
             // BUT: If there are multiple matches!() with &&, keep as matches!()
-            let use_if_let = cond.starts_with("matches!(") && !cond.contains(" && ");
+            // ALSO: If the pattern contains a guard (if condition), keep as matches!() since if let guards have different syntax
+            let use_if_let = cond.starts_with("matches!(") && !cond.contains(" && ") && !cond.contains(" if ");
             let (if_let_pattern, var_name) = if use_if_let {
                 // Extract: matches!(value, Expr::Lit(_)) -> ("Expr::Lit(ref lit)", "value")
                 if let Some(start) = cond.find('(') {
@@ -3007,19 +3008,16 @@ fn translate_condition(js_condition: &str, metadata: Option<&PluginMetadata>) ->
     if result.contains(" && ") {
         let parts: Vec<&str> = result.split(" && ").collect();
 
-        // Special case: multiple t.is type checks combined with &&
-        // Pattern: t.isTSTypeReference(actualType) && t.isIdentifier(actualType.typeName)
-        // This needs to be handled recursively
-        if parts.iter().all(|p| p.trim().starts_with("t.is")) {
-            // Recursively translate each type check and combine
-            let translated_parts: Vec<String> = parts.iter()
-                .map(|part| translate_condition(part.trim(), metadata))
-                .collect();
-            return translated_parts.join(" && ");
-        }
-
+        // Handle mixed conditions: recursively translate each part
+        // Pattern: t.isTSTypeReference(returnType) && t.isIdentifier(returnType.typeName) && returnType.typeName.name === 'Promise'
         let translated_parts: Vec<String> = parts.iter().map(|part| {
             let trimmed = part.trim();
+
+            // If it starts with t.is, recursively translate it
+            if trimmed.starts_with("t.is") {
+                return translate_condition(trimmed, metadata);
+            }
+
             // Check if this is a simple array/vec reference (no operators)
             if !trimmed.contains("==") && !trimmed.contains("!=") &&
                !trimmed.contains('>') && !trimmed.contains('<') &&
@@ -3027,10 +3025,11 @@ fn translate_condition(js_condition: &str, metadata: Option<&PluginMetadata>) ->
                (trimmed.contains(".hooks") || trimmed.contains(".props") ||
                 trimmed.contains(".jsx_elements") || trimmed.ends_with("s")) {
                 // This is likely an array truthiness check
-                format!("!{}.is_empty()", trimmed)
-            } else {
-                trimmed.to_string()
+                return format!("!{}.is_empty()", trimmed);
             }
+
+            // Otherwise return as-is (will be translated later)
+            trimmed.to_string()
         }).collect();
         result = translated_parts.join(" && ");
     }
