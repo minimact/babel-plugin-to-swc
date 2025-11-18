@@ -168,6 +168,12 @@
         { "name": "element", "type": "&JsxElement" }
       ],
       "returns": "String"
+    },
+
+    "capitalize": {
+      "params": [],
+      "returns": "String",
+      "skip": true
     }
   },
 
@@ -184,6 +190,9 @@
     "t.isTSArrayType(tsType)": "matches!(ts_type, TsType::TsArrayType(_))",
     "t.isTSTypeLiteral(tsType)": "matches!(ts_type, TsType::TsTypeLit(_))",
     "t.isTSTypeReference(tsType)": "matches!(ts_type, TsType::TsTypeRef(_))",
+    "t.isTSTypeReference(actualType) && t.isIdentifier(actualType.typeName)": "matches!(actual_type, TsType::TsTypeRef(TsTypeRef { type_name: TsEntityName::Ident(_), .. }))",
+    "t.isTSTypeReference(returnType) && t.isIdentifier(returnType.typeName)": "matches!(return_type, TsType::TsTypeRef(TsTypeRef { type_name: TsEntityName::Ident(_), .. }))",
+    "t.isTSTypeReference(returnType) && t.isIdentifier(returnType.typeName) && returnType.typeName.name == \"Promise\"": "matches!(return_type, TsType::TsTypeRef(TsTypeRef { type_name: TsEntityName::Ident(ident), .. }) if ident.sym == \"Promise\")",
     "t.isIdentifier(tsType.typeName)": "matches!(type_ref.type_name, TsEntityName::Ident(_))",
     "tsType.typeName.name": "type_name_ident.sym.to_string()",
     "tsType.elementType": "array_type.elem_type",
