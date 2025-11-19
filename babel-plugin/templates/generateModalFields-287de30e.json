@@ -1,0 +1,63 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateModalFields",
+  "params": [
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "lines",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateModalFields(component, lines) {\r\n  for (const modal of component.useModal) {\r\n    lines.push(`    private ModalState ${modal.name} = new ModalState();`);\r\n    lines.push('');\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "644620db",
+      "type": "ForOfStatement",
+      "babel_source": "for (const modal of component.useModal) {\r\n    lines.push(`    private ModalState ${modal.name} = new ModalState();`);\r\n    lines.push('');\r\n  }",
+      "parentContext": {
+        "functionName": "generateModalFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "921a14d7",
+      "type": "VariableDeclaration",
+      "babel_source": "const modal",
+      "parentContext": {
+        "functionName": "generateModalFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "774d2348",
+      "type": "TemplateLiteral",
+      "babel_source": "`    private ModalState ${modal.name} = new ModalState();`",
+      "parentContext": {
+        "functionName": "generateModalFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/component/generateFields.cjs"
+  ]
+}

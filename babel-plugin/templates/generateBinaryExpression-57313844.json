@@ -1,0 +1,820 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateBinaryExpression",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "generateCSharpExpression",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateBinaryExpression(node, generateCSharpExpression) {\r\n  // Helper function to get operator precedence (higher = tighter binding)\r\n  const getPrecedence = (op) => {\r\n    if (op === '*' || op === '/' || op === '%') return 3;\r\n    if (op === '+' || op === '-') return 2;\r\n    if (op === '==' || op === '!=' || op === '===' || op === '!==' ||\r\n        op === '<' || op === '>' || op === '<=' || op === '>=') return 1;\r\n    return 0;\r\n  };\r\n\r\n  const currentPrecedence = getPrecedence(node.operator);\r\n\r\n  // Generate left side, wrap in parentheses if needed\r\n  let left = generateCSharpExpression(node.left);\r\n  if (t.isBinaryExpression(node.left)) {\r\n    const leftPrecedence = getPrecedence(node.left.operator);\r\n    // Wrap in parentheses if left has lower precedence\r\n    if (leftPrecedence < currentPrecedence) {\r\n      left = `(${left})`;\r\n    }\r\n  }\r\n\r\n  // Generate right side, wrap in parentheses if needed\r\n  let right = generateCSharpExpression(node.right);\r\n  if (t.isBinaryExpression(node.right)) {\r\n    const rightPrecedence = getPrecedence(node.right.operator);\r\n    // Wrap in parentheses if right has lower or equal precedence\r\n    // Equal precedence on right needs parens for left-associative operators\r\n    if (rightPrecedence <= currentPrecedence) {\r\n      right = `(${right})`;\r\n    }\r\n  }\r\n\r\n  // Convert JavaScript operators to C# operators\r\n  let operator = node.operator;\r\n  if (operator === '===') operator = '==';\r\n  if (operator === '!==') operator = '!=';\r\n  return `${left} ${operator} ${right}`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "17e126c5",
+      "type": "VariableDeclaration",
+      "babel_source": "const getPrecedence = (op) => {\r\n    if (op === '*' || op === '/' || op === '%') return 3;\r\n    if (op === '+' || op === '-') return 2;\r\n    if (op === '==' || op === '!=' || op === '===' || op === '!==' ||\r\n        op === '<' || op === '>' || op === '<=' || op === '>=') return 1;\r\n    return 0;\r\n  };",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9e0584ab",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "(op) => {\r\n    if (op === '*' || op === '/' || op === '%') return 3;\r\n    if (op === '+' || op === '-') return 2;\r\n    if (op === '==' || op === '!=' || op === '===' || op === '!==' ||\r\n        op === '<' || op === '>' || op === '<=' || op === '>=') return 1;\r\n    return 0;\r\n  }",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "33c674ac",
+      "type": "IfStatement",
+      "condition": "op === '*' || op === '/' || op === '%'",
+      "babel_source": "if (op === '*' || op === '/' || op === '%') return 3;",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "57ae53ae",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "op === '*' || op === '/' || op === '%'",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1db85f11",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "op === '*' || op === '/'",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bea8697e",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "op === '*'",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "807453eb",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "op === '/'",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "54bc7654",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "op === '%'",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "65a81cc5",
+      "type": "ReturnStatement",
+      "babel_source": "return 3;",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fd6dcaa0",
+      "type": "IfStatement",
+      "condition": "op === '+' || op === '-'",
+      "babel_source": "if (op === '+' || op === '-') return 2;",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e4538d23",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "op === '+' || op === '-'",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c239b7c9",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "op === '+'",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ddea2d06",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "op === '-'",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4903bb33",
+      "type": "ReturnStatement",
+      "babel_source": "return 2;",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "177073be",
+      "type": "IfStatement",
+      "condition": "op === '==' || op === '!=' || op === '===' || op === '!==' ||\r\n        op === '<' || op === '>' || op === '<=' || op === '>='",
+      "babel_source": "if (op === '==' || op === '!=' || op === '===' || op === '!==' ||\r\n        op === '<' || op === '>' || op === '<=' || op === '>=') return 1;",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "aea2f728",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "op === '==' || op === '!=' || op === '===' || op === '!==' ||\r\n        op === '<' || op === '>' || op === '<=' || op === '>='",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ff7bba2d",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "op === '==' || op === '!=' || op === '===' || op === '!==' ||\r\n        op === '<' || op === '>' || op === '<='",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7f02a1e0",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "op === '==' || op === '!=' || op === '===' || op === '!==' ||\r\n        op === '<' || op === '>'",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cc9d0cfe",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "op === '==' || op === '!=' || op === '===' || op === '!==' ||\r\n        op === '<'",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "07841f38",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "op === '==' || op === '!=' || op === '===' || op === '!=='",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b1ea85a3",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "op === '==' || op === '!=' || op === '==='",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "19d5e3cb",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "op === '==' || op === '!='",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "61493156",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "op === '=='",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "82e8ee2b",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "op === '!='",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c702134b",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "op === '==='",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e48ba50f",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "op === '!=='",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e1b2d0f0",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "op === '<'",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2e4034d4",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "op === '>'",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8c218c2f",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "op === '<='",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "daf8f39b",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "op === '>='",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f58b7c3a",
+      "type": "ReturnStatement",
+      "babel_source": "return 1;",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6be2e46a",
+      "type": "ReturnStatement",
+      "babel_source": "return 0;",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "10ffe3a3",
+      "type": "VariableDeclaration",
+      "babel_source": "const currentPrecedence = getPrecedence(node.operator);",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8f70d17f",
+      "type": "VariableDeclaration",
+      "babel_source": "let left = generateCSharpExpression(node.left);",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "27a5864f",
+      "type": "IfStatement",
+      "condition": "t.isBinaryExpression(node.left)",
+      "babel_source": "if (t.isBinaryExpression(node.left)) {\r\n    const leftPrecedence = getPrecedence(node.left.operator);\r\n    // Wrap in parentheses if left has lower precedence\r\n    if (leftPrecedence < currentPrecedence) {\r\n      left = `(${left})`;\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "43e5986e",
+      "type": "BabelTypeCheck",
+      "method": "isBinaryExpression",
+      "babel_source": "t.isBinaryExpression(node.left)",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "38a8698c",
+      "type": "VariableDeclaration",
+      "babel_source": "const leftPrecedence = getPrecedence(node.left.operator);",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d8217d78",
+      "type": "IfStatement",
+      "condition": "leftPrecedence < currentPrecedence",
+      "babel_source": "if (leftPrecedence < currentPrecedence) {\r\n      left = `(${left})`;\r\n    }",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b8bce9ff",
+      "type": "BinaryExpression",
+      "operator": "<",
+      "babel_source": "leftPrecedence < currentPrecedence",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "836d4d03",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "left = `(${left})`",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "805284c4",
+      "type": "TemplateLiteral",
+      "babel_source": "`(${left})`",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1238f29c",
+      "type": "VariableDeclaration",
+      "babel_source": "let right = generateCSharpExpression(node.right);",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ee104d18",
+      "type": "IfStatement",
+      "condition": "t.isBinaryExpression(node.right)",
+      "babel_source": "if (t.isBinaryExpression(node.right)) {\r\n    const rightPrecedence = getPrecedence(node.right.operator);\r\n    // Wrap in parentheses if right has lower or equal precedence\r\n    // Equal precedence on right needs parens for left-associative operators\r\n    if (rightPrecedence <= currentPrecedence) {\r\n      right = `(${right})`;\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "56073b2f",
+      "type": "BabelTypeCheck",
+      "method": "isBinaryExpression",
+      "babel_source": "t.isBinaryExpression(node.right)",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "23b5b599",
+      "type": "VariableDeclaration",
+      "babel_source": "const rightPrecedence = getPrecedence(node.right.operator);",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4deea009",
+      "type": "IfStatement",
+      "condition": "rightPrecedence <= currentPrecedence",
+      "babel_source": "if (rightPrecedence <= currentPrecedence) {\r\n      right = `(${right})`;\r\n    }",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "73f93917",
+      "type": "BinaryExpression",
+      "operator": "<=",
+      "babel_source": "rightPrecedence <= currentPrecedence",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cd246a49",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "right = `(${right})`",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3864bf25",
+      "type": "TemplateLiteral",
+      "babel_source": "`(${right})`",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f0602acf",
+      "type": "VariableDeclaration",
+      "babel_source": "let operator = node.operator;",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "613ca6fd",
+      "type": "IfStatement",
+      "condition": "operator === '==='",
+      "babel_source": "if (operator === '===') operator = '==';",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "292d0437",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "operator === '==='",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "778df3d9",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "operator = '=='",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f7d18c87",
+      "type": "IfStatement",
+      "condition": "operator === '!=='",
+      "babel_source": "if (operator === '!==') operator = '!=';",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c82ce55b",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "operator === '!=='",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "290dacab",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "operator = '!='",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "06f3a837",
+      "type": "ReturnStatement",
+      "babel_source": "return `${left} ${operator} ${right}`;",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f4fdaca8",
+      "type": "TemplateLiteral",
+      "babel_source": "`${left} ${operator} ${right}`",
+      "parentContext": {
+        "functionName": "generateBinaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/expressions/operators.cjs"
+  ]
+}

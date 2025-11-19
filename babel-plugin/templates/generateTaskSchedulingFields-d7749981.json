@@ -1,0 +1,227 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateTaskSchedulingFields",
+  "params": [
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "lines",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateTaskSchedulingFields(component, lines) {\r\n  // MicroTask fields\r\n  if (component.useMicroTask) {\r\n    for (let i = 0; i < component.useMicroTask.length; i++) {\r\n      lines.push(`    // useMicroTask ${i}`);\r\n      lines.push(`    private bool _microTaskScheduled_${i} = false;`);\r\n      lines.push('');\r\n    }\r\n  }\r\n\r\n  // MacroTask fields\r\n  if (component.useMacroTask) {\r\n    for (let i = 0; i < component.useMacroTask.length; i++) {\r\n      const task = component.useMacroTask[i];\r\n      lines.push(`    // useMacroTask ${i} (delay: ${task.delay}ms)`);\r\n      lines.push(`    private bool _macroTaskScheduled_${i} = false;`);\r\n      lines.push('');\r\n    }\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "22501931",
+      "type": "IfStatement",
+      "condition": "component.useMicroTask",
+      "babel_source": "if (component.useMicroTask) {\r\n    for (let i = 0; i < component.useMicroTask.length; i++) {\r\n      lines.push(`    // useMicroTask ${i}`);\r\n      lines.push(`    private bool _microTaskScheduled_${i} = false;`);\r\n      lines.push('');\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generateTaskSchedulingFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "36fdfb97",
+      "type": "ForStatement",
+      "babel_source": "for (let i = 0; i < component.useMicroTask.length; i++) {\r\n      lines.push(`    // useMicroTask ${i}`);\r\n      lines.push(`    private bool _microTaskScheduled_${i} = false;`);\r\n      lines.push('');\r\n    }",
+      "parentContext": {
+        "functionName": "generateTaskSchedulingFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ecb911a1",
+      "type": "VariableDeclaration",
+      "babel_source": "let i = 0",
+      "parentContext": {
+        "functionName": "generateTaskSchedulingFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d7904f49",
+      "type": "BinaryExpression",
+      "operator": "<",
+      "babel_source": "i < component.useMicroTask.length",
+      "parentContext": {
+        "functionName": "generateTaskSchedulingFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e8dee0e1",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "i++",
+      "parentContext": {
+        "functionName": "generateTaskSchedulingFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d1dbcede",
+      "type": "TemplateLiteral",
+      "babel_source": "`    // useMicroTask ${i}`",
+      "parentContext": {
+        "functionName": "generateTaskSchedulingFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "455e2a3c",
+      "type": "TemplateLiteral",
+      "babel_source": "`    private bool _microTaskScheduled_${i} = false;`",
+      "parentContext": {
+        "functionName": "generateTaskSchedulingFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "03e73c80",
+      "type": "IfStatement",
+      "condition": "component.useMacroTask",
+      "babel_source": "if (component.useMacroTask) {\r\n    for (let i = 0; i < component.useMacroTask.length; i++) {\r\n      const task = component.useMacroTask[i];\r\n      lines.push(`    // useMacroTask ${i} (delay: ${task.delay}ms)`);\r\n      lines.push(`    private bool _macroTaskScheduled_${i} = false;`);\r\n      lines.push('');\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generateTaskSchedulingFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "aa409232",
+      "type": "ForStatement",
+      "babel_source": "for (let i = 0; i < component.useMacroTask.length; i++) {\r\n      const task = component.useMacroTask[i];\r\n      lines.push(`    // useMacroTask ${i} (delay: ${task.delay}ms)`);\r\n      lines.push(`    private bool _macroTaskScheduled_${i} = false;`);\r\n      lines.push('');\r\n    }",
+      "parentContext": {
+        "functionName": "generateTaskSchedulingFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ecb911a1",
+      "type": "VariableDeclaration",
+      "babel_source": "let i = 0",
+      "parentContext": {
+        "functionName": "generateTaskSchedulingFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "13b46831",
+      "type": "BinaryExpression",
+      "operator": "<",
+      "babel_source": "i < component.useMacroTask.length",
+      "parentContext": {
+        "functionName": "generateTaskSchedulingFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e8dee0e1",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "i++",
+      "parentContext": {
+        "functionName": "generateTaskSchedulingFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9758241c",
+      "type": "VariableDeclaration",
+      "babel_source": "const task = component.useMacroTask[i];",
+      "parentContext": {
+        "functionName": "generateTaskSchedulingFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "59bd5e45",
+      "type": "TemplateLiteral",
+      "babel_source": "`    // useMacroTask ${i} (delay: ${task.delay}ms)`",
+      "parentContext": {
+        "functionName": "generateTaskSchedulingFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "296f0067",
+      "type": "TemplateLiteral",
+      "babel_source": "`    private bool _macroTaskScheduled_${i} = false;`",
+      "parentContext": {
+        "functionName": "generateTaskSchedulingFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/component/generateFields.cjs"
+  ]
+}

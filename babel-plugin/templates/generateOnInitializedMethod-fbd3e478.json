@@ -1,0 +1,131 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateOnInitializedMethod",
+  "params": [
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "lines",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateOnInitializedMethod(component, lines) {\r\n  if (component.useRazorMarkdown && component.useRazorMarkdown.length > 0) {\r\n    const { convertRazorMarkdownToCSharp } = require('../razorMarkdown.cjs');\r\n\r\n    lines.push('');\r\n    lines.push('    protected override void OnInitialized()');\r\n    lines.push('    {');\r\n    lines.push('        base.OnInitialized();');\r\n    lines.push('');\r\n\r\n    for (const md of component.useRazorMarkdown) {\r\n      const csharpMarkdown = convertRazorMarkdownToCSharp(md.initialValue);\r\n      lines.push(`        ${md.name} = ${csharpMarkdown};`);\r\n    }\r\n\r\n    lines.push('    }');\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "0affb9a9",
+      "type": "IfStatement",
+      "condition": "component.useRazorMarkdown && component.useRazorMarkdown.length > 0",
+      "babel_source": "if (component.useRazorMarkdown && component.useRazorMarkdown.length > 0) {\r\n    const { convertRazorMarkdownToCSharp } = require('../razorMarkdown.cjs');\r\n\r\n    lines.push('');\r\n    lines.push('    protected override void OnInitialized()');\r\n    lines.push('    {');\r\n    lines.push('        base.OnInitialized();');\r\n    lines.push('');\r\n\r\n    for (const md of component.useRazorMarkdown) {\r\n      const csharpMarkdown = convertRazorMarkdownToCSharp(md.initialValue);\r\n      lines.push(`        ${md.name} = ${csharpMarkdown};`);\r\n    }\r\n\r\n    lines.push('    }');\r\n  }",
+      "parentContext": {
+        "functionName": "generateOnInitializedMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bd92d755",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "component.useRazorMarkdown && component.useRazorMarkdown.length > 0",
+      "parentContext": {
+        "functionName": "generateOnInitializedMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e456646b",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "component.useRazorMarkdown.length > 0",
+      "parentContext": {
+        "functionName": "generateOnInitializedMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "59efd8ab",
+      "type": "VariableDeclaration",
+      "babel_source": "const { convertRazorMarkdownToCSharp } = require('../razorMarkdown.cjs');",
+      "parentContext": {
+        "functionName": "generateOnInitializedMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "afd2b384",
+      "type": "ForOfStatement",
+      "babel_source": "for (const md of component.useRazorMarkdown) {\r\n      const csharpMarkdown = convertRazorMarkdownToCSharp(md.initialValue);\r\n      lines.push(`        ${md.name} = ${csharpMarkdown};`);\r\n    }",
+      "parentContext": {
+        "functionName": "generateOnInitializedMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b975b76b",
+      "type": "VariableDeclaration",
+      "babel_source": "const md",
+      "parentContext": {
+        "functionName": "generateOnInitializedMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7b898226",
+      "type": "VariableDeclaration",
+      "babel_source": "const csharpMarkdown = convertRazorMarkdownToCSharp(md.initialValue);",
+      "parentContext": {
+        "functionName": "generateOnInitializedMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "93dd6e01",
+      "type": "TemplateLiteral",
+      "babel_source": "`        ${md.name} = ${csharpMarkdown};`",
+      "parentContext": {
+        "functionName": "generateOnInitializedMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/component/generateMethods.cjs"
+  ]
+}

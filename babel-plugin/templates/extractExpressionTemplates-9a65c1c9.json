@@ -1,0 +1,130 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractExpressionTemplates",
+  "params": [
+    {
+      "name": "renderBody",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractExpressionTemplates(renderBody, component) {\r\n  if (!renderBody) return [];\r\n\r\n  const expressionTemplates = [];\r\n\r\n  // Start traversal\r\n  traverseJSX(renderBody, [], expressionTemplates, component);\r\n\r\n  return expressionTemplates;\r\n}",
+  "body_templates": [
+    {
+      "hash": "7ba9f7aa",
+      "type": "IfStatement",
+      "condition": "!renderBody",
+      "babel_source": "if (!renderBody) return [];",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bc65e16e",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!renderBody",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c7221e11",
+      "type": "ReturnStatement",
+      "babel_source": "return [];",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "10702c18",
+      "type": "VariableDeclaration",
+      "babel_source": "const expressionTemplates = [];",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "72614b69",
+      "type": "ReturnStatement",
+      "babel_source": "return expressionTemplates;",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/expressionTemplates.cjs"
+  ]
+}

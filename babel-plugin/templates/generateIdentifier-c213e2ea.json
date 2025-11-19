@@ -1,0 +1,444 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateIdentifier",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "currentComponent",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateIdentifier(node, currentComponent) {\r\n  // Special case: 'state' identifier (state proxy)\r\n  // Note: This should only happen as part of member expression (state.key or state[\"key\"])\r\n  // Standalone 'state' reference is unusual - warn but transpile to 'State'\r\n  if (node.name === 'state') {\r\n    console.warn('[Babel Plugin] Naked state reference detected (should be state.key or state[\"key\"])');\r\n    return 'State';\r\n  }\r\n\r\n  // Check if this identifier is a custom hook return value\r\n  if (currentComponent && currentComponent.customHooks) {\r\n    for (const hookInstance of currentComponent.customHooks) {\r\n      if (!hookInstance.metadata || !hookInstance.metadata.returnValues) continue;\r\n\r\n      // Check if this identifier matches any non-UI return value\r\n      const returnValueIndex = hookInstance.returnValues.indexOf(node.name);\r\n      if (returnValueIndex !== -1) {\r\n        const returnValueMetadata = hookInstance.metadata.returnValues[returnValueIndex];\r\n\r\n        // Skip UI return values (they're handled separately as VComponentWrapper)\r\n        if (returnValueMetadata.type === 'jsx') {\r\n          return node.name; // Keep as-is for UI variables\r\n        }\r\n\r\n        // Replace with lifted state access for state/method returns\r\n        if (returnValueMetadata.type === 'state') {\r\n          // Access the hook's lifted state: State[\"hookNamespace.stateVarName\"]\r\n          const liftedStatePath = `${hookInstance.namespace}.${returnValueMetadata.name}`;\r\n          return `GetState<dynamic>(\"${liftedStatePath}\")`;\r\n        } else if (returnValueMetadata.type === 'method') {\r\n          // For methods, we can't call them from parent - warn and keep as-is for now\r\n          // In the future, we could emit a method that invokes the child component's method\r\n          console.warn(`[Custom Hook] Cannot access method '${node.name}' from hook '${hookInstance.hookName}' in parent component`);\r\n          return node.name;\r\n        }\r\n      }\r\n    }\r\n  }\r\n\r\n  return node.name;\r\n}",
+  "body_templates": [
+    {
+      "hash": "c5e1e608",
+      "type": "IfStatement",
+      "condition": "node.name === 'state'",
+      "babel_source": "if (node.name === 'state') {\r\n    console.warn('[Babel Plugin] Naked state reference detected (should be state.key or state[\"key\"])');\r\n    return 'State';\r\n  }",
+      "parentContext": {
+        "functionName": "generateIdentifier",
+        "functionParams": [
+          "node",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d7325478",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "node.name === 'state'",
+      "parentContext": {
+        "functionName": "generateIdentifier",
+        "functionParams": [
+          "node",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c6927328",
+      "type": "ReturnStatement",
+      "babel_source": "return 'State';",
+      "parentContext": {
+        "functionName": "generateIdentifier",
+        "functionParams": [
+          "node",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bb0526f7",
+      "type": "IfStatement",
+      "condition": "currentComponent && currentComponent.customHooks",
+      "babel_source": "if (currentComponent && currentComponent.customHooks) {\r\n    for (const hookInstance of currentComponent.customHooks) {\r\n      if (!hookInstance.metadata || !hookInstance.metadata.returnValues) continue;\r\n\r\n      // Check if this identifier matches any non-UI return value\r\n      const returnValueIndex = hookInstance.returnValues.indexOf(node.name);\r\n      if (returnValueIndex !== -1) {\r\n        const returnValueMetadata = hookInstance.metadata.returnValues[returnValueIndex];\r\n\r\n        // Skip UI return values (they're handled separately as VComponentWrapper)\r\n        if (returnValueMetadata.type === 'jsx') {\r\n          return node.name; // Keep as-is for UI variables\r\n        }\r\n\r\n        // Replace with lifted state access for state/method returns\r\n        if (returnValueMetadata.type === 'state') {\r\n          // Access the hook's lifted state: State[\"hookNamespace.stateVarName\"]\r\n          const liftedStatePath = `${hookInstance.namespace}.${returnValueMetadata.name}`;\r\n          return `GetState<dynamic>(\"${liftedStatePath}\")`;\r\n        } else if (returnValueMetadata.type === 'method') {\r\n          // For methods, we can't call them from parent - warn and keep as-is for now\r\n          // In the future, we could emit a method that invokes the child component's method\r\n          console.warn(`[Custom Hook] Cannot access method '${node.name}' from hook '${hookInstance.hookName}' in parent component`);\r\n          return node.name;\r\n        }\r\n      }\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generateIdentifier",
+        "functionParams": [
+          "node",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7345df9c",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "currentComponent && currentComponent.customHooks",
+      "parentContext": {
+        "functionName": "generateIdentifier",
+        "functionParams": [
+          "node",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d4322c0e",
+      "type": "ForOfStatement",
+      "babel_source": "for (const hookInstance of currentComponent.customHooks) {\r\n      if (!hookInstance.metadata || !hookInstance.metadata.returnValues) continue;\r\n\r\n      // Check if this identifier matches any non-UI return value\r\n      const returnValueIndex = hookInstance.returnValues.indexOf(node.name);\r\n      if (returnValueIndex !== -1) {\r\n        const returnValueMetadata = hookInstance.metadata.returnValues[returnValueIndex];\r\n\r\n        // Skip UI return values (they're handled separately as VComponentWrapper)\r\n        if (returnValueMetadata.type === 'jsx') {\r\n          return node.name; // Keep as-is for UI variables\r\n        }\r\n\r\n        // Replace with lifted state access for state/method returns\r\n        if (returnValueMetadata.type === 'state') {\r\n          // Access the hook's lifted state: State[\"hookNamespace.stateVarName\"]\r\n          const liftedStatePath = `${hookInstance.namespace}.${returnValueMetadata.name}`;\r\n          return `GetState<dynamic>(\"${liftedStatePath}\")`;\r\n        } else if (returnValueMetadata.type === 'method') {\r\n          // For methods, we can't call them from parent - warn and keep as-is for now\r\n          // In the future, we could emit a method that invokes the child component's method\r\n          console.warn(`[Custom Hook] Cannot access method '${node.name}' from hook '${hookInstance.hookName}' in parent component`);\r\n          return node.name;\r\n        }\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "generateIdentifier",
+        "functionParams": [
+          "node",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3c481395",
+      "type": "VariableDeclaration",
+      "babel_source": "const hookInstance",
+      "parentContext": {
+        "functionName": "generateIdentifier",
+        "functionParams": [
+          "node",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d8bc5a7f",
+      "type": "IfStatement",
+      "condition": "!hookInstance.metadata || !hookInstance.metadata.returnValues",
+      "babel_source": "if (!hookInstance.metadata || !hookInstance.metadata.returnValues) continue;",
+      "parentContext": {
+        "functionName": "generateIdentifier",
+        "functionParams": [
+          "node",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dc12c2d0",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "!hookInstance.metadata || !hookInstance.metadata.returnValues",
+      "parentContext": {
+        "functionName": "generateIdentifier",
+        "functionParams": [
+          "node",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "88ca91b6",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!hookInstance.metadata",
+      "parentContext": {
+        "functionName": "generateIdentifier",
+        "functionParams": [
+          "node",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "03753e39",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!hookInstance.metadata.returnValues",
+      "parentContext": {
+        "functionName": "generateIdentifier",
+        "functionParams": [
+          "node",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0bf37874",
+      "type": "ContinueStatement",
+      "babel_source": "continue;",
+      "parentContext": {
+        "functionName": "generateIdentifier",
+        "functionParams": [
+          "node",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "09dc9775",
+      "type": "VariableDeclaration",
+      "babel_source": "const returnValueIndex = hookInstance.returnValues.indexOf(node.name);",
+      "parentContext": {
+        "functionName": "generateIdentifier",
+        "functionParams": [
+          "node",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1194364c",
+      "type": "IfStatement",
+      "condition": "returnValueIndex !== -1",
+      "babel_source": "if (returnValueIndex !== -1) {\r\n        const returnValueMetadata = hookInstance.metadata.returnValues[returnValueIndex];\r\n\r\n        // Skip UI return values (they're handled separately as VComponentWrapper)\r\n        if (returnValueMetadata.type === 'jsx') {\r\n          return node.name; // Keep as-is for UI variables\r\n        }\r\n\r\n        // Replace with lifted state access for state/method returns\r\n        if (returnValueMetadata.type === 'state') {\r\n          // Access the hook's lifted state: State[\"hookNamespace.stateVarName\"]\r\n          const liftedStatePath = `${hookInstance.namespace}.${returnValueMetadata.name}`;\r\n          return `GetState<dynamic>(\"${liftedStatePath}\")`;\r\n        } else if (returnValueMetadata.type === 'method') {\r\n          // For methods, we can't call them from parent - warn and keep as-is for now\r\n          // In the future, we could emit a method that invokes the child component's method\r\n          console.warn(`[Custom Hook] Cannot access method '${node.name}' from hook '${hookInstance.hookName}' in parent component`);\r\n          return node.name;\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "generateIdentifier",
+        "functionParams": [
+          "node",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c3bb1a72",
+      "type": "BinaryExpression",
+      "operator": "!==",
+      "babel_source": "returnValueIndex !== -1",
+      "parentContext": {
+        "functionName": "generateIdentifier",
+        "functionParams": [
+          "node",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1bad6b8c",
+      "type": "UnaryExpression",
+      "operator": "-",
+      "babel_source": "-1",
+      "parentContext": {
+        "functionName": "generateIdentifier",
+        "functionParams": [
+          "node",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "48872000",
+      "type": "VariableDeclaration",
+      "babel_source": "const returnValueMetadata = hookInstance.metadata.returnValues[returnValueIndex];",
+      "parentContext": {
+        "functionName": "generateIdentifier",
+        "functionParams": [
+          "node",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "711708d8",
+      "type": "IfStatement",
+      "condition": "returnValueMetadata.type === 'jsx'",
+      "babel_source": "if (returnValueMetadata.type === 'jsx') {\r\n          return node.name; // Keep as-is for UI variables\r\n        }",
+      "parentContext": {
+        "functionName": "generateIdentifier",
+        "functionParams": [
+          "node",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "05d32c1a",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "returnValueMetadata.type === 'jsx'",
+      "parentContext": {
+        "functionName": "generateIdentifier",
+        "functionParams": [
+          "node",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1d251b6e",
+      "type": "ReturnStatement",
+      "babel_source": "return node.name;",
+      "parentContext": {
+        "functionName": "generateIdentifier",
+        "functionParams": [
+          "node",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a5440ea1",
+      "type": "IfStatement",
+      "condition": "returnValueMetadata.type === 'state'",
+      "babel_source": "if (returnValueMetadata.type === 'state') {\r\n          // Access the hook's lifted state: State[\"hookNamespace.stateVarName\"]\r\n          const liftedStatePath = `${hookInstance.namespace}.${returnValueMetadata.name}`;\r\n          return `GetState<dynamic>(\"${liftedStatePath}\")`;\r\n        } else if (returnValueMetadata.type === 'method') {\r\n          // For methods, we can't call them from parent - warn and keep as-is for now\r\n          // In the future, we could emit a method that invokes the child component's method\r\n          console.warn(`[Custom Hook] Cannot access method '${node.name}' from hook '${hookInstance.hookName}' in parent component`);\r\n          return node.name;\r\n        }",
+      "parentContext": {
+        "functionName": "generateIdentifier",
+        "functionParams": [
+          "node",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3a2190e5",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "returnValueMetadata.type === 'state'",
+      "parentContext": {
+        "functionName": "generateIdentifier",
+        "functionParams": [
+          "node",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0729b90f",
+      "type": "VariableDeclaration",
+      "babel_source": "const liftedStatePath = `${hookInstance.namespace}.${returnValueMetadata.name}`;",
+      "parentContext": {
+        "functionName": "generateIdentifier",
+        "functionParams": [
+          "node",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1322b101",
+      "type": "TemplateLiteral",
+      "babel_source": "`${hookInstance.namespace}.${returnValueMetadata.name}`",
+      "parentContext": {
+        "functionName": "generateIdentifier",
+        "functionParams": [
+          "node",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "75f0cd2d",
+      "type": "ReturnStatement",
+      "babel_source": "return `GetState<dynamic>(\"${liftedStatePath}\")`;",
+      "parentContext": {
+        "functionName": "generateIdentifier",
+        "functionParams": [
+          "node",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "af544654",
+      "type": "TemplateLiteral",
+      "babel_source": "`GetState<dynamic>(\"${liftedStatePath}\")`",
+      "parentContext": {
+        "functionName": "generateIdentifier",
+        "functionParams": [
+          "node",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c63235f2",
+      "type": "IfStatement",
+      "condition": "returnValueMetadata.type === 'method'",
+      "babel_source": "if (returnValueMetadata.type === 'method') {\r\n          // For methods, we can't call them from parent - warn and keep as-is for now\r\n          // In the future, we could emit a method that invokes the child component's method\r\n          console.warn(`[Custom Hook] Cannot access method '${node.name}' from hook '${hookInstance.hookName}' in parent component`);\r\n          return node.name;\r\n        }",
+      "parentContext": {
+        "functionName": "generateIdentifier",
+        "functionParams": [
+          "node",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "87d83202",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "returnValueMetadata.type === 'method'",
+      "parentContext": {
+        "functionName": "generateIdentifier",
+        "functionParams": [
+          "node",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9c25b753",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Custom Hook] Cannot access method '${node.name}' from hook '${hookInstance.hookName}' in parent component`",
+      "parentContext": {
+        "functionName": "generateIdentifier",
+        "functionParams": [
+          "node",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1d251b6e",
+      "type": "ReturnStatement",
+      "babel_source": "return node.name;",
+      "parentContext": {
+        "functionName": "generateIdentifier",
+        "functionParams": [
+          "node",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1d251b6e",
+      "type": "ReturnStatement",
+      "babel_source": "return node.name;",
+      "parentContext": {
+        "functionName": "generateIdentifier",
+        "functionParams": [
+          "node",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/expressions/identifiers.cjs"
+  ]
+}

@@ -1,0 +1,144 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateMvcStateSetters",
+  "params": [
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "lines",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateMvcStateSetters(component, lines) {\r\n  if (component.useMvcState) {\r\n    for (const mvcState of component.useMvcState) {\r\n      if (mvcState.setter) {\r\n        const csharpType = mvcState.type !== 'object' ? mvcState.type : 'dynamic';\r\n        lines.push('');\r\n        lines.push(`    private void ${mvcState.setter}(${csharpType} value)`);\r\n        lines.push('    {');\r\n        lines.push(`        SetState(\"${mvcState.propertyName}\", value);`);\r\n        lines.push('    }');\r\n      }\r\n    }\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "27264467",
+      "type": "IfStatement",
+      "condition": "component.useMvcState",
+      "babel_source": "if (component.useMvcState) {\r\n    for (const mvcState of component.useMvcState) {\r\n      if (mvcState.setter) {\r\n        const csharpType = mvcState.type !== 'object' ? mvcState.type : 'dynamic';\r\n        lines.push('');\r\n        lines.push(`    private void ${mvcState.setter}(${csharpType} value)`);\r\n        lines.push('    {');\r\n        lines.push(`        SetState(\"${mvcState.propertyName}\", value);`);\r\n        lines.push('    }');\r\n      }\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generateMvcStateSetters",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e8c65222",
+      "type": "ForOfStatement",
+      "babel_source": "for (const mvcState of component.useMvcState) {\r\n      if (mvcState.setter) {\r\n        const csharpType = mvcState.type !== 'object' ? mvcState.type : 'dynamic';\r\n        lines.push('');\r\n        lines.push(`    private void ${mvcState.setter}(${csharpType} value)`);\r\n        lines.push('    {');\r\n        lines.push(`        SetState(\"${mvcState.propertyName}\", value);`);\r\n        lines.push('    }');\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "generateMvcStateSetters",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0bcd8c24",
+      "type": "VariableDeclaration",
+      "babel_source": "const mvcState",
+      "parentContext": {
+        "functionName": "generateMvcStateSetters",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e4145d58",
+      "type": "IfStatement",
+      "condition": "mvcState.setter",
+      "babel_source": "if (mvcState.setter) {\r\n        const csharpType = mvcState.type !== 'object' ? mvcState.type : 'dynamic';\r\n        lines.push('');\r\n        lines.push(`    private void ${mvcState.setter}(${csharpType} value)`);\r\n        lines.push('    {');\r\n        lines.push(`        SetState(\"${mvcState.propertyName}\", value);`);\r\n        lines.push('    }');\r\n      }",
+      "parentContext": {
+        "functionName": "generateMvcStateSetters",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cfca7efc",
+      "type": "VariableDeclaration",
+      "babel_source": "const csharpType = mvcState.type !== 'object' ? mvcState.type : 'dynamic';",
+      "parentContext": {
+        "functionName": "generateMvcStateSetters",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c1f141e2",
+      "type": "ConditionalExpression",
+      "babel_source": "mvcState.type !== 'object' ? mvcState.type : 'dynamic'",
+      "parentContext": {
+        "functionName": "generateMvcStateSetters",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d264ea84",
+      "type": "BinaryExpression",
+      "operator": "!==",
+      "babel_source": "mvcState.type !== 'object'",
+      "parentContext": {
+        "functionName": "generateMvcStateSetters",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9b9289d3",
+      "type": "TemplateLiteral",
+      "babel_source": "`    private void ${mvcState.setter}(${csharpType} value)`",
+      "parentContext": {
+        "functionName": "generateMvcStateSetters",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6f545181",
+      "type": "TemplateLiteral",
+      "babel_source": "`        SetState(\"${mvcState.propertyName}\", value);`",
+      "parentContext": {
+        "functionName": "generateMvcStateSetters",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/component/generateMethods.cjs"
+  ]
+}

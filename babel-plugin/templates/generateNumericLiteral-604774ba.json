@@ -1,0 +1,31 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateNumericLiteral",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateNumericLiteral(node) {\r\n  return String(node.value);\r\n}",
+  "body_templates": [
+    {
+      "hash": "cb8ab669",
+      "type": "ReturnStatement",
+      "babel_source": "return String(node.value);",
+      "parentContext": {
+        "functionName": "generateNumericLiteral",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/expressions/literals.cjs"
+  ]
+}

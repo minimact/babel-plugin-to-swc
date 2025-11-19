@@ -1,0 +1,207 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "buildOptionalMemberPath",
+  "params": [
+    {
+      "name": "expr",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function buildOptionalMemberPath(expr) {\r\n  const parts = [];\r\n  let current = expr;\r\n\r\n  while (t.isOptionalMemberExpression(current) || t.isMemberExpression(current)) {\r\n    if (t.isIdentifier(current.property)) {\r\n      parts.unshift(current.property.name);\r\n    } else {\r\n      return null; // Computed property\r\n    }\r\n    current = current.object;\r\n  }\r\n\r\n  if (t.isIdentifier(current)) {\r\n    parts.unshift(current.name);\r\n    return parts.join('.');\r\n  }\r\n\r\n  return null;\r\n}",
+  "body_templates": [
+    {
+      "hash": "c4133e54",
+      "type": "VariableDeclaration",
+      "babel_source": "const parts = [];",
+      "parentContext": {
+        "functionName": "buildOptionalMemberPath",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "buildOptionalMemberPath",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b74a5e61",
+      "type": "VariableDeclaration",
+      "babel_source": "let current = expr;",
+      "parentContext": {
+        "functionName": "buildOptionalMemberPath",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a0c7e73e",
+      "type": "WhileStatement",
+      "babel_source": "while (t.isOptionalMemberExpression(current) || t.isMemberExpression(current)) {\r\n    if (t.isIdentifier(current.property)) {\r\n      parts.unshift(current.property.name);\r\n    } else {\r\n      return null; // Computed property\r\n    }\r\n    current = current.object;\r\n  }",
+      "parentContext": {
+        "functionName": "buildOptionalMemberPath",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3dbf7e03",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isOptionalMemberExpression(current) || t.isMemberExpression(current)",
+      "parentContext": {
+        "functionName": "buildOptionalMemberPath",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "709f6575",
+      "type": "BabelTypeCheck",
+      "method": "isOptionalMemberExpression",
+      "babel_source": "t.isOptionalMemberExpression(current)",
+      "parentContext": {
+        "functionName": "buildOptionalMemberPath",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "99ac970d",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(current)",
+      "parentContext": {
+        "functionName": "buildOptionalMemberPath",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "68016893",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(current.property)",
+      "babel_source": "if (t.isIdentifier(current.property)) {\r\n      parts.unshift(current.property.name);\r\n    } else {\r\n      return null; // Computed property\r\n    }",
+      "parentContext": {
+        "functionName": "buildOptionalMemberPath",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "70f404ee",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(current.property)",
+      "parentContext": {
+        "functionName": "buildOptionalMemberPath",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "buildOptionalMemberPath",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "05723cfe",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "current = current.object",
+      "parentContext": {
+        "functionName": "buildOptionalMemberPath",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "85e51236",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(current)",
+      "babel_source": "if (t.isIdentifier(current)) {\r\n    parts.unshift(current.name);\r\n    return parts.join('.');\r\n  }",
+      "parentContext": {
+        "functionName": "buildOptionalMemberPath",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f41cdd7f",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(current)",
+      "parentContext": {
+        "functionName": "buildOptionalMemberPath",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42163b24",
+      "type": "ReturnStatement",
+      "babel_source": "return parts.join('.');",
+      "parentContext": {
+        "functionName": "buildOptionalMemberPath",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "buildOptionalMemberPath",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/templates/buildMemberPath.cjs"
+  ]
+}

@@ -1,0 +1,499 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "buildBindingPath",
+  "params": [
+    {
+      "name": "expr",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    },
+    {
+      "name": "itemVar",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "indexVar",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function buildBindingPath(expr, itemVar, indexVar) {\r\n  if (t.isIdentifier(expr)) {\r\n    // Just the item variable itself\r\n    if (expr.name === itemVar) {\r\n      return null; // Can't template the entire item object\r\n    }\r\n    // Index variable\r\n    if (expr.name === 'index' || expr.name === indexVar) {\r\n      return 'index';\r\n    }\r\n    // Other identifier (likely a closure variable)\r\n    return null;\r\n  }\r\n\r\n  if (t.isMemberExpression(expr)) {\r\n    const path = buildMemberExpressionPath(expr);\r\n    if (path && path.startsWith(itemVar + '.')) {\r\n      // Replace item variable with \"item\" prefix\r\n      return 'item' + path.substring(itemVar.length);\r\n    }\r\n  }\r\n\r\n  // Handle binary expressions: todo.priority + 1, price * quantity, etc.\r\n  if (t.isBinaryExpression(expr)) {\r\n    return extractLoopBinaryExpression(expr, itemVar, indexVar);\r\n  }\r\n\r\n  // Handle logical expressions: todo.dueDate || 'No due date'\r\n  if (t.isLogicalExpression(expr)) {\r\n    return extractLoopLogicalExpression(expr, itemVar, indexVar);\r\n  }\r\n\r\n  // Handle unary expressions: !todo.completed, -value\r\n  if (t.isUnaryExpression(expr)) {\r\n    return extractLoopUnaryExpression(expr, itemVar, indexVar);\r\n  }\r\n\r\n  // Handle call expressions: todo.text.toUpperCase(), array.concat()\r\n  if (t.isCallExpression(expr)) {\r\n    return extractLoopCallExpression(expr, itemVar, indexVar);\r\n  }\r\n\r\n  return null;\r\n}",
+  "body_templates": [
+    {
+      "hash": "51d5b5a8",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(expr)",
+      "babel_source": "if (t.isIdentifier(expr)) {\r\n    // Just the item variable itself\r\n    if (expr.name === itemVar) {\r\n      return null; // Can't template the entire item object\r\n    }\r\n    // Index variable\r\n    if (expr.name === 'index' || expr.name === indexVar) {\r\n      return 'index';\r\n    }\r\n    // Other identifier (likely a closure variable)\r\n    return null;\r\n  }",
+      "parentContext": {
+        "functionName": "buildBindingPath",
+        "functionParams": [
+          "expr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42d26fd4",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(expr)",
+      "parentContext": {
+        "functionName": "buildBindingPath",
+        "functionParams": [
+          "expr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9c18d21e",
+      "type": "IfStatement",
+      "condition": "expr.name === itemVar",
+      "babel_source": "if (expr.name === itemVar) {\r\n      return null; // Can't template the entire item object\r\n    }",
+      "parentContext": {
+        "functionName": "buildBindingPath",
+        "functionParams": [
+          "expr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f51098d8",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "expr.name === itemVar",
+      "parentContext": {
+        "functionName": "buildBindingPath",
+        "functionParams": [
+          "expr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "buildBindingPath",
+        "functionParams": [
+          "expr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3dcea146",
+      "type": "IfStatement",
+      "condition": "expr.name === 'index' || expr.name === indexVar",
+      "babel_source": "if (expr.name === 'index' || expr.name === indexVar) {\r\n      return 'index';\r\n    }",
+      "parentContext": {
+        "functionName": "buildBindingPath",
+        "functionParams": [
+          "expr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5b455522",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "expr.name === 'index' || expr.name === indexVar",
+      "parentContext": {
+        "functionName": "buildBindingPath",
+        "functionParams": [
+          "expr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "764c830d",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "expr.name === 'index'",
+      "parentContext": {
+        "functionName": "buildBindingPath",
+        "functionParams": [
+          "expr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f0a2c631",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "expr.name === indexVar",
+      "parentContext": {
+        "functionName": "buildBindingPath",
+        "functionParams": [
+          "expr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f75d6a43",
+      "type": "ReturnStatement",
+      "babel_source": "return 'index';",
+      "parentContext": {
+        "functionName": "buildBindingPath",
+        "functionParams": [
+          "expr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "buildBindingPath",
+        "functionParams": [
+          "expr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7aa2ae84",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(expr)",
+      "babel_source": "if (t.isMemberExpression(expr)) {\r\n    const path = buildMemberExpressionPath(expr);\r\n    if (path && path.startsWith(itemVar + '.')) {\r\n      // Replace item variable with \"item\" prefix\r\n      return 'item' + path.substring(itemVar.length);\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "buildBindingPath",
+        "functionParams": [
+          "expr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c8858c63",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(expr)",
+      "parentContext": {
+        "functionName": "buildBindingPath",
+        "functionParams": [
+          "expr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f7710f20",
+      "type": "VariableDeclaration",
+      "babel_source": "const path = buildMemberExpressionPath(expr);",
+      "parentContext": {
+        "functionName": "buildBindingPath",
+        "functionParams": [
+          "expr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2a50fb38",
+      "type": "IfStatement",
+      "condition": "path && path.startsWith(itemVar + '.')",
+      "babel_source": "if (path && path.startsWith(itemVar + '.')) {\r\n      // Replace item variable with \"item\" prefix\r\n      return 'item' + path.substring(itemVar.length);\r\n    }",
+      "parentContext": {
+        "functionName": "buildBindingPath",
+        "functionParams": [
+          "expr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c5dfd156",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "path && path.startsWith(itemVar + '.')",
+      "parentContext": {
+        "functionName": "buildBindingPath",
+        "functionParams": [
+          "expr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1f167560",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "itemVar + '.'",
+      "parentContext": {
+        "functionName": "buildBindingPath",
+        "functionParams": [
+          "expr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "052a2fa8",
+      "type": "ReturnStatement",
+      "babel_source": "return 'item' + path.substring(itemVar.length);",
+      "parentContext": {
+        "functionName": "buildBindingPath",
+        "functionParams": [
+          "expr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "75135431",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "'item' + path.substring(itemVar.length)",
+      "parentContext": {
+        "functionName": "buildBindingPath",
+        "functionParams": [
+          "expr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fe82308f",
+      "type": "IfStatement",
+      "condition": "t.isBinaryExpression(expr)",
+      "babel_source": "if (t.isBinaryExpression(expr)) {\r\n    return extractLoopBinaryExpression(expr, itemVar, indexVar);\r\n  }",
+      "parentContext": {
+        "functionName": "buildBindingPath",
+        "functionParams": [
+          "expr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8db0ee56",
+      "type": "BabelTypeCheck",
+      "method": "isBinaryExpression",
+      "babel_source": "t.isBinaryExpression(expr)",
+      "parentContext": {
+        "functionName": "buildBindingPath",
+        "functionParams": [
+          "expr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d7c4a7e9",
+      "type": "ReturnStatement",
+      "babel_source": "return extractLoopBinaryExpression(expr, itemVar, indexVar);",
+      "parentContext": {
+        "functionName": "buildBindingPath",
+        "functionParams": [
+          "expr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0813654b",
+      "type": "IfStatement",
+      "condition": "t.isLogicalExpression(expr)",
+      "babel_source": "if (t.isLogicalExpression(expr)) {\r\n    return extractLoopLogicalExpression(expr, itemVar, indexVar);\r\n  }",
+      "parentContext": {
+        "functionName": "buildBindingPath",
+        "functionParams": [
+          "expr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c20dd732",
+      "type": "BabelTypeCheck",
+      "method": "isLogicalExpression",
+      "babel_source": "t.isLogicalExpression(expr)",
+      "parentContext": {
+        "functionName": "buildBindingPath",
+        "functionParams": [
+          "expr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "36cfc0c8",
+      "type": "ReturnStatement",
+      "babel_source": "return extractLoopLogicalExpression(expr, itemVar, indexVar);",
+      "parentContext": {
+        "functionName": "buildBindingPath",
+        "functionParams": [
+          "expr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "38edf866",
+      "type": "IfStatement",
+      "condition": "t.isUnaryExpression(expr)",
+      "babel_source": "if (t.isUnaryExpression(expr)) {\r\n    return extractLoopUnaryExpression(expr, itemVar, indexVar);\r\n  }",
+      "parentContext": {
+        "functionName": "buildBindingPath",
+        "functionParams": [
+          "expr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4b2e045a",
+      "type": "BabelTypeCheck",
+      "method": "isUnaryExpression",
+      "babel_source": "t.isUnaryExpression(expr)",
+      "parentContext": {
+        "functionName": "buildBindingPath",
+        "functionParams": [
+          "expr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "172af111",
+      "type": "ReturnStatement",
+      "babel_source": "return extractLoopUnaryExpression(expr, itemVar, indexVar);",
+      "parentContext": {
+        "functionName": "buildBindingPath",
+        "functionParams": [
+          "expr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "32b4317d",
+      "type": "IfStatement",
+      "condition": "t.isCallExpression(expr)",
+      "babel_source": "if (t.isCallExpression(expr)) {\r\n    return extractLoopCallExpression(expr, itemVar, indexVar);\r\n  }",
+      "parentContext": {
+        "functionName": "buildBindingPath",
+        "functionParams": [
+          "expr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "46479f62",
+      "type": "BabelTypeCheck",
+      "method": "isCallExpression",
+      "babel_source": "t.isCallExpression(expr)",
+      "parentContext": {
+        "functionName": "buildBindingPath",
+        "functionParams": [
+          "expr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ea11168d",
+      "type": "ReturnStatement",
+      "babel_source": "return extractLoopCallExpression(expr, itemVar, indexVar);",
+      "parentContext": {
+        "functionName": "buildBindingPath",
+        "functionParams": [
+          "expr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "buildBindingPath",
+        "functionParams": [
+          "expr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/loopTemplates/buildBindingPath.cjs"
+  ]
+}

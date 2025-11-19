@@ -1,0 +1,85 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateUnaryExpression",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "generateCSharpExpression",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    },
+    {
+      "name": "inInterpolation",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateUnaryExpression(node, generateCSharpExpression, inInterpolation) {\r\n  const argument = generateCSharpExpression(node.argument, inInterpolation);\r\n  const operator = node.operator;\r\n  return `${operator}${argument}`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "a89b827c",
+      "type": "VariableDeclaration",
+      "babel_source": "const argument = generateCSharpExpression(node.argument, inInterpolation);",
+      "parentContext": {
+        "functionName": "generateUnaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "619da3db",
+      "type": "VariableDeclaration",
+      "babel_source": "const operator = node.operator;",
+      "parentContext": {
+        "functionName": "generateUnaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "72f871d1",
+      "type": "ReturnStatement",
+      "babel_source": "return `${operator}${argument}`;",
+      "parentContext": {
+        "functionName": "generateUnaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9ac92da5",
+      "type": "TemplateLiteral",
+      "babel_source": "`${operator}${argument}`",
+      "parentContext": {
+        "functionName": "generateUnaryExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/expressions/operators.cjs"
+  ]
+}

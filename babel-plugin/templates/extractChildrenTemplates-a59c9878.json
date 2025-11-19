@@ -1,0 +1,375 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractChildrenTemplates",
+  "params": [
+    {
+      "name": "children",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "itemVar",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "indexVar",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractChildrenTemplates(children, itemVar, indexVar) {\r\n  const templates = [];\r\n\r\n  for (const child of children) {\r\n    // Static text: <li>Static text</li>\r\n    if (t.isJSXText(child)) {\r\n      const text = child.value.trim();\r\n      if (text) {\r\n        templates.push({\r\n          type: 'Text',\r\n          template: text,\r\n          bindings: [],\r\n          slots: []\r\n        });\r\n      }\r\n      continue;\r\n    }\r\n\r\n    // Expression: <li>{todo.text}</li>\r\n    if (t.isJSXExpressionContainer(child)) {\r\n      const template = extractTextTemplate(child.expression, itemVar, indexVar);\r\n      if (template) {\r\n        templates.push(template);\r\n      }\r\n      continue;\r\n    }\r\n\r\n    // Nested element: <li><span>{todo.text}</span></li>\r\n    if (t.isJSXElement(child)) {\r\n      if (extractElementTemplate) {\r\n        const elementTemplate = extractElementTemplate(child, itemVar, indexVar);\r\n        if (elementTemplate) {\r\n          templates.push(elementTemplate);\r\n        }\r\n      }\r\n      continue;\r\n    }\r\n  }\r\n\r\n  return templates;\r\n}",
+  "body_templates": [
+    {
+      "hash": "78f08ce6",
+      "type": "VariableDeclaration",
+      "babel_source": "const templates = [];",
+      "parentContext": {
+        "functionName": "extractChildrenTemplates",
+        "functionParams": [
+          "children",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractChildrenTemplates",
+        "functionParams": [
+          "children",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "05ac05c3",
+      "type": "ForOfStatement",
+      "babel_source": "for (const child of children) {\r\n    // Static text: <li>Static text</li>\r\n    if (t.isJSXText(child)) {\r\n      const text = child.value.trim();\r\n      if (text) {\r\n        templates.push({\r\n          type: 'Text',\r\n          template: text,\r\n          bindings: [],\r\n          slots: []\r\n        });\r\n      }\r\n      continue;\r\n    }\r\n\r\n    // Expression: <li>{todo.text}</li>\r\n    if (t.isJSXExpressionContainer(child)) {\r\n      const template = extractTextTemplate(child.expression, itemVar, indexVar);\r\n      if (template) {\r\n        templates.push(template);\r\n      }\r\n      continue;\r\n    }\r\n\r\n    // Nested element: <li><span>{todo.text}</span></li>\r\n    if (t.isJSXElement(child)) {\r\n      if (extractElementTemplate) {\r\n        const elementTemplate = extractElementTemplate(child, itemVar, indexVar);\r\n        if (elementTemplate) {\r\n          templates.push(elementTemplate);\r\n        }\r\n      }\r\n      continue;\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "extractChildrenTemplates",
+        "functionParams": [
+          "children",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "efdd3930",
+      "type": "VariableDeclaration",
+      "babel_source": "const child",
+      "parentContext": {
+        "functionName": "extractChildrenTemplates",
+        "functionParams": [
+          "children",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5dbe7fe8",
+      "type": "IfStatement",
+      "condition": "t.isJSXText(child)",
+      "babel_source": "if (t.isJSXText(child)) {\r\n      const text = child.value.trim();\r\n      if (text) {\r\n        templates.push({\r\n          type: 'Text',\r\n          template: text,\r\n          bindings: [],\r\n          slots: []\r\n        });\r\n      }\r\n      continue;\r\n    }",
+      "parentContext": {
+        "functionName": "extractChildrenTemplates",
+        "functionParams": [
+          "children",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8cc41c4e",
+      "type": "BabelTypeCheck",
+      "method": "isJSXText",
+      "babel_source": "t.isJSXText(child)",
+      "parentContext": {
+        "functionName": "extractChildrenTemplates",
+        "functionParams": [
+          "children",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9fb13957",
+      "type": "VariableDeclaration",
+      "babel_source": "const text = child.value.trim();",
+      "parentContext": {
+        "functionName": "extractChildrenTemplates",
+        "functionParams": [
+          "children",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7301bee1",
+      "type": "IfStatement",
+      "condition": "text",
+      "babel_source": "if (text) {\r\n        templates.push({\r\n          type: 'Text',\r\n          template: text,\r\n          bindings: [],\r\n          slots: []\r\n        });\r\n      }",
+      "parentContext": {
+        "functionName": "extractChildrenTemplates",
+        "functionParams": [
+          "children",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8bcf150f",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n          type: 'Text',\r\n          template: text,\r\n          bindings: [],\r\n          slots: []\r\n        }",
+      "parentContext": {
+        "functionName": "extractChildrenTemplates",
+        "functionParams": [
+          "children",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractChildrenTemplates",
+        "functionParams": [
+          "children",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractChildrenTemplates",
+        "functionParams": [
+          "children",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0bf37874",
+      "type": "ContinueStatement",
+      "babel_source": "continue;",
+      "parentContext": {
+        "functionName": "extractChildrenTemplates",
+        "functionParams": [
+          "children",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0a62ecff",
+      "type": "IfStatement",
+      "condition": "t.isJSXExpressionContainer(child)",
+      "babel_source": "if (t.isJSXExpressionContainer(child)) {\r\n      const template = extractTextTemplate(child.expression, itemVar, indexVar);\r\n      if (template) {\r\n        templates.push(template);\r\n      }\r\n      continue;\r\n    }",
+      "parentContext": {
+        "functionName": "extractChildrenTemplates",
+        "functionParams": [
+          "children",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c53c8d32",
+      "type": "BabelTypeCheck",
+      "method": "isJSXExpressionContainer",
+      "babel_source": "t.isJSXExpressionContainer(child)",
+      "parentContext": {
+        "functionName": "extractChildrenTemplates",
+        "functionParams": [
+          "children",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "33941004",
+      "type": "VariableDeclaration",
+      "babel_source": "const template = extractTextTemplate(child.expression, itemVar, indexVar);",
+      "parentContext": {
+        "functionName": "extractChildrenTemplates",
+        "functionParams": [
+          "children",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9e641943",
+      "type": "IfStatement",
+      "condition": "template",
+      "babel_source": "if (template) {\r\n        templates.push(template);\r\n      }",
+      "parentContext": {
+        "functionName": "extractChildrenTemplates",
+        "functionParams": [
+          "children",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0bf37874",
+      "type": "ContinueStatement",
+      "babel_source": "continue;",
+      "parentContext": {
+        "functionName": "extractChildrenTemplates",
+        "functionParams": [
+          "children",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "41c82957",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(child)",
+      "babel_source": "if (t.isJSXElement(child)) {\r\n      if (extractElementTemplate) {\r\n        const elementTemplate = extractElementTemplate(child, itemVar, indexVar);\r\n        if (elementTemplate) {\r\n          templates.push(elementTemplate);\r\n        }\r\n      }\r\n      continue;\r\n    }",
+      "parentContext": {
+        "functionName": "extractChildrenTemplates",
+        "functionParams": [
+          "children",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d44bd174",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(child)",
+      "parentContext": {
+        "functionName": "extractChildrenTemplates",
+        "functionParams": [
+          "children",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ded2e69a",
+      "type": "IfStatement",
+      "condition": "extractElementTemplate",
+      "babel_source": "if (extractElementTemplate) {\r\n        const elementTemplate = extractElementTemplate(child, itemVar, indexVar);\r\n        if (elementTemplate) {\r\n          templates.push(elementTemplate);\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "extractChildrenTemplates",
+        "functionParams": [
+          "children",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ecc35da8",
+      "type": "VariableDeclaration",
+      "babel_source": "const elementTemplate = extractElementTemplate(child, itemVar, indexVar);",
+      "parentContext": {
+        "functionName": "extractChildrenTemplates",
+        "functionParams": [
+          "children",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3efd1fe9",
+      "type": "IfStatement",
+      "condition": "elementTemplate",
+      "babel_source": "if (elementTemplate) {\r\n          templates.push(elementTemplate);\r\n        }",
+      "parentContext": {
+        "functionName": "extractChildrenTemplates",
+        "functionParams": [
+          "children",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0bf37874",
+      "type": "ContinueStatement",
+      "babel_source": "continue;",
+      "parentContext": {
+        "functionName": "extractChildrenTemplates",
+        "functionParams": [
+          "children",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ce7c3aac",
+      "type": "ReturnStatement",
+      "babel_source": "return templates;",
+      "parentContext": {
+        "functionName": "extractChildrenTemplates",
+        "functionParams": [
+          "children",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/loopTemplates/extractChildrenTemplates.cjs"
+  ]
+}

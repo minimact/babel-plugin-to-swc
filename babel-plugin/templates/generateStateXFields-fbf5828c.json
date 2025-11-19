@@ -1,0 +1,76 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateStateXFields",
+  "params": [
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "lines",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateStateXFields(component, lines) {\r\n  for (const stateX of component.useStateX) {\r\n    lines.push(`    [State]`);\r\n    lines.push(`    private ${stateX.initialValueType} ${stateX.varName} = ${stateX.initialValue};`);\r\n    lines.push('');\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "41feaa4e",
+      "type": "ForOfStatement",
+      "babel_source": "for (const stateX of component.useStateX) {\r\n    lines.push(`    [State]`);\r\n    lines.push(`    private ${stateX.initialValueType} ${stateX.varName} = ${stateX.initialValue};`);\r\n    lines.push('');\r\n  }",
+      "parentContext": {
+        "functionName": "generateStateXFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4e60ee72",
+      "type": "VariableDeclaration",
+      "babel_source": "const stateX",
+      "parentContext": {
+        "functionName": "generateStateXFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "634a1d52",
+      "type": "TemplateLiteral",
+      "babel_source": "`    [State]`",
+      "parentContext": {
+        "functionName": "generateStateXFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1e78e9a0",
+      "type": "TemplateLiteral",
+      "babel_source": "`    private ${stateX.initialValueType} ${stateX.varName} = ${stateX.initialValue};`",
+      "parentContext": {
+        "functionName": "generateStateXFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/component/generateFields.cjs"
+  ]
+}

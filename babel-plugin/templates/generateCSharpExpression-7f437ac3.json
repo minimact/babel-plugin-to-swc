@@ -1,0 +1,1101 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateCSharpExpression",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "inInterpolation",
+      "inferredType": "unknown",
+      "defaultValue": "false"
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateCSharpExpression(node, inInterpolation = false) {\r\n  if (!node) {\r\n    const nodePath = node?.__minimactPath || '';\r\n    return `new VNull(\"${nodePath}\")`;\r\n  }\r\n\r\n  if (t.isStringLiteral(node)) {\r\n    return generateStringLiteral(node, inInterpolation);\r\n  }\r\n\r\n  if (t.isNumericLiteral(node)) {\r\n    return generateNumericLiteral(node);\r\n  }\r\n\r\n  if (t.isBooleanLiteral(node)) {\r\n    return generateBooleanLiteral(node);\r\n  }\r\n\r\n  if (t.isNullLiteral(node)) {\r\n    return generateNullLiteral(node);\r\n  }\r\n\r\n  if (t.isIdentifier(node)) {\r\n    return generateIdentifier(node, currentComponent);\r\n  }\r\n\r\n  if (t.isAssignmentExpression(node)) {\r\n    return generateAssignmentExpression(node, generateCSharpExpression, inInterpolation);\r\n  }\r\n\r\n  if (t.isAwaitExpression(node)) {\r\n    return `await ${generateCSharpExpression(node.argument, inInterpolation)}`;\r\n  }\r\n\r\n  // Handle TypeScript type assertions: (e.target as any) → e.target (strip the cast)\r\n  // In C#, we rely on dynamic typing, so type casts are usually unnecessary\r\n  if (t.isTSAsExpression(node)) {\r\n    return generateCSharpExpression(node.expression, inInterpolation);\r\n  }\r\n\r\n  // Handle TypeScript type assertions (angle bracket syntax): <any>e.target → e.target\r\n  if (t.isTSTypeAssertion(node)) {\r\n    return generateCSharpExpression(node.expression, inInterpolation);\r\n  }\r\n\r\n  // Handle optional chaining: viewModel?.userEmail → viewModel?.UserEmail\r\n  if (t.isOptionalMemberExpression(node)) {\r\n    return generateOptionalMemberExpression(node, generateCSharpExpression, inInterpolation);\r\n  }\r\n\r\n  if (t.isMemberExpression(node)) {\r\n    return generateMemberExpression(node, generateCSharpExpression, inInterpolation);\r\n  }\r\n\r\n  if (t.isArrayExpression(node)) {\r\n    return generateArrayExpression(node, generateCSharpExpression);\r\n  }\r\n\r\n  if (t.isUnaryExpression(node)) {\r\n    return generateUnaryExpression(node, generateCSharpExpression, inInterpolation);\r\n  }\r\n\r\n  if (t.isBinaryExpression(node)) {\r\n    return generateBinaryExpression(node, generateCSharpExpression);\r\n  }\r\n\r\n  if (t.isLogicalExpression(node)) {\r\n    return generateLogicalExpression(node, generateCSharpExpression);\r\n  }\r\n\r\n  if (t.isConditionalExpression(node)) {\r\n    return generateConditionalExpression(node, generateCSharpExpression);\r\n  }\r\n\r\n  if (t.isCallExpression(node)) {\r\n    return generateCallExpression(node, generateCSharpExpression, generateCSharpStatement, currentComponent);\r\n  }\r\n\r\n  if (t.isOptionalCallExpression(node)) {\r\n    return generateOptionalCallExpression(node, generateCSharpExpression, generateCSharpStatement, currentComponent);\r\n  }\r\n\r\n  if (t.isTemplateLiteral(node)) {\r\n    return generateTemplateLiteral(node, generateCSharpExpression);\r\n  }\r\n\r\n  if (t.isNewExpression(node)) {\r\n    return generateNewExpression(node, generateCSharpExpression);\r\n  }\r\n\r\n  if (t.isObjectExpression(node)) {\r\n    return generateObjectExpression(node, generateCSharpExpression);\r\n  }\r\n\r\n  if (t.isArrowFunctionExpression(node) || t.isFunctionExpression(node)) {\r\n    return generateFunctionExpression(node, generateCSharpExpression, generateCSharpStatement);\r\n  }\r\n\r\n  // Fallback for unknown node types\r\n  const nodePath = node?.__minimactPath || '';\r\n  return `new VNull(\"${nodePath}\")`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "63e37cff",
+      "type": "IfStatement",
+      "condition": "!node",
+      "babel_source": "if (!node) {\r\n    const nodePath = node?.__minimactPath || '';\r\n    return `new VNull(\"${nodePath}\")`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e10d47ee",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!node",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "41399c1c",
+      "type": "VariableDeclaration",
+      "babel_source": "const nodePath = node?.__minimactPath || '';",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "872beb95",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "node?.__minimactPath || ''",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cee4de05",
+      "type": "ReturnStatement",
+      "babel_source": "return `new VNull(\"${nodePath}\")`;",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3d30a682",
+      "type": "TemplateLiteral",
+      "babel_source": "`new VNull(\"${nodePath}\")`",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6a87fc3c",
+      "type": "IfStatement",
+      "condition": "t.isStringLiteral(node)",
+      "babel_source": "if (t.isStringLiteral(node)) {\r\n    return generateStringLiteral(node, inInterpolation);\r\n  }",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7173d8cd",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(node)",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6c5b1c11",
+      "type": "ReturnStatement",
+      "babel_source": "return generateStringLiteral(node, inInterpolation);",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2ac7b8f4",
+      "type": "IfStatement",
+      "condition": "t.isNumericLiteral(node)",
+      "babel_source": "if (t.isNumericLiteral(node)) {\r\n    return generateNumericLiteral(node);\r\n  }",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ae0f901d",
+      "type": "BabelTypeCheck",
+      "method": "isNumericLiteral",
+      "babel_source": "t.isNumericLiteral(node)",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "203024f2",
+      "type": "ReturnStatement",
+      "babel_source": "return generateNumericLiteral(node);",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "53ebb28b",
+      "type": "IfStatement",
+      "condition": "t.isBooleanLiteral(node)",
+      "babel_source": "if (t.isBooleanLiteral(node)) {\r\n    return generateBooleanLiteral(node);\r\n  }",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e92ed5e3",
+      "type": "BabelTypeCheck",
+      "method": "isBooleanLiteral",
+      "babel_source": "t.isBooleanLiteral(node)",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1fac3ab3",
+      "type": "ReturnStatement",
+      "babel_source": "return generateBooleanLiteral(node);",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fcbc8007",
+      "type": "IfStatement",
+      "condition": "t.isNullLiteral(node)",
+      "babel_source": "if (t.isNullLiteral(node)) {\r\n    return generateNullLiteral(node);\r\n  }",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b7f91226",
+      "type": "BabelTypeCheck",
+      "method": "isNullLiteral",
+      "babel_source": "t.isNullLiteral(node)",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "08c4ef44",
+      "type": "ReturnStatement",
+      "babel_source": "return generateNullLiteral(node);",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "616d01af",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(node)",
+      "babel_source": "if (t.isIdentifier(node)) {\r\n    return generateIdentifier(node, currentComponent);\r\n  }",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "458e4c81",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node)",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9a1cff35",
+      "type": "ReturnStatement",
+      "babel_source": "return generateIdentifier(node, currentComponent);",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0d9ff692",
+      "type": "IfStatement",
+      "condition": "t.isAssignmentExpression(node)",
+      "babel_source": "if (t.isAssignmentExpression(node)) {\r\n    return generateAssignmentExpression(node, generateCSharpExpression, inInterpolation);\r\n  }",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f78a196e",
+      "type": "BabelTypeCheck",
+      "method": "isAssignmentExpression",
+      "babel_source": "t.isAssignmentExpression(node)",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cc71c9d8",
+      "type": "ReturnStatement",
+      "babel_source": "return generateAssignmentExpression(node, generateCSharpExpression, inInterpolation);",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "439e8fe7",
+      "type": "IfStatement",
+      "condition": "t.isAwaitExpression(node)",
+      "babel_source": "if (t.isAwaitExpression(node)) {\r\n    return `await ${generateCSharpExpression(node.argument, inInterpolation)}`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ce15fb6",
+      "type": "BabelTypeCheck",
+      "method": "isAwaitExpression",
+      "babel_source": "t.isAwaitExpression(node)",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab78c8a0",
+      "type": "ReturnStatement",
+      "babel_source": "return `await ${generateCSharpExpression(node.argument, inInterpolation)}`;",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6aa72576",
+      "type": "TemplateLiteral",
+      "babel_source": "`await ${generateCSharpExpression(node.argument, inInterpolation)}`",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ec5d8c01",
+      "type": "IfStatement",
+      "condition": "t.isTSAsExpression(node)",
+      "babel_source": "if (t.isTSAsExpression(node)) {\r\n    return generateCSharpExpression(node.expression, inInterpolation);\r\n  }",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f32b52a5",
+      "type": "BabelTypeCheck",
+      "method": "isTSAsExpression",
+      "babel_source": "t.isTSAsExpression(node)",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3529ff7e",
+      "type": "ReturnStatement",
+      "babel_source": "return generateCSharpExpression(node.expression, inInterpolation);",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4d2d0b7a",
+      "type": "IfStatement",
+      "condition": "t.isTSTypeAssertion(node)",
+      "babel_source": "if (t.isTSTypeAssertion(node)) {\r\n    return generateCSharpExpression(node.expression, inInterpolation);\r\n  }",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "86cad9b6",
+      "type": "BabelTypeCheck",
+      "method": "isTSTypeAssertion",
+      "babel_source": "t.isTSTypeAssertion(node)",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3529ff7e",
+      "type": "ReturnStatement",
+      "babel_source": "return generateCSharpExpression(node.expression, inInterpolation);",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b4859b78",
+      "type": "IfStatement",
+      "condition": "t.isOptionalMemberExpression(node)",
+      "babel_source": "if (t.isOptionalMemberExpression(node)) {\r\n    return generateOptionalMemberExpression(node, generateCSharpExpression, inInterpolation);\r\n  }",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "db27d946",
+      "type": "BabelTypeCheck",
+      "method": "isOptionalMemberExpression",
+      "babel_source": "t.isOptionalMemberExpression(node)",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7cc6e745",
+      "type": "ReturnStatement",
+      "babel_source": "return generateOptionalMemberExpression(node, generateCSharpExpression, inInterpolation);",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "92761496",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(node)",
+      "babel_source": "if (t.isMemberExpression(node)) {\r\n    return generateMemberExpression(node, generateCSharpExpression, inInterpolation);\r\n  }",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e4025d71",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(node)",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1366615b",
+      "type": "ReturnStatement",
+      "babel_source": "return generateMemberExpression(node, generateCSharpExpression, inInterpolation);",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "57dfa32d",
+      "type": "IfStatement",
+      "condition": "t.isArrayExpression(node)",
+      "babel_source": "if (t.isArrayExpression(node)) {\r\n    return generateArrayExpression(node, generateCSharpExpression);\r\n  }",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "df02b329",
+      "type": "BabelTypeCheck",
+      "method": "isArrayExpression",
+      "babel_source": "t.isArrayExpression(node)",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1c9a9b2a",
+      "type": "ReturnStatement",
+      "babel_source": "return generateArrayExpression(node, generateCSharpExpression);",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "900ff45b",
+      "type": "IfStatement",
+      "condition": "t.isUnaryExpression(node)",
+      "babel_source": "if (t.isUnaryExpression(node)) {\r\n    return generateUnaryExpression(node, generateCSharpExpression, inInterpolation);\r\n  }",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "27f27257",
+      "type": "BabelTypeCheck",
+      "method": "isUnaryExpression",
+      "babel_source": "t.isUnaryExpression(node)",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c89289ad",
+      "type": "ReturnStatement",
+      "babel_source": "return generateUnaryExpression(node, generateCSharpExpression, inInterpolation);",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dcf2df98",
+      "type": "IfStatement",
+      "condition": "t.isBinaryExpression(node)",
+      "babel_source": "if (t.isBinaryExpression(node)) {\r\n    return generateBinaryExpression(node, generateCSharpExpression);\r\n  }",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ae0955e9",
+      "type": "BabelTypeCheck",
+      "method": "isBinaryExpression",
+      "babel_source": "t.isBinaryExpression(node)",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c99831e5",
+      "type": "ReturnStatement",
+      "babel_source": "return generateBinaryExpression(node, generateCSharpExpression);",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0c4ad614",
+      "type": "IfStatement",
+      "condition": "t.isLogicalExpression(node)",
+      "babel_source": "if (t.isLogicalExpression(node)) {\r\n    return generateLogicalExpression(node, generateCSharpExpression);\r\n  }",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "00fb4fd3",
+      "type": "BabelTypeCheck",
+      "method": "isLogicalExpression",
+      "babel_source": "t.isLogicalExpression(node)",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "305ef314",
+      "type": "ReturnStatement",
+      "babel_source": "return generateLogicalExpression(node, generateCSharpExpression);",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "344cc561",
+      "type": "IfStatement",
+      "condition": "t.isConditionalExpression(node)",
+      "babel_source": "if (t.isConditionalExpression(node)) {\r\n    return generateConditionalExpression(node, generateCSharpExpression);\r\n  }",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1459577d",
+      "type": "BabelTypeCheck",
+      "method": "isConditionalExpression",
+      "babel_source": "t.isConditionalExpression(node)",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fbbe3983",
+      "type": "ReturnStatement",
+      "babel_source": "return generateConditionalExpression(node, generateCSharpExpression);",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bfdfda0b",
+      "type": "IfStatement",
+      "condition": "t.isCallExpression(node)",
+      "babel_source": "if (t.isCallExpression(node)) {\r\n    return generateCallExpression(node, generateCSharpExpression, generateCSharpStatement, currentComponent);\r\n  }",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1088dc62",
+      "type": "BabelTypeCheck",
+      "method": "isCallExpression",
+      "babel_source": "t.isCallExpression(node)",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4b36e450",
+      "type": "ReturnStatement",
+      "babel_source": "return generateCallExpression(node, generateCSharpExpression, generateCSharpStatement, currentComponent);",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ac870686",
+      "type": "IfStatement",
+      "condition": "t.isOptionalCallExpression(node)",
+      "babel_source": "if (t.isOptionalCallExpression(node)) {\r\n    return generateOptionalCallExpression(node, generateCSharpExpression, generateCSharpStatement, currentComponent);\r\n  }",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c49a13c3",
+      "type": "BabelTypeCheck",
+      "method": "isOptionalCallExpression",
+      "babel_source": "t.isOptionalCallExpression(node)",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6e2b03a7",
+      "type": "ReturnStatement",
+      "babel_source": "return generateOptionalCallExpression(node, generateCSharpExpression, generateCSharpStatement, currentComponent);",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0ea74252",
+      "type": "IfStatement",
+      "condition": "t.isTemplateLiteral(node)",
+      "babel_source": "if (t.isTemplateLiteral(node)) {\r\n    return generateTemplateLiteral(node, generateCSharpExpression);\r\n  }",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f523b775",
+      "type": "BabelTypeCheck",
+      "method": "isTemplateLiteral",
+      "babel_source": "t.isTemplateLiteral(node)",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2747b51f",
+      "type": "ReturnStatement",
+      "babel_source": "return generateTemplateLiteral(node, generateCSharpExpression);",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f438ed08",
+      "type": "IfStatement",
+      "condition": "t.isNewExpression(node)",
+      "babel_source": "if (t.isNewExpression(node)) {\r\n    return generateNewExpression(node, generateCSharpExpression);\r\n  }",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1108c486",
+      "type": "BabelTypeCheck",
+      "method": "isNewExpression",
+      "babel_source": "t.isNewExpression(node)",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0ef0049d",
+      "type": "ReturnStatement",
+      "babel_source": "return generateNewExpression(node, generateCSharpExpression);",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "02f17b93",
+      "type": "IfStatement",
+      "condition": "t.isObjectExpression(node)",
+      "babel_source": "if (t.isObjectExpression(node)) {\r\n    return generateObjectExpression(node, generateCSharpExpression);\r\n  }",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "63339805",
+      "type": "BabelTypeCheck",
+      "method": "isObjectExpression",
+      "babel_source": "t.isObjectExpression(node)",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "04a93a25",
+      "type": "ReturnStatement",
+      "babel_source": "return generateObjectExpression(node, generateCSharpExpression);",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7bc81922",
+      "type": "IfStatement",
+      "condition": "t.isArrowFunctionExpression(node) || t.isFunctionExpression(node)",
+      "babel_source": "if (t.isArrowFunctionExpression(node) || t.isFunctionExpression(node)) {\r\n    return generateFunctionExpression(node, generateCSharpExpression, generateCSharpStatement);\r\n  }",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0909c72d",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isArrowFunctionExpression(node) || t.isFunctionExpression(node)",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4d2a5749",
+      "type": "BabelTypeCheck",
+      "method": "isArrowFunctionExpression",
+      "babel_source": "t.isArrowFunctionExpression(node)",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "630f2645",
+      "type": "BabelTypeCheck",
+      "method": "isFunctionExpression",
+      "babel_source": "t.isFunctionExpression(node)",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "350a1e01",
+      "type": "ReturnStatement",
+      "babel_source": "return generateFunctionExpression(node, generateCSharpExpression, generateCSharpStatement);",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "41399c1c",
+      "type": "VariableDeclaration",
+      "babel_source": "const nodePath = node?.__minimactPath || '';",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "872beb95",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "node?.__minimactPath || ''",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cee4de05",
+      "type": "ReturnStatement",
+      "babel_source": "return `new VNull(\"${nodePath}\")`;",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3d30a682",
+      "type": "TemplateLiteral",
+      "babel_source": "`new VNull(\"${nodePath}\")`",
+      "parentContext": {
+        "functionName": "generateCSharpExpression",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/expressions.cjs"
+  ]
+}

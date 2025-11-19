@@ -1,0 +1,5254 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateCallExpression",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "generateCSharpExpression",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    },
+    {
+      "name": "generateCSharpStatement",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "currentComponent",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateCallExpression(node, generateCSharpExpression, generateCSharpStatement, currentComponent) {\r\n  // Handle Math.max() → Math.Max()\r\n  if (t.isMemberExpression(node.callee) &&\r\n      t.isIdentifier(node.callee.object, { name: 'Math' }) &&\r\n      t.isIdentifier(node.callee.property, { name: 'max' })) {\r\n    const args = node.arguments.map(arg => generateCSharpExpression(arg)).join(', ');\r\n    return `Math.Max(${args})`;\r\n  }\r\n\r\n  // Handle Math.min() → Math.Min()\r\n  if (t.isMemberExpression(node.callee) &&\r\n      t.isIdentifier(node.callee.object, { name: 'Math' }) &&\r\n      t.isIdentifier(node.callee.property, { name: 'min' })) {\r\n    const args = node.arguments.map(arg => generateCSharpExpression(arg)).join(', ');\r\n    return `Math.Min(${args})`;\r\n  }\r\n\r\n  // Handle other Math methods (floor, ceil, round, pow, log, etc.) → Pascal case\r\n  if (t.isMemberExpression(node.callee) &&\r\n      t.isIdentifier(node.callee.object, { name: 'Math' })) {\r\n    const methodName = node.callee.property.name;\r\n    const pascalMethodName = methodName.charAt(0).toUpperCase() + methodName.slice(1);\r\n    const args = node.arguments.map(arg => generateCSharpExpression(arg)).join(', ');\r\n\r\n    // Cast floor/ceil/round to int for array indexing compatibility\r\n    if (methodName === 'floor' || methodName === 'ceil' || methodName === 'round') {\r\n      return `(int)Math.${pascalMethodName}(${args})`;\r\n    }\r\n\r\n    return `Math.${pascalMethodName}(${args})`;\r\n  }\r\n\r\n  // Handle encodeURIComponent() → Uri.EscapeDataString()\r\n  if (t.isIdentifier(node.callee, { name: 'encodeURIComponent' })) {\r\n    const args = node.arguments.map(arg => generateCSharpExpression(arg)).join(', ');\r\n    return `Uri.EscapeDataString(${args})`;\r\n  }\r\n\r\n  // Handle setState(key, value) → SetState(key, value)\r\n  // This is the compile-time state proxy function for lifted state\r\n  if (t.isIdentifier(node.callee, { name: 'setState' })) {\r\n    if (node.arguments.length >= 2) {\r\n      const key = generateCSharpExpression(node.arguments[0]);\r\n      const value = generateCSharpExpression(node.arguments[1]);\r\n      return `SetState(${key}, ${value})`;\r\n    } else {\r\n      console.warn('[Babel Plugin] setState requires 2 arguments (key, value)');\r\n      return `SetState(\"\", null)`;\r\n    }\r\n  }\r\n\r\n  // Handle fetch() → HttpClient call\r\n  // Note: This generates a basic wrapper. Real implementation would use IHttpClientFactory\r\n  if (t.isIdentifier(node.callee, { name: 'fetch' })) {\r\n    const url = node.arguments.length > 0 ? generateCSharpExpression(node.arguments[0]) : '\"\"';\r\n    // Return HttpResponseMessage (await is handled by caller)\r\n    return `new HttpClient().GetAsync(${url})`;\r\n  }\r\n\r\n  // Handle Promise.resolve(value) → Task.FromResult(value)\r\n  if (t.isMemberExpression(node.callee) &&\r\n      t.isIdentifier(node.callee.object, { name: 'Promise' }) &&\r\n      t.isIdentifier(node.callee.property, { name: 'resolve' })) {\r\n    if (node.arguments.length > 0) {\r\n      const value = generateCSharpExpression(node.arguments[0]);\r\n      return `Task.FromResult(${value})`;\r\n    }\r\n    return `Task.CompletedTask`;\r\n  }\r\n\r\n  // Handle Promise.reject(error) → Task.FromException(error)\r\n  if (t.isMemberExpression(node.callee) &&\r\n      t.isIdentifier(node.callee.object, { name: 'Promise' }) &&\r\n      t.isIdentifier(node.callee.property, { name: 'reject' })) {\r\n    if (node.arguments.length > 0) {\r\n      const error = generateCSharpExpression(node.arguments[0]);\r\n      return `Task.FromException(new Exception(${error}))`;\r\n    }\r\n  }\r\n\r\n  // Handle alert() → Console.WriteLine() (or custom alert implementation)\r\n  if (t.isIdentifier(node.callee, { name: 'alert' })) {\r\n    const args = node.arguments.map(arg => generateCSharpExpression(arg)).join(' + ');\r\n    return `Console.WriteLine(${args})`;\r\n  }\r\n\r\n  // Handle String(value) → value.ToString()\r\n  if (t.isIdentifier(node.callee, { name: 'String' })) {\r\n    if (node.arguments.length > 0) {\r\n      const arg = generateCSharpExpression(node.arguments[0]);\r\n      return `(${arg}).ToString()`;\r\n    }\r\n    return '\"\"';\r\n  }\r\n\r\n  // Handle Object.keys() → dictionary.Keys or reflection for objects\r\n  if (t.isMemberExpression(node.callee) &&\r\n      t.isIdentifier(node.callee.object, { name: 'Object' }) &&\r\n      t.isIdentifier(node.callee.property, { name: 'keys' })) {\r\n    if (node.arguments.length > 0) {\r\n      const obj = generateCSharpExpression(node.arguments[0]);\r\n      // For dynamic objects, cast to IDictionary and get Keys\r\n      return `((IDictionary<string, object>)${obj}).Keys`;\r\n    }\r\n  }\r\n\r\n  // Handle Date.now() → DateTimeOffset.Now.ToUnixTimeMilliseconds()\r\n  if (t.isMemberExpression(node.callee) &&\r\n      t.isIdentifier(node.callee.object, { name: 'Date' }) &&\r\n      t.isIdentifier(node.callee.property, { name: 'now' })) {\r\n    return 'DateTimeOffset.Now.ToUnixTimeMilliseconds()';\r\n  }\r\n\r\n  // Handle console.log → Console.WriteLine\r\n  if (t.isMemberExpression(node.callee) &&\r\n      t.isIdentifier(node.callee.object, { name: 'console' }) &&\r\n      t.isIdentifier(node.callee.property, { name: 'log' })) {\r\n    const args = node.arguments.map(arg => generateCSharpExpression(arg)).join(' + ');\r\n    return `Console.WriteLine(${args})`;\r\n  }\r\n\r\n  // Handle response.json() → response.Content.ReadFromJsonAsync<dynamic>()\r\n  if (t.isMemberExpression(node.callee) && t.isIdentifier(node.callee.property, { name: 'json' })) {\r\n    const object = generateCSharpExpression(node.callee.object);\r\n    return `${object}.Content.ReadFromJsonAsync<dynamic>()`;\r\n  }\r\n\r\n  // Handle .toFixed(n) → .ToString(\"Fn\")\r\n  if (t.isMemberExpression(node.callee) && t.isIdentifier(node.callee.property, { name: 'toFixed' })) {\r\n    let object = generateCSharpExpression(node.callee.object);\r\n\r\n    // Preserve parentheses for complex expressions (binary operations, conditionals, etc.)\r\n    // This ensures operator precedence is maintained: (price * quantity).toFixed(2) → (price * quantity).ToString(\"F2\")\r\n    if (t.isBinaryExpression(node.callee.object) ||\r\n        t.isLogicalExpression(node.callee.object) ||\r\n        t.isConditionalExpression(node.callee.object) ||\r\n        t.isCallExpression(node.callee.object)) {\r\n      object = `(${object})`;\r\n    }\r\n\r\n    const decimals = node.arguments.length > 0 && t.isNumericLiteral(node.arguments[0])\r\n      ? node.arguments[0].value\r\n      : 2;\r\n    return `${object}.ToString(\"F${decimals}\")`;\r\n  }\r\n\r\n  // Handle .toLocaleString() → .ToString(\"g\") (DateTime)\r\n  if (t.isMemberExpression(node.callee) && t.isIdentifier(node.callee.property, { name: 'toLocaleString' })) {\r\n    const object = generateCSharpExpression(node.callee.object);\r\n    return `${object}.ToString(\"g\")`;\r\n  }\r\n\r\n  // Handle .toLowerCase() → .ToLower()\r\n  if (t.isMemberExpression(node.callee) && t.isIdentifier(node.callee.property, { name: 'toLowerCase' })) {\r\n    const object = generateCSharpExpression(node.callee.object);\r\n    return `${object}.ToLower()`;\r\n  }\r\n\r\n  // Handle .toUpperCase() → .ToUpper()\r\n  if (t.isMemberExpression(node.callee) && t.isIdentifier(node.callee.property, { name: 'toUpperCase' })) {\r\n    const object = generateCSharpExpression(node.callee.object);\r\n    return `${object}.ToUpper()`;\r\n  }\r\n\r\n  // Handle .trim() → .Trim()\r\n  if (t.isMemberExpression(node.callee) && t.isIdentifier(node.callee.property, { name: 'trim' })) {\r\n    const object = generateCSharpExpression(node.callee.object);\r\n    return `${object}.Trim()`;\r\n  }\r\n\r\n  // Handle .substring(start, end) → .Substring(start, end)\r\n  if (t.isMemberExpression(node.callee) && t.isIdentifier(node.callee.property, { name: 'substring' })) {\r\n    const object = generateCSharpExpression(node.callee.object);\r\n    const args = node.arguments.map(arg => generateCSharpExpression(arg)).join(', ');\r\n    return `${object}.Substring(${args})`;\r\n  }\r\n\r\n  // Handle .padStart(length, char) → .PadLeft(length, char)\r\n  if (t.isMemberExpression(node.callee) && t.isIdentifier(node.callee.property, { name: 'padStart' })) {\r\n    const object = generateCSharpExpression(node.callee.object);\r\n    const length = node.arguments[0] ? generateCSharpExpression(node.arguments[0]) : '0';\r\n    let padChar = node.arguments[1] ? generateCSharpExpression(node.arguments[1]) : '\" \"';\r\n\r\n    // Convert string literal \"0\" to char literal '0'\r\n    if (t.isStringLiteral(node.arguments[1]) && node.arguments[1].value.length === 1) {\r\n      padChar = `'${node.arguments[1].value}'`;\r\n    }\r\n\r\n    return `${object}.PadLeft(${length}, ${padChar})`;\r\n  }\r\n\r\n  // Handle .padEnd(length, char) → .PadRight(length, char)\r\n  if (t.isMemberExpression(node.callee) && t.isIdentifier(node.callee.property, { name: 'padEnd' })) {\r\n    const object = generateCSharpExpression(node.callee.object);\r\n    const length = node.arguments[0] ? generateCSharpExpression(node.arguments[0]) : '0';\r\n    let padChar = node.arguments[1] ? generateCSharpExpression(node.arguments[1]) : '\" \"';\r\n\r\n    // Convert string literal \"0\" to char literal '0'\r\n    if (t.isStringLiteral(node.arguments[1]) && node.arguments[1].value.length === 1) {\r\n      padChar = `'${node.arguments[1].value}'`;\r\n    }\r\n\r\n    return `${object}.PadRight(${length}, ${padChar})`;\r\n  }\r\n\r\n  // Handle useState/useClientState setters → SetState calls\r\n  if (t.isIdentifier(node.callee) && currentComponent) {\r\n    const setterName = node.callee.name;\r\n\r\n    // Check if this is a useState setter\r\n    const useState = [...(currentComponent.useState || []), ...(currentComponent.useClientState || [])]\r\n      .find(state => state.setter === setterName);\r\n\r\n    if (useState && node.arguments.length > 0) {\r\n      const newValue = generateCSharpExpression(node.arguments[0]);\r\n      return `SetState(nameof(${useState.name}), ${newValue})`;\r\n    }\r\n  }\r\n\r\n  // Handle .map() → .Select()\r\n  if (t.isMemberExpression(node.callee) && t.isIdentifier(node.callee.property, { name: 'map' })) {\r\n    const object = generateCSharpExpression(node.callee.object);\r\n    if (node.arguments.length > 0) {\r\n      const callback = node.arguments[0];\r\n      if (t.isArrowFunctionExpression(callback)) {\r\n        const paramNames = callback.params.map(p => p.name);\r\n        // C# requires parentheses for 0 or 2+ parameters\r\n        const params = paramNames.length === 1\r\n          ? paramNames[0]\r\n          : `(${paramNames.join(', ')})`;\r\n\r\n        // Handle JSX in arrow function body\r\n        let body;\r\n        if (t.isBlockStatement(callback.body)) {\r\n          body = `{ ${callback.body.body.map(stmt => generateCSharpStatement(stmt)).join(' ')} }`;\r\n        } else if (t.isJSXElement(callback.body) || t.isJSXFragment(callback.body)) {\r\n          // JSX element - use generateJSXElement with currentComponent context\r\n          // Store map context for event handler closure capture\r\n          // For nested maps, we need to ACCUMULATE params, not replace them\r\n          const previousMapContext = currentComponent ? currentComponent.currentMapContext : null;\r\n          const previousParams = previousMapContext ? previousMapContext.params : [];\r\n          if (currentComponent) {\r\n            // Combine previous params with current params for nested map support\r\n            currentComponent.currentMapContext = { params: [...previousParams, ...paramNames] };\r\n          }\r\n          body = generateJSXElement(callback.body, currentComponent, 0);\r\n          // Restore previous context\r\n          if (currentComponent) {\r\n            currentComponent.currentMapContext = previousMapContext;\r\n          }\r\n        } else {\r\n          body = generateCSharpExpression(callback.body);\r\n        }\r\n\r\n        // Cast to IEnumerable<dynamic> if we detect dynamic access\r\n        // Check for optional chaining or property access (likely dynamic)\r\n        const needsCast = object.includes('?.') || object.includes('?') || object.includes('.');\r\n        const castedObject = needsCast ? `((IEnumerable<dynamic>)${object})` : object;\r\n\r\n        // If the object needs casting (is dynamic), we also need to cast the lambda\r\n        // to prevent CS1977: \"Cannot use a lambda expression as an argument to a dynamically dispatched operation\"\r\n        const lambdaExpr = `${params} => ${body}`;\r\n        const castedLambda = needsCast ? `(Func<dynamic, dynamic>)(${lambdaExpr})` : lambdaExpr;\r\n\r\n        return `${castedObject}.Select(${castedLambda}).ToList()`;\r\n      }\r\n    }\r\n  }\r\n\r\n  // Generic function call\r\n  const callee = generateCSharpExpression(node.callee);\r\n  const args = node.arguments.map(arg => generateCSharpExpression(arg)).join(', ');\r\n  return `${callee}(${args})`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "bd4c5849",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(node.callee) &&\r\n      t.isIdentifier(node.callee.object, { name: 'Math' }) &&\r\n      t.isIdentifier(node.callee.property, { name: 'max' })",
+      "babel_source": "if (t.isMemberExpression(node.callee) &&\r\n      t.isIdentifier(node.callee.object, { name: 'Math' }) &&\r\n      t.isIdentifier(node.callee.property, { name: 'max' })) {\r\n    const args = node.arguments.map(arg => generateCSharpExpression(arg)).join(', ');\r\n    return `Math.Max(${args})`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a3c66433",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isMemberExpression(node.callee) &&\r\n      t.isIdentifier(node.callee.object, { name: 'Math' }) &&\r\n      t.isIdentifier(node.callee.property, { name: 'max' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d04cc290",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isMemberExpression(node.callee) &&\r\n      t.isIdentifier(node.callee.object, { name: 'Math' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ec7eca4e",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(node.callee)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d7860666",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee.object, { name: 'Math' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "721c7d25",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'Math' }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fbbbe655",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee.property, { name: 'max' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b85ba7bf",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'max' }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8a5de54b",
+      "type": "VariableDeclaration",
+      "babel_source": "const args = node.arguments.map(arg => generateCSharpExpression(arg)).join(', ');",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "38737e30",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "arg => generateCSharpExpression(arg)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f3ab3707",
+      "type": "ReturnStatement",
+      "babel_source": "return `Math.Max(${args})`;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "314a1fb3",
+      "type": "TemplateLiteral",
+      "babel_source": "`Math.Max(${args})`",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "354189f5",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(node.callee) &&\r\n      t.isIdentifier(node.callee.object, { name: 'Math' }) &&\r\n      t.isIdentifier(node.callee.property, { name: 'min' })",
+      "babel_source": "if (t.isMemberExpression(node.callee) &&\r\n      t.isIdentifier(node.callee.object, { name: 'Math' }) &&\r\n      t.isIdentifier(node.callee.property, { name: 'min' })) {\r\n    const args = node.arguments.map(arg => generateCSharpExpression(arg)).join(', ');\r\n    return `Math.Min(${args})`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e1f7bb9a",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isMemberExpression(node.callee) &&\r\n      t.isIdentifier(node.callee.object, { name: 'Math' }) &&\r\n      t.isIdentifier(node.callee.property, { name: 'min' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d04cc290",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isMemberExpression(node.callee) &&\r\n      t.isIdentifier(node.callee.object, { name: 'Math' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ec7eca4e",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(node.callee)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d7860666",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee.object, { name: 'Math' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "721c7d25",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'Math' }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "17973380",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee.property, { name: 'min' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5dc07de0",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'min' }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8a5de54b",
+      "type": "VariableDeclaration",
+      "babel_source": "const args = node.arguments.map(arg => generateCSharpExpression(arg)).join(', ');",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "38737e30",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "arg => generateCSharpExpression(arg)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "be433fca",
+      "type": "ReturnStatement",
+      "babel_source": "return `Math.Min(${args})`;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ade87b07",
+      "type": "TemplateLiteral",
+      "babel_source": "`Math.Min(${args})`",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0b2cafd0",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(node.callee) &&\r\n      t.isIdentifier(node.callee.object, { name: 'Math' })",
+      "babel_source": "if (t.isMemberExpression(node.callee) &&\r\n      t.isIdentifier(node.callee.object, { name: 'Math' })) {\r\n    const methodName = node.callee.property.name;\r\n    const pascalMethodName = methodName.charAt(0).toUpperCase() + methodName.slice(1);\r\n    const args = node.arguments.map(arg => generateCSharpExpression(arg)).join(', ');\r\n\r\n    // Cast floor/ceil/round to int for array indexing compatibility\r\n    if (methodName === 'floor' || methodName === 'ceil' || methodName === 'round') {\r\n      return `(int)Math.${pascalMethodName}(${args})`;\r\n    }\r\n\r\n    return `Math.${pascalMethodName}(${args})`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d04cc290",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isMemberExpression(node.callee) &&\r\n      t.isIdentifier(node.callee.object, { name: 'Math' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ec7eca4e",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(node.callee)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d7860666",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee.object, { name: 'Math' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "721c7d25",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'Math' }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "36e8b992",
+      "type": "VariableDeclaration",
+      "babel_source": "const methodName = node.callee.property.name;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c29fa654",
+      "type": "VariableDeclaration",
+      "babel_source": "const pascalMethodName = methodName.charAt(0).toUpperCase() + methodName.slice(1);",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a0d4aeeb",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "methodName.charAt(0).toUpperCase() + methodName.slice(1)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8a5de54b",
+      "type": "VariableDeclaration",
+      "babel_source": "const args = node.arguments.map(arg => generateCSharpExpression(arg)).join(', ');",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "38737e30",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "arg => generateCSharpExpression(arg)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "97e5c689",
+      "type": "IfStatement",
+      "condition": "methodName === 'floor' || methodName === 'ceil' || methodName === 'round'",
+      "babel_source": "if (methodName === 'floor' || methodName === 'ceil' || methodName === 'round') {\r\n      return `(int)Math.${pascalMethodName}(${args})`;\r\n    }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "680806c7",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "methodName === 'floor' || methodName === 'ceil' || methodName === 'round'",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9dcfe074",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "methodName === 'floor' || methodName === 'ceil'",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "99e6f873",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "methodName === 'floor'",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fcc2e17d",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "methodName === 'ceil'",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b83b1861",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "methodName === 'round'",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab8d0f4e",
+      "type": "ReturnStatement",
+      "babel_source": "return `(int)Math.${pascalMethodName}(${args})`;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2540f9bf",
+      "type": "TemplateLiteral",
+      "babel_source": "`(int)Math.${pascalMethodName}(${args})`",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a7447008",
+      "type": "ReturnStatement",
+      "babel_source": "return `Math.${pascalMethodName}(${args})`;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f9eb9082",
+      "type": "TemplateLiteral",
+      "babel_source": "`Math.${pascalMethodName}(${args})`",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ca796abe",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(node.callee, { name: 'encodeURIComponent' })",
+      "babel_source": "if (t.isIdentifier(node.callee, { name: 'encodeURIComponent' })) {\r\n    const args = node.arguments.map(arg => generateCSharpExpression(arg)).join(', ');\r\n    return `Uri.EscapeDataString(${args})`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bdb7706b",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee, { name: 'encodeURIComponent' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8b12141e",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'encodeURIComponent' }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8a5de54b",
+      "type": "VariableDeclaration",
+      "babel_source": "const args = node.arguments.map(arg => generateCSharpExpression(arg)).join(', ');",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "38737e30",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "arg => generateCSharpExpression(arg)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5c6c7cbb",
+      "type": "ReturnStatement",
+      "babel_source": "return `Uri.EscapeDataString(${args})`;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "00cc22f7",
+      "type": "TemplateLiteral",
+      "babel_source": "`Uri.EscapeDataString(${args})`",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c540443a",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(node.callee, { name: 'setState' })",
+      "babel_source": "if (t.isIdentifier(node.callee, { name: 'setState' })) {\r\n    if (node.arguments.length >= 2) {\r\n      const key = generateCSharpExpression(node.arguments[0]);\r\n      const value = generateCSharpExpression(node.arguments[1]);\r\n      return `SetState(${key}, ${value})`;\r\n    } else {\r\n      console.warn('[Babel Plugin] setState requires 2 arguments (key, value)');\r\n      return `SetState(\"\", null)`;\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a2c62c43",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee, { name: 'setState' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42cd6039",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'setState' }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "072e771e",
+      "type": "IfStatement",
+      "condition": "node.arguments.length >= 2",
+      "babel_source": "if (node.arguments.length >= 2) {\r\n      const key = generateCSharpExpression(node.arguments[0]);\r\n      const value = generateCSharpExpression(node.arguments[1]);\r\n      return `SetState(${key}, ${value})`;\r\n    } else {\r\n      console.warn('[Babel Plugin] setState requires 2 arguments (key, value)');\r\n      return `SetState(\"\", null)`;\r\n    }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "398521da",
+      "type": "BinaryExpression",
+      "operator": ">=",
+      "babel_source": "node.arguments.length >= 2",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3a426b97",
+      "type": "VariableDeclaration",
+      "babel_source": "const key = generateCSharpExpression(node.arguments[0]);",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2178a6fa",
+      "type": "VariableDeclaration",
+      "babel_source": "const value = generateCSharpExpression(node.arguments[1]);",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2a2d0892",
+      "type": "ReturnStatement",
+      "babel_source": "return `SetState(${key}, ${value})`;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d3b06d0e",
+      "type": "TemplateLiteral",
+      "babel_source": "`SetState(${key}, ${value})`",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "15aa981a",
+      "type": "ReturnStatement",
+      "babel_source": "return `SetState(\"\", null)`;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "190b4eb4",
+      "type": "TemplateLiteral",
+      "babel_source": "`SetState(\"\", null)`",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "12a19e33",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(node.callee, { name: 'fetch' })",
+      "babel_source": "if (t.isIdentifier(node.callee, { name: 'fetch' })) {\r\n    const url = node.arguments.length > 0 ? generateCSharpExpression(node.arguments[0]) : '\"\"';\r\n    // Return HttpResponseMessage (await is handled by caller)\r\n    return `new HttpClient().GetAsync(${url})`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e74b1786",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee, { name: 'fetch' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ac64b48a",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'fetch' }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "251ca8f4",
+      "type": "VariableDeclaration",
+      "babel_source": "const url = node.arguments.length > 0 ? generateCSharpExpression(node.arguments[0]) : '\"\"';",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bfc598fa",
+      "type": "ConditionalExpression",
+      "babel_source": "node.arguments.length > 0 ? generateCSharpExpression(node.arguments[0]) : '\"\"'",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e786d65e",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "node.arguments.length > 0",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "44bdd90c",
+      "type": "ReturnStatement",
+      "babel_source": "return `new HttpClient().GetAsync(${url})`;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2d782a7f",
+      "type": "TemplateLiteral",
+      "babel_source": "`new HttpClient().GetAsync(${url})`",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "62283dce",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(node.callee) &&\r\n      t.isIdentifier(node.callee.object, { name: 'Promise' }) &&\r\n      t.isIdentifier(node.callee.property, { name: 'resolve' })",
+      "babel_source": "if (t.isMemberExpression(node.callee) &&\r\n      t.isIdentifier(node.callee.object, { name: 'Promise' }) &&\r\n      t.isIdentifier(node.callee.property, { name: 'resolve' })) {\r\n    if (node.arguments.length > 0) {\r\n      const value = generateCSharpExpression(node.arguments[0]);\r\n      return `Task.FromResult(${value})`;\r\n    }\r\n    return `Task.CompletedTask`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "68af39a5",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isMemberExpression(node.callee) &&\r\n      t.isIdentifier(node.callee.object, { name: 'Promise' }) &&\r\n      t.isIdentifier(node.callee.property, { name: 'resolve' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a6aa1314",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isMemberExpression(node.callee) &&\r\n      t.isIdentifier(node.callee.object, { name: 'Promise' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ec7eca4e",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(node.callee)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0d9915a8",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee.object, { name: 'Promise' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c6409ebd",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'Promise' }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a740d8e1",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee.property, { name: 'resolve' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fc17a34c",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'resolve' }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cfc502ab",
+      "type": "IfStatement",
+      "condition": "node.arguments.length > 0",
+      "babel_source": "if (node.arguments.length > 0) {\r\n      const value = generateCSharpExpression(node.arguments[0]);\r\n      return `Task.FromResult(${value})`;\r\n    }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e786d65e",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "node.arguments.length > 0",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e1c72b87",
+      "type": "VariableDeclaration",
+      "babel_source": "const value = generateCSharpExpression(node.arguments[0]);",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b48deb2c",
+      "type": "ReturnStatement",
+      "babel_source": "return `Task.FromResult(${value})`;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e6e04d2a",
+      "type": "TemplateLiteral",
+      "babel_source": "`Task.FromResult(${value})`",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e27ceb10",
+      "type": "ReturnStatement",
+      "babel_source": "return `Task.CompletedTask`;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "75bacffe",
+      "type": "TemplateLiteral",
+      "babel_source": "`Task.CompletedTask`",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a947bd0a",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(node.callee) &&\r\n      t.isIdentifier(node.callee.object, { name: 'Promise' }) &&\r\n      t.isIdentifier(node.callee.property, { name: 'reject' })",
+      "babel_source": "if (t.isMemberExpression(node.callee) &&\r\n      t.isIdentifier(node.callee.object, { name: 'Promise' }) &&\r\n      t.isIdentifier(node.callee.property, { name: 'reject' })) {\r\n    if (node.arguments.length > 0) {\r\n      const error = generateCSharpExpression(node.arguments[0]);\r\n      return `Task.FromException(new Exception(${error}))`;\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a4433644",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isMemberExpression(node.callee) &&\r\n      t.isIdentifier(node.callee.object, { name: 'Promise' }) &&\r\n      t.isIdentifier(node.callee.property, { name: 'reject' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a6aa1314",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isMemberExpression(node.callee) &&\r\n      t.isIdentifier(node.callee.object, { name: 'Promise' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ec7eca4e",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(node.callee)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0d9915a8",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee.object, { name: 'Promise' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c6409ebd",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'Promise' }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7897ed7b",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee.property, { name: 'reject' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ad2788a3",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'reject' }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "49a093e5",
+      "type": "IfStatement",
+      "condition": "node.arguments.length > 0",
+      "babel_source": "if (node.arguments.length > 0) {\r\n      const error = generateCSharpExpression(node.arguments[0]);\r\n      return `Task.FromException(new Exception(${error}))`;\r\n    }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e786d65e",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "node.arguments.length > 0",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4e2bc815",
+      "type": "VariableDeclaration",
+      "babel_source": "const error = generateCSharpExpression(node.arguments[0]);",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "290188f8",
+      "type": "ReturnStatement",
+      "babel_source": "return `Task.FromException(new Exception(${error}))`;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "61b16429",
+      "type": "TemplateLiteral",
+      "babel_source": "`Task.FromException(new Exception(${error}))`",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9dd4b059",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(node.callee, { name: 'alert' })",
+      "babel_source": "if (t.isIdentifier(node.callee, { name: 'alert' })) {\r\n    const args = node.arguments.map(arg => generateCSharpExpression(arg)).join(' + ');\r\n    return `Console.WriteLine(${args})`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3775ba8b",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee, { name: 'alert' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7fe05178",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'alert' }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "67d3010f",
+      "type": "VariableDeclaration",
+      "babel_source": "const args = node.arguments.map(arg => generateCSharpExpression(arg)).join(' + ');",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "38737e30",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "arg => generateCSharpExpression(arg)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9a9fa93f",
+      "type": "ReturnStatement",
+      "babel_source": "return `Console.WriteLine(${args})`;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "97fc31c3",
+      "type": "TemplateLiteral",
+      "babel_source": "`Console.WriteLine(${args})`",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cdcdae60",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(node.callee, { name: 'String' })",
+      "babel_source": "if (t.isIdentifier(node.callee, { name: 'String' })) {\r\n    if (node.arguments.length > 0) {\r\n      const arg = generateCSharpExpression(node.arguments[0]);\r\n      return `(${arg}).ToString()`;\r\n    }\r\n    return '\"\"';\r\n  }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "54345581",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee, { name: 'String' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e51e2a9f",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'String' }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "18279f91",
+      "type": "IfStatement",
+      "condition": "node.arguments.length > 0",
+      "babel_source": "if (node.arguments.length > 0) {\r\n      const arg = generateCSharpExpression(node.arguments[0]);\r\n      return `(${arg}).ToString()`;\r\n    }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e786d65e",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "node.arguments.length > 0",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ea615a50",
+      "type": "VariableDeclaration",
+      "babel_source": "const arg = generateCSharpExpression(node.arguments[0]);",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6d495157",
+      "type": "ReturnStatement",
+      "babel_source": "return `(${arg}).ToString()`;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "678b0971",
+      "type": "TemplateLiteral",
+      "babel_source": "`(${arg}).ToString()`",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "248880b6",
+      "type": "ReturnStatement",
+      "babel_source": "return '\"\"';",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "48ef1496",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(node.callee) &&\r\n      t.isIdentifier(node.callee.object, { name: 'Object' }) &&\r\n      t.isIdentifier(node.callee.property, { name: 'keys' })",
+      "babel_source": "if (t.isMemberExpression(node.callee) &&\r\n      t.isIdentifier(node.callee.object, { name: 'Object' }) &&\r\n      t.isIdentifier(node.callee.property, { name: 'keys' })) {\r\n    if (node.arguments.length > 0) {\r\n      const obj = generateCSharpExpression(node.arguments[0]);\r\n      // For dynamic objects, cast to IDictionary and get Keys\r\n      return `((IDictionary<string, object>)${obj}).Keys`;\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5f3c8281",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isMemberExpression(node.callee) &&\r\n      t.isIdentifier(node.callee.object, { name: 'Object' }) &&\r\n      t.isIdentifier(node.callee.property, { name: 'keys' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e3b4e204",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isMemberExpression(node.callee) &&\r\n      t.isIdentifier(node.callee.object, { name: 'Object' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ec7eca4e",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(node.callee)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7aef0468",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee.object, { name: 'Object' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "293a7b89",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'Object' }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "75dbece8",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee.property, { name: 'keys' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a2591de2",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'keys' }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "62042afa",
+      "type": "IfStatement",
+      "condition": "node.arguments.length > 0",
+      "babel_source": "if (node.arguments.length > 0) {\r\n      const obj = generateCSharpExpression(node.arguments[0]);\r\n      // For dynamic objects, cast to IDictionary and get Keys\r\n      return `((IDictionary<string, object>)${obj}).Keys`;\r\n    }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e786d65e",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "node.arguments.length > 0",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bf73c6e6",
+      "type": "VariableDeclaration",
+      "babel_source": "const obj = generateCSharpExpression(node.arguments[0]);",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a25a8fb8",
+      "type": "ReturnStatement",
+      "babel_source": "return `((IDictionary<string, object>)${obj}).Keys`;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "80cedb5d",
+      "type": "TemplateLiteral",
+      "babel_source": "`((IDictionary<string, object>)${obj}).Keys`",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ef8fe539",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(node.callee) &&\r\n      t.isIdentifier(node.callee.object, { name: 'Date' }) &&\r\n      t.isIdentifier(node.callee.property, { name: 'now' })",
+      "babel_source": "if (t.isMemberExpression(node.callee) &&\r\n      t.isIdentifier(node.callee.object, { name: 'Date' }) &&\r\n      t.isIdentifier(node.callee.property, { name: 'now' })) {\r\n    return 'DateTimeOffset.Now.ToUnixTimeMilliseconds()';\r\n  }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cdd31e6a",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isMemberExpression(node.callee) &&\r\n      t.isIdentifier(node.callee.object, { name: 'Date' }) &&\r\n      t.isIdentifier(node.callee.property, { name: 'now' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f30387c4",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isMemberExpression(node.callee) &&\r\n      t.isIdentifier(node.callee.object, { name: 'Date' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ec7eca4e",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(node.callee)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9dd21249",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee.object, { name: 'Date' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "314fe5f2",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'Date' }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "49d51678",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee.property, { name: 'now' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dfe50aae",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'now' }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ebdd1f95",
+      "type": "ReturnStatement",
+      "babel_source": "return 'DateTimeOffset.Now.ToUnixTimeMilliseconds()';",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8bc8b77b",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(node.callee) &&\r\n      t.isIdentifier(node.callee.object, { name: 'console' }) &&\r\n      t.isIdentifier(node.callee.property, { name: 'log' })",
+      "babel_source": "if (t.isMemberExpression(node.callee) &&\r\n      t.isIdentifier(node.callee.object, { name: 'console' }) &&\r\n      t.isIdentifier(node.callee.property, { name: 'log' })) {\r\n    const args = node.arguments.map(arg => generateCSharpExpression(arg)).join(' + ');\r\n    return `Console.WriteLine(${args})`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5464839d",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isMemberExpression(node.callee) &&\r\n      t.isIdentifier(node.callee.object, { name: 'console' }) &&\r\n      t.isIdentifier(node.callee.property, { name: 'log' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "aac74c46",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isMemberExpression(node.callee) &&\r\n      t.isIdentifier(node.callee.object, { name: 'console' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ec7eca4e",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(node.callee)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "44dc9330",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee.object, { name: 'console' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "802420a1",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'console' }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0ea551b3",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee.property, { name: 'log' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "91456a9a",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'log' }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "67d3010f",
+      "type": "VariableDeclaration",
+      "babel_source": "const args = node.arguments.map(arg => generateCSharpExpression(arg)).join(' + ');",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "38737e30",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "arg => generateCSharpExpression(arg)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9a9fa93f",
+      "type": "ReturnStatement",
+      "babel_source": "return `Console.WriteLine(${args})`;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "97fc31c3",
+      "type": "TemplateLiteral",
+      "babel_source": "`Console.WriteLine(${args})`",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a9bb9e45",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(node.callee) && t.isIdentifier(node.callee.property, { name: 'json' })",
+      "babel_source": "if (t.isMemberExpression(node.callee) && t.isIdentifier(node.callee.property, { name: 'json' })) {\r\n    const object = generateCSharpExpression(node.callee.object);\r\n    return `${object}.Content.ReadFromJsonAsync<dynamic>()`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0e7a737b",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isMemberExpression(node.callee) && t.isIdentifier(node.callee.property, { name: 'json' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ec7eca4e",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(node.callee)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e30647ca",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee.property, { name: 'json' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f7443b74",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'json' }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2ea5d72d",
+      "type": "VariableDeclaration",
+      "babel_source": "const object = generateCSharpExpression(node.callee.object);",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e11030a9",
+      "type": "ReturnStatement",
+      "babel_source": "return `${object}.Content.ReadFromJsonAsync<dynamic>()`;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5da53183",
+      "type": "TemplateLiteral",
+      "babel_source": "`${object}.Content.ReadFromJsonAsync<dynamic>()`",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "70c9b1c9",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(node.callee) && t.isIdentifier(node.callee.property, { name: 'toFixed' })",
+      "babel_source": "if (t.isMemberExpression(node.callee) && t.isIdentifier(node.callee.property, { name: 'toFixed' })) {\r\n    let object = generateCSharpExpression(node.callee.object);\r\n\r\n    // Preserve parentheses for complex expressions (binary operations, conditionals, etc.)\r\n    // This ensures operator precedence is maintained: (price * quantity).toFixed(2) → (price * quantity).ToString(\"F2\")\r\n    if (t.isBinaryExpression(node.callee.object) ||\r\n        t.isLogicalExpression(node.callee.object) ||\r\n        t.isConditionalExpression(node.callee.object) ||\r\n        t.isCallExpression(node.callee.object)) {\r\n      object = `(${object})`;\r\n    }\r\n\r\n    const decimals = node.arguments.length > 0 && t.isNumericLiteral(node.arguments[0])\r\n      ? node.arguments[0].value\r\n      : 2;\r\n    return `${object}.ToString(\"F${decimals}\")`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab7ebe1d",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isMemberExpression(node.callee) && t.isIdentifier(node.callee.property, { name: 'toFixed' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ec7eca4e",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(node.callee)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "163239e1",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee.property, { name: 'toFixed' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c0cd1937",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'toFixed' }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dc64b109",
+      "type": "VariableDeclaration",
+      "babel_source": "let object = generateCSharpExpression(node.callee.object);",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a588d78a",
+      "type": "IfStatement",
+      "condition": "t.isBinaryExpression(node.callee.object) ||\r\n        t.isLogicalExpression(node.callee.object) ||\r\n        t.isConditionalExpression(node.callee.object) ||\r\n        t.isCallExpression(node.callee.object)",
+      "babel_source": "if (t.isBinaryExpression(node.callee.object) ||\r\n        t.isLogicalExpression(node.callee.object) ||\r\n        t.isConditionalExpression(node.callee.object) ||\r\n        t.isCallExpression(node.callee.object)) {\r\n      object = `(${object})`;\r\n    }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "39b9f445",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isBinaryExpression(node.callee.object) ||\r\n        t.isLogicalExpression(node.callee.object) ||\r\n        t.isConditionalExpression(node.callee.object) ||\r\n        t.isCallExpression(node.callee.object)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8a2087f0",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isBinaryExpression(node.callee.object) ||\r\n        t.isLogicalExpression(node.callee.object) ||\r\n        t.isConditionalExpression(node.callee.object)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1973c6f6",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isBinaryExpression(node.callee.object) ||\r\n        t.isLogicalExpression(node.callee.object)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "10ad59df",
+      "type": "BabelTypeCheck",
+      "method": "isBinaryExpression",
+      "babel_source": "t.isBinaryExpression(node.callee.object)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8bd2bf9d",
+      "type": "BabelTypeCheck",
+      "method": "isLogicalExpression",
+      "babel_source": "t.isLogicalExpression(node.callee.object)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a312ff38",
+      "type": "BabelTypeCheck",
+      "method": "isConditionalExpression",
+      "babel_source": "t.isConditionalExpression(node.callee.object)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "752a1a21",
+      "type": "BabelTypeCheck",
+      "method": "isCallExpression",
+      "babel_source": "t.isCallExpression(node.callee.object)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fd426ac6",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "object = `(${object})`",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3918e805",
+      "type": "TemplateLiteral",
+      "babel_source": "`(${object})`",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7608d875",
+      "type": "VariableDeclaration",
+      "babel_source": "const decimals = node.arguments.length > 0 && t.isNumericLiteral(node.arguments[0])\r\n      ? node.arguments[0].value\r\n      : 2;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "855a642a",
+      "type": "ConditionalExpression",
+      "babel_source": "node.arguments.length > 0 && t.isNumericLiteral(node.arguments[0])\r\n      ? node.arguments[0].value\r\n      : 2",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "612d5da7",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "node.arguments.length > 0 && t.isNumericLiteral(node.arguments[0])",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e786d65e",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "node.arguments.length > 0",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4a72e5b1",
+      "type": "BabelTypeCheck",
+      "method": "isNumericLiteral",
+      "babel_source": "t.isNumericLiteral(node.arguments[0])",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ddced66f",
+      "type": "ReturnStatement",
+      "babel_source": "return `${object}.ToString(\"F${decimals}\")`;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "12db959a",
+      "type": "TemplateLiteral",
+      "babel_source": "`${object}.ToString(\"F${decimals}\")`",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f0e09d89",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(node.callee) && t.isIdentifier(node.callee.property, { name: 'toLocaleString' })",
+      "babel_source": "if (t.isMemberExpression(node.callee) && t.isIdentifier(node.callee.property, { name: 'toLocaleString' })) {\r\n    const object = generateCSharpExpression(node.callee.object);\r\n    return `${object}.ToString(\"g\")`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "50110cbf",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isMemberExpression(node.callee) && t.isIdentifier(node.callee.property, { name: 'toLocaleString' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ec7eca4e",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(node.callee)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f947c018",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee.property, { name: 'toLocaleString' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "716a8413",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'toLocaleString' }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2ea5d72d",
+      "type": "VariableDeclaration",
+      "babel_source": "const object = generateCSharpExpression(node.callee.object);",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bb703a50",
+      "type": "ReturnStatement",
+      "babel_source": "return `${object}.ToString(\"g\")`;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "55a6fd47",
+      "type": "TemplateLiteral",
+      "babel_source": "`${object}.ToString(\"g\")`",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7ae2c0b7",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(node.callee) && t.isIdentifier(node.callee.property, { name: 'toLowerCase' })",
+      "babel_source": "if (t.isMemberExpression(node.callee) && t.isIdentifier(node.callee.property, { name: 'toLowerCase' })) {\r\n    const object = generateCSharpExpression(node.callee.object);\r\n    return `${object}.ToLower()`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fd1135e8",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isMemberExpression(node.callee) && t.isIdentifier(node.callee.property, { name: 'toLowerCase' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ec7eca4e",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(node.callee)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bf00c074",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee.property, { name: 'toLowerCase' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bb4d949c",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'toLowerCase' }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2ea5d72d",
+      "type": "VariableDeclaration",
+      "babel_source": "const object = generateCSharpExpression(node.callee.object);",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bf6f8029",
+      "type": "ReturnStatement",
+      "babel_source": "return `${object}.ToLower()`;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "60cb9d93",
+      "type": "TemplateLiteral",
+      "babel_source": "`${object}.ToLower()`",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "77fbf558",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(node.callee) && t.isIdentifier(node.callee.property, { name: 'toUpperCase' })",
+      "babel_source": "if (t.isMemberExpression(node.callee) && t.isIdentifier(node.callee.property, { name: 'toUpperCase' })) {\r\n    const object = generateCSharpExpression(node.callee.object);\r\n    return `${object}.ToUpper()`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6015d9c5",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isMemberExpression(node.callee) && t.isIdentifier(node.callee.property, { name: 'toUpperCase' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ec7eca4e",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(node.callee)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a48e8eb4",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee.property, { name: 'toUpperCase' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3f4c9764",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'toUpperCase' }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2ea5d72d",
+      "type": "VariableDeclaration",
+      "babel_source": "const object = generateCSharpExpression(node.callee.object);",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b721b8d7",
+      "type": "ReturnStatement",
+      "babel_source": "return `${object}.ToUpper()`;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "70e78408",
+      "type": "TemplateLiteral",
+      "babel_source": "`${object}.ToUpper()`",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2f13ef78",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(node.callee) && t.isIdentifier(node.callee.property, { name: 'trim' })",
+      "babel_source": "if (t.isMemberExpression(node.callee) && t.isIdentifier(node.callee.property, { name: 'trim' })) {\r\n    const object = generateCSharpExpression(node.callee.object);\r\n    return `${object}.Trim()`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6f67587b",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isMemberExpression(node.callee) && t.isIdentifier(node.callee.property, { name: 'trim' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ec7eca4e",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(node.callee)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "726b8b97",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee.property, { name: 'trim' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0e540775",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'trim' }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2ea5d72d",
+      "type": "VariableDeclaration",
+      "babel_source": "const object = generateCSharpExpression(node.callee.object);",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d2e35eb7",
+      "type": "ReturnStatement",
+      "babel_source": "return `${object}.Trim()`;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "506f75de",
+      "type": "TemplateLiteral",
+      "babel_source": "`${object}.Trim()`",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1fda0164",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(node.callee) && t.isIdentifier(node.callee.property, { name: 'substring' })",
+      "babel_source": "if (t.isMemberExpression(node.callee) && t.isIdentifier(node.callee.property, { name: 'substring' })) {\r\n    const object = generateCSharpExpression(node.callee.object);\r\n    const args = node.arguments.map(arg => generateCSharpExpression(arg)).join(', ');\r\n    return `${object}.Substring(${args})`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3fd87c68",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isMemberExpression(node.callee) && t.isIdentifier(node.callee.property, { name: 'substring' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ec7eca4e",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(node.callee)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a46f8d3c",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee.property, { name: 'substring' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dd840245",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'substring' }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2ea5d72d",
+      "type": "VariableDeclaration",
+      "babel_source": "const object = generateCSharpExpression(node.callee.object);",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8a5de54b",
+      "type": "VariableDeclaration",
+      "babel_source": "const args = node.arguments.map(arg => generateCSharpExpression(arg)).join(', ');",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "38737e30",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "arg => generateCSharpExpression(arg)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "14963812",
+      "type": "ReturnStatement",
+      "babel_source": "return `${object}.Substring(${args})`;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "920d31bb",
+      "type": "TemplateLiteral",
+      "babel_source": "`${object}.Substring(${args})`",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1cd16b47",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(node.callee) && t.isIdentifier(node.callee.property, { name: 'padStart' })",
+      "babel_source": "if (t.isMemberExpression(node.callee) && t.isIdentifier(node.callee.property, { name: 'padStart' })) {\r\n    const object = generateCSharpExpression(node.callee.object);\r\n    const length = node.arguments[0] ? generateCSharpExpression(node.arguments[0]) : '0';\r\n    let padChar = node.arguments[1] ? generateCSharpExpression(node.arguments[1]) : '\" \"';\r\n\r\n    // Convert string literal \"0\" to char literal '0'\r\n    if (t.isStringLiteral(node.arguments[1]) && node.arguments[1].value.length === 1) {\r\n      padChar = `'${node.arguments[1].value}'`;\r\n    }\r\n\r\n    return `${object}.PadLeft(${length}, ${padChar})`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "53fa93c8",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isMemberExpression(node.callee) && t.isIdentifier(node.callee.property, { name: 'padStart' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ec7eca4e",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(node.callee)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "64b71418",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee.property, { name: 'padStart' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f8192167",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'padStart' }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2ea5d72d",
+      "type": "VariableDeclaration",
+      "babel_source": "const object = generateCSharpExpression(node.callee.object);",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "30773b47",
+      "type": "VariableDeclaration",
+      "babel_source": "const length = node.arguments[0] ? generateCSharpExpression(node.arguments[0]) : '0';",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f1d8a3d0",
+      "type": "ConditionalExpression",
+      "babel_source": "node.arguments[0] ? generateCSharpExpression(node.arguments[0]) : '0'",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2930a89e",
+      "type": "VariableDeclaration",
+      "babel_source": "let padChar = node.arguments[1] ? generateCSharpExpression(node.arguments[1]) : '\" \"';",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c4ce81cf",
+      "type": "ConditionalExpression",
+      "babel_source": "node.arguments[1] ? generateCSharpExpression(node.arguments[1]) : '\" \"'",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "be3ce79e",
+      "type": "IfStatement",
+      "condition": "t.isStringLiteral(node.arguments[1]) && node.arguments[1].value.length === 1",
+      "babel_source": "if (t.isStringLiteral(node.arguments[1]) && node.arguments[1].value.length === 1) {\r\n      padChar = `'${node.arguments[1].value}'`;\r\n    }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "57d91683",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isStringLiteral(node.arguments[1]) && node.arguments[1].value.length === 1",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0b776169",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(node.arguments[1])",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1ae134d3",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "node.arguments[1].value.length === 1",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f7e80491",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "padChar = `'${node.arguments[1].value}'`",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "faa513fe",
+      "type": "TemplateLiteral",
+      "babel_source": "`'${node.arguments[1].value}'`",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c9ffd6b4",
+      "type": "ReturnStatement",
+      "babel_source": "return `${object}.PadLeft(${length}, ${padChar})`;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3c93f4bf",
+      "type": "TemplateLiteral",
+      "babel_source": "`${object}.PadLeft(${length}, ${padChar})`",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "11134f14",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(node.callee) && t.isIdentifier(node.callee.property, { name: 'padEnd' })",
+      "babel_source": "if (t.isMemberExpression(node.callee) && t.isIdentifier(node.callee.property, { name: 'padEnd' })) {\r\n    const object = generateCSharpExpression(node.callee.object);\r\n    const length = node.arguments[0] ? generateCSharpExpression(node.arguments[0]) : '0';\r\n    let padChar = node.arguments[1] ? generateCSharpExpression(node.arguments[1]) : '\" \"';\r\n\r\n    // Convert string literal \"0\" to char literal '0'\r\n    if (t.isStringLiteral(node.arguments[1]) && node.arguments[1].value.length === 1) {\r\n      padChar = `'${node.arguments[1].value}'`;\r\n    }\r\n\r\n    return `${object}.PadRight(${length}, ${padChar})`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b12c89c2",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isMemberExpression(node.callee) && t.isIdentifier(node.callee.property, { name: 'padEnd' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ec7eca4e",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(node.callee)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7b8dd83d",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee.property, { name: 'padEnd' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f303b1a8",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'padEnd' }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2ea5d72d",
+      "type": "VariableDeclaration",
+      "babel_source": "const object = generateCSharpExpression(node.callee.object);",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "30773b47",
+      "type": "VariableDeclaration",
+      "babel_source": "const length = node.arguments[0] ? generateCSharpExpression(node.arguments[0]) : '0';",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f1d8a3d0",
+      "type": "ConditionalExpression",
+      "babel_source": "node.arguments[0] ? generateCSharpExpression(node.arguments[0]) : '0'",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2930a89e",
+      "type": "VariableDeclaration",
+      "babel_source": "let padChar = node.arguments[1] ? generateCSharpExpression(node.arguments[1]) : '\" \"';",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c4ce81cf",
+      "type": "ConditionalExpression",
+      "babel_source": "node.arguments[1] ? generateCSharpExpression(node.arguments[1]) : '\" \"'",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "be3ce79e",
+      "type": "IfStatement",
+      "condition": "t.isStringLiteral(node.arguments[1]) && node.arguments[1].value.length === 1",
+      "babel_source": "if (t.isStringLiteral(node.arguments[1]) && node.arguments[1].value.length === 1) {\r\n      padChar = `'${node.arguments[1].value}'`;\r\n    }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "57d91683",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isStringLiteral(node.arguments[1]) && node.arguments[1].value.length === 1",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0b776169",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(node.arguments[1])",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1ae134d3",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "node.arguments[1].value.length === 1",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f7e80491",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "padChar = `'${node.arguments[1].value}'`",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "faa513fe",
+      "type": "TemplateLiteral",
+      "babel_source": "`'${node.arguments[1].value}'`",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ca63ad77",
+      "type": "ReturnStatement",
+      "babel_source": "return `${object}.PadRight(${length}, ${padChar})`;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a4723c2d",
+      "type": "TemplateLiteral",
+      "babel_source": "`${object}.PadRight(${length}, ${padChar})`",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "76b63741",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(node.callee) && currentComponent",
+      "babel_source": "if (t.isIdentifier(node.callee) && currentComponent) {\r\n    const setterName = node.callee.name;\r\n\r\n    // Check if this is a useState setter\r\n    const useState = [...(currentComponent.useState || []), ...(currentComponent.useClientState || [])]\r\n      .find(state => state.setter === setterName);\r\n\r\n    if (useState && node.arguments.length > 0) {\r\n      const newValue = generateCSharpExpression(node.arguments[0]);\r\n      return `SetState(nameof(${useState.name}), ${newValue})`;\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d1f6d33e",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isIdentifier(node.callee) && currentComponent",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "55f75a54",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "545d5ea1",
+      "type": "VariableDeclaration",
+      "babel_source": "const setterName = node.callee.name;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6d427a83",
+      "type": "VariableDeclaration",
+      "babel_source": "const useState = [...(currentComponent.useState || []), ...(currentComponent.useClientState || [])]\r\n      .find(state => state.setter === setterName);",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c8ac030a",
+      "type": "ArrayExpression",
+      "babel_source": "[...(currentComponent.useState || []), ...(currentComponent.useClientState || [])]",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5dc6ab1d",
+      "type": "SpreadElement",
+      "babel_source": "...(currentComponent.useState || [])",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cc9e6117",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "currentComponent.useState || []",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b32676b0",
+      "type": "SpreadElement",
+      "babel_source": "...(currentComponent.useClientState || [])",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "36639255",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "currentComponent.useClientState || []",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c8a4d983",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "state => state.setter === setterName",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a87bc328",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "state.setter === setterName",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "60ecba78",
+      "type": "IfStatement",
+      "condition": "useState && node.arguments.length > 0",
+      "babel_source": "if (useState && node.arguments.length > 0) {\r\n      const newValue = generateCSharpExpression(node.arguments[0]);\r\n      return `SetState(nameof(${useState.name}), ${newValue})`;\r\n    }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "049c28b1",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "useState && node.arguments.length > 0",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e786d65e",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "node.arguments.length > 0",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "678dc056",
+      "type": "VariableDeclaration",
+      "babel_source": "const newValue = generateCSharpExpression(node.arguments[0]);",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a1889d52",
+      "type": "ReturnStatement",
+      "babel_source": "return `SetState(nameof(${useState.name}), ${newValue})`;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9cd9fc63",
+      "type": "TemplateLiteral",
+      "babel_source": "`SetState(nameof(${useState.name}), ${newValue})`",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f81e1fe6",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(node.callee) && t.isIdentifier(node.callee.property, { name: 'map' })",
+      "babel_source": "if (t.isMemberExpression(node.callee) && t.isIdentifier(node.callee.property, { name: 'map' })) {\r\n    const object = generateCSharpExpression(node.callee.object);\r\n    if (node.arguments.length > 0) {\r\n      const callback = node.arguments[0];\r\n      if (t.isArrowFunctionExpression(callback)) {\r\n        const paramNames = callback.params.map(p => p.name);\r\n        // C# requires parentheses for 0 or 2+ parameters\r\n        const params = paramNames.length === 1\r\n          ? paramNames[0]\r\n          : `(${paramNames.join(', ')})`;\r\n\r\n        // Handle JSX in arrow function body\r\n        let body;\r\n        if (t.isBlockStatement(callback.body)) {\r\n          body = `{ ${callback.body.body.map(stmt => generateCSharpStatement(stmt)).join(' ')} }`;\r\n        } else if (t.isJSXElement(callback.body) || t.isJSXFragment(callback.body)) {\r\n          // JSX element - use generateJSXElement with currentComponent context\r\n          // Store map context for event handler closure capture\r\n          // For nested maps, we need to ACCUMULATE params, not replace them\r\n          const previousMapContext = currentComponent ? currentComponent.currentMapContext : null;\r\n          const previousParams = previousMapContext ? previousMapContext.params : [];\r\n          if (currentComponent) {\r\n            // Combine previous params with current params for nested map support\r\n            currentComponent.currentMapContext = { params: [...previousParams, ...paramNames] };\r\n          }\r\n          body = generateJSXElement(callback.body, currentComponent, 0);\r\n          // Restore previous context\r\n          if (currentComponent) {\r\n            currentComponent.currentMapContext = previousMapContext;\r\n          }\r\n        } else {\r\n          body = generateCSharpExpression(callback.body);\r\n        }\r\n\r\n        // Cast to IEnumerable<dynamic> if we detect dynamic access\r\n        // Check for optional chaining or property access (likely dynamic)\r\n        const needsCast = object.includes('?.') || object.includes('?') || object.includes('.');\r\n        const castedObject = needsCast ? `((IEnumerable<dynamic>)${object})` : object;\r\n\r\n        // If the object needs casting (is dynamic), we also need to cast the lambda\r\n        // to prevent CS1977: \"Cannot use a lambda expression as an argument to a dynamically dispatched operation\"\r\n        const lambdaExpr = `${params} => ${body}`;\r\n        const castedLambda = needsCast ? `(Func<dynamic, dynamic>)(${lambdaExpr})` : lambdaExpr;\r\n\r\n        return `${castedObject}.Select(${castedLambda}).ToList()`;\r\n      }\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "40fd6630",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isMemberExpression(node.callee) && t.isIdentifier(node.callee.property, { name: 'map' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ec7eca4e",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(node.callee)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fabb4451",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee.property, { name: 'map' })",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "66886116",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'map' }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2ea5d72d",
+      "type": "VariableDeclaration",
+      "babel_source": "const object = generateCSharpExpression(node.callee.object);",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "da5e3593",
+      "type": "IfStatement",
+      "condition": "node.arguments.length > 0",
+      "babel_source": "if (node.arguments.length > 0) {\r\n      const callback = node.arguments[0];\r\n      if (t.isArrowFunctionExpression(callback)) {\r\n        const paramNames = callback.params.map(p => p.name);\r\n        // C# requires parentheses for 0 or 2+ parameters\r\n        const params = paramNames.length === 1\r\n          ? paramNames[0]\r\n          : `(${paramNames.join(', ')})`;\r\n\r\n        // Handle JSX in arrow function body\r\n        let body;\r\n        if (t.isBlockStatement(callback.body)) {\r\n          body = `{ ${callback.body.body.map(stmt => generateCSharpStatement(stmt)).join(' ')} }`;\r\n        } else if (t.isJSXElement(callback.body) || t.isJSXFragment(callback.body)) {\r\n          // JSX element - use generateJSXElement with currentComponent context\r\n          // Store map context for event handler closure capture\r\n          // For nested maps, we need to ACCUMULATE params, not replace them\r\n          const previousMapContext = currentComponent ? currentComponent.currentMapContext : null;\r\n          const previousParams = previousMapContext ? previousMapContext.params : [];\r\n          if (currentComponent) {\r\n            // Combine previous params with current params for nested map support\r\n            currentComponent.currentMapContext = { params: [...previousParams, ...paramNames] };\r\n          }\r\n          body = generateJSXElement(callback.body, currentComponent, 0);\r\n          // Restore previous context\r\n          if (currentComponent) {\r\n            currentComponent.currentMapContext = previousMapContext;\r\n          }\r\n        } else {\r\n          body = generateCSharpExpression(callback.body);\r\n        }\r\n\r\n        // Cast to IEnumerable<dynamic> if we detect dynamic access\r\n        // Check for optional chaining or property access (likely dynamic)\r\n        const needsCast = object.includes('?.') || object.includes('?') || object.includes('.');\r\n        const castedObject = needsCast ? `((IEnumerable<dynamic>)${object})` : object;\r\n\r\n        // If the object needs casting (is dynamic), we also need to cast the lambda\r\n        // to prevent CS1977: \"Cannot use a lambda expression as an argument to a dynamically dispatched operation\"\r\n        const lambdaExpr = `${params} => ${body}`;\r\n        const castedLambda = needsCast ? `(Func<dynamic, dynamic>)(${lambdaExpr})` : lambdaExpr;\r\n\r\n        return `${castedObject}.Select(${castedLambda}).ToList()`;\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e786d65e",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "node.arguments.length > 0",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "88261630",
+      "type": "VariableDeclaration",
+      "babel_source": "const callback = node.arguments[0];",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "48e25dd5",
+      "type": "IfStatement",
+      "condition": "t.isArrowFunctionExpression(callback)",
+      "babel_source": "if (t.isArrowFunctionExpression(callback)) {\r\n        const paramNames = callback.params.map(p => p.name);\r\n        // C# requires parentheses for 0 or 2+ parameters\r\n        const params = paramNames.length === 1\r\n          ? paramNames[0]\r\n          : `(${paramNames.join(', ')})`;\r\n\r\n        // Handle JSX in arrow function body\r\n        let body;\r\n        if (t.isBlockStatement(callback.body)) {\r\n          body = `{ ${callback.body.body.map(stmt => generateCSharpStatement(stmt)).join(' ')} }`;\r\n        } else if (t.isJSXElement(callback.body) || t.isJSXFragment(callback.body)) {\r\n          // JSX element - use generateJSXElement with currentComponent context\r\n          // Store map context for event handler closure capture\r\n          // For nested maps, we need to ACCUMULATE params, not replace them\r\n          const previousMapContext = currentComponent ? currentComponent.currentMapContext : null;\r\n          const previousParams = previousMapContext ? previousMapContext.params : [];\r\n          if (currentComponent) {\r\n            // Combine previous params with current params for nested map support\r\n            currentComponent.currentMapContext = { params: [...previousParams, ...paramNames] };\r\n          }\r\n          body = generateJSXElement(callback.body, currentComponent, 0);\r\n          // Restore previous context\r\n          if (currentComponent) {\r\n            currentComponent.currentMapContext = previousMapContext;\r\n          }\r\n        } else {\r\n          body = generateCSharpExpression(callback.body);\r\n        }\r\n\r\n        // Cast to IEnumerable<dynamic> if we detect dynamic access\r\n        // Check for optional chaining or property access (likely dynamic)\r\n        const needsCast = object.includes('?.') || object.includes('?') || object.includes('.');\r\n        const castedObject = needsCast ? `((IEnumerable<dynamic>)${object})` : object;\r\n\r\n        // If the object needs casting (is dynamic), we also need to cast the lambda\r\n        // to prevent CS1977: \"Cannot use a lambda expression as an argument to a dynamically dispatched operation\"\r\n        const lambdaExpr = `${params} => ${body}`;\r\n        const castedLambda = needsCast ? `(Func<dynamic, dynamic>)(${lambdaExpr})` : lambdaExpr;\r\n\r\n        return `${castedObject}.Select(${castedLambda}).ToList()`;\r\n      }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c04c3b2e",
+      "type": "BabelTypeCheck",
+      "method": "isArrowFunctionExpression",
+      "babel_source": "t.isArrowFunctionExpression(callback)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7b7aee33",
+      "type": "VariableDeclaration",
+      "babel_source": "const paramNames = callback.params.map(p => p.name);",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "722f041e",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "p => p.name",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "874eb578",
+      "type": "VariableDeclaration",
+      "babel_source": "const params = paramNames.length === 1\r\n          ? paramNames[0]\r\n          : `(${paramNames.join(', ')})`;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b93d36fd",
+      "type": "ConditionalExpression",
+      "babel_source": "paramNames.length === 1\r\n          ? paramNames[0]\r\n          : `(${paramNames.join(', ')})`",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f8481d90",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "paramNames.length === 1",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fe0c0712",
+      "type": "TemplateLiteral",
+      "babel_source": "`(${paramNames.join(', ')})`",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "df08436d",
+      "type": "VariableDeclaration",
+      "babel_source": "let body;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1a0f87ca",
+      "type": "IfStatement",
+      "condition": "t.isBlockStatement(callback.body)",
+      "babel_source": "if (t.isBlockStatement(callback.body)) {\r\n          body = `{ ${callback.body.body.map(stmt => generateCSharpStatement(stmt)).join(' ')} }`;\r\n        } else if (t.isJSXElement(callback.body) || t.isJSXFragment(callback.body)) {\r\n          // JSX element - use generateJSXElement with currentComponent context\r\n          // Store map context for event handler closure capture\r\n          // For nested maps, we need to ACCUMULATE params, not replace them\r\n          const previousMapContext = currentComponent ? currentComponent.currentMapContext : null;\r\n          const previousParams = previousMapContext ? previousMapContext.params : [];\r\n          if (currentComponent) {\r\n            // Combine previous params with current params for nested map support\r\n            currentComponent.currentMapContext = { params: [...previousParams, ...paramNames] };\r\n          }\r\n          body = generateJSXElement(callback.body, currentComponent, 0);\r\n          // Restore previous context\r\n          if (currentComponent) {\r\n            currentComponent.currentMapContext = previousMapContext;\r\n          }\r\n        } else {\r\n          body = generateCSharpExpression(callback.body);\r\n        }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9ce55016",
+      "type": "BabelTypeCheck",
+      "method": "isBlockStatement",
+      "babel_source": "t.isBlockStatement(callback.body)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7fa94722",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "body = `{ ${callback.body.body.map(stmt => generateCSharpStatement(stmt)).join(' ')} }`",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1e9f6f9b",
+      "type": "TemplateLiteral",
+      "babel_source": "`{ ${callback.body.body.map(stmt => generateCSharpStatement(stmt)).join(' ')} }`",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "351b6ebf",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "stmt => generateCSharpStatement(stmt)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "546663a7",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(callback.body) || t.isJSXFragment(callback.body)",
+      "babel_source": "if (t.isJSXElement(callback.body) || t.isJSXFragment(callback.body)) {\r\n          // JSX element - use generateJSXElement with currentComponent context\r\n          // Store map context for event handler closure capture\r\n          // For nested maps, we need to ACCUMULATE params, not replace them\r\n          const previousMapContext = currentComponent ? currentComponent.currentMapContext : null;\r\n          const previousParams = previousMapContext ? previousMapContext.params : [];\r\n          if (currentComponent) {\r\n            // Combine previous params with current params for nested map support\r\n            currentComponent.currentMapContext = { params: [...previousParams, ...paramNames] };\r\n          }\r\n          body = generateJSXElement(callback.body, currentComponent, 0);\r\n          // Restore previous context\r\n          if (currentComponent) {\r\n            currentComponent.currentMapContext = previousMapContext;\r\n          }\r\n        } else {\r\n          body = generateCSharpExpression(callback.body);\r\n        }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8686a80a",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isJSXElement(callback.body) || t.isJSXFragment(callback.body)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e74aa137",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(callback.body)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dba7e467",
+      "type": "BabelTypeCheck",
+      "method": "isJSXFragment",
+      "babel_source": "t.isJSXFragment(callback.body)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ef428401",
+      "type": "VariableDeclaration",
+      "babel_source": "const previousMapContext = currentComponent ? currentComponent.currentMapContext : null;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9a6f1474",
+      "type": "ConditionalExpression",
+      "babel_source": "currentComponent ? currentComponent.currentMapContext : null",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8ab8bc6a",
+      "type": "VariableDeclaration",
+      "babel_source": "const previousParams = previousMapContext ? previousMapContext.params : [];",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f509d3a5",
+      "type": "ConditionalExpression",
+      "babel_source": "previousMapContext ? previousMapContext.params : []",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e2fab25a",
+      "type": "IfStatement",
+      "condition": "currentComponent",
+      "babel_source": "if (currentComponent) {\r\n            // Combine previous params with current params for nested map support\r\n            currentComponent.currentMapContext = { params: [...previousParams, ...paramNames] };\r\n          }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d301e931",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "currentComponent.currentMapContext = { params: [...previousParams, ...paramNames] }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "608f51a4",
+      "type": "ObjectExpression",
+      "babel_source": "{ params: [...previousParams, ...paramNames] }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5cb2b97e",
+      "type": "ArrayExpression",
+      "babel_source": "[...previousParams, ...paramNames]",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1cd25663",
+      "type": "SpreadElement",
+      "babel_source": "...previousParams",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ebf26aa5",
+      "type": "SpreadElement",
+      "babel_source": "...paramNames",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "54ccf012",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "body = generateJSXElement(callback.body, currentComponent, 0)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d9938f32",
+      "type": "IfStatement",
+      "condition": "currentComponent",
+      "babel_source": "if (currentComponent) {\r\n            currentComponent.currentMapContext = previousMapContext;\r\n          }",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9b8360d3",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "currentComponent.currentMapContext = previousMapContext",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6a1b5377",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "body = generateCSharpExpression(callback.body)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b9e3263a",
+      "type": "VariableDeclaration",
+      "babel_source": "const needsCast = object.includes('?.') || object.includes('?') || object.includes('.');",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "28b05651",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "object.includes('?.') || object.includes('?') || object.includes('.')",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "94cc3d88",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "object.includes('?.') || object.includes('?')",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cfbb8da2",
+      "type": "VariableDeclaration",
+      "babel_source": "const castedObject = needsCast ? `((IEnumerable<dynamic>)${object})` : object;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6c92303c",
+      "type": "ConditionalExpression",
+      "babel_source": "needsCast ? `((IEnumerable<dynamic>)${object})` : object",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "56818431",
+      "type": "TemplateLiteral",
+      "babel_source": "`((IEnumerable<dynamic>)${object})`",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ebd9711c",
+      "type": "VariableDeclaration",
+      "babel_source": "const lambdaExpr = `${params} => ${body}`;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "22510f18",
+      "type": "TemplateLiteral",
+      "babel_source": "`${params} => ${body}`",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5a9a8c3f",
+      "type": "VariableDeclaration",
+      "babel_source": "const castedLambda = needsCast ? `(Func<dynamic, dynamic>)(${lambdaExpr})` : lambdaExpr;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "91080577",
+      "type": "ConditionalExpression",
+      "babel_source": "needsCast ? `(Func<dynamic, dynamic>)(${lambdaExpr})` : lambdaExpr",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d63049bb",
+      "type": "TemplateLiteral",
+      "babel_source": "`(Func<dynamic, dynamic>)(${lambdaExpr})`",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "05009192",
+      "type": "ReturnStatement",
+      "babel_source": "return `${castedObject}.Select(${castedLambda}).ToList()`;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b7b32024",
+      "type": "TemplateLiteral",
+      "babel_source": "`${castedObject}.Select(${castedLambda}).ToList()`",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8637216e",
+      "type": "VariableDeclaration",
+      "babel_source": "const callee = generateCSharpExpression(node.callee);",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8a5de54b",
+      "type": "VariableDeclaration",
+      "babel_source": "const args = node.arguments.map(arg => generateCSharpExpression(arg)).join(', ');",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "38737e30",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "arg => generateCSharpExpression(arg)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0b87ae87",
+      "type": "ReturnStatement",
+      "babel_source": "return `${callee}(${args})`;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0653ee57",
+      "type": "TemplateLiteral",
+      "babel_source": "`${callee}(${args})`",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/expressions/calls.cjs"
+  ]
+}

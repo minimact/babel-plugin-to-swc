@@ -1,0 +1,1010 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateHelperFunctions",
+  "params": [
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "lines",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateHelperFunctions(component, lines) {\r\n  // In-component helper functions\r\n  if (component.helperFunctions && component.helperFunctions.length > 0) {\r\n    for (const func of component.helperFunctions) {\r\n      // Skip custom hooks\r\n      if (func.name && func.name.startsWith('use') && func.params && func.params.length > 0) {\r\n        const firstParam = func.params[0];\r\n        if (firstParam.name === 'namespace') {\r\n          continue;\r\n        }\r\n      }\r\n\r\n      lines.push('');\r\n\r\n      const returnType = func.isAsync\r\n        ? (func.returnType === 'void' ? 'async Task' : `async Task<${func.returnType}>`)\r\n        : func.returnType;\r\n\r\n      const params = (func.params || []).map(p => `${p.type} ${p.name}`).join(', ');\r\n\r\n      lines.push(`    private ${returnType} ${func.name}(${params})`);\r\n      lines.push('    {');\r\n\r\n      if (func.body && t.isBlockStatement(func.body)) {\r\n        for (const statement of func.body.body) {\r\n          const stmtCode = generateCSharpStatement(statement, 2);\r\n          lines.push(stmtCode);\r\n        }\r\n      }\r\n\r\n      lines.push('    }');\r\n    }\r\n  }\r\n\r\n  // Top-level helper functions\r\n  if (component.topLevelHelperFunctions && component.topLevelHelperFunctions.length > 0) {\r\n    for (const helper of component.topLevelHelperFunctions) {\r\n      // Skip custom hooks\r\n      if (helper.name && helper.name.startsWith('use') && helper.node && helper.node.params && helper.node.params.length > 0) {\r\n        const firstParam = helper.node.params[0];\r\n        if (firstParam && firstParam.name === 'namespace') {\r\n          continue;\r\n        }\r\n      }\r\n\r\n      lines.push('');\r\n      lines.push(`    // Helper function: ${helper.name}`);\r\n\r\n      const func = helper.node;\r\n      const params = (func.params || []).map(p => {\r\n        let paramType = 'dynamic';\r\n        if (p.typeAnnotation && p.typeAnnotation.typeAnnotation) {\r\n          paramType = tsTypeToCSharpType(p.typeAnnotation.typeAnnotation);\r\n        }\r\n        return `${paramType} ${p.name}`;\r\n      }).join(', ');\r\n\r\n      let returnType = 'dynamic';\r\n      if (func.returnType && func.returnType.typeAnnotation) {\r\n        returnType = tsTypeToCSharpType(func.returnType.typeAnnotation);\r\n      }\r\n\r\n      lines.push(`    private static ${returnType} ${helper.name}(${params})`);\r\n      lines.push('    {');\r\n\r\n      if (t.isBlockStatement(func.body)) {\r\n        for (const statement of func.body.body) {\r\n          const csharpStmt = generateCSharpStatement(statement);\r\n          if (csharpStmt) {\r\n            lines.push(`        ${csharpStmt}`);\r\n          }\r\n        }\r\n      } else {\r\n        const csharpExpr = generateCSharpExpression(func.body);\r\n        lines.push(`        return ${csharpExpr};`);\r\n      }\r\n\r\n      lines.push('    }');\r\n    }\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "5fefafc7",
+      "type": "IfStatement",
+      "condition": "component.helperFunctions && component.helperFunctions.length > 0",
+      "babel_source": "if (component.helperFunctions && component.helperFunctions.length > 0) {\r\n    for (const func of component.helperFunctions) {\r\n      // Skip custom hooks\r\n      if (func.name && func.name.startsWith('use') && func.params && func.params.length > 0) {\r\n        const firstParam = func.params[0];\r\n        if (firstParam.name === 'namespace') {\r\n          continue;\r\n        }\r\n      }\r\n\r\n      lines.push('');\r\n\r\n      const returnType = func.isAsync\r\n        ? (func.returnType === 'void' ? 'async Task' : `async Task<${func.returnType}>`)\r\n        : func.returnType;\r\n\r\n      const params = (func.params || []).map(p => `${p.type} ${p.name}`).join(', ');\r\n\r\n      lines.push(`    private ${returnType} ${func.name}(${params})`);\r\n      lines.push('    {');\r\n\r\n      if (func.body && t.isBlockStatement(func.body)) {\r\n        for (const statement of func.body.body) {\r\n          const stmtCode = generateCSharpStatement(statement, 2);\r\n          lines.push(stmtCode);\r\n        }\r\n      }\r\n\r\n      lines.push('    }');\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "eb9c2075",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "component.helperFunctions && component.helperFunctions.length > 0",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4859c4ca",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "component.helperFunctions.length > 0",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ec22c2e3",
+      "type": "ForOfStatement",
+      "babel_source": "for (const func of component.helperFunctions) {\r\n      // Skip custom hooks\r\n      if (func.name && func.name.startsWith('use') && func.params && func.params.length > 0) {\r\n        const firstParam = func.params[0];\r\n        if (firstParam.name === 'namespace') {\r\n          continue;\r\n        }\r\n      }\r\n\r\n      lines.push('');\r\n\r\n      const returnType = func.isAsync\r\n        ? (func.returnType === 'void' ? 'async Task' : `async Task<${func.returnType}>`)\r\n        : func.returnType;\r\n\r\n      const params = (func.params || []).map(p => `${p.type} ${p.name}`).join(', ');\r\n\r\n      lines.push(`    private ${returnType} ${func.name}(${params})`);\r\n      lines.push('    {');\r\n\r\n      if (func.body && t.isBlockStatement(func.body)) {\r\n        for (const statement of func.body.body) {\r\n          const stmtCode = generateCSharpStatement(statement, 2);\r\n          lines.push(stmtCode);\r\n        }\r\n      }\r\n\r\n      lines.push('    }');\r\n    }",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f981ecfd",
+      "type": "VariableDeclaration",
+      "babel_source": "const func",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6b6ffe84",
+      "type": "IfStatement",
+      "condition": "func.name && func.name.startsWith('use') && func.params && func.params.length > 0",
+      "babel_source": "if (func.name && func.name.startsWith('use') && func.params && func.params.length > 0) {\r\n        const firstParam = func.params[0];\r\n        if (firstParam.name === 'namespace') {\r\n          continue;\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "60c27e27",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "func.name && func.name.startsWith('use') && func.params && func.params.length > 0",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "010faad0",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "func.name && func.name.startsWith('use') && func.params",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "93cfef55",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "func.name && func.name.startsWith('use')",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b4644b02",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "func.params.length > 0",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4c1d9b46",
+      "type": "VariableDeclaration",
+      "babel_source": "const firstParam = func.params[0];",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "25d432bd",
+      "type": "IfStatement",
+      "condition": "firstParam.name === 'namespace'",
+      "babel_source": "if (firstParam.name === 'namespace') {\r\n          continue;\r\n        }",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9d994100",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "firstParam.name === 'namespace'",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0bf37874",
+      "type": "ContinueStatement",
+      "babel_source": "continue;",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "63be80b5",
+      "type": "VariableDeclaration",
+      "babel_source": "const returnType = func.isAsync\r\n        ? (func.returnType === 'void' ? 'async Task' : `async Task<${func.returnType}>`)\r\n        : func.returnType;",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "388e0ca0",
+      "type": "ConditionalExpression",
+      "babel_source": "func.isAsync\r\n        ? (func.returnType === 'void' ? 'async Task' : `async Task<${func.returnType}>`)\r\n        : func.returnType",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a334ce3c",
+      "type": "ConditionalExpression",
+      "babel_source": "func.returnType === 'void' ? 'async Task' : `async Task<${func.returnType}>`",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d660bd94",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "func.returnType === 'void'",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "837416b5",
+      "type": "TemplateLiteral",
+      "babel_source": "`async Task<${func.returnType}>`",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "793c9264",
+      "type": "VariableDeclaration",
+      "babel_source": "const params = (func.params || []).map(p => `${p.type} ${p.name}`).join(', ');",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9c148a3b",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "func.params || []",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "380b9f53",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "p => `${p.type} ${p.name}`",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4629495b",
+      "type": "TemplateLiteral",
+      "babel_source": "`${p.type} ${p.name}`",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4b49626f",
+      "type": "TemplateLiteral",
+      "babel_source": "`    private ${returnType} ${func.name}(${params})`",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "894bcbf5",
+      "type": "IfStatement",
+      "condition": "func.body && t.isBlockStatement(func.body)",
+      "babel_source": "if (func.body && t.isBlockStatement(func.body)) {\r\n        for (const statement of func.body.body) {\r\n          const stmtCode = generateCSharpStatement(statement, 2);\r\n          lines.push(stmtCode);\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f517f9cf",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "func.body && t.isBlockStatement(func.body)",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "58b7c12d",
+      "type": "BabelTypeCheck",
+      "method": "isBlockStatement",
+      "babel_source": "t.isBlockStatement(func.body)",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8d896df0",
+      "type": "ForOfStatement",
+      "babel_source": "for (const statement of func.body.body) {\r\n          const stmtCode = generateCSharpStatement(statement, 2);\r\n          lines.push(stmtCode);\r\n        }",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f397d33c",
+      "type": "VariableDeclaration",
+      "babel_source": "const statement",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "602ba699",
+      "type": "VariableDeclaration",
+      "babel_source": "const stmtCode = generateCSharpStatement(statement, 2);",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1adc7a86",
+      "type": "IfStatement",
+      "condition": "component.topLevelHelperFunctions && component.topLevelHelperFunctions.length > 0",
+      "babel_source": "if (component.topLevelHelperFunctions && component.topLevelHelperFunctions.length > 0) {\r\n    for (const helper of component.topLevelHelperFunctions) {\r\n      // Skip custom hooks\r\n      if (helper.name && helper.name.startsWith('use') && helper.node && helper.node.params && helper.node.params.length > 0) {\r\n        const firstParam = helper.node.params[0];\r\n        if (firstParam && firstParam.name === 'namespace') {\r\n          continue;\r\n        }\r\n      }\r\n\r\n      lines.push('');\r\n      lines.push(`    // Helper function: ${helper.name}`);\r\n\r\n      const func = helper.node;\r\n      const params = (func.params || []).map(p => {\r\n        let paramType = 'dynamic';\r\n        if (p.typeAnnotation && p.typeAnnotation.typeAnnotation) {\r\n          paramType = tsTypeToCSharpType(p.typeAnnotation.typeAnnotation);\r\n        }\r\n        return `${paramType} ${p.name}`;\r\n      }).join(', ');\r\n\r\n      let returnType = 'dynamic';\r\n      if (func.returnType && func.returnType.typeAnnotation) {\r\n        returnType = tsTypeToCSharpType(func.returnType.typeAnnotation);\r\n      }\r\n\r\n      lines.push(`    private static ${returnType} ${helper.name}(${params})`);\r\n      lines.push('    {');\r\n\r\n      if (t.isBlockStatement(func.body)) {\r\n        for (const statement of func.body.body) {\r\n          const csharpStmt = generateCSharpStatement(statement);\r\n          if (csharpStmt) {\r\n            lines.push(`        ${csharpStmt}`);\r\n          }\r\n        }\r\n      } else {\r\n        const csharpExpr = generateCSharpExpression(func.body);\r\n        lines.push(`        return ${csharpExpr};`);\r\n      }\r\n\r\n      lines.push('    }');\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "64066bb7",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "component.topLevelHelperFunctions && component.topLevelHelperFunctions.length > 0",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ea68d21b",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "component.topLevelHelperFunctions.length > 0",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a7cd665f",
+      "type": "ForOfStatement",
+      "babel_source": "for (const helper of component.topLevelHelperFunctions) {\r\n      // Skip custom hooks\r\n      if (helper.name && helper.name.startsWith('use') && helper.node && helper.node.params && helper.node.params.length > 0) {\r\n        const firstParam = helper.node.params[0];\r\n        if (firstParam && firstParam.name === 'namespace') {\r\n          continue;\r\n        }\r\n      }\r\n\r\n      lines.push('');\r\n      lines.push(`    // Helper function: ${helper.name}`);\r\n\r\n      const func = helper.node;\r\n      const params = (func.params || []).map(p => {\r\n        let paramType = 'dynamic';\r\n        if (p.typeAnnotation && p.typeAnnotation.typeAnnotation) {\r\n          paramType = tsTypeToCSharpType(p.typeAnnotation.typeAnnotation);\r\n        }\r\n        return `${paramType} ${p.name}`;\r\n      }).join(', ');\r\n\r\n      let returnType = 'dynamic';\r\n      if (func.returnType && func.returnType.typeAnnotation) {\r\n        returnType = tsTypeToCSharpType(func.returnType.typeAnnotation);\r\n      }\r\n\r\n      lines.push(`    private static ${returnType} ${helper.name}(${params})`);\r\n      lines.push('    {');\r\n\r\n      if (t.isBlockStatement(func.body)) {\r\n        for (const statement of func.body.body) {\r\n          const csharpStmt = generateCSharpStatement(statement);\r\n          if (csharpStmt) {\r\n            lines.push(`        ${csharpStmt}`);\r\n          }\r\n        }\r\n      } else {\r\n        const csharpExpr = generateCSharpExpression(func.body);\r\n        lines.push(`        return ${csharpExpr};`);\r\n      }\r\n\r\n      lines.push('    }');\r\n    }",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c771b607",
+      "type": "VariableDeclaration",
+      "babel_source": "const helper",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c42ed2be",
+      "type": "IfStatement",
+      "condition": "helper.name && helper.name.startsWith('use') && helper.node && helper.node.params && helper.node.params.length > 0",
+      "babel_source": "if (helper.name && helper.name.startsWith('use') && helper.node && helper.node.params && helper.node.params.length > 0) {\r\n        const firstParam = helper.node.params[0];\r\n        if (firstParam && firstParam.name === 'namespace') {\r\n          continue;\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cecb97c0",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "helper.name && helper.name.startsWith('use') && helper.node && helper.node.params && helper.node.params.length > 0",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7dabc300",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "helper.name && helper.name.startsWith('use') && helper.node && helper.node.params",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "27e21539",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "helper.name && helper.name.startsWith('use') && helper.node",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e7b1e0cc",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "helper.name && helper.name.startsWith('use')",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3baa7112",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "helper.node.params.length > 0",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "52bea70b",
+      "type": "VariableDeclaration",
+      "babel_source": "const firstParam = helper.node.params[0];",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "98226485",
+      "type": "IfStatement",
+      "condition": "firstParam && firstParam.name === 'namespace'",
+      "babel_source": "if (firstParam && firstParam.name === 'namespace') {\r\n          continue;\r\n        }",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "356286e0",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "firstParam && firstParam.name === 'namespace'",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9d994100",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "firstParam.name === 'namespace'",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0bf37874",
+      "type": "ContinueStatement",
+      "babel_source": "continue;",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f24d9df6",
+      "type": "TemplateLiteral",
+      "babel_source": "`    // Helper function: ${helper.name}`",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "76553cba",
+      "type": "VariableDeclaration",
+      "babel_source": "const func = helper.node;",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b3f4d1aa",
+      "type": "VariableDeclaration",
+      "babel_source": "const params = (func.params || []).map(p => {\r\n        let paramType = 'dynamic';\r\n        if (p.typeAnnotation && p.typeAnnotation.typeAnnotation) {\r\n          paramType = tsTypeToCSharpType(p.typeAnnotation.typeAnnotation);\r\n        }\r\n        return `${paramType} ${p.name}`;\r\n      }).join(', ');",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9c148a3b",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "func.params || []",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ad46163b",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "p => {\r\n        let paramType = 'dynamic';\r\n        if (p.typeAnnotation && p.typeAnnotation.typeAnnotation) {\r\n          paramType = tsTypeToCSharpType(p.typeAnnotation.typeAnnotation);\r\n        }\r\n        return `${paramType} ${p.name}`;\r\n      }",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7d3d0986",
+      "type": "VariableDeclaration",
+      "babel_source": "let paramType = 'dynamic';",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ac4cc8ae",
+      "type": "IfStatement",
+      "condition": "p.typeAnnotation && p.typeAnnotation.typeAnnotation",
+      "babel_source": "if (p.typeAnnotation && p.typeAnnotation.typeAnnotation) {\r\n          paramType = tsTypeToCSharpType(p.typeAnnotation.typeAnnotation);\r\n        }",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "57b73d6a",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "p.typeAnnotation && p.typeAnnotation.typeAnnotation",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f5838add",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "paramType = tsTypeToCSharpType(p.typeAnnotation.typeAnnotation)",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a6a99090",
+      "type": "ReturnStatement",
+      "babel_source": "return `${paramType} ${p.name}`;",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c35c2998",
+      "type": "TemplateLiteral",
+      "babel_source": "`${paramType} ${p.name}`",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ac207d6b",
+      "type": "VariableDeclaration",
+      "babel_source": "let returnType = 'dynamic';",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2bbf5ad5",
+      "type": "IfStatement",
+      "condition": "func.returnType && func.returnType.typeAnnotation",
+      "babel_source": "if (func.returnType && func.returnType.typeAnnotation) {\r\n        returnType = tsTypeToCSharpType(func.returnType.typeAnnotation);\r\n      }",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d685fd65",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "func.returnType && func.returnType.typeAnnotation",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5d11fed8",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "returnType = tsTypeToCSharpType(func.returnType.typeAnnotation)",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1c8464e3",
+      "type": "TemplateLiteral",
+      "babel_source": "`    private static ${returnType} ${helper.name}(${params})`",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b0055fd3",
+      "type": "IfStatement",
+      "condition": "t.isBlockStatement(func.body)",
+      "babel_source": "if (t.isBlockStatement(func.body)) {\r\n        for (const statement of func.body.body) {\r\n          const csharpStmt = generateCSharpStatement(statement);\r\n          if (csharpStmt) {\r\n            lines.push(`        ${csharpStmt}`);\r\n          }\r\n        }\r\n      } else {\r\n        const csharpExpr = generateCSharpExpression(func.body);\r\n        lines.push(`        return ${csharpExpr};`);\r\n      }",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "58b7c12d",
+      "type": "BabelTypeCheck",
+      "method": "isBlockStatement",
+      "babel_source": "t.isBlockStatement(func.body)",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "603fa642",
+      "type": "ForOfStatement",
+      "babel_source": "for (const statement of func.body.body) {\r\n          const csharpStmt = generateCSharpStatement(statement);\r\n          if (csharpStmt) {\r\n            lines.push(`        ${csharpStmt}`);\r\n          }\r\n        }",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f397d33c",
+      "type": "VariableDeclaration",
+      "babel_source": "const statement",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d935ae0c",
+      "type": "VariableDeclaration",
+      "babel_source": "const csharpStmt = generateCSharpStatement(statement);",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0bc4efc0",
+      "type": "IfStatement",
+      "condition": "csharpStmt",
+      "babel_source": "if (csharpStmt) {\r\n            lines.push(`        ${csharpStmt}`);\r\n          }",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2aa03bfc",
+      "type": "TemplateLiteral",
+      "babel_source": "`        ${csharpStmt}`",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a6c6ce97",
+      "type": "VariableDeclaration",
+      "babel_source": "const csharpExpr = generateCSharpExpression(func.body);",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ece42c61",
+      "type": "TemplateLiteral",
+      "babel_source": "`        return ${csharpExpr};`",
+      "parentContext": {
+        "functionName": "generateHelperFunctions",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/component/generateMethods.cjs"
+  ]
+}

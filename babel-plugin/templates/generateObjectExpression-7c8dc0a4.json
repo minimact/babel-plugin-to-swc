@@ -1,0 +1,506 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateObjectExpression",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "generateCSharpExpression",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateObjectExpression(node, generateCSharpExpression) {\r\n  // Convert JS object literal to C# anonymous object or Dictionary\r\n  // Check if any key has hyphens (invalid for C# anonymous types)\r\n  const hasHyphenatedKeys = node.properties.some(prop => {\r\n    if (t.isObjectProperty(prop)) {\r\n      const key = t.isIdentifier(prop.key) ? prop.key.name : prop.key.value;\r\n      return typeof key === 'string' && key.includes('-');\r\n    }\r\n    return false;\r\n  });\r\n\r\n  const properties = node.properties.map(prop => {\r\n    if (t.isObjectProperty(prop)) {\r\n      const key = t.isIdentifier(prop.key) ? prop.key.name : prop.key.value;\r\n      const value = generateCSharpExpression(prop.value);\r\n\r\n      if (hasHyphenatedKeys) {\r\n        // Use Dictionary syntax with quoted keys\r\n        return `[\"${key}\"] = ${value}`;\r\n      } else {\r\n        // Use anonymous object syntax\r\n        return `${key} = ${value}`;\r\n      }\r\n    }\r\n    return '';\r\n  }).filter(p => p !== '');\r\n\r\n  if (properties.length === 0) return 'null';\r\n\r\n  if (hasHyphenatedKeys) {\r\n    return `new Dictionary<string, object> { ${properties.join(', ')} }`;\r\n  } else {\r\n    return `new { ${properties.join(', ')} }`;\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "e7b1d134",
+      "type": "VariableDeclaration",
+      "babel_source": "const hasHyphenatedKeys = node.properties.some(prop => {\r\n    if (t.isObjectProperty(prop)) {\r\n      const key = t.isIdentifier(prop.key) ? prop.key.name : prop.key.value;\r\n      return typeof key === 'string' && key.includes('-');\r\n    }\r\n    return false;\r\n  });",
+      "parentContext": {
+        "functionName": "generateObjectExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "56d245e7",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "prop => {\r\n    if (t.isObjectProperty(prop)) {\r\n      const key = t.isIdentifier(prop.key) ? prop.key.name : prop.key.value;\r\n      return typeof key === 'string' && key.includes('-');\r\n    }\r\n    return false;\r\n  }",
+      "parentContext": {
+        "functionName": "generateObjectExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2e14d6f8",
+      "type": "IfStatement",
+      "condition": "t.isObjectProperty(prop)",
+      "babel_source": "if (t.isObjectProperty(prop)) {\r\n      const key = t.isIdentifier(prop.key) ? prop.key.name : prop.key.value;\r\n      return typeof key === 'string' && key.includes('-');\r\n    }",
+      "parentContext": {
+        "functionName": "generateObjectExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d8cb3d9e",
+      "type": "BabelTypeCheck",
+      "method": "isObjectProperty",
+      "babel_source": "t.isObjectProperty(prop)",
+      "parentContext": {
+        "functionName": "generateObjectExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c94bac7f",
+      "type": "VariableDeclaration",
+      "babel_source": "const key = t.isIdentifier(prop.key) ? prop.key.name : prop.key.value;",
+      "parentContext": {
+        "functionName": "generateObjectExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "32a67b85",
+      "type": "ConditionalExpression",
+      "babel_source": "t.isIdentifier(prop.key) ? prop.key.name : prop.key.value",
+      "parentContext": {
+        "functionName": "generateObjectExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f3845e36",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(prop.key)",
+      "parentContext": {
+        "functionName": "generateObjectExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d8f8a0bc",
+      "type": "ReturnStatement",
+      "babel_source": "return typeof key === 'string' && key.includes('-');",
+      "parentContext": {
+        "functionName": "generateObjectExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "10780b30",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "typeof key === 'string' && key.includes('-')",
+      "parentContext": {
+        "functionName": "generateObjectExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6014950a",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "typeof key === 'string'",
+      "parentContext": {
+        "functionName": "generateObjectExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3afe7d16",
+      "type": "UnaryExpression",
+      "operator": "typeof",
+      "babel_source": "typeof key",
+      "parentContext": {
+        "functionName": "generateObjectExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dabbdf16",
+      "type": "ReturnStatement",
+      "babel_source": "return false;",
+      "parentContext": {
+        "functionName": "generateObjectExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2e1bf17a",
+      "type": "VariableDeclaration",
+      "babel_source": "const properties = node.properties.map(prop => {\r\n    if (t.isObjectProperty(prop)) {\r\n      const key = t.isIdentifier(prop.key) ? prop.key.name : prop.key.value;\r\n      const value = generateCSharpExpression(prop.value);\r\n\r\n      if (hasHyphenatedKeys) {\r\n        // Use Dictionary syntax with quoted keys\r\n        return `[\"${key}\"] = ${value}`;\r\n      } else {\r\n        // Use anonymous object syntax\r\n        return `${key} = ${value}`;\r\n      }\r\n    }\r\n    return '';\r\n  }).filter(p => p !== '');",
+      "parentContext": {
+        "functionName": "generateObjectExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8e32171b",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "prop => {\r\n    if (t.isObjectProperty(prop)) {\r\n      const key = t.isIdentifier(prop.key) ? prop.key.name : prop.key.value;\r\n      const value = generateCSharpExpression(prop.value);\r\n\r\n      if (hasHyphenatedKeys) {\r\n        // Use Dictionary syntax with quoted keys\r\n        return `[\"${key}\"] = ${value}`;\r\n      } else {\r\n        // Use anonymous object syntax\r\n        return `${key} = ${value}`;\r\n      }\r\n    }\r\n    return '';\r\n  }",
+      "parentContext": {
+        "functionName": "generateObjectExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9ba7ce35",
+      "type": "IfStatement",
+      "condition": "t.isObjectProperty(prop)",
+      "babel_source": "if (t.isObjectProperty(prop)) {\r\n      const key = t.isIdentifier(prop.key) ? prop.key.name : prop.key.value;\r\n      const value = generateCSharpExpression(prop.value);\r\n\r\n      if (hasHyphenatedKeys) {\r\n        // Use Dictionary syntax with quoted keys\r\n        return `[\"${key}\"] = ${value}`;\r\n      } else {\r\n        // Use anonymous object syntax\r\n        return `${key} = ${value}`;\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "generateObjectExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d8cb3d9e",
+      "type": "BabelTypeCheck",
+      "method": "isObjectProperty",
+      "babel_source": "t.isObjectProperty(prop)",
+      "parentContext": {
+        "functionName": "generateObjectExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c94bac7f",
+      "type": "VariableDeclaration",
+      "babel_source": "const key = t.isIdentifier(prop.key) ? prop.key.name : prop.key.value;",
+      "parentContext": {
+        "functionName": "generateObjectExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "32a67b85",
+      "type": "ConditionalExpression",
+      "babel_source": "t.isIdentifier(prop.key) ? prop.key.name : prop.key.value",
+      "parentContext": {
+        "functionName": "generateObjectExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f3845e36",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(prop.key)",
+      "parentContext": {
+        "functionName": "generateObjectExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6a01e930",
+      "type": "VariableDeclaration",
+      "babel_source": "const value = generateCSharpExpression(prop.value);",
+      "parentContext": {
+        "functionName": "generateObjectExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4b815f0f",
+      "type": "IfStatement",
+      "condition": "hasHyphenatedKeys",
+      "babel_source": "if (hasHyphenatedKeys) {\r\n        // Use Dictionary syntax with quoted keys\r\n        return `[\"${key}\"] = ${value}`;\r\n      } else {\r\n        // Use anonymous object syntax\r\n        return `${key} = ${value}`;\r\n      }",
+      "parentContext": {
+        "functionName": "generateObjectExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d7afbd24",
+      "type": "ReturnStatement",
+      "babel_source": "return `[\"${key}\"] = ${value}`;",
+      "parentContext": {
+        "functionName": "generateObjectExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6b887ff3",
+      "type": "TemplateLiteral",
+      "babel_source": "`[\"${key}\"] = ${value}`",
+      "parentContext": {
+        "functionName": "generateObjectExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "23b85818",
+      "type": "ReturnStatement",
+      "babel_source": "return `${key} = ${value}`;",
+      "parentContext": {
+        "functionName": "generateObjectExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ffc92247",
+      "type": "TemplateLiteral",
+      "babel_source": "`${key} = ${value}`",
+      "parentContext": {
+        "functionName": "generateObjectExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7be478c8",
+      "type": "ReturnStatement",
+      "babel_source": "return '';",
+      "parentContext": {
+        "functionName": "generateObjectExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "adef2565",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "p => p !== ''",
+      "parentContext": {
+        "functionName": "generateObjectExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f83c4dea",
+      "type": "BinaryExpression",
+      "operator": "!==",
+      "babel_source": "p !== ''",
+      "parentContext": {
+        "functionName": "generateObjectExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "be815005",
+      "type": "IfStatement",
+      "condition": "properties.length === 0",
+      "babel_source": "if (properties.length === 0) return 'null';",
+      "parentContext": {
+        "functionName": "generateObjectExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "99d3d71a",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "properties.length === 0",
+      "parentContext": {
+        "functionName": "generateObjectExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e6caf818",
+      "type": "ReturnStatement",
+      "babel_source": "return 'null';",
+      "parentContext": {
+        "functionName": "generateObjectExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cc7da3b7",
+      "type": "IfStatement",
+      "condition": "hasHyphenatedKeys",
+      "babel_source": "if (hasHyphenatedKeys) {\r\n    return `new Dictionary<string, object> { ${properties.join(', ')} }`;\r\n  } else {\r\n    return `new { ${properties.join(', ')} }`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateObjectExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c7023dbc",
+      "type": "ReturnStatement",
+      "babel_source": "return `new Dictionary<string, object> { ${properties.join(', ')} }`;",
+      "parentContext": {
+        "functionName": "generateObjectExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "23e2c976",
+      "type": "TemplateLiteral",
+      "babel_source": "`new Dictionary<string, object> { ${properties.join(', ')} }`",
+      "parentContext": {
+        "functionName": "generateObjectExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "017c25b0",
+      "type": "ReturnStatement",
+      "babel_source": "return `new { ${properties.join(', ')} }`;",
+      "parentContext": {
+        "functionName": "generateObjectExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9ef6c853",
+      "type": "TemplateLiteral",
+      "babel_source": "`new { ${properties.join(', ')} }`",
+      "parentContext": {
+        "functionName": "generateObjectExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/expressions/objects.cjs"
+  ]
+}

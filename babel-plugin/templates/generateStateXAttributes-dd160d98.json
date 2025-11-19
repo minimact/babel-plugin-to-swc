@@ -1,0 +1,455 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateStateXAttributes",
+  "params": [
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "lines",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateStateXAttributes(component, lines) {\r\n  if (component.useStateX && component.useStateX.length > 0) {\r\n    for (let i = 0; i < component.useStateX.length; i++) {\r\n      const stateX = component.useStateX[i];\r\n      const stateKey = `stateX_${i}`;\r\n\r\n      for (const target of stateX.targets) {\r\n        const parts = [];\r\n\r\n        // Required: stateKey and selector\r\n        parts.push(`\"${stateKey}\"`);\r\n        parts.push(`\"${target.selector}\"`);\r\n\r\n        // Optional: Transform (C# lambda)\r\n        if (target.transform) {\r\n          parts.push(`Transform = @\"${target.transform}\"`);\r\n        }\r\n\r\n        // Optional: TransformId (registry reference)\r\n        if (target.transformId) {\r\n          parts.push(`TransformId = \"${target.transformId}\"`);\r\n        }\r\n\r\n        // Optional: ApplyAs mode\r\n        if (target.applyAs && target.applyAs !== 'textContent') {\r\n          parts.push(`ApplyAs = \"${target.applyAs}\"`);\r\n        }\r\n\r\n        // Optional: Property name\r\n        if (target.property) {\r\n          parts.push(`Property = \"${target.property}\"`);\r\n        }\r\n\r\n        // Optional: ApplyIf condition\r\n        if (target.applyIf && target.applyIf.csharpCode) {\r\n          parts.push(`ApplyIf = @\"${target.applyIf.csharpCode}\"`);\r\n        }\r\n\r\n        // Optional: Template hint\r\n        if (target.template) {\r\n          parts.push(`Template = \"${target.template}\"`);\r\n        }\r\n\r\n        lines.push(`[StateXTransform(${parts.join(', ')})]`);\r\n      }\r\n    }\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "69118f1e",
+      "type": "IfStatement",
+      "condition": "component.useStateX && component.useStateX.length > 0",
+      "babel_source": "if (component.useStateX && component.useStateX.length > 0) {\r\n    for (let i = 0; i < component.useStateX.length; i++) {\r\n      const stateX = component.useStateX[i];\r\n      const stateKey = `stateX_${i}`;\r\n\r\n      for (const target of stateX.targets) {\r\n        const parts = [];\r\n\r\n        // Required: stateKey and selector\r\n        parts.push(`\"${stateKey}\"`);\r\n        parts.push(`\"${target.selector}\"`);\r\n\r\n        // Optional: Transform (C# lambda)\r\n        if (target.transform) {\r\n          parts.push(`Transform = @\"${target.transform}\"`);\r\n        }\r\n\r\n        // Optional: TransformId (registry reference)\r\n        if (target.transformId) {\r\n          parts.push(`TransformId = \"${target.transformId}\"`);\r\n        }\r\n\r\n        // Optional: ApplyAs mode\r\n        if (target.applyAs && target.applyAs !== 'textContent') {\r\n          parts.push(`ApplyAs = \"${target.applyAs}\"`);\r\n        }\r\n\r\n        // Optional: Property name\r\n        if (target.property) {\r\n          parts.push(`Property = \"${target.property}\"`);\r\n        }\r\n\r\n        // Optional: ApplyIf condition\r\n        if (target.applyIf && target.applyIf.csharpCode) {\r\n          parts.push(`ApplyIf = @\"${target.applyIf.csharpCode}\"`);\r\n        }\r\n\r\n        // Optional: Template hint\r\n        if (target.template) {\r\n          parts.push(`Template = \"${target.template}\"`);\r\n        }\r\n\r\n        lines.push(`[StateXTransform(${parts.join(', ')})]`);\r\n      }\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generateStateXAttributes",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4c4b118d",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "component.useStateX && component.useStateX.length > 0",
+      "parentContext": {
+        "functionName": "generateStateXAttributes",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "919060dc",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "component.useStateX.length > 0",
+      "parentContext": {
+        "functionName": "generateStateXAttributes",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ae2a3613",
+      "type": "ForStatement",
+      "babel_source": "for (let i = 0; i < component.useStateX.length; i++) {\r\n      const stateX = component.useStateX[i];\r\n      const stateKey = `stateX_${i}`;\r\n\r\n      for (const target of stateX.targets) {\r\n        const parts = [];\r\n\r\n        // Required: stateKey and selector\r\n        parts.push(`\"${stateKey}\"`);\r\n        parts.push(`\"${target.selector}\"`);\r\n\r\n        // Optional: Transform (C# lambda)\r\n        if (target.transform) {\r\n          parts.push(`Transform = @\"${target.transform}\"`);\r\n        }\r\n\r\n        // Optional: TransformId (registry reference)\r\n        if (target.transformId) {\r\n          parts.push(`TransformId = \"${target.transformId}\"`);\r\n        }\r\n\r\n        // Optional: ApplyAs mode\r\n        if (target.applyAs && target.applyAs !== 'textContent') {\r\n          parts.push(`ApplyAs = \"${target.applyAs}\"`);\r\n        }\r\n\r\n        // Optional: Property name\r\n        if (target.property) {\r\n          parts.push(`Property = \"${target.property}\"`);\r\n        }\r\n\r\n        // Optional: ApplyIf condition\r\n        if (target.applyIf && target.applyIf.csharpCode) {\r\n          parts.push(`ApplyIf = @\"${target.applyIf.csharpCode}\"`);\r\n        }\r\n\r\n        // Optional: Template hint\r\n        if (target.template) {\r\n          parts.push(`Template = \"${target.template}\"`);\r\n        }\r\n\r\n        lines.push(`[StateXTransform(${parts.join(', ')})]`);\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "generateStateXAttributes",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ecb911a1",
+      "type": "VariableDeclaration",
+      "babel_source": "let i = 0",
+      "parentContext": {
+        "functionName": "generateStateXAttributes",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dcbbe2f8",
+      "type": "BinaryExpression",
+      "operator": "<",
+      "babel_source": "i < component.useStateX.length",
+      "parentContext": {
+        "functionName": "generateStateXAttributes",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e8dee0e1",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "i++",
+      "parentContext": {
+        "functionName": "generateStateXAttributes",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "63ef8c71",
+      "type": "VariableDeclaration",
+      "babel_source": "const stateX = component.useStateX[i];",
+      "parentContext": {
+        "functionName": "generateStateXAttributes",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dffab823",
+      "type": "VariableDeclaration",
+      "babel_source": "const stateKey = `stateX_${i}`;",
+      "parentContext": {
+        "functionName": "generateStateXAttributes",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f8ec353b",
+      "type": "TemplateLiteral",
+      "babel_source": "`stateX_${i}`",
+      "parentContext": {
+        "functionName": "generateStateXAttributes",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5b2901ab",
+      "type": "ForOfStatement",
+      "babel_source": "for (const target of stateX.targets) {\r\n        const parts = [];\r\n\r\n        // Required: stateKey and selector\r\n        parts.push(`\"${stateKey}\"`);\r\n        parts.push(`\"${target.selector}\"`);\r\n\r\n        // Optional: Transform (C# lambda)\r\n        if (target.transform) {\r\n          parts.push(`Transform = @\"${target.transform}\"`);\r\n        }\r\n\r\n        // Optional: TransformId (registry reference)\r\n        if (target.transformId) {\r\n          parts.push(`TransformId = \"${target.transformId}\"`);\r\n        }\r\n\r\n        // Optional: ApplyAs mode\r\n        if (target.applyAs && target.applyAs !== 'textContent') {\r\n          parts.push(`ApplyAs = \"${target.applyAs}\"`);\r\n        }\r\n\r\n        // Optional: Property name\r\n        if (target.property) {\r\n          parts.push(`Property = \"${target.property}\"`);\r\n        }\r\n\r\n        // Optional: ApplyIf condition\r\n        if (target.applyIf && target.applyIf.csharpCode) {\r\n          parts.push(`ApplyIf = @\"${target.applyIf.csharpCode}\"`);\r\n        }\r\n\r\n        // Optional: Template hint\r\n        if (target.template) {\r\n          parts.push(`Template = \"${target.template}\"`);\r\n        }\r\n\r\n        lines.push(`[StateXTransform(${parts.join(', ')})]`);\r\n      }",
+      "parentContext": {
+        "functionName": "generateStateXAttributes",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d0f61167",
+      "type": "VariableDeclaration",
+      "babel_source": "const target",
+      "parentContext": {
+        "functionName": "generateStateXAttributes",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c4133e54",
+      "type": "VariableDeclaration",
+      "babel_source": "const parts = [];",
+      "parentContext": {
+        "functionName": "generateStateXAttributes",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "generateStateXAttributes",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e97b6b80",
+      "type": "TemplateLiteral",
+      "babel_source": "`\"${stateKey}\"`",
+      "parentContext": {
+        "functionName": "generateStateXAttributes",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c23c2712",
+      "type": "TemplateLiteral",
+      "babel_source": "`\"${target.selector}\"`",
+      "parentContext": {
+        "functionName": "generateStateXAttributes",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e50d56b6",
+      "type": "IfStatement",
+      "condition": "target.transform",
+      "babel_source": "if (target.transform) {\r\n          parts.push(`Transform = @\"${target.transform}\"`);\r\n        }",
+      "parentContext": {
+        "functionName": "generateStateXAttributes",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "36e80d4a",
+      "type": "TemplateLiteral",
+      "babel_source": "`Transform = @\"${target.transform}\"`",
+      "parentContext": {
+        "functionName": "generateStateXAttributes",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a62c8f2e",
+      "type": "IfStatement",
+      "condition": "target.transformId",
+      "babel_source": "if (target.transformId) {\r\n          parts.push(`TransformId = \"${target.transformId}\"`);\r\n        }",
+      "parentContext": {
+        "functionName": "generateStateXAttributes",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "29ba9f52",
+      "type": "TemplateLiteral",
+      "babel_source": "`TransformId = \"${target.transformId}\"`",
+      "parentContext": {
+        "functionName": "generateStateXAttributes",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "778a5d59",
+      "type": "IfStatement",
+      "condition": "target.applyAs && target.applyAs !== 'textContent'",
+      "babel_source": "if (target.applyAs && target.applyAs !== 'textContent') {\r\n          parts.push(`ApplyAs = \"${target.applyAs}\"`);\r\n        }",
+      "parentContext": {
+        "functionName": "generateStateXAttributes",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7553f093",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "target.applyAs && target.applyAs !== 'textContent'",
+      "parentContext": {
+        "functionName": "generateStateXAttributes",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4b6a0213",
+      "type": "BinaryExpression",
+      "operator": "!==",
+      "babel_source": "target.applyAs !== 'textContent'",
+      "parentContext": {
+        "functionName": "generateStateXAttributes",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "74bfc203",
+      "type": "TemplateLiteral",
+      "babel_source": "`ApplyAs = \"${target.applyAs}\"`",
+      "parentContext": {
+        "functionName": "generateStateXAttributes",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "81d639d3",
+      "type": "IfStatement",
+      "condition": "target.property",
+      "babel_source": "if (target.property) {\r\n          parts.push(`Property = \"${target.property}\"`);\r\n        }",
+      "parentContext": {
+        "functionName": "generateStateXAttributes",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9220395e",
+      "type": "TemplateLiteral",
+      "babel_source": "`Property = \"${target.property}\"`",
+      "parentContext": {
+        "functionName": "generateStateXAttributes",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8566d0ee",
+      "type": "IfStatement",
+      "condition": "target.applyIf && target.applyIf.csharpCode",
+      "babel_source": "if (target.applyIf && target.applyIf.csharpCode) {\r\n          parts.push(`ApplyIf = @\"${target.applyIf.csharpCode}\"`);\r\n        }",
+      "parentContext": {
+        "functionName": "generateStateXAttributes",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b05f520b",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "target.applyIf && target.applyIf.csharpCode",
+      "parentContext": {
+        "functionName": "generateStateXAttributes",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42fea2b4",
+      "type": "TemplateLiteral",
+      "babel_source": "`ApplyIf = @\"${target.applyIf.csharpCode}\"`",
+      "parentContext": {
+        "functionName": "generateStateXAttributes",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "05602fd2",
+      "type": "IfStatement",
+      "condition": "target.template",
+      "babel_source": "if (target.template) {\r\n          parts.push(`Template = \"${target.template}\"`);\r\n        }",
+      "parentContext": {
+        "functionName": "generateStateXAttributes",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6ad49819",
+      "type": "TemplateLiteral",
+      "babel_source": "`Template = \"${target.template}\"`",
+      "parentContext": {
+        "functionName": "generateStateXAttributes",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9aaaf21c",
+      "type": "TemplateLiteral",
+      "babel_source": "`[StateXTransform(${parts.join(', ')})]`",
+      "parentContext": {
+        "functionName": "generateStateXAttributes",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/component/generateAttributes.cjs"
+  ]
+}

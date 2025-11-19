@@ -1,0 +1,334 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateLogicalExpression",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "generateCSharpExpression",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateLogicalExpression(node, generateCSharpExpression) {\r\n  const left = generateCSharpExpression(node.left);\r\n  const right = generateCSharpExpression(node.right);\r\n\r\n  if (node.operator === '||') {\r\n    // JavaScript: a || b\r\n    // C#: a ?? b (null coalescing)\r\n    return `(${left}) ?? (${right})`;\r\n  } else if (node.operator === '&&') {\r\n    // Check if right side is a boolean expression (comparison, logical, etc.)\r\n    const rightIsBooleanExpr = t.isBinaryExpression(node.right) ||\r\n                                t.isLogicalExpression(node.right) ||\r\n                                t.isUnaryExpression(node.right);\r\n\r\n    if (rightIsBooleanExpr) {\r\n      // JavaScript: a && (b > 0)\r\n      // C#: (a) && (b > 0) - boolean AND\r\n      return `(${left}) && (${right})`;\r\n    } else {\r\n      // JavaScript: a && <jsx> or a && someValue\r\n      // C#: a != null ? value : VNull (for objects)\r\n      const nodePath = node.__minimactPath || '';\r\n      return `(${left}) != null ? (${right}) : new VNull(\"${nodePath}\")`;\r\n    }\r\n  }\r\n\r\n  return `${left} ${node.operator} ${right}`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "dd9002df",
+      "type": "VariableDeclaration",
+      "babel_source": "const left = generateCSharpExpression(node.left);",
+      "parentContext": {
+        "functionName": "generateLogicalExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7860cd21",
+      "type": "VariableDeclaration",
+      "babel_source": "const right = generateCSharpExpression(node.right);",
+      "parentContext": {
+        "functionName": "generateLogicalExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "676b5324",
+      "type": "IfStatement",
+      "condition": "node.operator === '||'",
+      "babel_source": "if (node.operator === '||') {\r\n    // JavaScript: a || b\r\n    // C#: a ?? b (null coalescing)\r\n    return `(${left}) ?? (${right})`;\r\n  } else if (node.operator === '&&') {\r\n    // Check if right side is a boolean expression (comparison, logical, etc.)\r\n    const rightIsBooleanExpr = t.isBinaryExpression(node.right) ||\r\n                                t.isLogicalExpression(node.right) ||\r\n                                t.isUnaryExpression(node.right);\r\n\r\n    if (rightIsBooleanExpr) {\r\n      // JavaScript: a && (b > 0)\r\n      // C#: (a) && (b > 0) - boolean AND\r\n      return `(${left}) && (${right})`;\r\n    } else {\r\n      // JavaScript: a && <jsx> or a && someValue\r\n      // C#: a != null ? value : VNull (for objects)\r\n      const nodePath = node.__minimactPath || '';\r\n      return `(${left}) != null ? (${right}) : new VNull(\"${nodePath}\")`;\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generateLogicalExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1050383f",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "node.operator === '||'",
+      "parentContext": {
+        "functionName": "generateLogicalExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c95b3302",
+      "type": "ReturnStatement",
+      "babel_source": "return `(${left}) ?? (${right})`;",
+      "parentContext": {
+        "functionName": "generateLogicalExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8b2619dd",
+      "type": "TemplateLiteral",
+      "babel_source": "`(${left}) ?? (${right})`",
+      "parentContext": {
+        "functionName": "generateLogicalExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e94a13c2",
+      "type": "IfStatement",
+      "condition": "node.operator === '&&'",
+      "babel_source": "if (node.operator === '&&') {\r\n    // Check if right side is a boolean expression (comparison, logical, etc.)\r\n    const rightIsBooleanExpr = t.isBinaryExpression(node.right) ||\r\n                                t.isLogicalExpression(node.right) ||\r\n                                t.isUnaryExpression(node.right);\r\n\r\n    if (rightIsBooleanExpr) {\r\n      // JavaScript: a && (b > 0)\r\n      // C#: (a) && (b > 0) - boolean AND\r\n      return `(${left}) && (${right})`;\r\n    } else {\r\n      // JavaScript: a && <jsx> or a && someValue\r\n      // C#: a != null ? value : VNull (for objects)\r\n      const nodePath = node.__minimactPath || '';\r\n      return `(${left}) != null ? (${right}) : new VNull(\"${nodePath}\")`;\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generateLogicalExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "50a384f0",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "node.operator === '&&'",
+      "parentContext": {
+        "functionName": "generateLogicalExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fb7d9df7",
+      "type": "VariableDeclaration",
+      "babel_source": "const rightIsBooleanExpr = t.isBinaryExpression(node.right) ||\r\n                                t.isLogicalExpression(node.right) ||\r\n                                t.isUnaryExpression(node.right);",
+      "parentContext": {
+        "functionName": "generateLogicalExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "57a3e7f8",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isBinaryExpression(node.right) ||\r\n                                t.isLogicalExpression(node.right) ||\r\n                                t.isUnaryExpression(node.right)",
+      "parentContext": {
+        "functionName": "generateLogicalExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "302fa0ef",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isBinaryExpression(node.right) ||\r\n                                t.isLogicalExpression(node.right)",
+      "parentContext": {
+        "functionName": "generateLogicalExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "56073b2f",
+      "type": "BabelTypeCheck",
+      "method": "isBinaryExpression",
+      "babel_source": "t.isBinaryExpression(node.right)",
+      "parentContext": {
+        "functionName": "generateLogicalExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "30997da8",
+      "type": "BabelTypeCheck",
+      "method": "isLogicalExpression",
+      "babel_source": "t.isLogicalExpression(node.right)",
+      "parentContext": {
+        "functionName": "generateLogicalExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "875e8ac2",
+      "type": "BabelTypeCheck",
+      "method": "isUnaryExpression",
+      "babel_source": "t.isUnaryExpression(node.right)",
+      "parentContext": {
+        "functionName": "generateLogicalExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "433f2141",
+      "type": "IfStatement",
+      "condition": "rightIsBooleanExpr",
+      "babel_source": "if (rightIsBooleanExpr) {\r\n      // JavaScript: a && (b > 0)\r\n      // C#: (a) && (b > 0) - boolean AND\r\n      return `(${left}) && (${right})`;\r\n    } else {\r\n      // JavaScript: a && <jsx> or a && someValue\r\n      // C#: a != null ? value : VNull (for objects)\r\n      const nodePath = node.__minimactPath || '';\r\n      return `(${left}) != null ? (${right}) : new VNull(\"${nodePath}\")`;\r\n    }",
+      "parentContext": {
+        "functionName": "generateLogicalExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8e06c68b",
+      "type": "ReturnStatement",
+      "babel_source": "return `(${left}) && (${right})`;",
+      "parentContext": {
+        "functionName": "generateLogicalExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "148873dc",
+      "type": "TemplateLiteral",
+      "babel_source": "`(${left}) && (${right})`",
+      "parentContext": {
+        "functionName": "generateLogicalExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2d76293e",
+      "type": "VariableDeclaration",
+      "babel_source": "const nodePath = node.__minimactPath || '';",
+      "parentContext": {
+        "functionName": "generateLogicalExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e3e86ef1",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "node.__minimactPath || ''",
+      "parentContext": {
+        "functionName": "generateLogicalExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7d087a79",
+      "type": "ReturnStatement",
+      "babel_source": "return `(${left}) != null ? (${right}) : new VNull(\"${nodePath}\")`;",
+      "parentContext": {
+        "functionName": "generateLogicalExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2af35a38",
+      "type": "TemplateLiteral",
+      "babel_source": "`(${left}) != null ? (${right}) : new VNull(\"${nodePath}\")`",
+      "parentContext": {
+        "functionName": "generateLogicalExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d19aed2e",
+      "type": "ReturnStatement",
+      "babel_source": "return `${left} ${node.operator} ${right}`;",
+      "parentContext": {
+        "functionName": "generateLogicalExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bf851df9",
+      "type": "TemplateLiteral",
+      "babel_source": "`${left} ${node.operator} ${right}`",
+      "parentContext": {
+        "functionName": "generateLogicalExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/expressions/operators.cjs"
+  ]
+}

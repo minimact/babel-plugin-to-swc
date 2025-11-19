@@ -1,0 +1,301 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractConditionalTemplate",
+  "params": [
+    {
+      "name": "conditionalExpr",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    },
+    {
+      "name": "itemVar",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "indexVar",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractConditionalTemplate(conditionalExpr, itemVar, indexVar) {\r\n  const test = conditionalExpr.test;\r\n  const consequent = conditionalExpr.consequent;\r\n  const alternate = conditionalExpr.alternate;\r\n\r\n  // Extract binding from test expression\r\n  const binding = buildBindingPath(test, itemVar, indexVar);\r\n  if (!binding) return null;\r\n\r\n  // Extract literal values from consequent and alternate\r\n  const trueValue = extractLiteralValue(consequent);\r\n  const falseValue = extractLiteralValue(alternate);\r\n\r\n  if (trueValue === null || falseValue === null) {\r\n    // Complex expressions in branches - can't template it\r\n    return null;\r\n  }\r\n\r\n  return {\r\n    template: '{0}',\r\n    bindings: [binding],\r\n    slots: [0],\r\n    conditionalTemplates: {\r\n      'true': trueValue,\r\n      'false': falseValue\r\n    },\r\n    conditionalBindingIndex: 0,\r\n    type: 'conditional'\r\n  };\r\n}",
+  "body_templates": [
+    {
+      "hash": "0580b47c",
+      "type": "VariableDeclaration",
+      "babel_source": "const test = conditionalExpr.test;",
+      "parentContext": {
+        "functionName": "extractConditionalTemplate",
+        "functionParams": [
+          "conditionalExpr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "41b62084",
+      "type": "VariableDeclaration",
+      "babel_source": "const consequent = conditionalExpr.consequent;",
+      "parentContext": {
+        "functionName": "extractConditionalTemplate",
+        "functionParams": [
+          "conditionalExpr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c01cc85c",
+      "type": "VariableDeclaration",
+      "babel_source": "const alternate = conditionalExpr.alternate;",
+      "parentContext": {
+        "functionName": "extractConditionalTemplate",
+        "functionParams": [
+          "conditionalExpr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7095547e",
+      "type": "VariableDeclaration",
+      "babel_source": "const binding = buildBindingPath(test, itemVar, indexVar);",
+      "parentContext": {
+        "functionName": "extractConditionalTemplate",
+        "functionParams": [
+          "conditionalExpr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e8e906d0",
+      "type": "IfStatement",
+      "condition": "!binding",
+      "babel_source": "if (!binding) return null;",
+      "parentContext": {
+        "functionName": "extractConditionalTemplate",
+        "functionParams": [
+          "conditionalExpr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cbb1eae6",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!binding",
+      "parentContext": {
+        "functionName": "extractConditionalTemplate",
+        "functionParams": [
+          "conditionalExpr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractConditionalTemplate",
+        "functionParams": [
+          "conditionalExpr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e049af74",
+      "type": "VariableDeclaration",
+      "babel_source": "const trueValue = extractLiteralValue(consequent);",
+      "parentContext": {
+        "functionName": "extractConditionalTemplate",
+        "functionParams": [
+          "conditionalExpr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0eec0a5b",
+      "type": "VariableDeclaration",
+      "babel_source": "const falseValue = extractLiteralValue(alternate);",
+      "parentContext": {
+        "functionName": "extractConditionalTemplate",
+        "functionParams": [
+          "conditionalExpr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "06c46d35",
+      "type": "IfStatement",
+      "condition": "trueValue === null || falseValue === null",
+      "babel_source": "if (trueValue === null || falseValue === null) {\r\n    // Complex expressions in branches - can't template it\r\n    return null;\r\n  }",
+      "parentContext": {
+        "functionName": "extractConditionalTemplate",
+        "functionParams": [
+          "conditionalExpr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "be289ea7",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "trueValue === null || falseValue === null",
+      "parentContext": {
+        "functionName": "extractConditionalTemplate",
+        "functionParams": [
+          "conditionalExpr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0c389a45",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "trueValue === null",
+      "parentContext": {
+        "functionName": "extractConditionalTemplate",
+        "functionParams": [
+          "conditionalExpr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f477bb38",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "falseValue === null",
+      "parentContext": {
+        "functionName": "extractConditionalTemplate",
+        "functionParams": [
+          "conditionalExpr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractConditionalTemplate",
+        "functionParams": [
+          "conditionalExpr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ce928dfc",
+      "type": "ReturnStatement",
+      "babel_source": "return {\r\n    template: '{0}',\r\n    bindings: [binding],\r\n    slots: [0],\r\n    conditionalTemplates: {\r\n      'true': trueValue,\r\n      'false': falseValue\r\n    },\r\n    conditionalBindingIndex: 0,\r\n    type: 'conditional'\r\n  };",
+      "parentContext": {
+        "functionName": "extractConditionalTemplate",
+        "functionParams": [
+          "conditionalExpr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "19f80b11",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    template: '{0}',\r\n    bindings: [binding],\r\n    slots: [0],\r\n    conditionalTemplates: {\r\n      'true': trueValue,\r\n      'false': falseValue\r\n    },\r\n    conditionalBindingIndex: 0,\r\n    type: 'conditional'\r\n  }",
+      "parentContext": {
+        "functionName": "extractConditionalTemplate",
+        "functionParams": [
+          "conditionalExpr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b854dc8e",
+      "type": "ArrayExpression",
+      "babel_source": "[binding]",
+      "parentContext": {
+        "functionName": "extractConditionalTemplate",
+        "functionParams": [
+          "conditionalExpr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d0bca111",
+      "type": "ArrayExpression",
+      "babel_source": "[0]",
+      "parentContext": {
+        "functionName": "extractConditionalTemplate",
+        "functionParams": [
+          "conditionalExpr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f6b753ab",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n      'true': trueValue,\r\n      'false': falseValue\r\n    }",
+      "parentContext": {
+        "functionName": "extractConditionalTemplate",
+        "functionParams": [
+          "conditionalExpr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/loopTemplates/extractConditionalTemplate.cjs"
+  ]
+}

@@ -1,0 +1,463 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateTemplateLiteral",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "generateCSharpExpression",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateTemplateLiteral(node, generateCSharpExpression) {\r\n  // If no expressions, use verbatim string literal (@\"...\") to avoid escaping issues\r\n  if (node.expressions.length === 0) {\r\n    const text = node.quasis[0].value.raw;\r\n    // Use verbatim string literal (@\"...\") for multiline or strings with special chars\r\n    // Escape \" as \"\" in verbatim strings\r\n    const escaped = text.replace(/\"/g, '\"\"');\r\n    return `@\"${escaped}\"`;\r\n  }\r\n\r\n  // Has expressions - use C# string interpolation\r\n  let result = '$\"';\r\n  for (let i = 0; i < node.quasis.length; i++) {\r\n    // Escape special chars in C# interpolated strings\r\n    let text = node.quasis[i].value.raw;\r\n    // Escape { and } by doubling them\r\n    text = text.replace(/{/g, '{{').replace(/}/g, '}}');\r\n    // Escape \" as \\\"\r\n    text = text.replace(/\"/g, '\\\\\"');\r\n    result += text;\r\n\r\n    if (i < node.expressions.length) {\r\n      const expr = node.expressions[i];\r\n      // Wrap conditional (ternary) expressions in parentheses to avoid ':' conflict in C# interpolation\r\n      const exprCode = generateCSharpExpression(expr);\r\n      const needsParens = t.isConditionalExpression(expr);\r\n      result += '{' + (needsParens ? `(${exprCode})` : exprCode) + '}';\r\n    }\r\n  }\r\n  result += '\"';\r\n  return result;\r\n}",
+  "body_templates": [
+    {
+      "hash": "3fe7ba08",
+      "type": "IfStatement",
+      "condition": "node.expressions.length === 0",
+      "babel_source": "if (node.expressions.length === 0) {\r\n    const text = node.quasis[0].value.raw;\r\n    // Use verbatim string literal (@\"...\") for multiline or strings with special chars\r\n    // Escape \" as \"\" in verbatim strings\r\n    const escaped = text.replace(/\"/g, '\"\"');\r\n    return `@\"${escaped}\"`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateTemplateLiteral",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "40958a2b",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "node.expressions.length === 0",
+      "parentContext": {
+        "functionName": "generateTemplateLiteral",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ccfc9106",
+      "type": "VariableDeclaration",
+      "babel_source": "const text = node.quasis[0].value.raw;",
+      "parentContext": {
+        "functionName": "generateTemplateLiteral",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "62e68a58",
+      "type": "VariableDeclaration",
+      "babel_source": "const escaped = text.replace(/\"/g, '\"\"');",
+      "parentContext": {
+        "functionName": "generateTemplateLiteral",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab9aeb8a",
+      "type": "RegExpLiteral",
+      "pattern": "\"",
+      "flags": "g",
+      "babel_source": "/\"/g",
+      "parentContext": {
+        "functionName": "generateTemplateLiteral",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "51d326b8",
+      "type": "ReturnStatement",
+      "babel_source": "return `@\"${escaped}\"`;",
+      "parentContext": {
+        "functionName": "generateTemplateLiteral",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7ccfa255",
+      "type": "TemplateLiteral",
+      "babel_source": "`@\"${escaped}\"`",
+      "parentContext": {
+        "functionName": "generateTemplateLiteral",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dc55ddeb",
+      "type": "VariableDeclaration",
+      "babel_source": "let result = '$\"';",
+      "parentContext": {
+        "functionName": "generateTemplateLiteral",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fdb2aabf",
+      "type": "ForStatement",
+      "babel_source": "for (let i = 0; i < node.quasis.length; i++) {\r\n    // Escape special chars in C# interpolated strings\r\n    let text = node.quasis[i].value.raw;\r\n    // Escape { and } by doubling them\r\n    text = text.replace(/{/g, '{{').replace(/}/g, '}}');\r\n    // Escape \" as \\\"\r\n    text = text.replace(/\"/g, '\\\\\"');\r\n    result += text;\r\n\r\n    if (i < node.expressions.length) {\r\n      const expr = node.expressions[i];\r\n      // Wrap conditional (ternary) expressions in parentheses to avoid ':' conflict in C# interpolation\r\n      const exprCode = generateCSharpExpression(expr);\r\n      const needsParens = t.isConditionalExpression(expr);\r\n      result += '{' + (needsParens ? `(${exprCode})` : exprCode) + '}';\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generateTemplateLiteral",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ecb911a1",
+      "type": "VariableDeclaration",
+      "babel_source": "let i = 0",
+      "parentContext": {
+        "functionName": "generateTemplateLiteral",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "814ce5b9",
+      "type": "BinaryExpression",
+      "operator": "<",
+      "babel_source": "i < node.quasis.length",
+      "parentContext": {
+        "functionName": "generateTemplateLiteral",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e8dee0e1",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "i++",
+      "parentContext": {
+        "functionName": "generateTemplateLiteral",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "94ba39e2",
+      "type": "VariableDeclaration",
+      "babel_source": "let text = node.quasis[i].value.raw;",
+      "parentContext": {
+        "functionName": "generateTemplateLiteral",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a77b8cf0",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "text = text.replace(/{/g, '{{').replace(/}/g, '}}')",
+      "parentContext": {
+        "functionName": "generateTemplateLiteral",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f0d5e15a",
+      "type": "RegExpLiteral",
+      "pattern": "{",
+      "flags": "g",
+      "babel_source": "/{/g",
+      "parentContext": {
+        "functionName": "generateTemplateLiteral",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "904da1a4",
+      "type": "RegExpLiteral",
+      "pattern": "}",
+      "flags": "g",
+      "babel_source": "/}/g",
+      "parentContext": {
+        "functionName": "generateTemplateLiteral",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d845b513",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "text = text.replace(/\"/g, '\\\\\"')",
+      "parentContext": {
+        "functionName": "generateTemplateLiteral",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab9aeb8a",
+      "type": "RegExpLiteral",
+      "pattern": "\"",
+      "flags": "g",
+      "babel_source": "/\"/g",
+      "parentContext": {
+        "functionName": "generateTemplateLiteral",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "50657843",
+      "type": "AssignmentExpression",
+      "operator": "+=",
+      "babel_source": "result += text",
+      "parentContext": {
+        "functionName": "generateTemplateLiteral",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "581b0586",
+      "type": "IfStatement",
+      "condition": "i < node.expressions.length",
+      "babel_source": "if (i < node.expressions.length) {\r\n      const expr = node.expressions[i];\r\n      // Wrap conditional (ternary) expressions in parentheses to avoid ':' conflict in C# interpolation\r\n      const exprCode = generateCSharpExpression(expr);\r\n      const needsParens = t.isConditionalExpression(expr);\r\n      result += '{' + (needsParens ? `(${exprCode})` : exprCode) + '}';\r\n    }",
+      "parentContext": {
+        "functionName": "generateTemplateLiteral",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "73381afd",
+      "type": "BinaryExpression",
+      "operator": "<",
+      "babel_source": "i < node.expressions.length",
+      "parentContext": {
+        "functionName": "generateTemplateLiteral",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "43c716e4",
+      "type": "VariableDeclaration",
+      "babel_source": "const expr = node.expressions[i];",
+      "parentContext": {
+        "functionName": "generateTemplateLiteral",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1633b6a6",
+      "type": "VariableDeclaration",
+      "babel_source": "const exprCode = generateCSharpExpression(expr);",
+      "parentContext": {
+        "functionName": "generateTemplateLiteral",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "24f08562",
+      "type": "VariableDeclaration",
+      "babel_source": "const needsParens = t.isConditionalExpression(expr);",
+      "parentContext": {
+        "functionName": "generateTemplateLiteral",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5574ecc1",
+      "type": "BabelTypeCheck",
+      "method": "isConditionalExpression",
+      "babel_source": "t.isConditionalExpression(expr)",
+      "parentContext": {
+        "functionName": "generateTemplateLiteral",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "50af738f",
+      "type": "AssignmentExpression",
+      "operator": "+=",
+      "babel_source": "result += '{' + (needsParens ? `(${exprCode})` : exprCode) + '}'",
+      "parentContext": {
+        "functionName": "generateTemplateLiteral",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "044adfc3",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "'{' + (needsParens ? `(${exprCode})` : exprCode) + '}'",
+      "parentContext": {
+        "functionName": "generateTemplateLiteral",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fd68cb05",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "'{' + (needsParens ? `(${exprCode})` : exprCode)",
+      "parentContext": {
+        "functionName": "generateTemplateLiteral",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1832071c",
+      "type": "ConditionalExpression",
+      "babel_source": "needsParens ? `(${exprCode})` : exprCode",
+      "parentContext": {
+        "functionName": "generateTemplateLiteral",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3a2a9519",
+      "type": "TemplateLiteral",
+      "babel_source": "`(${exprCode})`",
+      "parentContext": {
+        "functionName": "generateTemplateLiteral",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f7b1edd3",
+      "type": "AssignmentExpression",
+      "operator": "+=",
+      "babel_source": "result += '\"'",
+      "parentContext": {
+        "functionName": "generateTemplateLiteral",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "882101dd",
+      "type": "ReturnStatement",
+      "babel_source": "return result;",
+      "parentContext": {
+        "functionName": "generateTemplateLiteral",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/expressions/literals.cjs"
+  ]
+}

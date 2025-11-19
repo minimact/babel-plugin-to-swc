@@ -1,0 +1,660 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractMethodCallBindingShared",
+  "params": [
+    {
+      "name": "expr",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractMethodCallBindingShared(expr) {\r\n  const callee = expr.callee;\r\n\r\n  if (!t.isMemberExpression(callee) && !t.isOptionalMemberExpression(callee)) {\r\n    return null;\r\n  }\r\n\r\n  const methodName = t.isIdentifier(callee.property) ? callee.property.name : null;\r\n  if (!methodName) return null;\r\n\r\n  const transformMethods = [\r\n    'toFixed', 'toString', 'toLowerCase', 'toUpperCase',\r\n    'trim', 'trimStart', 'trimEnd'\r\n  ];\r\n\r\n  if (!transformMethods.includes(methodName)) {\r\n    return null;\r\n  }\r\n\r\n  let binding = null;\r\n  if (t.isMemberExpression(callee.object)) {\r\n    binding = buildMemberPath(callee.object);\r\n  } else if (t.isIdentifier(callee.object)) {\r\n    binding = callee.object.name;\r\n  } else if (t.isBinaryExpression(callee.object)) {\r\n    const identifiers = [];\r\n    extractIdentifiers(callee.object, identifiers);\r\n    binding = `__expr__:${identifiers.join(',')}`;\r\n  }\r\n\r\n  if (!binding) return null;\r\n\r\n  const args = expr.arguments.map(arg => {\r\n    if (t.isNumericLiteral(arg)) return arg.value;\r\n    if (t.isStringLiteral(arg)) return arg.value;\r\n    if (t.isBooleanLiteral(arg)) return arg.value;\r\n    return null;\r\n  }).filter(v => v !== null);\r\n\r\n  return {\r\n    transform: methodName,\r\n    binding: binding,\r\n    args: args\r\n  };\r\n}",
+  "body_templates": [
+    {
+      "hash": "0ef2ce4e",
+      "type": "VariableDeclaration",
+      "babel_source": "const callee = expr.callee;",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4798c603",
+      "type": "IfStatement",
+      "condition": "!t.isMemberExpression(callee) && !t.isOptionalMemberExpression(callee)",
+      "babel_source": "if (!t.isMemberExpression(callee) && !t.isOptionalMemberExpression(callee)) {\r\n    return null;\r\n  }",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "911268b2",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "!t.isMemberExpression(callee) && !t.isOptionalMemberExpression(callee)",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d8167843",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isMemberExpression(callee)",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "20d9afa3",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(callee)",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "45de481a",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isOptionalMemberExpression(callee)",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "eb9b3271",
+      "type": "BabelTypeCheck",
+      "method": "isOptionalMemberExpression",
+      "babel_source": "t.isOptionalMemberExpression(callee)",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1d5530e6",
+      "type": "VariableDeclaration",
+      "babel_source": "const methodName = t.isIdentifier(callee.property) ? callee.property.name : null;",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e9c9517c",
+      "type": "ConditionalExpression",
+      "babel_source": "t.isIdentifier(callee.property) ? callee.property.name : null",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0adf570d",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(callee.property)",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e412cd6f",
+      "type": "IfStatement",
+      "condition": "!methodName",
+      "babel_source": "if (!methodName) return null;",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d10d9221",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!methodName",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "71c9bb03",
+      "type": "VariableDeclaration",
+      "babel_source": "const transformMethods = [\r\n    'toFixed', 'toString', 'toLowerCase', 'toUpperCase',\r\n    'trim', 'trimStart', 'trimEnd'\r\n  ];",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8af612ba",
+      "type": "ArrayExpression",
+      "babel_source": "[\r\n    'toFixed', 'toString', 'toLowerCase', 'toUpperCase',\r\n    'trim', 'trimStart', 'trimEnd'\r\n  ]",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a89e20e8",
+      "type": "IfStatement",
+      "condition": "!transformMethods.includes(methodName)",
+      "babel_source": "if (!transformMethods.includes(methodName)) {\r\n    return null;\r\n  }",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f3bf76e6",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!transformMethods.includes(methodName)",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7bed37c6",
+      "type": "VariableDeclaration",
+      "babel_source": "let binding = null;",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6098400e",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(callee.object)",
+      "babel_source": "if (t.isMemberExpression(callee.object)) {\r\n    binding = buildMemberPath(callee.object);\r\n  } else if (t.isIdentifier(callee.object)) {\r\n    binding = callee.object.name;\r\n  } else if (t.isBinaryExpression(callee.object)) {\r\n    const identifiers = [];\r\n    extractIdentifiers(callee.object, identifiers);\r\n    binding = `__expr__:${identifiers.join(',')}`;\r\n  }",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e5edd50b",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(callee.object)",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "48f47236",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "binding = buildMemberPath(callee.object)",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b510d8db",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(callee.object)",
+      "babel_source": "if (t.isIdentifier(callee.object)) {\r\n    binding = callee.object.name;\r\n  } else if (t.isBinaryExpression(callee.object)) {\r\n    const identifiers = [];\r\n    extractIdentifiers(callee.object, identifiers);\r\n    binding = `__expr__:${identifiers.join(',')}`;\r\n  }",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "adaf9b83",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(callee.object)",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "de1e5022",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "binding = callee.object.name",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "93f38376",
+      "type": "IfStatement",
+      "condition": "t.isBinaryExpression(callee.object)",
+      "babel_source": "if (t.isBinaryExpression(callee.object)) {\r\n    const identifiers = [];\r\n    extractIdentifiers(callee.object, identifiers);\r\n    binding = `__expr__:${identifiers.join(',')}`;\r\n  }",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bd761d26",
+      "type": "BabelTypeCheck",
+      "method": "isBinaryExpression",
+      "babel_source": "t.isBinaryExpression(callee.object)",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6b6132bd",
+      "type": "VariableDeclaration",
+      "babel_source": "const identifiers = [];",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "85b05825",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "binding = `__expr__:${identifiers.join(',')}`",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "80700c94",
+      "type": "TemplateLiteral",
+      "babel_source": "`__expr__:${identifiers.join(',')}`",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e8e906d0",
+      "type": "IfStatement",
+      "condition": "!binding",
+      "babel_source": "if (!binding) return null;",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cbb1eae6",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!binding",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0b4d3119",
+      "type": "VariableDeclaration",
+      "babel_source": "const args = expr.arguments.map(arg => {\r\n    if (t.isNumericLiteral(arg)) return arg.value;\r\n    if (t.isStringLiteral(arg)) return arg.value;\r\n    if (t.isBooleanLiteral(arg)) return arg.value;\r\n    return null;\r\n  }).filter(v => v !== null);",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "742350c7",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "arg => {\r\n    if (t.isNumericLiteral(arg)) return arg.value;\r\n    if (t.isStringLiteral(arg)) return arg.value;\r\n    if (t.isBooleanLiteral(arg)) return arg.value;\r\n    return null;\r\n  }",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1fbeef54",
+      "type": "IfStatement",
+      "condition": "t.isNumericLiteral(arg)",
+      "babel_source": "if (t.isNumericLiteral(arg)) return arg.value;",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f154633b",
+      "type": "BabelTypeCheck",
+      "method": "isNumericLiteral",
+      "babel_source": "t.isNumericLiteral(arg)",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a32a50fe",
+      "type": "ReturnStatement",
+      "babel_source": "return arg.value;",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d8b3a0ff",
+      "type": "IfStatement",
+      "condition": "t.isStringLiteral(arg)",
+      "babel_source": "if (t.isStringLiteral(arg)) return arg.value;",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3be46d5d",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(arg)",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a32a50fe",
+      "type": "ReturnStatement",
+      "babel_source": "return arg.value;",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9c7bb4c9",
+      "type": "IfStatement",
+      "condition": "t.isBooleanLiteral(arg)",
+      "babel_source": "if (t.isBooleanLiteral(arg)) return arg.value;",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1f7a5aa1",
+      "type": "BabelTypeCheck",
+      "method": "isBooleanLiteral",
+      "babel_source": "t.isBooleanLiteral(arg)",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a32a50fe",
+      "type": "ReturnStatement",
+      "babel_source": "return arg.value;",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4898195e",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "v => v !== null",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9e09d587",
+      "type": "BinaryExpression",
+      "operator": "!==",
+      "babel_source": "v !== null",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a72bb01a",
+      "type": "ReturnStatement",
+      "babel_source": "return {\r\n    transform: methodName,\r\n    binding: binding,\r\n    args: args\r\n  };",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0e91f2e6",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    transform: methodName,\r\n    binding: binding,\r\n    args: args\r\n  }",
+      "parentContext": {
+        "functionName": "extractMethodCallBindingShared",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/templates/extractBindingShared.cjs"
+  ]
+}

@@ -1,0 +1,129 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractLoopCallExpression",
+  "params": [
+    {
+      "name": "expr",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    },
+    {
+      "name": "itemVar",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "indexVar",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractLoopCallExpression(expr, itemVar, indexVar) {\r\n  const identifiers = [];\r\n  extractLoopIdentifiers(expr, identifiers, itemVar, indexVar);\r\n\r\n  if (identifiers.length === 0) {\r\n    return null;\r\n  }\r\n\r\n  // Use __expr__ prefix to indicate this is a computed expression\r\n  return `__expr__:${identifiers.join(',')}`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "6b6132bd",
+      "type": "VariableDeclaration",
+      "babel_source": "const identifiers = [];",
+      "parentContext": {
+        "functionName": "extractLoopCallExpression",
+        "functionParams": [
+          "expr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractLoopCallExpression",
+        "functionParams": [
+          "expr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "aa90f5ca",
+      "type": "IfStatement",
+      "condition": "identifiers.length === 0",
+      "babel_source": "if (identifiers.length === 0) {\r\n    return null;\r\n  }",
+      "parentContext": {
+        "functionName": "extractLoopCallExpression",
+        "functionParams": [
+          "expr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "116987ff",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "identifiers.length === 0",
+      "parentContext": {
+        "functionName": "extractLoopCallExpression",
+        "functionParams": [
+          "expr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractLoopCallExpression",
+        "functionParams": [
+          "expr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0ef2fb73",
+      "type": "ReturnStatement",
+      "babel_source": "return `__expr__:${identifiers.join(',')}`;",
+      "parentContext": {
+        "functionName": "extractLoopCallExpression",
+        "functionParams": [
+          "expr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "80700c94",
+      "type": "TemplateLiteral",
+      "babel_source": "`__expr__:${identifiers.join(',')}`",
+      "parentContext": {
+        "functionName": "extractLoopCallExpression",
+        "functionParams": [
+          "expr",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/loopTemplates/extractLoopExpressions.cjs"
+  ]
+}

@@ -1,0 +1,247 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generatePubSubFields",
+  "params": [
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "lines",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generatePubSubFields(component, lines) {\r\n  // Pub fields\r\n  if (component.usePub) {\r\n    for (const pub of component.usePub) {\r\n      const channelStr = pub.channel ? `\"${pub.channel}\"` : 'null';\r\n      lines.push(`    // usePub: ${pub.name}`);\r\n      lines.push(`    private string ${pub.name}_channel = ${channelStr};`);\r\n      lines.push('');\r\n    }\r\n  }\r\n\r\n  // Sub fields\r\n  if (component.useSub) {\r\n    for (const sub of component.useSub) {\r\n      const channelStr = sub.channel ? `\"${sub.channel}\"` : 'null';\r\n      lines.push(`    // useSub: ${sub.name}`);\r\n      lines.push(`    private string ${sub.name}_channel = ${channelStr};`);\r\n      lines.push(`    private dynamic ${sub.name}_value = null;`);\r\n      lines.push('');\r\n    }\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "df0814f5",
+      "type": "IfStatement",
+      "condition": "component.usePub",
+      "babel_source": "if (component.usePub) {\r\n    for (const pub of component.usePub) {\r\n      const channelStr = pub.channel ? `\"${pub.channel}\"` : 'null';\r\n      lines.push(`    // usePub: ${pub.name}`);\r\n      lines.push(`    private string ${pub.name}_channel = ${channelStr};`);\r\n      lines.push('');\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generatePubSubFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4cb71592",
+      "type": "ForOfStatement",
+      "babel_source": "for (const pub of component.usePub) {\r\n      const channelStr = pub.channel ? `\"${pub.channel}\"` : 'null';\r\n      lines.push(`    // usePub: ${pub.name}`);\r\n      lines.push(`    private string ${pub.name}_channel = ${channelStr};`);\r\n      lines.push('');\r\n    }",
+      "parentContext": {
+        "functionName": "generatePubSubFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "87eb847e",
+      "type": "VariableDeclaration",
+      "babel_source": "const pub",
+      "parentContext": {
+        "functionName": "generatePubSubFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b8c2d9cb",
+      "type": "VariableDeclaration",
+      "babel_source": "const channelStr = pub.channel ? `\"${pub.channel}\"` : 'null';",
+      "parentContext": {
+        "functionName": "generatePubSubFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d53f5350",
+      "type": "ConditionalExpression",
+      "babel_source": "pub.channel ? `\"${pub.channel}\"` : 'null'",
+      "parentContext": {
+        "functionName": "generatePubSubFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "796fe4ad",
+      "type": "TemplateLiteral",
+      "babel_source": "`\"${pub.channel}\"`",
+      "parentContext": {
+        "functionName": "generatePubSubFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab6c72b8",
+      "type": "TemplateLiteral",
+      "babel_source": "`    // usePub: ${pub.name}`",
+      "parentContext": {
+        "functionName": "generatePubSubFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6b8ef12b",
+      "type": "TemplateLiteral",
+      "babel_source": "`    private string ${pub.name}_channel = ${channelStr};`",
+      "parentContext": {
+        "functionName": "generatePubSubFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5af65ccb",
+      "type": "IfStatement",
+      "condition": "component.useSub",
+      "babel_source": "if (component.useSub) {\r\n    for (const sub of component.useSub) {\r\n      const channelStr = sub.channel ? `\"${sub.channel}\"` : 'null';\r\n      lines.push(`    // useSub: ${sub.name}`);\r\n      lines.push(`    private string ${sub.name}_channel = ${channelStr};`);\r\n      lines.push(`    private dynamic ${sub.name}_value = null;`);\r\n      lines.push('');\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generatePubSubFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ad438086",
+      "type": "ForOfStatement",
+      "babel_source": "for (const sub of component.useSub) {\r\n      const channelStr = sub.channel ? `\"${sub.channel}\"` : 'null';\r\n      lines.push(`    // useSub: ${sub.name}`);\r\n      lines.push(`    private string ${sub.name}_channel = ${channelStr};`);\r\n      lines.push(`    private dynamic ${sub.name}_value = null;`);\r\n      lines.push('');\r\n    }",
+      "parentContext": {
+        "functionName": "generatePubSubFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "43c95233",
+      "type": "VariableDeclaration",
+      "babel_source": "const sub",
+      "parentContext": {
+        "functionName": "generatePubSubFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d2b473e0",
+      "type": "VariableDeclaration",
+      "babel_source": "const channelStr = sub.channel ? `\"${sub.channel}\"` : 'null';",
+      "parentContext": {
+        "functionName": "generatePubSubFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1911a1d8",
+      "type": "ConditionalExpression",
+      "babel_source": "sub.channel ? `\"${sub.channel}\"` : 'null'",
+      "parentContext": {
+        "functionName": "generatePubSubFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "314698bb",
+      "type": "TemplateLiteral",
+      "babel_source": "`\"${sub.channel}\"`",
+      "parentContext": {
+        "functionName": "generatePubSubFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "438690cc",
+      "type": "TemplateLiteral",
+      "babel_source": "`    // useSub: ${sub.name}`",
+      "parentContext": {
+        "functionName": "generatePubSubFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3db80e38",
+      "type": "TemplateLiteral",
+      "babel_source": "`    private string ${sub.name}_channel = ${channelStr};`",
+      "parentContext": {
+        "functionName": "generatePubSubFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "387c6d8a",
+      "type": "TemplateLiteral",
+      "babel_source": "`    private dynamic ${sub.name}_value = null;`",
+      "parentContext": {
+        "functionName": "generatePubSubFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/component/generateFields.cjs"
+  ]
+}

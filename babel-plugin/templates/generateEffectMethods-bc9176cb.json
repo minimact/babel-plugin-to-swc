@@ -1,0 +1,526 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateEffectMethods",
+  "params": [
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "lines",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateEffectMethods(component, lines) {\r\n  let effectIndex = 0;\r\n  for (const effect of component.useEffect) {\r\n    lines.push('');\r\n\r\n    // Extract dependency names from array\r\n    const deps = [];\r\n    if (effect.dependencies && t.isArrayExpression(effect.dependencies)) {\r\n      for (const dep of effect.dependencies.elements) {\r\n        if (t.isIdentifier(dep)) {\r\n          deps.push(dep.name);\r\n        }\r\n      }\r\n    }\r\n\r\n    // Generate attributes\r\n    if (deps.length === 0 && effect.dependencies && t.isArrayExpression(effect.dependencies) && effect.dependencies.elements.length === 0) {\r\n      lines.push(`    [OnMounted]`);\r\n    } else if (deps.length > 0) {\r\n      for (const dep of deps) {\r\n        lines.push(`    [OnStateChanged(\"${dep}\")]`);\r\n      }\r\n    }\r\n\r\n    lines.push(`    private void Effect_${effectIndex}()`);\r\n    lines.push('    {');\r\n\r\n    // Extract and convert effect body\r\n    if (effect.body && t.isArrowFunctionExpression(effect.body)) {\r\n      const body = effect.body.body;\r\n      if (t.isBlockStatement(body)) {\r\n        for (const stmt of body.body) {\r\n          lines.push(`        ${generateCSharpStatement(stmt)}`);\r\n        }\r\n      } else {\r\n        lines.push(`        ${generateCSharpExpression(body)};`);\r\n      }\r\n    }\r\n\r\n    lines.push('    }');\r\n    effectIndex++;\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "4a146471",
+      "type": "VariableDeclaration",
+      "babel_source": "let effectIndex = 0;",
+      "parentContext": {
+        "functionName": "generateEffectMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1a6ba0b1",
+      "type": "ForOfStatement",
+      "babel_source": "for (const effect of component.useEffect) {\r\n    lines.push('');\r\n\r\n    // Extract dependency names from array\r\n    const deps = [];\r\n    if (effect.dependencies && t.isArrayExpression(effect.dependencies)) {\r\n      for (const dep of effect.dependencies.elements) {\r\n        if (t.isIdentifier(dep)) {\r\n          deps.push(dep.name);\r\n        }\r\n      }\r\n    }\r\n\r\n    // Generate attributes\r\n    if (deps.length === 0 && effect.dependencies && t.isArrayExpression(effect.dependencies) && effect.dependencies.elements.length === 0) {\r\n      lines.push(`    [OnMounted]`);\r\n    } else if (deps.length > 0) {\r\n      for (const dep of deps) {\r\n        lines.push(`    [OnStateChanged(\"${dep}\")]`);\r\n      }\r\n    }\r\n\r\n    lines.push(`    private void Effect_${effectIndex}()`);\r\n    lines.push('    {');\r\n\r\n    // Extract and convert effect body\r\n    if (effect.body && t.isArrowFunctionExpression(effect.body)) {\r\n      const body = effect.body.body;\r\n      if (t.isBlockStatement(body)) {\r\n        for (const stmt of body.body) {\r\n          lines.push(`        ${generateCSharpStatement(stmt)}`);\r\n        }\r\n      } else {\r\n        lines.push(`        ${generateCSharpExpression(body)};`);\r\n      }\r\n    }\r\n\r\n    lines.push('    }');\r\n    effectIndex++;\r\n  }",
+      "parentContext": {
+        "functionName": "generateEffectMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ce38c228",
+      "type": "VariableDeclaration",
+      "babel_source": "const effect",
+      "parentContext": {
+        "functionName": "generateEffectMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f93d2dce",
+      "type": "VariableDeclaration",
+      "babel_source": "const deps = [];",
+      "parentContext": {
+        "functionName": "generateEffectMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "generateEffectMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b9400fdf",
+      "type": "IfStatement",
+      "condition": "effect.dependencies && t.isArrayExpression(effect.dependencies)",
+      "babel_source": "if (effect.dependencies && t.isArrayExpression(effect.dependencies)) {\r\n      for (const dep of effect.dependencies.elements) {\r\n        if (t.isIdentifier(dep)) {\r\n          deps.push(dep.name);\r\n        }\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "generateEffectMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "39b0527b",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "effect.dependencies && t.isArrayExpression(effect.dependencies)",
+      "parentContext": {
+        "functionName": "generateEffectMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "34f4e747",
+      "type": "BabelTypeCheck",
+      "method": "isArrayExpression",
+      "babel_source": "t.isArrayExpression(effect.dependencies)",
+      "parentContext": {
+        "functionName": "generateEffectMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ef6f5c28",
+      "type": "ForOfStatement",
+      "babel_source": "for (const dep of effect.dependencies.elements) {\r\n        if (t.isIdentifier(dep)) {\r\n          deps.push(dep.name);\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "generateEffectMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "33e80d46",
+      "type": "VariableDeclaration",
+      "babel_source": "const dep",
+      "parentContext": {
+        "functionName": "generateEffectMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e57cf68f",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(dep)",
+      "babel_source": "if (t.isIdentifier(dep)) {\r\n          deps.push(dep.name);\r\n        }",
+      "parentContext": {
+        "functionName": "generateEffectMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "286e19db",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(dep)",
+      "parentContext": {
+        "functionName": "generateEffectMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bbfc4468",
+      "type": "IfStatement",
+      "condition": "deps.length === 0 && effect.dependencies && t.isArrayExpression(effect.dependencies) && effect.dependencies.elements.length === 0",
+      "babel_source": "if (deps.length === 0 && effect.dependencies && t.isArrayExpression(effect.dependencies) && effect.dependencies.elements.length === 0) {\r\n      lines.push(`    [OnMounted]`);\r\n    } else if (deps.length > 0) {\r\n      for (const dep of deps) {\r\n        lines.push(`    [OnStateChanged(\"${dep}\")]`);\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "generateEffectMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a632872d",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "deps.length === 0 && effect.dependencies && t.isArrayExpression(effect.dependencies) && effect.dependencies.elements.length === 0",
+      "parentContext": {
+        "functionName": "generateEffectMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "657714ec",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "deps.length === 0 && effect.dependencies && t.isArrayExpression(effect.dependencies)",
+      "parentContext": {
+        "functionName": "generateEffectMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "60f6e277",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "deps.length === 0 && effect.dependencies",
+      "parentContext": {
+        "functionName": "generateEffectMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b5378698",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "deps.length === 0",
+      "parentContext": {
+        "functionName": "generateEffectMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "34f4e747",
+      "type": "BabelTypeCheck",
+      "method": "isArrayExpression",
+      "babel_source": "t.isArrayExpression(effect.dependencies)",
+      "parentContext": {
+        "functionName": "generateEffectMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3657828e",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "effect.dependencies.elements.length === 0",
+      "parentContext": {
+        "functionName": "generateEffectMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8ced7765",
+      "type": "TemplateLiteral",
+      "babel_source": "`    [OnMounted]`",
+      "parentContext": {
+        "functionName": "generateEffectMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5170d10d",
+      "type": "IfStatement",
+      "condition": "deps.length > 0",
+      "babel_source": "if (deps.length > 0) {\r\n      for (const dep of deps) {\r\n        lines.push(`    [OnStateChanged(\"${dep}\")]`);\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "generateEffectMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e0dd3515",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "deps.length > 0",
+      "parentContext": {
+        "functionName": "generateEffectMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6cbe03aa",
+      "type": "ForOfStatement",
+      "babel_source": "for (const dep of deps) {\r\n        lines.push(`    [OnStateChanged(\"${dep}\")]`);\r\n      }",
+      "parentContext": {
+        "functionName": "generateEffectMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "33e80d46",
+      "type": "VariableDeclaration",
+      "babel_source": "const dep",
+      "parentContext": {
+        "functionName": "generateEffectMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2269e81a",
+      "type": "TemplateLiteral",
+      "babel_source": "`    [OnStateChanged(\"${dep}\")]`",
+      "parentContext": {
+        "functionName": "generateEffectMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "000baf16",
+      "type": "TemplateLiteral",
+      "babel_source": "`    private void Effect_${effectIndex}()`",
+      "parentContext": {
+        "functionName": "generateEffectMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "686946de",
+      "type": "IfStatement",
+      "condition": "effect.body && t.isArrowFunctionExpression(effect.body)",
+      "babel_source": "if (effect.body && t.isArrowFunctionExpression(effect.body)) {\r\n      const body = effect.body.body;\r\n      if (t.isBlockStatement(body)) {\r\n        for (const stmt of body.body) {\r\n          lines.push(`        ${generateCSharpStatement(stmt)}`);\r\n        }\r\n      } else {\r\n        lines.push(`        ${generateCSharpExpression(body)};`);\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "generateEffectMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "eac0ddcd",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "effect.body && t.isArrowFunctionExpression(effect.body)",
+      "parentContext": {
+        "functionName": "generateEffectMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9b98a14c",
+      "type": "BabelTypeCheck",
+      "method": "isArrowFunctionExpression",
+      "babel_source": "t.isArrowFunctionExpression(effect.body)",
+      "parentContext": {
+        "functionName": "generateEffectMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1bf240cb",
+      "type": "VariableDeclaration",
+      "babel_source": "const body = effect.body.body;",
+      "parentContext": {
+        "functionName": "generateEffectMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "59b64434",
+      "type": "IfStatement",
+      "condition": "t.isBlockStatement(body)",
+      "babel_source": "if (t.isBlockStatement(body)) {\r\n        for (const stmt of body.body) {\r\n          lines.push(`        ${generateCSharpStatement(stmt)}`);\r\n        }\r\n      } else {\r\n        lines.push(`        ${generateCSharpExpression(body)};`);\r\n      }",
+      "parentContext": {
+        "functionName": "generateEffectMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8f74e258",
+      "type": "BabelTypeCheck",
+      "method": "isBlockStatement",
+      "babel_source": "t.isBlockStatement(body)",
+      "parentContext": {
+        "functionName": "generateEffectMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "381112ce",
+      "type": "ForOfStatement",
+      "babel_source": "for (const stmt of body.body) {\r\n          lines.push(`        ${generateCSharpStatement(stmt)}`);\r\n        }",
+      "parentContext": {
+        "functionName": "generateEffectMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2b909e3d",
+      "type": "VariableDeclaration",
+      "babel_source": "const stmt",
+      "parentContext": {
+        "functionName": "generateEffectMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "11e0ac84",
+      "type": "TemplateLiteral",
+      "babel_source": "`        ${generateCSharpStatement(stmt)}`",
+      "parentContext": {
+        "functionName": "generateEffectMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2cc29b34",
+      "type": "TemplateLiteral",
+      "babel_source": "`        ${generateCSharpExpression(body)};`",
+      "parentContext": {
+        "functionName": "generateEffectMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7fffd54b",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "effectIndex++",
+      "parentContext": {
+        "functionName": "generateEffectMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/component/generateMethods.cjs"
+  ]
+}

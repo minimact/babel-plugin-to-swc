@@ -1,0 +1,487 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateClientEffectsMethod",
+  "params": [
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "lines",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateClientEffectsMethod(component, lines) {\r\n  if (component.clientEffects && component.clientEffects.length > 0) {\r\n    lines.push('');\r\n    lines.push('    /// <summary>');\r\n    lines.push('    /// Returns JavaScript callbacks for useEffect hooks');\r\n    lines.push('    /// These execute in the browser with bound hook context');\r\n    lines.push('    /// </summary>');\r\n    lines.push('    protected override Dictionary<string, EffectDefinition> GetClientEffects()');\r\n    lines.push('    {');\r\n    lines.push('        return new Dictionary<string, EffectDefinition>');\r\n    lines.push('        {');\r\n\r\n    for (let i = 0; i < component.clientEffects.length; i++) {\r\n      const effect = component.clientEffects[i];\r\n\r\n      const escapedJs = effect.jsCode\r\n        .replace(/\\\\/g, '\\\\\\\\')\r\n        .replace(/\"/g, '\\\\\"')\r\n        .replace(/\\n/g, '\\\\n')\r\n        .replace(/\\r/g, '');\r\n\r\n      const deps = [];\r\n      if (effect.dependencies && effect.dependencies.elements) {\r\n        for (const dep of effect.dependencies.elements) {\r\n          if (dep && dep.name) {\r\n            deps.push(`\"${dep.name}\"`);\r\n          }\r\n        }\r\n      }\r\n      const depsArray = deps.length > 0 ? deps.join(', ') : '';\r\n\r\n      const comma = i < component.clientEffects.length - 1 ? ',' : '';\r\n\r\n      lines.push(`            [\"${effect.name}\"] = new EffectDefinition`);\r\n      lines.push(`            {`);\r\n      lines.push(`                Callback = @\"${escapedJs}\",`);\r\n      lines.push(`                Dependencies = new[] { ${depsArray} }`);\r\n      lines.push(`            }${comma}`);\r\n    }\r\n\r\n    lines.push('        };');\r\n    lines.push('    }');\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "7b84111d",
+      "type": "IfStatement",
+      "condition": "component.clientEffects && component.clientEffects.length > 0",
+      "babel_source": "if (component.clientEffects && component.clientEffects.length > 0) {\r\n    lines.push('');\r\n    lines.push('    /// <summary>');\r\n    lines.push('    /// Returns JavaScript callbacks for useEffect hooks');\r\n    lines.push('    /// These execute in the browser with bound hook context');\r\n    lines.push('    /// </summary>');\r\n    lines.push('    protected override Dictionary<string, EffectDefinition> GetClientEffects()');\r\n    lines.push('    {');\r\n    lines.push('        return new Dictionary<string, EffectDefinition>');\r\n    lines.push('        {');\r\n\r\n    for (let i = 0; i < component.clientEffects.length; i++) {\r\n      const effect = component.clientEffects[i];\r\n\r\n      const escapedJs = effect.jsCode\r\n        .replace(/\\\\/g, '\\\\\\\\')\r\n        .replace(/\"/g, '\\\\\"')\r\n        .replace(/\\n/g, '\\\\n')\r\n        .replace(/\\r/g, '');\r\n\r\n      const deps = [];\r\n      if (effect.dependencies && effect.dependencies.elements) {\r\n        for (const dep of effect.dependencies.elements) {\r\n          if (dep && dep.name) {\r\n            deps.push(`\"${dep.name}\"`);\r\n          }\r\n        }\r\n      }\r\n      const depsArray = deps.length > 0 ? deps.join(', ') : '';\r\n\r\n      const comma = i < component.clientEffects.length - 1 ? ',' : '';\r\n\r\n      lines.push(`            [\"${effect.name}\"] = new EffectDefinition`);\r\n      lines.push(`            {`);\r\n      lines.push(`                Callback = @\"${escapedJs}\",`);\r\n      lines.push(`                Dependencies = new[] { ${depsArray} }`);\r\n      lines.push(`            }${comma}`);\r\n    }\r\n\r\n    lines.push('        };');\r\n    lines.push('    }');\r\n  }",
+      "parentContext": {
+        "functionName": "generateClientEffectsMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d484071b",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "component.clientEffects && component.clientEffects.length > 0",
+      "parentContext": {
+        "functionName": "generateClientEffectsMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "126fcccf",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "component.clientEffects.length > 0",
+      "parentContext": {
+        "functionName": "generateClientEffectsMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e9116b32",
+      "type": "ForStatement",
+      "babel_source": "for (let i = 0; i < component.clientEffects.length; i++) {\r\n      const effect = component.clientEffects[i];\r\n\r\n      const escapedJs = effect.jsCode\r\n        .replace(/\\\\/g, '\\\\\\\\')\r\n        .replace(/\"/g, '\\\\\"')\r\n        .replace(/\\n/g, '\\\\n')\r\n        .replace(/\\r/g, '');\r\n\r\n      const deps = [];\r\n      if (effect.dependencies && effect.dependencies.elements) {\r\n        for (const dep of effect.dependencies.elements) {\r\n          if (dep && dep.name) {\r\n            deps.push(`\"${dep.name}\"`);\r\n          }\r\n        }\r\n      }\r\n      const depsArray = deps.length > 0 ? deps.join(', ') : '';\r\n\r\n      const comma = i < component.clientEffects.length - 1 ? ',' : '';\r\n\r\n      lines.push(`            [\"${effect.name}\"] = new EffectDefinition`);\r\n      lines.push(`            {`);\r\n      lines.push(`                Callback = @\"${escapedJs}\",`);\r\n      lines.push(`                Dependencies = new[] { ${depsArray} }`);\r\n      lines.push(`            }${comma}`);\r\n    }",
+      "parentContext": {
+        "functionName": "generateClientEffectsMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ecb911a1",
+      "type": "VariableDeclaration",
+      "babel_source": "let i = 0",
+      "parentContext": {
+        "functionName": "generateClientEffectsMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6f2e19ae",
+      "type": "BinaryExpression",
+      "operator": "<",
+      "babel_source": "i < component.clientEffects.length",
+      "parentContext": {
+        "functionName": "generateClientEffectsMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e8dee0e1",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "i++",
+      "parentContext": {
+        "functionName": "generateClientEffectsMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d928f994",
+      "type": "VariableDeclaration",
+      "babel_source": "const effect = component.clientEffects[i];",
+      "parentContext": {
+        "functionName": "generateClientEffectsMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9efcc411",
+      "type": "VariableDeclaration",
+      "babel_source": "const escapedJs = effect.jsCode\r\n        .replace(/\\\\/g, '\\\\\\\\')\r\n        .replace(/\"/g, '\\\\\"')\r\n        .replace(/\\n/g, '\\\\n')\r\n        .replace(/\\r/g, '');",
+      "parentContext": {
+        "functionName": "generateClientEffectsMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7de23ca2",
+      "type": "RegExpLiteral",
+      "pattern": "\\\\",
+      "flags": "g",
+      "babel_source": "/\\\\/g",
+      "parentContext": {
+        "functionName": "generateClientEffectsMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab9aeb8a",
+      "type": "RegExpLiteral",
+      "pattern": "\"",
+      "flags": "g",
+      "babel_source": "/\"/g",
+      "parentContext": {
+        "functionName": "generateClientEffectsMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5ddaeb03",
+      "type": "RegExpLiteral",
+      "pattern": "\\n",
+      "flags": "g",
+      "babel_source": "/\\n/g",
+      "parentContext": {
+        "functionName": "generateClientEffectsMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "549672df",
+      "type": "RegExpLiteral",
+      "pattern": "\\r",
+      "flags": "g",
+      "babel_source": "/\\r/g",
+      "parentContext": {
+        "functionName": "generateClientEffectsMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f93d2dce",
+      "type": "VariableDeclaration",
+      "babel_source": "const deps = [];",
+      "parentContext": {
+        "functionName": "generateClientEffectsMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "generateClientEffectsMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0c21efe7",
+      "type": "IfStatement",
+      "condition": "effect.dependencies && effect.dependencies.elements",
+      "babel_source": "if (effect.dependencies && effect.dependencies.elements) {\r\n        for (const dep of effect.dependencies.elements) {\r\n          if (dep && dep.name) {\r\n            deps.push(`\"${dep.name}\"`);\r\n          }\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "generateClientEffectsMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ed1b4254",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "effect.dependencies && effect.dependencies.elements",
+      "parentContext": {
+        "functionName": "generateClientEffectsMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3afda12d",
+      "type": "ForOfStatement",
+      "babel_source": "for (const dep of effect.dependencies.elements) {\r\n          if (dep && dep.name) {\r\n            deps.push(`\"${dep.name}\"`);\r\n          }\r\n        }",
+      "parentContext": {
+        "functionName": "generateClientEffectsMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "33e80d46",
+      "type": "VariableDeclaration",
+      "babel_source": "const dep",
+      "parentContext": {
+        "functionName": "generateClientEffectsMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6e9b4b3d",
+      "type": "IfStatement",
+      "condition": "dep && dep.name",
+      "babel_source": "if (dep && dep.name) {\r\n            deps.push(`\"${dep.name}\"`);\r\n          }",
+      "parentContext": {
+        "functionName": "generateClientEffectsMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e758f3aa",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "dep && dep.name",
+      "parentContext": {
+        "functionName": "generateClientEffectsMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ddfeba7a",
+      "type": "TemplateLiteral",
+      "babel_source": "`\"${dep.name}\"`",
+      "parentContext": {
+        "functionName": "generateClientEffectsMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ea8647b6",
+      "type": "VariableDeclaration",
+      "babel_source": "const depsArray = deps.length > 0 ? deps.join(', ') : '';",
+      "parentContext": {
+        "functionName": "generateClientEffectsMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fd14781c",
+      "type": "ConditionalExpression",
+      "babel_source": "deps.length > 0 ? deps.join(', ') : ''",
+      "parentContext": {
+        "functionName": "generateClientEffectsMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e0dd3515",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "deps.length > 0",
+      "parentContext": {
+        "functionName": "generateClientEffectsMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c45c9769",
+      "type": "VariableDeclaration",
+      "babel_source": "const comma = i < component.clientEffects.length - 1 ? ',' : '';",
+      "parentContext": {
+        "functionName": "generateClientEffectsMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1170fdf2",
+      "type": "ConditionalExpression",
+      "babel_source": "i < component.clientEffects.length - 1 ? ',' : ''",
+      "parentContext": {
+        "functionName": "generateClientEffectsMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9ba8a8f4",
+      "type": "BinaryExpression",
+      "operator": "<",
+      "babel_source": "i < component.clientEffects.length - 1",
+      "parentContext": {
+        "functionName": "generateClientEffectsMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a76ede63",
+      "type": "BinaryExpression",
+      "operator": "-",
+      "babel_source": "component.clientEffects.length - 1",
+      "parentContext": {
+        "functionName": "generateClientEffectsMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "14026dfa",
+      "type": "TemplateLiteral",
+      "babel_source": "`            [\"${effect.name}\"] = new EffectDefinition`",
+      "parentContext": {
+        "functionName": "generateClientEffectsMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0ec1fe61",
+      "type": "TemplateLiteral",
+      "babel_source": "`            {`",
+      "parentContext": {
+        "functionName": "generateClientEffectsMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a6950663",
+      "type": "TemplateLiteral",
+      "babel_source": "`                Callback = @\"${escapedJs}\",`",
+      "parentContext": {
+        "functionName": "generateClientEffectsMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "72397356",
+      "type": "TemplateLiteral",
+      "babel_source": "`                Dependencies = new[] { ${depsArray} }`",
+      "parentContext": {
+        "functionName": "generateClientEffectsMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ab7beff",
+      "type": "TemplateLiteral",
+      "babel_source": "`            }${comma}`",
+      "parentContext": {
+        "functionName": "generateClientEffectsMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/component/generateMethods.cjs"
+  ]
+}

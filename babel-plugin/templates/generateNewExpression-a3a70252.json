@@ -1,0 +1,698 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateNewExpression",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "generateCSharpExpression",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateNewExpression(node, generateCSharpExpression) {\r\n  // Handle new Promise(resolve => setTimeout(resolve, ms)) → Task.Delay(ms)\r\n  if (t.isIdentifier(node.callee, { name: 'Promise' }) && node.arguments.length > 0) {\r\n    const callback = node.arguments[0];\r\n\r\n    // Check if it's the setTimeout pattern\r\n    if (t.isArrowFunctionExpression(callback) && callback.params.length === 1) {\r\n      const resolveParam = callback.params[0].name;\r\n      const body = callback.body;\r\n\r\n      // Check if body is: setTimeout(resolve, ms)\r\n      if (t.isCallExpression(body) &&\r\n          t.isIdentifier(body.callee, { name: 'setTimeout' }) &&\r\n          body.arguments.length === 2 &&\r\n          t.isIdentifier(body.arguments[0], { name: resolveParam })) {\r\n        const delay = generateCSharpExpression(body.arguments[1]);\r\n        return `Task.Delay(${delay})`;\r\n      }\r\n    }\r\n\r\n    // Generic Promise constructor - not directly supported in C#\r\n    // Return Task.CompletedTask as a fallback\r\n    return `Task.CompletedTask`;\r\n  }\r\n\r\n  // Handle new Date() → DateTime.Parse()\r\n  if (t.isIdentifier(node.callee, { name: 'Date' })) {\r\n    if (node.arguments.length === 0) {\r\n      return 'DateTime.Now';\r\n    } else if (node.arguments.length === 1) {\r\n      const arg = generateCSharpExpression(node.arguments[0]);\r\n      return `DateTime.Parse(${arg})`;\r\n    }\r\n  }\r\n\r\n  // Handle new Error() → new Exception()\r\n  if (t.isIdentifier(node.callee, { name: 'Error' })) {\r\n    const args = node.arguments.map(arg => generateCSharpExpression(arg)).join(', ');\r\n    return `new Exception(${args})`;\r\n  }\r\n\r\n  // Handle other new expressions: new Foo() → new Foo()\r\n  const callee = generateCSharpExpression(node.callee);\r\n  const args = node.arguments.map(arg => generateCSharpExpression(arg)).join(', ');\r\n  return `new ${callee}(${args})`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "937cc288",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(node.callee, { name: 'Promise' }) && node.arguments.length > 0",
+      "babel_source": "if (t.isIdentifier(node.callee, { name: 'Promise' }) && node.arguments.length > 0) {\r\n    const callback = node.arguments[0];\r\n\r\n    // Check if it's the setTimeout pattern\r\n    if (t.isArrowFunctionExpression(callback) && callback.params.length === 1) {\r\n      const resolveParam = callback.params[0].name;\r\n      const body = callback.body;\r\n\r\n      // Check if body is: setTimeout(resolve, ms)\r\n      if (t.isCallExpression(body) &&\r\n          t.isIdentifier(body.callee, { name: 'setTimeout' }) &&\r\n          body.arguments.length === 2 &&\r\n          t.isIdentifier(body.arguments[0], { name: resolveParam })) {\r\n        const delay = generateCSharpExpression(body.arguments[1]);\r\n        return `Task.Delay(${delay})`;\r\n      }\r\n    }\r\n\r\n    // Generic Promise constructor - not directly supported in C#\r\n    // Return Task.CompletedTask as a fallback\r\n    return `Task.CompletedTask`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "412d8405",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isIdentifier(node.callee, { name: 'Promise' }) && node.arguments.length > 0",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7efde644",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee, { name: 'Promise' })",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c6409ebd",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'Promise' }",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e786d65e",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "node.arguments.length > 0",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "88261630",
+      "type": "VariableDeclaration",
+      "babel_source": "const callback = node.arguments[0];",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2d439856",
+      "type": "IfStatement",
+      "condition": "t.isArrowFunctionExpression(callback) && callback.params.length === 1",
+      "babel_source": "if (t.isArrowFunctionExpression(callback) && callback.params.length === 1) {\r\n      const resolveParam = callback.params[0].name;\r\n      const body = callback.body;\r\n\r\n      // Check if body is: setTimeout(resolve, ms)\r\n      if (t.isCallExpression(body) &&\r\n          t.isIdentifier(body.callee, { name: 'setTimeout' }) &&\r\n          body.arguments.length === 2 &&\r\n          t.isIdentifier(body.arguments[0], { name: resolveParam })) {\r\n        const delay = generateCSharpExpression(body.arguments[1]);\r\n        return `Task.Delay(${delay})`;\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "17f740f3",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isArrowFunctionExpression(callback) && callback.params.length === 1",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c04c3b2e",
+      "type": "BabelTypeCheck",
+      "method": "isArrowFunctionExpression",
+      "babel_source": "t.isArrowFunctionExpression(callback)",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c2e2b6cb",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "callback.params.length === 1",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f3eb8960",
+      "type": "VariableDeclaration",
+      "babel_source": "const resolveParam = callback.params[0].name;",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0649097a",
+      "type": "VariableDeclaration",
+      "babel_source": "const body = callback.body;",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7404a751",
+      "type": "IfStatement",
+      "condition": "t.isCallExpression(body) &&\r\n          t.isIdentifier(body.callee, { name: 'setTimeout' }) &&\r\n          body.arguments.length === 2 &&\r\n          t.isIdentifier(body.arguments[0], { name: resolveParam })",
+      "babel_source": "if (t.isCallExpression(body) &&\r\n          t.isIdentifier(body.callee, { name: 'setTimeout' }) &&\r\n          body.arguments.length === 2 &&\r\n          t.isIdentifier(body.arguments[0], { name: resolveParam })) {\r\n        const delay = generateCSharpExpression(body.arguments[1]);\r\n        return `Task.Delay(${delay})`;\r\n      }",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4e892a96",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isCallExpression(body) &&\r\n          t.isIdentifier(body.callee, { name: 'setTimeout' }) &&\r\n          body.arguments.length === 2 &&\r\n          t.isIdentifier(body.arguments[0], { name: resolveParam })",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f39f58fc",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isCallExpression(body) &&\r\n          t.isIdentifier(body.callee, { name: 'setTimeout' }) &&\r\n          body.arguments.length === 2",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9aee235c",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isCallExpression(body) &&\r\n          t.isIdentifier(body.callee, { name: 'setTimeout' })",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f64a52a9",
+      "type": "BabelTypeCheck",
+      "method": "isCallExpression",
+      "babel_source": "t.isCallExpression(body)",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0d17e865",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(body.callee, { name: 'setTimeout' })",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d7c66454",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'setTimeout' }",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "17e48ded",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "body.arguments.length === 2",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "df7c2b6e",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(body.arguments[0], { name: resolveParam })",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2d22c90d",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: resolveParam }",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ddf8c94d",
+      "type": "VariableDeclaration",
+      "babel_source": "const delay = generateCSharpExpression(body.arguments[1]);",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e350575a",
+      "type": "ReturnStatement",
+      "babel_source": "return `Task.Delay(${delay})`;",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b1ec9124",
+      "type": "TemplateLiteral",
+      "babel_source": "`Task.Delay(${delay})`",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e27ceb10",
+      "type": "ReturnStatement",
+      "babel_source": "return `Task.CompletedTask`;",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "75bacffe",
+      "type": "TemplateLiteral",
+      "babel_source": "`Task.CompletedTask`",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4887b7fe",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(node.callee, { name: 'Date' })",
+      "babel_source": "if (t.isIdentifier(node.callee, { name: 'Date' })) {\r\n    if (node.arguments.length === 0) {\r\n      return 'DateTime.Now';\r\n    } else if (node.arguments.length === 1) {\r\n      const arg = generateCSharpExpression(node.arguments[0]);\r\n      return `DateTime.Parse(${arg})`;\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "75bc2510",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee, { name: 'Date' })",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "314fe5f2",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'Date' }",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "696a6368",
+      "type": "IfStatement",
+      "condition": "node.arguments.length === 0",
+      "babel_source": "if (node.arguments.length === 0) {\r\n      return 'DateTime.Now';\r\n    } else if (node.arguments.length === 1) {\r\n      const arg = generateCSharpExpression(node.arguments[0]);\r\n      return `DateTime.Parse(${arg})`;\r\n    }",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3ef2dc8e",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "node.arguments.length === 0",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f95d5baa",
+      "type": "ReturnStatement",
+      "babel_source": "return 'DateTime.Now';",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "079fe0ca",
+      "type": "IfStatement",
+      "condition": "node.arguments.length === 1",
+      "babel_source": "if (node.arguments.length === 1) {\r\n      const arg = generateCSharpExpression(node.arguments[0]);\r\n      return `DateTime.Parse(${arg})`;\r\n    }",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42111bb3",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "node.arguments.length === 1",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ea615a50",
+      "type": "VariableDeclaration",
+      "babel_source": "const arg = generateCSharpExpression(node.arguments[0]);",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "764f7b55",
+      "type": "ReturnStatement",
+      "babel_source": "return `DateTime.Parse(${arg})`;",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a7946db3",
+      "type": "TemplateLiteral",
+      "babel_source": "`DateTime.Parse(${arg})`",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6adb37e6",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(node.callee, { name: 'Error' })",
+      "babel_source": "if (t.isIdentifier(node.callee, { name: 'Error' })) {\r\n    const args = node.arguments.map(arg => generateCSharpExpression(arg)).join(', ');\r\n    return `new Exception(${args})`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ed24cd0e",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee, { name: 'Error' })",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d1da6864",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'Error' }",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8a5de54b",
+      "type": "VariableDeclaration",
+      "babel_source": "const args = node.arguments.map(arg => generateCSharpExpression(arg)).join(', ');",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "38737e30",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "arg => generateCSharpExpression(arg)",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9a65beee",
+      "type": "ReturnStatement",
+      "babel_source": "return `new Exception(${args})`;",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "696883ea",
+      "type": "TemplateLiteral",
+      "babel_source": "`new Exception(${args})`",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8637216e",
+      "type": "VariableDeclaration",
+      "babel_source": "const callee = generateCSharpExpression(node.callee);",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8a5de54b",
+      "type": "VariableDeclaration",
+      "babel_source": "const args = node.arguments.map(arg => generateCSharpExpression(arg)).join(', ');",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "38737e30",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "arg => generateCSharpExpression(arg)",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "622b11f9",
+      "type": "ReturnStatement",
+      "babel_source": "return `new ${callee}(${args})`;",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7230bbc5",
+      "type": "TemplateLiteral",
+      "babel_source": "`new ${callee}(${args})`",
+      "parentContext": {
+        "functionName": "generateNewExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/expressions/newExpressions.cjs"
+  ]
+}

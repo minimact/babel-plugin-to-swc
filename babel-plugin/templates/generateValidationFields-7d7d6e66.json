@@ -1,0 +1,250 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateValidationFields",
+  "params": [
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "lines",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateValidationFields(component, lines) {\r\n  for (const validation of component.useValidation) {\r\n    lines.push(`    [Validation]`);\r\n    lines.push(`    private ValidationField ${validation.name} = new ValidationField`);\r\n    lines.push(`    {`);\r\n    lines.push(`        FieldKey = \"${validation.fieldKey}\",`);\r\n\r\n    // Add validation rules\r\n    if (validation.rules.required) {\r\n      lines.push(`        Required = ${validation.rules.required.toString().toLowerCase()},`);\r\n    }\r\n    if (validation.rules.minLength) {\r\n      lines.push(`        MinLength = ${validation.rules.minLength},`);\r\n    }\r\n    if (validation.rules.maxLength) {\r\n      lines.push(`        MaxLength = ${validation.rules.maxLength},`);\r\n    }\r\n    if (validation.rules.pattern) {\r\n      lines.push(`        Pattern = @\"${validation.rules.pattern}\",`);\r\n    }\r\n    if (validation.rules.message) {\r\n      lines.push(`        Message = \"${validation.rules.message}\"`);\r\n    }\r\n\r\n    lines.push(`    };`);\r\n    lines.push('');\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "0bd408e9",
+      "type": "ForOfStatement",
+      "babel_source": "for (const validation of component.useValidation) {\r\n    lines.push(`    [Validation]`);\r\n    lines.push(`    private ValidationField ${validation.name} = new ValidationField`);\r\n    lines.push(`    {`);\r\n    lines.push(`        FieldKey = \"${validation.fieldKey}\",`);\r\n\r\n    // Add validation rules\r\n    if (validation.rules.required) {\r\n      lines.push(`        Required = ${validation.rules.required.toString().toLowerCase()},`);\r\n    }\r\n    if (validation.rules.minLength) {\r\n      lines.push(`        MinLength = ${validation.rules.minLength},`);\r\n    }\r\n    if (validation.rules.maxLength) {\r\n      lines.push(`        MaxLength = ${validation.rules.maxLength},`);\r\n    }\r\n    if (validation.rules.pattern) {\r\n      lines.push(`        Pattern = @\"${validation.rules.pattern}\",`);\r\n    }\r\n    if (validation.rules.message) {\r\n      lines.push(`        Message = \"${validation.rules.message}\"`);\r\n    }\r\n\r\n    lines.push(`    };`);\r\n    lines.push('');\r\n  }",
+      "parentContext": {
+        "functionName": "generateValidationFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2a6d231a",
+      "type": "VariableDeclaration",
+      "babel_source": "const validation",
+      "parentContext": {
+        "functionName": "generateValidationFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4d160f24",
+      "type": "TemplateLiteral",
+      "babel_source": "`    [Validation]`",
+      "parentContext": {
+        "functionName": "generateValidationFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "857c992d",
+      "type": "TemplateLiteral",
+      "babel_source": "`    private ValidationField ${validation.name} = new ValidationField`",
+      "parentContext": {
+        "functionName": "generateValidationFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "497895ef",
+      "type": "TemplateLiteral",
+      "babel_source": "`    {`",
+      "parentContext": {
+        "functionName": "generateValidationFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "468a1715",
+      "type": "TemplateLiteral",
+      "babel_source": "`        FieldKey = \"${validation.fieldKey}\",`",
+      "parentContext": {
+        "functionName": "generateValidationFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ac5b6674",
+      "type": "IfStatement",
+      "condition": "validation.rules.required",
+      "babel_source": "if (validation.rules.required) {\r\n      lines.push(`        Required = ${validation.rules.required.toString().toLowerCase()},`);\r\n    }",
+      "parentContext": {
+        "functionName": "generateValidationFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8093b479",
+      "type": "TemplateLiteral",
+      "babel_source": "`        Required = ${validation.rules.required.toString().toLowerCase()},`",
+      "parentContext": {
+        "functionName": "generateValidationFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8e6397ab",
+      "type": "IfStatement",
+      "condition": "validation.rules.minLength",
+      "babel_source": "if (validation.rules.minLength) {\r\n      lines.push(`        MinLength = ${validation.rules.minLength},`);\r\n    }",
+      "parentContext": {
+        "functionName": "generateValidationFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2d1995c3",
+      "type": "TemplateLiteral",
+      "babel_source": "`        MinLength = ${validation.rules.minLength},`",
+      "parentContext": {
+        "functionName": "generateValidationFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "76a481d8",
+      "type": "IfStatement",
+      "condition": "validation.rules.maxLength",
+      "babel_source": "if (validation.rules.maxLength) {\r\n      lines.push(`        MaxLength = ${validation.rules.maxLength},`);\r\n    }",
+      "parentContext": {
+        "functionName": "generateValidationFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3f8c08e0",
+      "type": "TemplateLiteral",
+      "babel_source": "`        MaxLength = ${validation.rules.maxLength},`",
+      "parentContext": {
+        "functionName": "generateValidationFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "afd44b49",
+      "type": "IfStatement",
+      "condition": "validation.rules.pattern",
+      "babel_source": "if (validation.rules.pattern) {\r\n      lines.push(`        Pattern = @\"${validation.rules.pattern}\",`);\r\n    }",
+      "parentContext": {
+        "functionName": "generateValidationFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "74b221e6",
+      "type": "TemplateLiteral",
+      "babel_source": "`        Pattern = @\"${validation.rules.pattern}\",`",
+      "parentContext": {
+        "functionName": "generateValidationFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "84fdaf03",
+      "type": "IfStatement",
+      "condition": "validation.rules.message",
+      "babel_source": "if (validation.rules.message) {\r\n      lines.push(`        Message = \"${validation.rules.message}\"`);\r\n    }",
+      "parentContext": {
+        "functionName": "generateValidationFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8f913810",
+      "type": "TemplateLiteral",
+      "babel_source": "`        Message = \"${validation.rules.message}\"`",
+      "parentContext": {
+        "functionName": "generateValidationFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cb43692a",
+      "type": "TemplateLiteral",
+      "babel_source": "`    };`",
+      "parentContext": {
+        "functionName": "generateValidationFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/component/generateFields.cjs"
+  ]
+}

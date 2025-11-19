@@ -1,0 +1,983 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractAttributeTemplates",
+  "params": [
+    {
+      "name": "renderBody",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractAttributeTemplates(renderBody, component) {\r\n  const templates = {};\r\n\r\n  // Traverse JSX tree using pre-assigned hex paths\r\n  function traverseJSX(node) {\r\n    if (t.isJSXElement(node)) {\r\n      const tagName = node.openingElement.name.name;\r\n\r\n      const elementPath = node.__minimactPath;\r\n      if (!elementPath) {\r\n        throw new Error(`[Attribute Extractor] No __minimactPath found on <${tagName}>. Did assignPathsToJSX run first?`);\r\n      }\r\n\r\n      const currentPath = getPathSegmentsFromNode(node);\r\n\r\n      // Check attributes for template expressions\r\n      for (const attr of node.openingElement.attributes) {\r\n        if (t.isJSXAttribute(attr)) {\r\n          const attrName = attr.name.name;\r\n          const attrValue = attr.value;\r\n\r\n          const attrPath = attr.__minimactPath || `${elementPath}.@${attrName}`;\r\n\r\n          // 1. Template literal: className={`count-${count}`}\r\n          if (t.isJSXExpressionContainer(attrValue) && t.isTemplateLiteral(attrValue.expression)) {\r\n            const template = extractTemplateLiteral(attrValue.expression, component);\r\n            if (template) {\r\n              console.log(`[Attribute Template] Found template literal in ${attrName}: \"${template.template}\" (path: ${attrPath})`);\r\n              templates[attrPath] = {\r\n                ...template,\r\n                path: currentPath,\r\n                attribute: attrName,\r\n                type: template.bindings.length > 0 ? 'attribute-dynamic' : 'attribute-static'\r\n              };\r\n            }\r\n          }\r\n          // 2. Style object: style={{ fontSize: '32px', opacity: isVisible ? 1 : 0.5 }}\r\n          else if (attrName === 'style' && t.isJSXExpressionContainer(attrValue) && t.isObjectExpression(attrValue.expression)) {\r\n            const styleTemplate = extractStyleObjectTemplate(attrValue.expression, tagName, null, null, currentPath, component);\r\n            if (styleTemplate) {\r\n              console.log(`[Attribute Template] Found style object: \"${styleTemplate.template.substring(0, 60)}...\" (path: ${attrPath})`);\r\n              templates[attrPath] = styleTemplate;\r\n            }\r\n          }\r\n          // 3. Static string attribute: className=\"btn-primary\", placeholder=\"Enter name\"\r\n          else if (t.isStringLiteral(attrValue)) {\r\n            console.log(`[Attribute Template] Found static attribute ${attrName}: \"${attrValue.value}\" (path: ${attrPath})`);\r\n            templates[attrPath] = {\r\n              template: attrValue.value,\r\n              bindings: [],\r\n              slots: [],\r\n              path: currentPath,\r\n              attribute: attrName,\r\n              type: 'attribute-static'\r\n            };\r\n          }\r\n          // 4. Simple expression (for future dynamic attribute support)\r\n          else if (t.isJSXExpressionContainer(attrValue)) {\r\n            const expr = attrValue.expression;\r\n            if (t.isIdentifier(expr) || t.isMemberExpression(expr)) {\r\n              const binding = t.isIdentifier(expr) ? expr.name : buildMemberPath(expr);\r\n              console.log(`[Attribute Template] Found dynamic attribute ${attrName}: binding=\"${binding}\" (path: ${attrPath})`);\r\n              templates[attrPath] = {\r\n                template: '{0}',\r\n                bindings: [binding],\r\n                slots: [0],\r\n                path: currentPath,\r\n                attribute: attrName,\r\n                type: 'attribute-dynamic'\r\n              };\r\n            }\r\n          }\r\n        }\r\n      }\r\n\r\n      // Traverse children\r\n      for (const child of node.children) {\r\n        if (t.isJSXElement(child)) {\r\n          traverseJSX(child);\r\n        }\r\n      }\r\n    }\r\n  }\r\n\r\n  if (renderBody) {\r\n    traverseJSX(renderBody);\r\n  }\r\n\r\n  return templates;\r\n}",
+  "body_templates": [
+    {
+      "hash": "7353dcfd",
+      "type": "VariableDeclaration",
+      "babel_source": "const templates = {};",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "44136fa3",
+      "type": "ObjectExpression",
+      "babel_source": "{}",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "27702b6e",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(node)",
+      "babel_source": "if (t.isJSXElement(node)) {\r\n      const tagName = node.openingElement.name.name;\r\n\r\n      const elementPath = node.__minimactPath;\r\n      if (!elementPath) {\r\n        throw new Error(`[Attribute Extractor] No __minimactPath found on <${tagName}>. Did assignPathsToJSX run first?`);\r\n      }\r\n\r\n      const currentPath = getPathSegmentsFromNode(node);\r\n\r\n      // Check attributes for template expressions\r\n      for (const attr of node.openingElement.attributes) {\r\n        if (t.isJSXAttribute(attr)) {\r\n          const attrName = attr.name.name;\r\n          const attrValue = attr.value;\r\n\r\n          const attrPath = attr.__minimactPath || `${elementPath}.@${attrName}`;\r\n\r\n          // 1. Template literal: className={`count-${count}`}\r\n          if (t.isJSXExpressionContainer(attrValue) && t.isTemplateLiteral(attrValue.expression)) {\r\n            const template = extractTemplateLiteral(attrValue.expression, component);\r\n            if (template) {\r\n              console.log(`[Attribute Template] Found template literal in ${attrName}: \"${template.template}\" (path: ${attrPath})`);\r\n              templates[attrPath] = {\r\n                ...template,\r\n                path: currentPath,\r\n                attribute: attrName,\r\n                type: template.bindings.length > 0 ? 'attribute-dynamic' : 'attribute-static'\r\n              };\r\n            }\r\n          }\r\n          // 2. Style object: style={{ fontSize: '32px', opacity: isVisible ? 1 : 0.5 }}\r\n          else if (attrName === 'style' && t.isJSXExpressionContainer(attrValue) && t.isObjectExpression(attrValue.expression)) {\r\n            const styleTemplate = extractStyleObjectTemplate(attrValue.expression, tagName, null, null, currentPath, component);\r\n            if (styleTemplate) {\r\n              console.log(`[Attribute Template] Found style object: \"${styleTemplate.template.substring(0, 60)}...\" (path: ${attrPath})`);\r\n              templates[attrPath] = styleTemplate;\r\n            }\r\n          }\r\n          // 3. Static string attribute: className=\"btn-primary\", placeholder=\"Enter name\"\r\n          else if (t.isStringLiteral(attrValue)) {\r\n            console.log(`[Attribute Template] Found static attribute ${attrName}: \"${attrValue.value}\" (path: ${attrPath})`);\r\n            templates[attrPath] = {\r\n              template: attrValue.value,\r\n              bindings: [],\r\n              slots: [],\r\n              path: currentPath,\r\n              attribute: attrName,\r\n              type: 'attribute-static'\r\n            };\r\n          }\r\n          // 4. Simple expression (for future dynamic attribute support)\r\n          else if (t.isJSXExpressionContainer(attrValue)) {\r\n            const expr = attrValue.expression;\r\n            if (t.isIdentifier(expr) || t.isMemberExpression(expr)) {\r\n              const binding = t.isIdentifier(expr) ? expr.name : buildMemberPath(expr);\r\n              console.log(`[Attribute Template] Found dynamic attribute ${attrName}: binding=\"${binding}\" (path: ${attrPath})`);\r\n              templates[attrPath] = {\r\n                template: '{0}',\r\n                bindings: [binding],\r\n                slots: [0],\r\n                path: currentPath,\r\n                attribute: attrName,\r\n                type: 'attribute-dynamic'\r\n              };\r\n            }\r\n          }\r\n        }\r\n      }\r\n\r\n      // Traverse children\r\n      for (const child of node.children) {\r\n        if (t.isJSXElement(child)) {\r\n          traverseJSX(child);\r\n        }\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "606ccdc5",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(node)",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c1132faa",
+      "type": "VariableDeclaration",
+      "babel_source": "const tagName = node.openingElement.name.name;",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "63a024c9",
+      "type": "VariableDeclaration",
+      "babel_source": "const elementPath = node.__minimactPath;",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "516d34d3",
+      "type": "IfStatement",
+      "condition": "!elementPath",
+      "babel_source": "if (!elementPath) {\r\n        throw new Error(`[Attribute Extractor] No __minimactPath found on <${tagName}>. Did assignPathsToJSX run first?`);\r\n      }",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "88d136bc",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!elementPath",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "68989986",
+      "type": "ThrowStatement",
+      "babel_source": "throw new Error(`[Attribute Extractor] No __minimactPath found on <${tagName}>. Did assignPathsToJSX run first?`);",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ead85a0",
+      "type": "NewExpression",
+      "babel_source": "new Error(`[Attribute Extractor] No __minimactPath found on <${tagName}>. Did assignPathsToJSX run first?`)",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "53dd4eea",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Attribute Extractor] No __minimactPath found on <${tagName}>. Did assignPathsToJSX run first?`",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ceba59e0",
+      "type": "VariableDeclaration",
+      "babel_source": "const currentPath = getPathSegmentsFromNode(node);",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "52e46fb4",
+      "type": "ForOfStatement",
+      "babel_source": "for (const attr of node.openingElement.attributes) {\r\n        if (t.isJSXAttribute(attr)) {\r\n          const attrName = attr.name.name;\r\n          const attrValue = attr.value;\r\n\r\n          const attrPath = attr.__minimactPath || `${elementPath}.@${attrName}`;\r\n\r\n          // 1. Template literal: className={`count-${count}`}\r\n          if (t.isJSXExpressionContainer(attrValue) && t.isTemplateLiteral(attrValue.expression)) {\r\n            const template = extractTemplateLiteral(attrValue.expression, component);\r\n            if (template) {\r\n              console.log(`[Attribute Template] Found template literal in ${attrName}: \"${template.template}\" (path: ${attrPath})`);\r\n              templates[attrPath] = {\r\n                ...template,\r\n                path: currentPath,\r\n                attribute: attrName,\r\n                type: template.bindings.length > 0 ? 'attribute-dynamic' : 'attribute-static'\r\n              };\r\n            }\r\n          }\r\n          // 2. Style object: style={{ fontSize: '32px', opacity: isVisible ? 1 : 0.5 }}\r\n          else if (attrName === 'style' && t.isJSXExpressionContainer(attrValue) && t.isObjectExpression(attrValue.expression)) {\r\n            const styleTemplate = extractStyleObjectTemplate(attrValue.expression, tagName, null, null, currentPath, component);\r\n            if (styleTemplate) {\r\n              console.log(`[Attribute Template] Found style object: \"${styleTemplate.template.substring(0, 60)}...\" (path: ${attrPath})`);\r\n              templates[attrPath] = styleTemplate;\r\n            }\r\n          }\r\n          // 3. Static string attribute: className=\"btn-primary\", placeholder=\"Enter name\"\r\n          else if (t.isStringLiteral(attrValue)) {\r\n            console.log(`[Attribute Template] Found static attribute ${attrName}: \"${attrValue.value}\" (path: ${attrPath})`);\r\n            templates[attrPath] = {\r\n              template: attrValue.value,\r\n              bindings: [],\r\n              slots: [],\r\n              path: currentPath,\r\n              attribute: attrName,\r\n              type: 'attribute-static'\r\n            };\r\n          }\r\n          // 4. Simple expression (for future dynamic attribute support)\r\n          else if (t.isJSXExpressionContainer(attrValue)) {\r\n            const expr = attrValue.expression;\r\n            if (t.isIdentifier(expr) || t.isMemberExpression(expr)) {\r\n              const binding = t.isIdentifier(expr) ? expr.name : buildMemberPath(expr);\r\n              console.log(`[Attribute Template] Found dynamic attribute ${attrName}: binding=\"${binding}\" (path: ${attrPath})`);\r\n              templates[attrPath] = {\r\n                template: '{0}',\r\n                bindings: [binding],\r\n                slots: [0],\r\n                path: currentPath,\r\n                attribute: attrName,\r\n                type: 'attribute-dynamic'\r\n              };\r\n            }\r\n          }\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "02ca2e7f",
+      "type": "VariableDeclaration",
+      "babel_source": "const attr",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d5bd2b57",
+      "type": "IfStatement",
+      "condition": "t.isJSXAttribute(attr)",
+      "babel_source": "if (t.isJSXAttribute(attr)) {\r\n          const attrName = attr.name.name;\r\n          const attrValue = attr.value;\r\n\r\n          const attrPath = attr.__minimactPath || `${elementPath}.@${attrName}`;\r\n\r\n          // 1. Template literal: className={`count-${count}`}\r\n          if (t.isJSXExpressionContainer(attrValue) && t.isTemplateLiteral(attrValue.expression)) {\r\n            const template = extractTemplateLiteral(attrValue.expression, component);\r\n            if (template) {\r\n              console.log(`[Attribute Template] Found template literal in ${attrName}: \"${template.template}\" (path: ${attrPath})`);\r\n              templates[attrPath] = {\r\n                ...template,\r\n                path: currentPath,\r\n                attribute: attrName,\r\n                type: template.bindings.length > 0 ? 'attribute-dynamic' : 'attribute-static'\r\n              };\r\n            }\r\n          }\r\n          // 2. Style object: style={{ fontSize: '32px', opacity: isVisible ? 1 : 0.5 }}\r\n          else if (attrName === 'style' && t.isJSXExpressionContainer(attrValue) && t.isObjectExpression(attrValue.expression)) {\r\n            const styleTemplate = extractStyleObjectTemplate(attrValue.expression, tagName, null, null, currentPath, component);\r\n            if (styleTemplate) {\r\n              console.log(`[Attribute Template] Found style object: \"${styleTemplate.template.substring(0, 60)}...\" (path: ${attrPath})`);\r\n              templates[attrPath] = styleTemplate;\r\n            }\r\n          }\r\n          // 3. Static string attribute: className=\"btn-primary\", placeholder=\"Enter name\"\r\n          else if (t.isStringLiteral(attrValue)) {\r\n            console.log(`[Attribute Template] Found static attribute ${attrName}: \"${attrValue.value}\" (path: ${attrPath})`);\r\n            templates[attrPath] = {\r\n              template: attrValue.value,\r\n              bindings: [],\r\n              slots: [],\r\n              path: currentPath,\r\n              attribute: attrName,\r\n              type: 'attribute-static'\r\n            };\r\n          }\r\n          // 4. Simple expression (for future dynamic attribute support)\r\n          else if (t.isJSXExpressionContainer(attrValue)) {\r\n            const expr = attrValue.expression;\r\n            if (t.isIdentifier(expr) || t.isMemberExpression(expr)) {\r\n              const binding = t.isIdentifier(expr) ? expr.name : buildMemberPath(expr);\r\n              console.log(`[Attribute Template] Found dynamic attribute ${attrName}: binding=\"${binding}\" (path: ${attrPath})`);\r\n              templates[attrPath] = {\r\n                template: '{0}',\r\n                bindings: [binding],\r\n                slots: [0],\r\n                path: currentPath,\r\n                attribute: attrName,\r\n                type: 'attribute-dynamic'\r\n              };\r\n            }\r\n          }\r\n        }",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7468026c",
+      "type": "BabelTypeCheck",
+      "method": "isJSXAttribute",
+      "babel_source": "t.isJSXAttribute(attr)",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e30061cb",
+      "type": "VariableDeclaration",
+      "babel_source": "const attrName = attr.name.name;",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "39552c3a",
+      "type": "VariableDeclaration",
+      "babel_source": "const attrValue = attr.value;",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ffd0d59a",
+      "type": "VariableDeclaration",
+      "babel_source": "const attrPath = attr.__minimactPath || `${elementPath}.@${attrName}`;",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "98246482",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "attr.__minimactPath || `${elementPath}.@${attrName}`",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "25cb3a79",
+      "type": "TemplateLiteral",
+      "babel_source": "`${elementPath}.@${attrName}`",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f1ae5e25",
+      "type": "IfStatement",
+      "condition": "t.isJSXExpressionContainer(attrValue) && t.isTemplateLiteral(attrValue.expression)",
+      "babel_source": "if (t.isJSXExpressionContainer(attrValue) && t.isTemplateLiteral(attrValue.expression)) {\r\n            const template = extractTemplateLiteral(attrValue.expression, component);\r\n            if (template) {\r\n              console.log(`[Attribute Template] Found template literal in ${attrName}: \"${template.template}\" (path: ${attrPath})`);\r\n              templates[attrPath] = {\r\n                ...template,\r\n                path: currentPath,\r\n                attribute: attrName,\r\n                type: template.bindings.length > 0 ? 'attribute-dynamic' : 'attribute-static'\r\n              };\r\n            }\r\n          }\r\n          // 2. Style object: style={{ fontSize: '32px', opacity: isVisible ? 1 : 0.5 }}\r\n          else if (attrName === 'style' && t.isJSXExpressionContainer(attrValue) && t.isObjectExpression(attrValue.expression)) {\r\n            const styleTemplate = extractStyleObjectTemplate(attrValue.expression, tagName, null, null, currentPath, component);\r\n            if (styleTemplate) {\r\n              console.log(`[Attribute Template] Found style object: \"${styleTemplate.template.substring(0, 60)}...\" (path: ${attrPath})`);\r\n              templates[attrPath] = styleTemplate;\r\n            }\r\n          }\r\n          // 3. Static string attribute: className=\"btn-primary\", placeholder=\"Enter name\"\r\n          else if (t.isStringLiteral(attrValue)) {\r\n            console.log(`[Attribute Template] Found static attribute ${attrName}: \"${attrValue.value}\" (path: ${attrPath})`);\r\n            templates[attrPath] = {\r\n              template: attrValue.value,\r\n              bindings: [],\r\n              slots: [],\r\n              path: currentPath,\r\n              attribute: attrName,\r\n              type: 'attribute-static'\r\n            };\r\n          }\r\n          // 4. Simple expression (for future dynamic attribute support)\r\n          else if (t.isJSXExpressionContainer(attrValue)) {\r\n            const expr = attrValue.expression;\r\n            if (t.isIdentifier(expr) || t.isMemberExpression(expr)) {\r\n              const binding = t.isIdentifier(expr) ? expr.name : buildMemberPath(expr);\r\n              console.log(`[Attribute Template] Found dynamic attribute ${attrName}: binding=\"${binding}\" (path: ${attrPath})`);\r\n              templates[attrPath] = {\r\n                template: '{0}',\r\n                bindings: [binding],\r\n                slots: [0],\r\n                path: currentPath,\r\n                attribute: attrName,\r\n                type: 'attribute-dynamic'\r\n              };\r\n            }\r\n          }",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5ccbc29d",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isJSXExpressionContainer(attrValue) && t.isTemplateLiteral(attrValue.expression)",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "aa0980fb",
+      "type": "BabelTypeCheck",
+      "method": "isJSXExpressionContainer",
+      "babel_source": "t.isJSXExpressionContainer(attrValue)",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f070bb35",
+      "type": "BabelTypeCheck",
+      "method": "isTemplateLiteral",
+      "babel_source": "t.isTemplateLiteral(attrValue.expression)",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "40127ba9",
+      "type": "VariableDeclaration",
+      "babel_source": "const template = extractTemplateLiteral(attrValue.expression, component);",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9c4a0aef",
+      "type": "IfStatement",
+      "condition": "template",
+      "babel_source": "if (template) {\r\n              console.log(`[Attribute Template] Found template literal in ${attrName}: \"${template.template}\" (path: ${attrPath})`);\r\n              templates[attrPath] = {\r\n                ...template,\r\n                path: currentPath,\r\n                attribute: attrName,\r\n                type: template.bindings.length > 0 ? 'attribute-dynamic' : 'attribute-static'\r\n              };\r\n            }",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "609f4428",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Attribute Template] Found template literal in ${attrName}: \"${template.template}\" (path: ${attrPath})`",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ed28453a",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "templates[attrPath] = {\r\n                ...template,\r\n                path: currentPath,\r\n                attribute: attrName,\r\n                type: template.bindings.length > 0 ? 'attribute-dynamic' : 'attribute-static'\r\n              }",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "76aabb32",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n                ...template,\r\n                path: currentPath,\r\n                attribute: attrName,\r\n                type: template.bindings.length > 0 ? 'attribute-dynamic' : 'attribute-static'\r\n              }",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "be8c5b37",
+      "type": "SpreadElement",
+      "babel_source": "...template",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4c69ef4b",
+      "type": "ConditionalExpression",
+      "babel_source": "template.bindings.length > 0 ? 'attribute-dynamic' : 'attribute-static'",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "20237a87",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "template.bindings.length > 0",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5bf9053c",
+      "type": "IfStatement",
+      "condition": "attrName === 'style' && t.isJSXExpressionContainer(attrValue) && t.isObjectExpression(attrValue.expression)",
+      "babel_source": "if (attrName === 'style' && t.isJSXExpressionContainer(attrValue) && t.isObjectExpression(attrValue.expression)) {\r\n            const styleTemplate = extractStyleObjectTemplate(attrValue.expression, tagName, null, null, currentPath, component);\r\n            if (styleTemplate) {\r\n              console.log(`[Attribute Template] Found style object: \"${styleTemplate.template.substring(0, 60)}...\" (path: ${attrPath})`);\r\n              templates[attrPath] = styleTemplate;\r\n            }\r\n          }\r\n          // 3. Static string attribute: className=\"btn-primary\", placeholder=\"Enter name\"\r\n          else if (t.isStringLiteral(attrValue)) {\r\n            console.log(`[Attribute Template] Found static attribute ${attrName}: \"${attrValue.value}\" (path: ${attrPath})`);\r\n            templates[attrPath] = {\r\n              template: attrValue.value,\r\n              bindings: [],\r\n              slots: [],\r\n              path: currentPath,\r\n              attribute: attrName,\r\n              type: 'attribute-static'\r\n            };\r\n          }\r\n          // 4. Simple expression (for future dynamic attribute support)\r\n          else if (t.isJSXExpressionContainer(attrValue)) {\r\n            const expr = attrValue.expression;\r\n            if (t.isIdentifier(expr) || t.isMemberExpression(expr)) {\r\n              const binding = t.isIdentifier(expr) ? expr.name : buildMemberPath(expr);\r\n              console.log(`[Attribute Template] Found dynamic attribute ${attrName}: binding=\"${binding}\" (path: ${attrPath})`);\r\n              templates[attrPath] = {\r\n                template: '{0}',\r\n                bindings: [binding],\r\n                slots: [0],\r\n                path: currentPath,\r\n                attribute: attrName,\r\n                type: 'attribute-dynamic'\r\n              };\r\n            }\r\n          }",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "98c0574d",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "attrName === 'style' && t.isJSXExpressionContainer(attrValue) && t.isObjectExpression(attrValue.expression)",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2b1087f6",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "attrName === 'style' && t.isJSXExpressionContainer(attrValue)",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1f7c7959",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "attrName === 'style'",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "aa0980fb",
+      "type": "BabelTypeCheck",
+      "method": "isJSXExpressionContainer",
+      "babel_source": "t.isJSXExpressionContainer(attrValue)",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "53f4c463",
+      "type": "BabelTypeCheck",
+      "method": "isObjectExpression",
+      "babel_source": "t.isObjectExpression(attrValue.expression)",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d4c5bb23",
+      "type": "VariableDeclaration",
+      "babel_source": "const styleTemplate = extractStyleObjectTemplate(attrValue.expression, tagName, null, null, currentPath, component);",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "530b61c2",
+      "type": "IfStatement",
+      "condition": "styleTemplate",
+      "babel_source": "if (styleTemplate) {\r\n              console.log(`[Attribute Template] Found style object: \"${styleTemplate.template.substring(0, 60)}...\" (path: ${attrPath})`);\r\n              templates[attrPath] = styleTemplate;\r\n            }",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "57b05a7a",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Attribute Template] Found style object: \"${styleTemplate.template.substring(0, 60)}...\" (path: ${attrPath})`",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5d865760",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "templates[attrPath] = styleTemplate",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9e0621b9",
+      "type": "IfStatement",
+      "condition": "t.isStringLiteral(attrValue)",
+      "babel_source": "if (t.isStringLiteral(attrValue)) {\r\n            console.log(`[Attribute Template] Found static attribute ${attrName}: \"${attrValue.value}\" (path: ${attrPath})`);\r\n            templates[attrPath] = {\r\n              template: attrValue.value,\r\n              bindings: [],\r\n              slots: [],\r\n              path: currentPath,\r\n              attribute: attrName,\r\n              type: 'attribute-static'\r\n            };\r\n          }\r\n          // 4. Simple expression (for future dynamic attribute support)\r\n          else if (t.isJSXExpressionContainer(attrValue)) {\r\n            const expr = attrValue.expression;\r\n            if (t.isIdentifier(expr) || t.isMemberExpression(expr)) {\r\n              const binding = t.isIdentifier(expr) ? expr.name : buildMemberPath(expr);\r\n              console.log(`[Attribute Template] Found dynamic attribute ${attrName}: binding=\"${binding}\" (path: ${attrPath})`);\r\n              templates[attrPath] = {\r\n                template: '{0}',\r\n                bindings: [binding],\r\n                slots: [0],\r\n                path: currentPath,\r\n                attribute: attrName,\r\n                type: 'attribute-dynamic'\r\n              };\r\n            }\r\n          }",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ce7e866f",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(attrValue)",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1a2f2e73",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Attribute Template] Found static attribute ${attrName}: \"${attrValue.value}\" (path: ${attrPath})`",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c7619e40",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "templates[attrPath] = {\r\n              template: attrValue.value,\r\n              bindings: [],\r\n              slots: [],\r\n              path: currentPath,\r\n              attribute: attrName,\r\n              type: 'attribute-static'\r\n            }",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "030052d3",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n              template: attrValue.value,\r\n              bindings: [],\r\n              slots: [],\r\n              path: currentPath,\r\n              attribute: attrName,\r\n              type: 'attribute-static'\r\n            }",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "492d1650",
+      "type": "IfStatement",
+      "condition": "t.isJSXExpressionContainer(attrValue)",
+      "babel_source": "if (t.isJSXExpressionContainer(attrValue)) {\r\n            const expr = attrValue.expression;\r\n            if (t.isIdentifier(expr) || t.isMemberExpression(expr)) {\r\n              const binding = t.isIdentifier(expr) ? expr.name : buildMemberPath(expr);\r\n              console.log(`[Attribute Template] Found dynamic attribute ${attrName}: binding=\"${binding}\" (path: ${attrPath})`);\r\n              templates[attrPath] = {\r\n                template: '{0}',\r\n                bindings: [binding],\r\n                slots: [0],\r\n                path: currentPath,\r\n                attribute: attrName,\r\n                type: 'attribute-dynamic'\r\n              };\r\n            }\r\n          }",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "aa0980fb",
+      "type": "BabelTypeCheck",
+      "method": "isJSXExpressionContainer",
+      "babel_source": "t.isJSXExpressionContainer(attrValue)",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "da29c6d3",
+      "type": "VariableDeclaration",
+      "babel_source": "const expr = attrValue.expression;",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "82a9f9f5",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(expr) || t.isMemberExpression(expr)",
+      "babel_source": "if (t.isIdentifier(expr) || t.isMemberExpression(expr)) {\r\n              const binding = t.isIdentifier(expr) ? expr.name : buildMemberPath(expr);\r\n              console.log(`[Attribute Template] Found dynamic attribute ${attrName}: binding=\"${binding}\" (path: ${attrPath})`);\r\n              templates[attrPath] = {\r\n                template: '{0}',\r\n                bindings: [binding],\r\n                slots: [0],\r\n                path: currentPath,\r\n                attribute: attrName,\r\n                type: 'attribute-dynamic'\r\n              };\r\n            }",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "10de4a70",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isIdentifier(expr) || t.isMemberExpression(expr)",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42d26fd4",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(expr)",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c8858c63",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(expr)",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9cdbcb4f",
+      "type": "VariableDeclaration",
+      "babel_source": "const binding = t.isIdentifier(expr) ? expr.name : buildMemberPath(expr);",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fd7083d7",
+      "type": "ConditionalExpression",
+      "babel_source": "t.isIdentifier(expr) ? expr.name : buildMemberPath(expr)",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42d26fd4",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(expr)",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "09f69fff",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Attribute Template] Found dynamic attribute ${attrName}: binding=\"${binding}\" (path: ${attrPath})`",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e57ad83a",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "templates[attrPath] = {\r\n                template: '{0}',\r\n                bindings: [binding],\r\n                slots: [0],\r\n                path: currentPath,\r\n                attribute: attrName,\r\n                type: 'attribute-dynamic'\r\n              }",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b9fe52ef",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n                template: '{0}',\r\n                bindings: [binding],\r\n                slots: [0],\r\n                path: currentPath,\r\n                attribute: attrName,\r\n                type: 'attribute-dynamic'\r\n              }",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b854dc8e",
+      "type": "ArrayExpression",
+      "babel_source": "[binding]",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d0bca111",
+      "type": "ArrayExpression",
+      "babel_source": "[0]",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "58bff515",
+      "type": "ForOfStatement",
+      "babel_source": "for (const child of node.children) {\r\n        if (t.isJSXElement(child)) {\r\n          traverseJSX(child);\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "efdd3930",
+      "type": "VariableDeclaration",
+      "babel_source": "const child",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1442b4ec",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(child)",
+      "babel_source": "if (t.isJSXElement(child)) {\r\n          traverseJSX(child);\r\n        }",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d44bd174",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(child)",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7687a2c9",
+      "type": "IfStatement",
+      "condition": "renderBody",
+      "babel_source": "if (renderBody) {\r\n    traverseJSX(renderBody);\r\n  }",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ce7c3aac",
+      "type": "ReturnStatement",
+      "babel_source": "return templates;",
+      "parentContext": {
+        "functionName": "extractAttributeTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/templates.cjs"
+  ]
+}

@@ -1,0 +1,960 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateMemberExpression",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "generateCSharpExpression",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    },
+    {
+      "name": "inInterpolation",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateMemberExpression(node, generateCSharpExpression, inInterpolation) {\r\n  // Special case: state.key or state[\"key\"] (state proxy)\r\n  if (t.isIdentifier(node.object, { name: 'state' })) {\r\n    if (node.computed) {\r\n      // state[\"someKey\"] or state[\"Child.key\"] → State[\"someKey\"] or State[\"Child.key\"]\r\n      const key = generateCSharpExpression(node.property, inInterpolation);\r\n      return `State[${key}]`;\r\n    } else {\r\n      // state.someKey → State[\"someKey\"]\r\n      const key = node.property.name;\r\n      return `State[\"${key}\"]`;\r\n    }\r\n  }\r\n\r\n  const object = generateCSharpExpression(node.object);\r\n  const propertyName = t.isIdentifier(node.property) ? node.property.name : null;\r\n\r\n  // Handle ref.current → just ref (refs in C# are the value itself, not a container)\r\n  if (propertyName === 'current' && !node.computed && t.isIdentifier(node.object)) {\r\n    // Check if the object is a ref variable (ends with \"Ref\")\r\n    if (node.object.name.endsWith('Ref')) {\r\n      return object;  // Return just the ref variable name without .current\r\n    }\r\n  }\r\n\r\n  // Handle JavaScript to C# API conversions\r\n  if (propertyName === 'length' && !node.computed) {\r\n    // array.length → array.Count\r\n    return `${object}.Count`;\r\n  }\r\n\r\n  // Handle event object property access (e.target.value → e.Target.Value)\r\n  if (propertyName === 'target' && !node.computed) {\r\n    return `${object}.Target`;\r\n  }\r\n  if (propertyName === 'value' && !node.computed) {\r\n    // Capitalize for C# property convention\r\n    return `${object}.Value`;\r\n  }\r\n  if (propertyName === 'checked' && !node.computed) {\r\n    // Capitalize for C# property convention\r\n    return `${object}.Checked`;\r\n  }\r\n\r\n  // Handle exception properties (err.message → err.Message)\r\n  if (propertyName === 'message' && !node.computed) {\r\n    return `${object}.Message`;\r\n  }\r\n\r\n  // Handle fetch Response properties (response.ok → response.IsSuccessStatusCode)\r\n  if (propertyName === 'ok' && !node.computed) {\r\n    return `${object}.IsSuccessStatusCode`;\r\n  }\r\n\r\n  const property = node.computed\r\n    ? `[${generateCSharpExpression(node.property)}]`\r\n    : `.${propertyName}`;\r\n  return `${object}${property}`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "44b67b95",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(node.object, { name: 'state' })",
+      "babel_source": "if (t.isIdentifier(node.object, { name: 'state' })) {\r\n    if (node.computed) {\r\n      // state[\"someKey\"] or state[\"Child.key\"] → State[\"someKey\"] or State[\"Child.key\"]\r\n      const key = generateCSharpExpression(node.property, inInterpolation);\r\n      return `State[${key}]`;\r\n    } else {\r\n      // state.someKey → State[\"someKey\"]\r\n      const key = node.property.name;\r\n      return `State[\"${key}\"]`;\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0c6d0eac",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.object, { name: 'state' })",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "91047a7a",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'state' }",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "41b1953c",
+      "type": "IfStatement",
+      "condition": "node.computed",
+      "babel_source": "if (node.computed) {\r\n      // state[\"someKey\"] or state[\"Child.key\"] → State[\"someKey\"] or State[\"Child.key\"]\r\n      const key = generateCSharpExpression(node.property, inInterpolation);\r\n      return `State[${key}]`;\r\n    } else {\r\n      // state.someKey → State[\"someKey\"]\r\n      const key = node.property.name;\r\n      return `State[\"${key}\"]`;\r\n    }",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "985aee62",
+      "type": "VariableDeclaration",
+      "babel_source": "const key = generateCSharpExpression(node.property, inInterpolation);",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "76b53bd6",
+      "type": "ReturnStatement",
+      "babel_source": "return `State[${key}]`;",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "647478b0",
+      "type": "TemplateLiteral",
+      "babel_source": "`State[${key}]`",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "713b833e",
+      "type": "VariableDeclaration",
+      "babel_source": "const key = node.property.name;",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e7d34427",
+      "type": "ReturnStatement",
+      "babel_source": "return `State[\"${key}\"]`;",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0c0c31bd",
+      "type": "TemplateLiteral",
+      "babel_source": "`State[\"${key}\"]`",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d464f703",
+      "type": "VariableDeclaration",
+      "babel_source": "const object = generateCSharpExpression(node.object);",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e37f6b6e",
+      "type": "VariableDeclaration",
+      "babel_source": "const propertyName = t.isIdentifier(node.property) ? node.property.name : null;",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9d2fd11c",
+      "type": "ConditionalExpression",
+      "babel_source": "t.isIdentifier(node.property) ? node.property.name : null",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a42af9c4",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.property)",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c88166c9",
+      "type": "IfStatement",
+      "condition": "propertyName === 'current' && !node.computed && t.isIdentifier(node.object)",
+      "babel_source": "if (propertyName === 'current' && !node.computed && t.isIdentifier(node.object)) {\r\n    // Check if the object is a ref variable (ends with \"Ref\")\r\n    if (node.object.name.endsWith('Ref')) {\r\n      return object;  // Return just the ref variable name without .current\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1461fd6a",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "propertyName === 'current' && !node.computed && t.isIdentifier(node.object)",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4fc2975c",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "propertyName === 'current' && !node.computed",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ab4d115",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "propertyName === 'current'",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c75e412c",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!node.computed",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "15a96eb5",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.object)",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b54d88d4",
+      "type": "IfStatement",
+      "condition": "node.object.name.endsWith('Ref')",
+      "babel_source": "if (node.object.name.endsWith('Ref')) {\r\n      return object;  // Return just the ref variable name without .current\r\n    }",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8bfbe8f6",
+      "type": "ReturnStatement",
+      "babel_source": "return object;",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "22086106",
+      "type": "IfStatement",
+      "condition": "propertyName === 'length' && !node.computed",
+      "babel_source": "if (propertyName === 'length' && !node.computed) {\r\n    // array.length → array.Count\r\n    return `${object}.Count`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bd8a88d9",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "propertyName === 'length' && !node.computed",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6fbf3ec5",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "propertyName === 'length'",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c75e412c",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!node.computed",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6b853348",
+      "type": "ReturnStatement",
+      "babel_source": "return `${object}.Count`;",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0cccaf60",
+      "type": "TemplateLiteral",
+      "babel_source": "`${object}.Count`",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d9124a97",
+      "type": "IfStatement",
+      "condition": "propertyName === 'target' && !node.computed",
+      "babel_source": "if (propertyName === 'target' && !node.computed) {\r\n    return `${object}.Target`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cac59366",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "propertyName === 'target' && !node.computed",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8694c221",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "propertyName === 'target'",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c75e412c",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!node.computed",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ffa65f16",
+      "type": "ReturnStatement",
+      "babel_source": "return `${object}.Target`;",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "475b2e4f",
+      "type": "TemplateLiteral",
+      "babel_source": "`${object}.Target`",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a14ed851",
+      "type": "IfStatement",
+      "condition": "propertyName === 'value' && !node.computed",
+      "babel_source": "if (propertyName === 'value' && !node.computed) {\r\n    // Capitalize for C# property convention\r\n    return `${object}.Value`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bd2628da",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "propertyName === 'value' && !node.computed",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a9432889",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "propertyName === 'value'",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c75e412c",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!node.computed",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8adafdda",
+      "type": "ReturnStatement",
+      "babel_source": "return `${object}.Value`;",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0f990449",
+      "type": "TemplateLiteral",
+      "babel_source": "`${object}.Value`",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5b20b99d",
+      "type": "IfStatement",
+      "condition": "propertyName === 'checked' && !node.computed",
+      "babel_source": "if (propertyName === 'checked' && !node.computed) {\r\n    // Capitalize for C# property convention\r\n    return `${object}.Checked`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "243f3be0",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "propertyName === 'checked' && !node.computed",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ae111b37",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "propertyName === 'checked'",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c75e412c",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!node.computed",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "83d47a08",
+      "type": "ReturnStatement",
+      "babel_source": "return `${object}.Checked`;",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "014015f1",
+      "type": "TemplateLiteral",
+      "babel_source": "`${object}.Checked`",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "da9a0c87",
+      "type": "IfStatement",
+      "condition": "propertyName === 'message' && !node.computed",
+      "babel_source": "if (propertyName === 'message' && !node.computed) {\r\n    return `${object}.Message`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f97c4edd",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "propertyName === 'message' && !node.computed",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "465d7d52",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "propertyName === 'message'",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c75e412c",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!node.computed",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0eac6552",
+      "type": "ReturnStatement",
+      "babel_source": "return `${object}.Message`;",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2cdbcee9",
+      "type": "TemplateLiteral",
+      "babel_source": "`${object}.Message`",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f2b42536",
+      "type": "IfStatement",
+      "condition": "propertyName === 'ok' && !node.computed",
+      "babel_source": "if (propertyName === 'ok' && !node.computed) {\r\n    return `${object}.IsSuccessStatusCode`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "154c3e53",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "propertyName === 'ok' && !node.computed",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "092617c6",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "propertyName === 'ok'",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c75e412c",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!node.computed",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "eabe37ba",
+      "type": "ReturnStatement",
+      "babel_source": "return `${object}.IsSuccessStatusCode`;",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ae95f129",
+      "type": "TemplateLiteral",
+      "babel_source": "`${object}.IsSuccessStatusCode`",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a6be99c6",
+      "type": "VariableDeclaration",
+      "babel_source": "const property = node.computed\r\n    ? `[${generateCSharpExpression(node.property)}]`\r\n    : `.${propertyName}`;",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0b67e409",
+      "type": "ConditionalExpression",
+      "babel_source": "node.computed\r\n    ? `[${generateCSharpExpression(node.property)}]`\r\n    : `.${propertyName}`",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "981b6ed8",
+      "type": "TemplateLiteral",
+      "babel_source": "`[${generateCSharpExpression(node.property)}]`",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5b867774",
+      "type": "TemplateLiteral",
+      "babel_source": "`.${propertyName}`",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "94eadeaf",
+      "type": "ReturnStatement",
+      "babel_source": "return `${object}${property}`;",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6e90232d",
+      "type": "TemplateLiteral",
+      "babel_source": "`${object}${property}`",
+      "parentContext": {
+        "functionName": "generateMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/expressions/identifiers.cjs"
+  ]
+}

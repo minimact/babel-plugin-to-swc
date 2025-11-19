@@ -1,0 +1,89 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateMarkdownFields",
+  "params": [
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "lines",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateMarkdownFields(component, lines) {\r\n  for (const md of component.useMarkdown) {\r\n    lines.push(`    [Markdown]`);\r\n    lines.push(`    [State]`);\r\n    lines.push(`    private string ${md.name} = ${md.initialValue};`);\r\n    lines.push('');\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "61cf8c7e",
+      "type": "ForOfStatement",
+      "babel_source": "for (const md of component.useMarkdown) {\r\n    lines.push(`    [Markdown]`);\r\n    lines.push(`    [State]`);\r\n    lines.push(`    private string ${md.name} = ${md.initialValue};`);\r\n    lines.push('');\r\n  }",
+      "parentContext": {
+        "functionName": "generateMarkdownFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b975b76b",
+      "type": "VariableDeclaration",
+      "babel_source": "const md",
+      "parentContext": {
+        "functionName": "generateMarkdownFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "66be01b6",
+      "type": "TemplateLiteral",
+      "babel_source": "`    [Markdown]`",
+      "parentContext": {
+        "functionName": "generateMarkdownFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "634a1d52",
+      "type": "TemplateLiteral",
+      "babel_source": "`    [State]`",
+      "parentContext": {
+        "functionName": "generateMarkdownFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a4a089ee",
+      "type": "TemplateLiteral",
+      "babel_source": "`    private string ${md.name} = ${md.initialValue};`",
+      "parentContext": {
+        "functionName": "generateMarkdownFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/component/generateFields.cjs"
+  ]
+}

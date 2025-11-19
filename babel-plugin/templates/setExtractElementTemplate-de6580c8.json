@@ -1,0 +1,32 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "setExtractElementTemplate",
+  "params": [
+    {
+      "name": "fn",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function setExtractElementTemplate(fn) {\r\n  extractElementTemplate = fn;\r\n}",
+  "body_templates": [
+    {
+      "hash": "1160e890",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "extractElementTemplate = fn",
+      "parentContext": {
+        "functionName": "setExtractElementTemplate",
+        "functionParams": [
+          "fn"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/loopTemplates/extractChildrenTemplates.cjs"
+  ]
+}

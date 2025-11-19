@@ -1,0 +1,360 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateFunctionExpression",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "generateCSharpExpression",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    },
+    {
+      "name": "generateCSharpStatement",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateFunctionExpression(node, generateCSharpExpression, generateCSharpStatement) {\r\n  // Arrow function: (x) => x * 2  →  x => x * 2\r\n  // Function expression: function(x) { return x * 2; }  →  x => x * 2\r\n  const params = node.params.map(p => {\r\n    if (t.isIdentifier(p)) return p.name;\r\n    if (t.isObjectPattern(p)) return '{...}'; // Destructuring - simplified\r\n    return 'param';\r\n  }).join(', ');\r\n\r\n  // Wrap params in parentheses if multiple or none\r\n  const paramsString = node.params.length === 1 ? params : `(${params})`;\r\n\r\n  // Generate function body\r\n  let body;\r\n  if (t.isBlockStatement(node.body)) {\r\n    // Block body: (x) => { return x * 2; }\r\n    const statements = node.body.body.map(stmt => generateCSharpStatement(stmt)).join(' ');\r\n    body = `{ ${statements} }`;\r\n  } else {\r\n    // Expression body: (x) => x * 2\r\n    body = generateCSharpExpression(node.body);\r\n  }\r\n\r\n  return `${paramsString} => ${body}`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "056b7ef4",
+      "type": "VariableDeclaration",
+      "babel_source": "const params = node.params.map(p => {\r\n    if (t.isIdentifier(p)) return p.name;\r\n    if (t.isObjectPattern(p)) return '{...}'; // Destructuring - simplified\r\n    return 'param';\r\n  }).join(', ');",
+      "parentContext": {
+        "functionName": "generateFunctionExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2ece6556",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "p => {\r\n    if (t.isIdentifier(p)) return p.name;\r\n    if (t.isObjectPattern(p)) return '{...}'; // Destructuring - simplified\r\n    return 'param';\r\n  }",
+      "parentContext": {
+        "functionName": "generateFunctionExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6091a996",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(p)",
+      "babel_source": "if (t.isIdentifier(p)) return p.name;",
+      "parentContext": {
+        "functionName": "generateFunctionExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d43d6349",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(p)",
+      "parentContext": {
+        "functionName": "generateFunctionExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e582e219",
+      "type": "ReturnStatement",
+      "babel_source": "return p.name;",
+      "parentContext": {
+        "functionName": "generateFunctionExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b7fc6913",
+      "type": "IfStatement",
+      "condition": "t.isObjectPattern(p)",
+      "babel_source": "if (t.isObjectPattern(p)) return '{...}';",
+      "parentContext": {
+        "functionName": "generateFunctionExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5e1514f1",
+      "type": "BabelTypeCheck",
+      "method": "isObjectPattern",
+      "babel_source": "t.isObjectPattern(p)",
+      "parentContext": {
+        "functionName": "generateFunctionExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cb717180",
+      "type": "ReturnStatement",
+      "babel_source": "return '{...}';",
+      "parentContext": {
+        "functionName": "generateFunctionExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4acecaf2",
+      "type": "ReturnStatement",
+      "babel_source": "return 'param';",
+      "parentContext": {
+        "functionName": "generateFunctionExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "861d185a",
+      "type": "VariableDeclaration",
+      "babel_source": "const paramsString = node.params.length === 1 ? params : `(${params})`;",
+      "parentContext": {
+        "functionName": "generateFunctionExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7c86df60",
+      "type": "ConditionalExpression",
+      "babel_source": "node.params.length === 1 ? params : `(${params})`",
+      "parentContext": {
+        "functionName": "generateFunctionExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "59705ea1",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "node.params.length === 1",
+      "parentContext": {
+        "functionName": "generateFunctionExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "013baddb",
+      "type": "TemplateLiteral",
+      "babel_source": "`(${params})`",
+      "parentContext": {
+        "functionName": "generateFunctionExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "df08436d",
+      "type": "VariableDeclaration",
+      "babel_source": "let body;",
+      "parentContext": {
+        "functionName": "generateFunctionExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b8e15442",
+      "type": "IfStatement",
+      "condition": "t.isBlockStatement(node.body)",
+      "babel_source": "if (t.isBlockStatement(node.body)) {\r\n    // Block body: (x) => { return x * 2; }\r\n    const statements = node.body.body.map(stmt => generateCSharpStatement(stmt)).join(' ');\r\n    body = `{ ${statements} }`;\r\n  } else {\r\n    // Expression body: (x) => x * 2\r\n    body = generateCSharpExpression(node.body);\r\n  }",
+      "parentContext": {
+        "functionName": "generateFunctionExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fdce86dd",
+      "type": "BabelTypeCheck",
+      "method": "isBlockStatement",
+      "babel_source": "t.isBlockStatement(node.body)",
+      "parentContext": {
+        "functionName": "generateFunctionExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7a7198c5",
+      "type": "VariableDeclaration",
+      "babel_source": "const statements = node.body.body.map(stmt => generateCSharpStatement(stmt)).join(' ');",
+      "parentContext": {
+        "functionName": "generateFunctionExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "351b6ebf",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "stmt => generateCSharpStatement(stmt)",
+      "parentContext": {
+        "functionName": "generateFunctionExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ac1d819b",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "body = `{ ${statements} }`",
+      "parentContext": {
+        "functionName": "generateFunctionExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c211d34c",
+      "type": "TemplateLiteral",
+      "babel_source": "`{ ${statements} }`",
+      "parentContext": {
+        "functionName": "generateFunctionExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7b5d7edc",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "body = generateCSharpExpression(node.body)",
+      "parentContext": {
+        "functionName": "generateFunctionExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7d0690b6",
+      "type": "ReturnStatement",
+      "babel_source": "return `${paramsString} => ${body}`;",
+      "parentContext": {
+        "functionName": "generateFunctionExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "04ede2e7",
+      "type": "TemplateLiteral",
+      "babel_source": "`${paramsString} => ${body}`",
+      "parentContext": {
+        "functionName": "generateFunctionExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/expressions/functions.cjs"
+  ]
+}

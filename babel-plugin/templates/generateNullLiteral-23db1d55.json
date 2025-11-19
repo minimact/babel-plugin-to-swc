@@ -1,0 +1,68 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateNullLiteral",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateNullLiteral(node) {\r\n  const nodePath = node.__minimactPath || '';\r\n  return `new VNull(\"${nodePath}\")`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "2d76293e",
+      "type": "VariableDeclaration",
+      "babel_source": "const nodePath = node.__minimactPath || '';",
+      "parentContext": {
+        "functionName": "generateNullLiteral",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e3e86ef1",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "node.__minimactPath || ''",
+      "parentContext": {
+        "functionName": "generateNullLiteral",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cee4de05",
+      "type": "ReturnStatement",
+      "babel_source": "return `new VNull(\"${nodePath}\")`;",
+      "parentContext": {
+        "functionName": "generateNullLiteral",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3d30a682",
+      "type": "TemplateLiteral",
+      "babel_source": "`new VNull(\"${nodePath}\")`",
+      "parentContext": {
+        "functionName": "generateNullLiteral",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/expressions/literals.cjs"
+  ]
+}

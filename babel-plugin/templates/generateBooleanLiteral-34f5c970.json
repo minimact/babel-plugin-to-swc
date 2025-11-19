@@ -1,0 +1,43 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateBooleanLiteral",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateBooleanLiteral(node) {\r\n  return node.value ? 'true' : 'false';\r\n}",
+  "body_templates": [
+    {
+      "hash": "4eb918a1",
+      "type": "ReturnStatement",
+      "babel_source": "return node.value ? 'true' : 'false';",
+      "parentContext": {
+        "functionName": "generateBooleanLiteral",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a78b0428",
+      "type": "ConditionalExpression",
+      "babel_source": "node.value ? 'true' : 'false'",
+      "parentContext": {
+        "functionName": "generateBooleanLiteral",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/expressions/literals.cjs"
+  ]
+}

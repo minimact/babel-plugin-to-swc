@@ -1,0 +1,164 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateComponent",
+  "params": [
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateComponent(component) {\r\n  // Set the current component context for useState setter detection\r\n  setCurrentComponent(component);\r\n\r\n  const lines = [];\r\n\r\n  // Timeline attributes (for @minimact/timeline)\r\n  if (component.timeline) {\r\n    const timelineAttrs = generateTimelineAttributes(component.timeline);\r\n    timelineAttrs.forEach(attr => lines.push(attr));\r\n  }\r\n\r\n  // Loop template attributes\r\n  generateLoopTemplateAttributes(component, lines);\r\n\r\n  // StateX projection attributes\r\n  generateStateXAttributes(component, lines);\r\n\r\n  // Class declaration\r\n  lines.push('[Component]');\r\n\r\n  const baseClass = component.useTemplate\r\n    ? component.useTemplate.name\r\n    : 'MinimactComponent';\r\n\r\n  lines.push(`public partial class ${component.name} : ${baseClass}`);\r\n  lines.push('{');\r\n\r\n  // Generate all fields\r\n  generateTemplateProperties(component, lines);\r\n  generatePropFields(component, lines);\r\n  generateStateFields(component, lines);\r\n  generateMvcStateFields(component, lines);\r\n  generateMvcViewModelFields(component, lines);\r\n  generateStateXFields(component, lines);\r\n  generateRefFields(component, lines);\r\n  generateMarkdownFields(component, lines);\r\n  generateRazorMarkdownFields(component, lines);\r\n  generateValidationFields(component, lines);\r\n  generateModalFields(component, lines);\r\n  generateToggleFields(component, lines);\r\n  generateDropdownFields(component, lines);\r\n  generatePubSubFields(component, lines);\r\n  generateTaskSchedulingFields(component, lines);\r\n  generateSignalRFields(component, lines);\r\n  generatePredictHintFields(component, lines);\r\n  generateClientComputedProperties(component, lines);\r\n\r\n  // Server Task methods (useServerTask)\r\n  const serverTaskMethods = generateServerTaskMethods(component);\r\n  for (const line of serverTaskMethods) {\r\n    lines.push(line);\r\n  }\r\n\r\n  // Generate all methods\r\n  generateRenderMethod(component, lines);\r\n  generateEffectMethods(component, lines);\r\n  generateEventHandlers(component, lines);\r\n  generateToggleMethods(component, lines);\r\n  generateClientHandlersMethod(component, lines);\r\n  generateClientEffectsMethod(component, lines);\r\n  generatePubSubMethods(component, lines);\r\n  generateSignalRMethods(component, lines);\r\n  generateMvcStateSetters(component, lines);\r\n  generateOnInitializedMethod(component, lines);\r\n  generateHelperFunctions(component, lines);\r\n\r\n  lines.push('}');\r\n\r\n  return lines;\r\n}",
+  "body_templates": [
+    {
+      "hash": "87b71d01",
+      "type": "VariableDeclaration",
+      "babel_source": "const lines = [];",
+      "parentContext": {
+        "functionName": "generateComponent",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "generateComponent",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "67a21f40",
+      "type": "IfStatement",
+      "condition": "component.timeline",
+      "babel_source": "if (component.timeline) {\r\n    const timelineAttrs = generateTimelineAttributes(component.timeline);\r\n    timelineAttrs.forEach(attr => lines.push(attr));\r\n  }",
+      "parentContext": {
+        "functionName": "generateComponent",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "405de2b6",
+      "type": "VariableDeclaration",
+      "babel_source": "const timelineAttrs = generateTimelineAttributes(component.timeline);",
+      "parentContext": {
+        "functionName": "generateComponent",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "753e0a3b",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "attr => lines.push(attr)",
+      "parentContext": {
+        "functionName": "generateComponent",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "426f28db",
+      "type": "VariableDeclaration",
+      "babel_source": "const baseClass = component.useTemplate\r\n    ? component.useTemplate.name\r\n    : 'MinimactComponent';",
+      "parentContext": {
+        "functionName": "generateComponent",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "43f3af89",
+      "type": "ConditionalExpression",
+      "babel_source": "component.useTemplate\r\n    ? component.useTemplate.name\r\n    : 'MinimactComponent'",
+      "parentContext": {
+        "functionName": "generateComponent",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "55027168",
+      "type": "TemplateLiteral",
+      "babel_source": "`public partial class ${component.name} : ${baseClass}`",
+      "parentContext": {
+        "functionName": "generateComponent",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "186a3b6a",
+      "type": "VariableDeclaration",
+      "babel_source": "const serverTaskMethods = generateServerTaskMethods(component);",
+      "parentContext": {
+        "functionName": "generateComponent",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6a876bed",
+      "type": "ForOfStatement",
+      "babel_source": "for (const line of serverTaskMethods) {\r\n    lines.push(line);\r\n  }",
+      "parentContext": {
+        "functionName": "generateComponent",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "75cda37d",
+      "type": "VariableDeclaration",
+      "babel_source": "const line",
+      "parentContext": {
+        "functionName": "generateComponent",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1769fcdf",
+      "type": "ReturnStatement",
+      "babel_source": "return lines;",
+      "parentContext": {
+        "functionName": "generateComponent",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/component.cjs"
+  ]
+}

@@ -1,0 +1,177 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "tsTypeToCSharpType",
+  "params": [
+    {
+      "name": "tsType",
+      "inferredType": "&TsType",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "&'static str",
+  "babel_source": "function tsTypeToCSharpType(tsType) {\r\n  if (!tsType) return 'dynamic';\r\n\r\n  switch (tsType.type) {\r\n    case 'TSStringKeyword':\r\n      return 'string';\r\n    case 'TSNumberKeyword':\r\n      return 'double';\r\n    case 'TSBooleanKeyword':\r\n      return 'bool';\r\n    case 'TSVoidKeyword':\r\n      return 'void';\r\n    case 'TSAnyKeyword':\r\n      return 'dynamic';\r\n    case 'TSArrayType':\r\n      const elementType = tsTypeToCSharpType(tsType.elementType);\r\n      return `List<${elementType}>`;\r\n    default:\r\n      return 'dynamic';\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "d2f4f74e",
+      "type": "IfStatement",
+      "condition": "!tsType",
+      "babel_source": "if (!tsType) return 'dynamic';",
+      "parentContext": {
+        "functionName": "tsTypeToCSharpType",
+        "functionParams": [
+          "tsType"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "913558ba",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!tsType",
+      "parentContext": {
+        "functionName": "tsTypeToCSharpType",
+        "functionParams": [
+          "tsType"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d31bdf27",
+      "type": "ReturnStatement",
+      "babel_source": "return 'dynamic';",
+      "parentContext": {
+        "functionName": "tsTypeToCSharpType",
+        "functionParams": [
+          "tsType"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "343f4ee7",
+      "type": "SwitchStatement",
+      "babel_source": "switch (tsType.type) {\r\n    case 'TSStringKeyword':\r\n      return 'string';\r\n    case 'TSNumberKeyword':\r\n      return 'double';\r\n    case 'TSBooleanKeyword':\r\n      return 'bool';\r\n    case 'TSVoidKeyword':\r\n      return 'void';\r\n    case 'TSAnyKeyword':\r\n      return 'dynamic';\r\n    case 'TSArrayType':\r\n      const elementType = tsTypeToCSharpType(tsType.elementType);\r\n      return `List<${elementType}>`;\r\n    default:\r\n      return 'dynamic';\r\n  }",
+      "parentContext": {
+        "functionName": "tsTypeToCSharpType",
+        "functionParams": [
+          "tsType"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f83ace9b",
+      "type": "ReturnStatement",
+      "babel_source": "return 'string';",
+      "parentContext": {
+        "functionName": "tsTypeToCSharpType",
+        "functionParams": [
+          "tsType"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f086ee1a",
+      "type": "ReturnStatement",
+      "babel_source": "return 'double';",
+      "parentContext": {
+        "functionName": "tsTypeToCSharpType",
+        "functionParams": [
+          "tsType"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6655b479",
+      "type": "ReturnStatement",
+      "babel_source": "return 'bool';",
+      "parentContext": {
+        "functionName": "tsTypeToCSharpType",
+        "functionParams": [
+          "tsType"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b230db84",
+      "type": "ReturnStatement",
+      "babel_source": "return 'void';",
+      "parentContext": {
+        "functionName": "tsTypeToCSharpType",
+        "functionParams": [
+          "tsType"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d31bdf27",
+      "type": "ReturnStatement",
+      "babel_source": "return 'dynamic';",
+      "parentContext": {
+        "functionName": "tsTypeToCSharpType",
+        "functionParams": [
+          "tsType"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e861c49b",
+      "type": "VariableDeclaration",
+      "babel_source": "const elementType = tsTypeToCSharpType(tsType.elementType);",
+      "parentContext": {
+        "functionName": "tsTypeToCSharpType",
+        "functionParams": [
+          "tsType"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3151d6a0",
+      "type": "ReturnStatement",
+      "babel_source": "return `List<${elementType}>`;",
+      "parentContext": {
+        "functionName": "tsTypeToCSharpType",
+        "functionParams": [
+          "tsType"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d1994432",
+      "type": "TemplateLiteral",
+      "babel_source": "`List<${elementType}>`",
+      "parentContext": {
+        "functionName": "tsTypeToCSharpType",
+        "functionParams": [
+          "tsType"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d31bdf27",
+      "type": "ReturnStatement",
+      "babel_source": "return 'dynamic';",
+      "parentContext": {
+        "functionName": "tsTypeToCSharpType",
+        "functionParams": [
+          "tsType"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/component/inferTypes.cjs"
+  ]
+}

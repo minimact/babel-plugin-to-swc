@@ -1,0 +1,294 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "analyzeBinaryExpression",
+  "params": [
+    {
+      "name": "expr",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    },
+    {
+      "name": "targetBinding",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "AnalysisResult",
+  "babel_source": "function analyzeBinaryExpression(expr, targetBinding) {\r\n  const operations = [];\r\n\r\n  function analyze(node) {\r\n    if (t.isBinaryExpression(node)) {\r\n      const { left, operator, right } = node;\r\n\r\n      // Check if one side is our target binding\r\n      const leftIsTarget = isBindingExpression(left, targetBinding);\r\n      const rightIsTarget = isBindingExpression(right, targetBinding);\r\n\r\n      if (leftIsTarget && t.isNumericLiteral(right)) {\r\n        operations.push({ op: operator, value: right.value, side: 'right' });\r\n      } else if (rightIsTarget && t.isNumericLiteral(left)) {\r\n        operations.push({ op: operator, value: left.value, side: 'left' });\r\n      } else {\r\n        // Recurse\r\n        analyze(left);\r\n        analyze(right);\r\n      }\r\n    }\r\n  }\r\n\r\n  analyze(expr);\r\n\r\n  if (operations.length > 0) {\r\n    return {\r\n      type: 'arithmetic',\r\n      operations\r\n    };\r\n  }\r\n\r\n  return null;\r\n}",
+  "body_templates": [
+    {
+      "hash": "65fcb15f",
+      "type": "VariableDeclaration",
+      "babel_source": "const operations = [];",
+      "parentContext": {
+        "functionName": "analyzeBinaryExpression",
+        "functionParams": [
+          "expr",
+          "targetBinding"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "analyzeBinaryExpression",
+        "functionParams": [
+          "expr",
+          "targetBinding"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "720abba1",
+      "type": "IfStatement",
+      "condition": "t.isBinaryExpression(node)",
+      "babel_source": "if (t.isBinaryExpression(node)) {\r\n      const { left, operator, right } = node;\r\n\r\n      // Check if one side is our target binding\r\n      const leftIsTarget = isBindingExpression(left, targetBinding);\r\n      const rightIsTarget = isBindingExpression(right, targetBinding);\r\n\r\n      if (leftIsTarget && t.isNumericLiteral(right)) {\r\n        operations.push({ op: operator, value: right.value, side: 'right' });\r\n      } else if (rightIsTarget && t.isNumericLiteral(left)) {\r\n        operations.push({ op: operator, value: left.value, side: 'left' });\r\n      } else {\r\n        // Recurse\r\n        analyze(left);\r\n        analyze(right);\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "analyzeBinaryExpression",
+        "functionParams": [
+          "expr",
+          "targetBinding"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ae0955e9",
+      "type": "BabelTypeCheck",
+      "method": "isBinaryExpression",
+      "babel_source": "t.isBinaryExpression(node)",
+      "parentContext": {
+        "functionName": "analyzeBinaryExpression",
+        "functionParams": [
+          "expr",
+          "targetBinding"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a613c762",
+      "type": "VariableDeclaration",
+      "babel_source": "const { left, operator, right } = node;",
+      "parentContext": {
+        "functionName": "analyzeBinaryExpression",
+        "functionParams": [
+          "expr",
+          "targetBinding"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3a36beec",
+      "type": "VariableDeclaration",
+      "babel_source": "const leftIsTarget = isBindingExpression(left, targetBinding);",
+      "parentContext": {
+        "functionName": "analyzeBinaryExpression",
+        "functionParams": [
+          "expr",
+          "targetBinding"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "78c9282d",
+      "type": "VariableDeclaration",
+      "babel_source": "const rightIsTarget = isBindingExpression(right, targetBinding);",
+      "parentContext": {
+        "functionName": "analyzeBinaryExpression",
+        "functionParams": [
+          "expr",
+          "targetBinding"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "41a6450c",
+      "type": "IfStatement",
+      "condition": "leftIsTarget && t.isNumericLiteral(right)",
+      "babel_source": "if (leftIsTarget && t.isNumericLiteral(right)) {\r\n        operations.push({ op: operator, value: right.value, side: 'right' });\r\n      } else if (rightIsTarget && t.isNumericLiteral(left)) {\r\n        operations.push({ op: operator, value: left.value, side: 'left' });\r\n      } else {\r\n        // Recurse\r\n        analyze(left);\r\n        analyze(right);\r\n      }",
+      "parentContext": {
+        "functionName": "analyzeBinaryExpression",
+        "functionParams": [
+          "expr",
+          "targetBinding"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6f2e9c23",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "leftIsTarget && t.isNumericLiteral(right)",
+      "parentContext": {
+        "functionName": "analyzeBinaryExpression",
+        "functionParams": [
+          "expr",
+          "targetBinding"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bf8de6a8",
+      "type": "BabelTypeCheck",
+      "method": "isNumericLiteral",
+      "babel_source": "t.isNumericLiteral(right)",
+      "parentContext": {
+        "functionName": "analyzeBinaryExpression",
+        "functionParams": [
+          "expr",
+          "targetBinding"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "86f1e32a",
+      "type": "ObjectExpression",
+      "babel_source": "{ op: operator, value: right.value, side: 'right' }",
+      "parentContext": {
+        "functionName": "analyzeBinaryExpression",
+        "functionParams": [
+          "expr",
+          "targetBinding"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8c169a50",
+      "type": "IfStatement",
+      "condition": "rightIsTarget && t.isNumericLiteral(left)",
+      "babel_source": "if (rightIsTarget && t.isNumericLiteral(left)) {\r\n        operations.push({ op: operator, value: left.value, side: 'left' });\r\n      } else {\r\n        // Recurse\r\n        analyze(left);\r\n        analyze(right);\r\n      }",
+      "parentContext": {
+        "functionName": "analyzeBinaryExpression",
+        "functionParams": [
+          "expr",
+          "targetBinding"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9521fcfa",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "rightIsTarget && t.isNumericLiteral(left)",
+      "parentContext": {
+        "functionName": "analyzeBinaryExpression",
+        "functionParams": [
+          "expr",
+          "targetBinding"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "848670c7",
+      "type": "BabelTypeCheck",
+      "method": "isNumericLiteral",
+      "babel_source": "t.isNumericLiteral(left)",
+      "parentContext": {
+        "functionName": "analyzeBinaryExpression",
+        "functionParams": [
+          "expr",
+          "targetBinding"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b56b9fee",
+      "type": "ObjectExpression",
+      "babel_source": "{ op: operator, value: left.value, side: 'left' }",
+      "parentContext": {
+        "functionName": "analyzeBinaryExpression",
+        "functionParams": [
+          "expr",
+          "targetBinding"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e75b2b06",
+      "type": "IfStatement",
+      "condition": "operations.length > 0",
+      "babel_source": "if (operations.length > 0) {\r\n    return {\r\n      type: 'arithmetic',\r\n      operations\r\n    };\r\n  }",
+      "parentContext": {
+        "functionName": "analyzeBinaryExpression",
+        "functionParams": [
+          "expr",
+          "targetBinding"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c365b1fd",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "operations.length > 0",
+      "parentContext": {
+        "functionName": "analyzeBinaryExpression",
+        "functionParams": [
+          "expr",
+          "targetBinding"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6d2ff047",
+      "type": "ReturnStatement",
+      "babel_source": "return {\r\n      type: 'arithmetic',\r\n      operations\r\n    };",
+      "parentContext": {
+        "functionName": "analyzeBinaryExpression",
+        "functionParams": [
+          "expr",
+          "targetBinding"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "be380e7c",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n      type: 'arithmetic',\r\n      operations\r\n    }",
+      "parentContext": {
+        "functionName": "analyzeBinaryExpression",
+        "functionParams": [
+          "expr",
+          "targetBinding"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "analyzeBinaryExpression",
+        "functionParams": [
+          "expr",
+          "targetBinding"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/expressionTemplates/analyzeBinaryExpression.cjs"
+  ]
+}

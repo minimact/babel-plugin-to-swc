@@ -1,0 +1,90 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateStringLiteral",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "inInterpolation",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateStringLiteral(node, inInterpolation) {\r\n  // In string interpolation context, escape the quotes: \\\"text\\\"\r\n  // Otherwise use normal quotes: \"text\"\r\n  if (inInterpolation) {\r\n    return `\\\\\"${escapeCSharpString(node.value)}\\\\\"`;\r\n  } else {\r\n    return `\"${escapeCSharpString(node.value)}\"`;\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "f7bdf509",
+      "type": "IfStatement",
+      "condition": "inInterpolation",
+      "babel_source": "if (inInterpolation) {\r\n    return `\\\\\"${escapeCSharpString(node.value)}\\\\\"`;\r\n  } else {\r\n    return `\"${escapeCSharpString(node.value)}\"`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateStringLiteral",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "18781776",
+      "type": "ReturnStatement",
+      "babel_source": "return `\\\\\"${escapeCSharpString(node.value)}\\\\\"`;",
+      "parentContext": {
+        "functionName": "generateStringLiteral",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "02f4f295",
+      "type": "TemplateLiteral",
+      "babel_source": "`\\\\\"${escapeCSharpString(node.value)}\\\\\"`",
+      "parentContext": {
+        "functionName": "generateStringLiteral",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "006ca6f3",
+      "type": "ReturnStatement",
+      "babel_source": "return `\"${escapeCSharpString(node.value)}\"`;",
+      "parentContext": {
+        "functionName": "generateStringLiteral",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3aaba4f6",
+      "type": "TemplateLiteral",
+      "babel_source": "`\"${escapeCSharpString(node.value)}\"`",
+      "parentContext": {
+        "functionName": "generateStringLiteral",
+        "functionParams": [
+          "node",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/expressions/literals.cjs"
+  ]
+}

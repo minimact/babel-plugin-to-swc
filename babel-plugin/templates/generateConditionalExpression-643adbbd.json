@@ -1,0 +1,89 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateConditionalExpression",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "generateCSharpExpression",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateConditionalExpression(node, generateCSharpExpression) {\r\n  // Handle ternary operator: test ? consequent : alternate\r\n  // Children are always in normal C# expression context, not interpolation context\r\n  const test = generateCSharpExpression(node.test, false);\r\n  const consequent = generateCSharpExpression(node.consequent, false);\r\n  const alternate = generateCSharpExpression(node.alternate, false);\r\n  return `(${test}) ? ${consequent} : ${alternate}`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "1081a98b",
+      "type": "VariableDeclaration",
+      "babel_source": "const test = generateCSharpExpression(node.test, false);",
+      "parentContext": {
+        "functionName": "generateConditionalExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1fd91aa7",
+      "type": "VariableDeclaration",
+      "babel_source": "const consequent = generateCSharpExpression(node.consequent, false);",
+      "parentContext": {
+        "functionName": "generateConditionalExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "06d43297",
+      "type": "VariableDeclaration",
+      "babel_source": "const alternate = generateCSharpExpression(node.alternate, false);",
+      "parentContext": {
+        "functionName": "generateConditionalExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3d45963c",
+      "type": "ReturnStatement",
+      "babel_source": "return `(${test}) ? ${consequent} : ${alternate}`;",
+      "parentContext": {
+        "functionName": "generateConditionalExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fc0471b7",
+      "type": "TemplateLiteral",
+      "babel_source": "`(${test}) ? ${consequent} : ${alternate}`",
+      "parentContext": {
+        "functionName": "generateConditionalExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/expressions/operators.cjs"
+  ]
+}

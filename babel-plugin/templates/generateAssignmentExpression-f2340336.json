@@ -1,0 +1,99 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateAssignmentExpression",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "generateCSharpExpression",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    },
+    {
+      "name": "inInterpolation",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateAssignmentExpression(node, generateCSharpExpression, inInterpolation) {\r\n  const left = generateCSharpExpression(node.left, inInterpolation);\r\n  const right = generateCSharpExpression(node.right, inInterpolation);\r\n  const operator = node.operator; // =, +=, -=, etc.\r\n  return `${left} ${operator} ${right}`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "d21934b7",
+      "type": "VariableDeclaration",
+      "babel_source": "const left = generateCSharpExpression(node.left, inInterpolation);",
+      "parentContext": {
+        "functionName": "generateAssignmentExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e79719ca",
+      "type": "VariableDeclaration",
+      "babel_source": "const right = generateCSharpExpression(node.right, inInterpolation);",
+      "parentContext": {
+        "functionName": "generateAssignmentExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "619da3db",
+      "type": "VariableDeclaration",
+      "babel_source": "const operator = node.operator;",
+      "parentContext": {
+        "functionName": "generateAssignmentExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "06f3a837",
+      "type": "ReturnStatement",
+      "babel_source": "return `${left} ${operator} ${right}`;",
+      "parentContext": {
+        "functionName": "generateAssignmentExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f4fdaca8",
+      "type": "TemplateLiteral",
+      "babel_source": "`${left} ${operator} ${right}`",
+      "parentContext": {
+        "functionName": "generateAssignmentExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/expressions/operators.cjs"
+  ]
+}

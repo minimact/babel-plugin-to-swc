@@ -1,0 +1,346 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateRenderMethod",
+  "params": [
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "lines",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateRenderMethod(component, lines) {\r\n  const renderMethodName = component.useTemplate ? 'RenderContent' : 'Render';\r\n  lines.push(`    protected override VNode ${renderMethodName}()`);\r\n  lines.push('    {');\r\n\r\n  // Only add StateManager sync if NOT using a template\r\n  if (!component.useTemplate) {\r\n    lines.push('        StateManager.SyncMembersToState(this);');\r\n    lines.push('');\r\n  }\r\n\r\n  // MVC State local variables\r\n  if (component.useMvcState && component.useMvcState.length > 0) {\r\n    lines.push('        // MVC State - read from State dictionary');\r\n    for (const mvcState of component.useMvcState) {\r\n      const csharpType = mvcState.type !== 'object' ? mvcState.type : 'dynamic';\r\n      lines.push(`        var ${mvcState.name} = GetState<${csharpType}>(\"${mvcState.propertyName}\");`);\r\n    }\r\n    lines.push('');\r\n  }\r\n\r\n  // Local variables (exclude client-computed ones)\r\n  const regularLocalVars = component.localVariables.filter(v => !v.isClientComputed);\r\n  for (const localVar of regularLocalVars) {\r\n    lines.push(`        ${localVar.type} ${localVar.name} = ${localVar.initialValue};`);\r\n  }\r\n  if (regularLocalVars.length > 0) {\r\n    lines.push('');\r\n  }\r\n\r\n  if (component.renderBody) {\r\n    const renderCode = generateRenderBody(component.renderBody, component, 2);\r\n    lines.push(renderCode);\r\n  } else {\r\n    lines.push('        return new VText(\"\");');\r\n  }\r\n\r\n  lines.push('    }');\r\n}",
+  "body_templates": [
+    {
+      "hash": "3df052d0",
+      "type": "VariableDeclaration",
+      "babel_source": "const renderMethodName = component.useTemplate ? 'RenderContent' : 'Render';",
+      "parentContext": {
+        "functionName": "generateRenderMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "384a76f2",
+      "type": "ConditionalExpression",
+      "babel_source": "component.useTemplate ? 'RenderContent' : 'Render'",
+      "parentContext": {
+        "functionName": "generateRenderMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1d7f268a",
+      "type": "TemplateLiteral",
+      "babel_source": "`    protected override VNode ${renderMethodName}()`",
+      "parentContext": {
+        "functionName": "generateRenderMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a4790dfb",
+      "type": "IfStatement",
+      "condition": "!component.useTemplate",
+      "babel_source": "if (!component.useTemplate) {\r\n    lines.push('        StateManager.SyncMembersToState(this);');\r\n    lines.push('');\r\n  }",
+      "parentContext": {
+        "functionName": "generateRenderMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8794723a",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!component.useTemplate",
+      "parentContext": {
+        "functionName": "generateRenderMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0c60bc66",
+      "type": "IfStatement",
+      "condition": "component.useMvcState && component.useMvcState.length > 0",
+      "babel_source": "if (component.useMvcState && component.useMvcState.length > 0) {\r\n    lines.push('        // MVC State - read from State dictionary');\r\n    for (const mvcState of component.useMvcState) {\r\n      const csharpType = mvcState.type !== 'object' ? mvcState.type : 'dynamic';\r\n      lines.push(`        var ${mvcState.name} = GetState<${csharpType}>(\"${mvcState.propertyName}\");`);\r\n    }\r\n    lines.push('');\r\n  }",
+      "parentContext": {
+        "functionName": "generateRenderMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8430cccc",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "component.useMvcState && component.useMvcState.length > 0",
+      "parentContext": {
+        "functionName": "generateRenderMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4a0461fb",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "component.useMvcState.length > 0",
+      "parentContext": {
+        "functionName": "generateRenderMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "556066dc",
+      "type": "ForOfStatement",
+      "babel_source": "for (const mvcState of component.useMvcState) {\r\n      const csharpType = mvcState.type !== 'object' ? mvcState.type : 'dynamic';\r\n      lines.push(`        var ${mvcState.name} = GetState<${csharpType}>(\"${mvcState.propertyName}\");`);\r\n    }",
+      "parentContext": {
+        "functionName": "generateRenderMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0bcd8c24",
+      "type": "VariableDeclaration",
+      "babel_source": "const mvcState",
+      "parentContext": {
+        "functionName": "generateRenderMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cfca7efc",
+      "type": "VariableDeclaration",
+      "babel_source": "const csharpType = mvcState.type !== 'object' ? mvcState.type : 'dynamic';",
+      "parentContext": {
+        "functionName": "generateRenderMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c1f141e2",
+      "type": "ConditionalExpression",
+      "babel_source": "mvcState.type !== 'object' ? mvcState.type : 'dynamic'",
+      "parentContext": {
+        "functionName": "generateRenderMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d264ea84",
+      "type": "BinaryExpression",
+      "operator": "!==",
+      "babel_source": "mvcState.type !== 'object'",
+      "parentContext": {
+        "functionName": "generateRenderMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7c50a95f",
+      "type": "TemplateLiteral",
+      "babel_source": "`        var ${mvcState.name} = GetState<${csharpType}>(\"${mvcState.propertyName}\");`",
+      "parentContext": {
+        "functionName": "generateRenderMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "074f63d1",
+      "type": "VariableDeclaration",
+      "babel_source": "const regularLocalVars = component.localVariables.filter(v => !v.isClientComputed);",
+      "parentContext": {
+        "functionName": "generateRenderMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e0a934a5",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "v => !v.isClientComputed",
+      "parentContext": {
+        "functionName": "generateRenderMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5b11b4fc",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!v.isClientComputed",
+      "parentContext": {
+        "functionName": "generateRenderMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0a71290b",
+      "type": "ForOfStatement",
+      "babel_source": "for (const localVar of regularLocalVars) {\r\n    lines.push(`        ${localVar.type} ${localVar.name} = ${localVar.initialValue};`);\r\n  }",
+      "parentContext": {
+        "functionName": "generateRenderMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "520b6e4a",
+      "type": "VariableDeclaration",
+      "babel_source": "const localVar",
+      "parentContext": {
+        "functionName": "generateRenderMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6f40047b",
+      "type": "TemplateLiteral",
+      "babel_source": "`        ${localVar.type} ${localVar.name} = ${localVar.initialValue};`",
+      "parentContext": {
+        "functionName": "generateRenderMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "87130516",
+      "type": "IfStatement",
+      "condition": "regularLocalVars.length > 0",
+      "babel_source": "if (regularLocalVars.length > 0) {\r\n    lines.push('');\r\n  }",
+      "parentContext": {
+        "functionName": "generateRenderMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "24148a89",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "regularLocalVars.length > 0",
+      "parentContext": {
+        "functionName": "generateRenderMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e4faa037",
+      "type": "IfStatement",
+      "condition": "component.renderBody",
+      "babel_source": "if (component.renderBody) {\r\n    const renderCode = generateRenderBody(component.renderBody, component, 2);\r\n    lines.push(renderCode);\r\n  } else {\r\n    lines.push('        return new VText(\"\");');\r\n  }",
+      "parentContext": {
+        "functionName": "generateRenderMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "287feae4",
+      "type": "VariableDeclaration",
+      "babel_source": "const renderCode = generateRenderBody(component.renderBody, component, 2);",
+      "parentContext": {
+        "functionName": "generateRenderMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/component/generateMethods.cjs"
+  ]
+}

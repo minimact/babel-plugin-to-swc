@@ -1,0 +1,63 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateDropdownFields",
+  "params": [
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "lines",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateDropdownFields(component, lines) {\r\n  for (const dropdown of component.useDropdown) {\r\n    lines.push(`    private DropdownState ${dropdown.name} = new DropdownState();`);\r\n    lines.push('');\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "b4b5ff4b",
+      "type": "ForOfStatement",
+      "babel_source": "for (const dropdown of component.useDropdown) {\r\n    lines.push(`    private DropdownState ${dropdown.name} = new DropdownState();`);\r\n    lines.push('');\r\n  }",
+      "parentContext": {
+        "functionName": "generateDropdownFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0c5eb4ee",
+      "type": "VariableDeclaration",
+      "babel_source": "const dropdown",
+      "parentContext": {
+        "functionName": "generateDropdownFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c5e36971",
+      "type": "TemplateLiteral",
+      "babel_source": "`    private DropdownState ${dropdown.name} = new DropdownState();`",
+      "parentContext": {
+        "functionName": "generateDropdownFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/component/generateFields.cjs"
+  ]
+}

@@ -1,0 +1,117 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractLoopTemplates",
+  "params": [
+    {
+      "name": "renderBody",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractLoopTemplates(renderBody, component) {\r\n  if (!renderBody) return [];\r\n\r\n  const loopTemplates = [];\r\n\r\n  // Start traversal\r\n  traverseJSX(renderBody, loopTemplates);\r\n\r\n  return loopTemplates;\r\n}",
+  "body_templates": [
+    {
+      "hash": "7ba9f7aa",
+      "type": "IfStatement",
+      "condition": "!renderBody",
+      "babel_source": "if (!renderBody) return [];",
+      "parentContext": {
+        "functionName": "extractLoopTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bc65e16e",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!renderBody",
+      "parentContext": {
+        "functionName": "extractLoopTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c7221e11",
+      "type": "ReturnStatement",
+      "babel_source": "return [];",
+      "parentContext": {
+        "functionName": "extractLoopTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractLoopTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b730f937",
+      "type": "VariableDeclaration",
+      "babel_source": "const loopTemplates = [];",
+      "parentContext": {
+        "functionName": "extractLoopTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractLoopTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "32101179",
+      "type": "ReturnStatement",
+      "babel_source": "return loopTemplates;",
+      "parentContext": {
+        "functionName": "extractLoopTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/loopTemplates.cjs"
+  ]
+}

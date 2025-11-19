@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "generated_at": "2025-11-18T23:55:33.280Z",
+  "generated_at": "2025-11-19T02:10:15.594Z",
   "source_dir": "J:\\projects\\babel-plugin-to-swc\\babel-plugin-to-swc\\example\\babel-plugin-minimact\\src",
   "files": {
     "utils/helpers.cjs": {
@@ -220,24 +220,193 @@
         "bacb673d"
       ]
     },
-    "extractors/expressionTemplates.cjs": {
+    "extractors/expressionTemplates/analyzeBinaryExpression.cjs": {
+      "helper_imports": {
+        "isBindingExpression": {
+          "source": "./isBindingExpression.cjs",
+          "imported": "isBindingExpression"
+        }
+      },
+      "template_hashes": [
+        "dd06dc08",
+        "e02508b7"
+      ]
+    },
+    "extractors/expressionTemplates/buildMemberPath.cjs": {
       "helper_imports": {},
       "template_hashes": [
-        "8cfefbca",
-        "6bcb65ab",
-        "cac66067",
-        "33c4ab1d",
-        "06d26e71",
-        "dbce4c38",
-        "d2cd21a8",
-        "ddf6cc9d",
-        "3ead26e8",
-        "076b6dc9",
-        "7ecb760c",
-        "4cf8c448",
-        "04dc8022",
-        "a5ca7857",
-        "dd0a1a91"
+        "c29f6cbf"
+      ]
+    },
+    "extractors/expressionTemplates/extractBinaryExpressionTemplate.cjs": {
+      "helper_imports": {
+        "extractIdentifiers": {
+          "source": "./extractIdentifiers.cjs",
+          "imported": "extractIdentifiers"
+        },
+        "analyzeBinaryExpression": {
+          "source": "./analyzeBinaryExpression.cjs",
+          "imported": "analyzeBinaryExpression"
+        },
+        "generateExpressionString": {
+          "source": "./generateExpressionString.cjs",
+          "imported": "generateExpressionString"
+        }
+      },
+      "template_hashes": [
+        "29d6103a"
+      ]
+    },
+    "extractors/expressionTemplates/extractBinding.cjs": {
+      "helper_imports": {
+        "buildMemberPath": {
+          "source": "./buildMemberPath.cjs",
+          "imported": "buildMemberPath"
+        }
+      },
+      "template_hashes": [
+        "a6dafdc8"
+      ]
+    },
+    "extractors/expressionTemplates/extractExpressionTemplate.cjs": {
+      "helper_imports": {
+        "extractMethodCallTemplate": {
+          "source": "./extractMethodCallTemplate.cjs",
+          "imported": "extractMethodCallTemplate"
+        },
+        "extractBinaryExpressionTemplate": {
+          "source": "./extractBinaryExpressionTemplate.cjs",
+          "imported": "extractBinaryExpressionTemplate"
+        },
+        "extractMemberExpressionTemplate": {
+          "source": "./extractMemberExpressionTemplate.cjs",
+          "imported": "extractMemberExpressionTemplate"
+        },
+        "extractUnaryExpressionTemplate": {
+          "source": "./extractUnaryExpressionTemplate.cjs",
+          "imported": "extractUnaryExpressionTemplate"
+        }
+      },
+      "template_hashes": [
+        "95b955a6"
+      ]
+    },
+    "extractors/expressionTemplates/extractIdentifiers.cjs": {
+      "helper_imports": {
+        "buildMemberPath": {
+          "source": "./buildMemberPath.cjs",
+          "imported": "buildMemberPath"
+        }
+      },
+      "template_hashes": [
+        "750f55e5"
+      ]
+    },
+    "extractors/expressionTemplates/extractMemberExpressionTemplate.cjs": {
+      "helper_imports": {
+        "buildMemberPath": {
+          "source": "./buildMemberPath.cjs",
+          "imported": "buildMemberPath"
+        },
+        "extractStateKey": {
+          "source": "./extractStateKey.cjs",
+          "imported": "extractStateKey"
+        },
+        "SUPPORTED_TRANSFORMS": {
+          "source": "./supportedTransforms.cjs",
+          "imported": "SUPPORTED_TRANSFORMS"
+        }
+      },
+      "template_hashes": [
+        "7022ab99"
+      ]
+    },
+    "extractors/expressionTemplates/extractMethodCallTemplate.cjs": {
+      "helper_imports": {
+        "extractBinding": {
+          "source": "./extractBinding.cjs",
+          "imported": "extractBinding"
+        },
+        "extractStateKey": {
+          "source": "./extractStateKey.cjs",
+          "imported": "extractStateKey"
+        },
+        "SUPPORTED_TRANSFORMS": {
+          "source": "./supportedTransforms.cjs",
+          "imported": "SUPPORTED_TRANSFORMS"
+        }
+      },
+      "template_hashes": [
+        "7944c3bd"
+      ]
+    },
+    "extractors/expressionTemplates/extractStateKey.cjs": {
+      "helper_imports": {},
+      "template_hashes": [
+        "0ac8cb8e"
+      ]
+    },
+    "extractors/expressionTemplates/extractUnaryExpressionTemplate.cjs": {
+      "helper_imports": {
+        "extractBinding": {
+          "source": "./extractBinding.cjs",
+          "imported": "extractBinding"
+        },
+        "extractStateKey": {
+          "source": "./extractStateKey.cjs",
+          "imported": "extractStateKey"
+        }
+      },
+      "template_hashes": [
+        "33b0e431"
+      ]
+    },
+    "extractors/expressionTemplates/generateExpressionString.cjs": {
+      "helper_imports": {
+        "buildMemberPath": {
+          "source": "./buildMemberPath.cjs",
+          "imported": "buildMemberPath"
+        }
+      },
+      "template_hashes": [
+        "f9f0cfeb"
+      ]
+    },
+    "extractors/expressionTemplates/isBindingExpression.cjs": {
+      "helper_imports": {
+        "extractBinding": {
+          "source": "./extractBinding.cjs",
+          "imported": "extractBinding"
+        }
+      },
+      "template_hashes": [
+        "cc5fc24e"
+      ]
+    },
+    "extractors/expressionTemplates/traverseJSX.cjs": {
+      "helper_imports": {
+        "extractExpressionTemplate": {
+          "source": "./extractExpressionTemplate.cjs",
+          "imported": "extractExpressionTemplate"
+        }
+      },
+      "template_hashes": [
+        "d88b9331"
+      ]
+    },
+    "extractors/expressionTemplates.cjs": {
+      "helper_imports": {
+        "traverseJSX": {
+          "source": "./expressionTemplates/traverseJSX.cjs",
+          "imported": "traverseJSX"
+        },
+        "SUPPORTED_TRANSFORMS": {
+          "source": "./expressionTemplates/supportedTransforms.cjs",
+          "imported": "SUPPORTED_TRANSFORMS"
+        }
+      },
+      "template_hashes": [
+        "9a65c1c9"
       ]
     },
     "extractors/hooks.cjs": {
@@ -318,30 +487,238 @@
         "68db4fdb"
       ]
     },
-    "extractors/loopTemplates.cjs": {
+    "extractors/loopTemplates/buildBindingPath.cjs": {
+      "helper_imports": {
+        "buildMemberExpressionPath": {
+          "source": "./buildMemberExpressionPath.cjs",
+          "imported": "buildMemberExpressionPath"
+        },
+        "extractLoopBinaryExpression": {
+          "source": "./extractLoopExpressions.cjs",
+          "imported": "extractLoopBinaryExpression"
+        },
+        "extractLoopLogicalExpression": {
+          "source": "./extractLoopExpressions.cjs",
+          "imported": "extractLoopLogicalExpression"
+        },
+        "extractLoopUnaryExpression": {
+          "source": "./extractLoopExpressions.cjs",
+          "imported": "extractLoopUnaryExpression"
+        },
+        "extractLoopCallExpression": {
+          "source": "./extractLoopExpressions.cjs",
+          "imported": "extractLoopCallExpression"
+        }
+      },
+      "template_hashes": [
+        "fe5c2bdc"
+      ]
+    },
+    "extractors/loopTemplates/buildMemberExpressionPath.cjs": {
       "helper_imports": {},
       "template_hashes": [
-        "10169809",
-        "94400f77",
-        "264235c4",
-        "d74e84b8",
-        "4f40de9c",
-        "3ae5cc83",
-        "525816fc",
-        "c1b72833",
-        "3c7a8a35",
-        "20e3cd98",
-        "c87f8957",
-        "4e546471",
-        "95762d39",
-        "5160725b",
-        "1f752750",
-        "61c88937",
-        "f4195383",
-        "9e135b67",
-        "9f6f23da",
-        "09e4aae7",
-        "4c38f9b0"
+        "dc2b0ecf"
+      ]
+    },
+    "extractors/loopTemplates/extractArrayBinding.cjs": {
+      "helper_imports": {},
+      "template_hashes": [
+        "c1514812"
+      ]
+    },
+    "extractors/loopTemplates/extractChildrenTemplates.cjs": {
+      "helper_imports": {
+        "extractTextTemplate": {
+          "source": "./extractTextTemplate.cjs",
+          "imported": "extractTextTemplate"
+        }
+      },
+      "template_hashes": [
+        "de6580c8",
+        "a59c9878"
+      ]
+    },
+    "extractors/loopTemplates/extractConditionalTemplate.cjs": {
+      "helper_imports": {
+        "buildBindingPath": {
+          "source": "./buildBindingPath.cjs",
+          "imported": "buildBindingPath"
+        },
+        "extractLiteralValue": {
+          "source": "./extractLiteralValue.cjs",
+          "imported": "extractLiteralValue"
+        }
+      },
+      "template_hashes": [
+        "f58eb2bd"
+      ]
+    },
+    "extractors/loopTemplates/extractElementTemplate.cjs": {
+      "helper_imports": {
+        "extractPropTemplates": {
+          "source": "./extractPropTemplates.cjs",
+          "imported": "extractPropTemplates"
+        },
+        "extractChildrenTemplates": {
+          "source": "./extractChildrenTemplates.cjs",
+          "imported": "extractChildrenTemplates"
+        }
+      },
+      "template_hashes": [
+        "8f4009e9"
+      ]
+    },
+    "extractors/loopTemplates/extractJSXFromCallback.cjs": {
+      "helper_imports": {},
+      "template_hashes": [
+        "e01658dc"
+      ]
+    },
+    "extractors/loopTemplates/extractKeyBinding.cjs": {
+      "helper_imports": {
+        "buildBindingPath": {
+          "source": "./buildBindingPath.cjs",
+          "imported": "buildBindingPath"
+        }
+      },
+      "template_hashes": [
+        "102b332a"
+      ]
+    },
+    "extractors/loopTemplates/extractLiteralValue.cjs": {
+      "helper_imports": {},
+      "template_hashes": [
+        "44264d36"
+      ]
+    },
+    "extractors/loopTemplates/extractLoopExpressions.cjs": {
+      "helper_imports": {
+        "extractLoopIdentifiers": {
+          "source": "./extractLoopIdentifiers.cjs",
+          "imported": "extractLoopIdentifiers"
+        }
+      },
+      "template_hashes": [
+        "816b291e",
+        "27b14192",
+        "9b12421c",
+        "1f0bb297"
+      ]
+    },
+    "extractors/loopTemplates/extractLoopIdentifiers.cjs": {
+      "helper_imports": {
+        "buildMemberExpressionPath": {
+          "source": "./buildMemberExpressionPath.cjs",
+          "imported": "buildMemberExpressionPath"
+        }
+      },
+      "template_hashes": [
+        "14ff2dca"
+      ]
+    },
+    "extractors/loopTemplates/extractLoopTemplate.cjs": {
+      "helper_imports": {
+        "extractArrayBinding": {
+          "source": "./extractArrayBinding.cjs",
+          "imported": "extractArrayBinding"
+        },
+        "extractJSXFromCallback": {
+          "source": "./extractJSXFromCallback.cjs",
+          "imported": "extractJSXFromCallback"
+        },
+        "extractElementTemplate": {
+          "source": "./extractElementTemplate.cjs",
+          "imported": "extractElementTemplate"
+        },
+        "extractKeyBinding": {
+          "source": "./extractKeyBinding.cjs",
+          "imported": "extractKeyBinding"
+        }
+      },
+      "template_hashes": [
+        "a64d289a"
+      ]
+    },
+    "extractors/loopTemplates/extractPropTemplates.cjs": {
+      "helper_imports": {
+        "buildBindingPath": {
+          "source": "./buildBindingPath.cjs",
+          "imported": "buildBindingPath"
+        },
+        "extractConditionalTemplate": {
+          "source": "./extractConditionalTemplate.cjs",
+          "imported": "extractConditionalTemplate"
+        },
+        "extractTemplateFromTemplateLiteral": {
+          "source": "./extractTemplateFromTemplateLiteral.cjs",
+          "imported": "extractTemplateFromTemplateLiteral"
+        }
+      },
+      "template_hashes": [
+        "d42ba6d4"
+      ]
+    },
+    "extractors/loopTemplates/extractTemplateFromTemplateLiteral.cjs": {
+      "helper_imports": {
+        "buildBindingPath": {
+          "source": "./buildBindingPath.cjs",
+          "imported": "buildBindingPath"
+        }
+      },
+      "template_hashes": [
+        "0fb9f992"
+      ]
+    },
+    "extractors/loopTemplates/extractTextTemplate.cjs": {
+      "helper_imports": {
+        "buildBindingPath": {
+          "source": "./buildBindingPath.cjs",
+          "imported": "buildBindingPath"
+        },
+        "extractConditionalTemplate": {
+          "source": "./extractConditionalTemplate.cjs",
+          "imported": "extractConditionalTemplate"
+        },
+        "extractTemplateFromTemplateLiteral": {
+          "source": "./extractTemplateFromTemplateLiteral.cjs",
+          "imported": "extractTemplateFromTemplateLiteral"
+        }
+      },
+      "template_hashes": [
+        "1059f111"
+      ]
+    },
+    "extractors/loopTemplates/findMapExpressions.cjs": {
+      "helper_imports": {
+        "extractLoopTemplate": {
+          "source": "./extractLoopTemplate.cjs",
+          "imported": "extractLoopTemplate"
+        }
+      },
+      "template_hashes": [
+        "5263ec31"
+      ]
+    },
+    "extractors/loopTemplates/traverseJSX.cjs": {
+      "helper_imports": {
+        "findMapExpressions": {
+          "source": "./findMapExpressions.cjs",
+          "imported": "findMapExpressions"
+        }
+      },
+      "template_hashes": [
+        "ff1d1dc5"
+      ]
+    },
+    "extractors/loopTemplates.cjs": {
+      "helper_imports": {
+        "traverseJSX": {
+          "source": "./loopTemplates/traverseJSX.cjs",
+          "imported": "traverseJSX"
+        }
+      },
+      "template_hashes": [
+        "596cd144"
       ]
     },
     "extractors/structuralTemplates.cjs": {
@@ -358,6 +735,183 @@
         "04dc8022"
       ]
     },
+    "extractors/templates/buildMemberPath.cjs": {
+      "helper_imports": {},
+      "template_hashes": [
+        "c29f6cbf",
+        "e3594743"
+      ]
+    },
+    "extractors/templates/extractBinding.cjs": {
+      "helper_imports": {
+        "buildMemberPath": {
+          "source": "./buildMemberPath.cjs",
+          "imported": "buildMemberPath"
+        },
+        "extractIdentifiers": {
+          "source": "./extractIdentifiers.cjs",
+          "imported": "extractIdentifiers"
+        },
+        "extractMethodCallBinding": {
+          "source": "./extractMethodCallBinding.cjs",
+          "imported": "extractMethodCallBinding"
+        },
+        "extractConditionalBinding": {
+          "source": "./extractConditionalBinding.cjs",
+          "imported": "extractConditionalBinding"
+        },
+        "extractOptionalChainBinding": {
+          "source": "./extractOptionalChainBinding.cjs",
+          "imported": "extractOptionalChainBinding"
+        }
+      },
+      "template_hashes": [
+        "6bc980f3"
+      ]
+    },
+    "extractors/templates/extractBindingShared.cjs": {
+      "helper_imports": {
+        "buildMemberPath": {
+          "source": "./buildMemberPath.cjs",
+          "imported": "buildMemberPath"
+        },
+        "extractIdentifiers": {
+          "source": "./extractIdentifiers.cjs",
+          "imported": "extractIdentifiers"
+        }
+      },
+      "template_hashes": [
+        "37ebcc7b",
+        "c1219277",
+        "ef9048e9",
+        "d5cb7184",
+        "5783b298",
+        "5cc67bec"
+      ]
+    },
+    "extractors/templates/extractConditionalBinding.cjs": {
+      "helper_imports": {
+        "extractLiteralValue": {
+          "source": "./extractLiteralValue.cjs",
+          "imported": "extractLiteralValue"
+        }
+      },
+      "template_hashes": [
+        "df3cbba6"
+      ]
+    },
+    "extractors/templates/extractIdentifiers.cjs": {
+      "helper_imports": {
+        "buildMemberPath": {
+          "source": "./buildMemberPath.cjs",
+          "imported": "buildMemberPath"
+        }
+      },
+      "template_hashes": [
+        "b4fcb864"
+      ]
+    },
+    "extractors/templates/extractLiteralValue.cjs": {
+      "helper_imports": {},
+      "template_hashes": [
+        "60f496b0"
+      ]
+    },
+    "extractors/templates/extractMethodCallBinding.cjs": {
+      "helper_imports": {
+        "buildMemberPath": {
+          "source": "./buildMemberPath.cjs",
+          "imported": "buildMemberPath"
+        },
+        "buildOptionalMemberPath": {
+          "source": "./buildMemberPath.cjs",
+          "imported": "buildOptionalMemberPath"
+        },
+        "extractIdentifiers": {
+          "source": "./extractIdentifiers.cjs",
+          "imported": "extractIdentifiers"
+        }
+      },
+      "template_hashes": [
+        "c46a5879"
+      ]
+    },
+    "extractors/templates/extractOptionalChainBinding.cjs": {
+      "helper_imports": {
+        "buildOptionalMemberPath": {
+          "source": "./buildMemberPath.cjs",
+          "imported": "buildOptionalMemberPath"
+        }
+      },
+      "template_hashes": [
+        "eb87b8ca"
+      ]
+    },
+    "extractors/templates/extractStyleObjectTemplate.cjs": {
+      "helper_imports": {
+        "extractBindingShared": {
+          "source": "./extractBindingShared.cjs",
+          "imported": "extractBindingShared"
+        },
+        "camelToKebab": {
+          "source": "./styleHelpers.cjs",
+          "imported": "camelToKebab"
+        },
+        "convertStyleValue": {
+          "source": "./styleHelpers.cjs",
+          "imported": "convertStyleValue"
+        }
+      },
+      "template_hashes": [
+        "e18911c5"
+      ]
+    },
+    "extractors/templates/extractTemplateLiteral.cjs": {
+      "helper_imports": {
+        "extractBindingShared": {
+          "source": "./extractBindingShared.cjs",
+          "imported": "extractBindingShared"
+        }
+      },
+      "template_hashes": [
+        "4444cf10"
+      ]
+    },
+    "extractors/templates/extractTextTemplate.cjs": {
+      "helper_imports": {
+        "extractBinding": {
+          "source": "./extractBinding.cjs",
+          "imported": "extractBinding"
+        },
+        "extractTemplateLiteral": {
+          "source": "./extractTemplateLiteral.cjs",
+          "imported": "extractTemplateLiteral"
+        }
+      },
+      "template_hashes": [
+        "e9c63b6f"
+      ]
+    },
+    "extractors/templates/isMapCallExpression.cjs": {
+      "helper_imports": {},
+      "template_hashes": [
+        "4ba47569"
+      ]
+    },
+    "extractors/templates/pathHelpers.cjs": {
+      "helper_imports": {},
+      "template_hashes": [
+        "769675dd",
+        "5a80cbbc"
+      ]
+    },
+    "extractors/templates/styleHelpers.cjs": {
+      "helper_imports": {},
+      "template_hashes": [
+        "5c68f96d",
+        "d6ae0c8c"
+      ]
+    },
     "extractors/templates.cjs": {
       "helper_imports": {
         "getPathFromNode": {
@@ -368,41 +922,33 @@
           "source": "../utils/pathAssignment.cjs",
           "imported": "getPathSegmentsFromNode"
         },
-        "convertStyleObjectToCss": {
-          "source": "../utils/styleConverter.cjs",
-          "imported": "convertStyleObjectToCss"
+        "buildMemberPath": {
+          "source": "./templates/buildMemberPath.cjs",
+          "imported": "buildMemberPath"
+        },
+        "extractTextTemplate": {
+          "source": "./templates/extractTextTemplate.cjs",
+          "imported": "extractTextTemplate"
+        },
+        "extractTemplateLiteral": {
+          "source": "./templates/extractTemplateLiteral.cjs",
+          "imported": "extractTemplateLiteral"
+        },
+        "extractStyleObjectTemplate": {
+          "source": "./templates/extractStyleObjectTemplate.cjs",
+          "imported": "extractStyleObjectTemplate"
+        },
+        "isMapCallExpression": {
+          "source": "./templates/isMapCallExpression.cjs",
+          "imported": "isMapCallExpression"
         }
       },
       "template_hashes": [
-        "15874984",
-        "32943362",
-        "51935764",
-        "93f0987d",
-        "9badb4d8",
-        "4ba47569",
-        "d04a490d",
-        "cbc3d08a",
-        "7b38871a",
-        "4aa4be3b",
-        "d11b3634",
-        "45467d8a",
-        "56d52a46",
-        "db3bcd2b",
-        "fc87d3b3",
-        "d6565b60",
-        "4c386a32",
-        "ad82a402",
-        "fddb335d",
-        "04dc8022",
-        "fba017f2",
-        "6b7c8063",
-        "824252d8",
-        "42b0e349",
-        "89c93d51",
-        "b8a20f9e",
-        "f19d6ed3",
-        "503b5151",
-        "cd7d4412",
+        "7bb577d2",
+        "5b61ab1b",
+        "f6cef14a",
+        "eeeeb4c6",
+        "5ed01d71",
         "a3bfc5b5"
       ]
     },
@@ -430,20 +976,87 @@
         "e7419daa"
       ]
     },
-    "generators/component.cjs": {
+    "generators/component/generateAttributes.cjs": {
+      "helper_imports": {},
+      "template_hashes": [
+        "53be9244",
+        "dd160d98"
+      ]
+    },
+    "generators/component/generateFields.cjs": {
       "helper_imports": {
-        "generateRenderBody": {
-          "source": "./renderBody.cjs",
-          "imported": "generateRenderBody"
-        },
+        "inferCSharpTypeFromInit": {
+          "source": "./inferTypes.cjs",
+          "imported": "inferCSharpTypeFromInit"
+        }
+      },
+      "template_hashes": [
+        "27821915",
+        "9d46dda3",
+        "5d6418ca",
+        "e9774294",
+        "5f7b377d",
+        "23aefe35",
+        "fbf5828c",
+        "8df90304",
+        "a5e8f257",
+        "1502727f",
+        "7d7d6e66",
+        "287de30e",
+        "0dcb0dd0",
+        "6c43363b",
+        "d7749981",
+        "076d7b99",
+        "b830a91f",
+        "63437e06"
+      ]
+    },
+    "generators/component/generateMethods.cjs": {
+      "helper_imports": {
         "generateCSharpExpression": {
-          "source": "./expressions.cjs",
+          "source": "../expressions.cjs",
           "imported": "generateCSharpExpression"
         },
         "generateCSharpStatement": {
-          "source": "./expressions.cjs",
+          "source": "../expressions.cjs",
           "imported": "generateCSharpStatement"
         },
+        "generateRenderBody": {
+          "source": "../renderBody.cjs",
+          "imported": "generateRenderBody"
+        },
+        "tsTypeToCSharpType": {
+          "source": "./inferTypes.cjs",
+          "imported": "tsTypeToCSharpType"
+        },
+        "convertRazorMarkdownToCSharp": {
+          "source": "../razorMarkdown.cjs",
+          "imported": "convertRazorMarkdownToCSharp"
+        }
+      },
+      "template_hashes": [
+        "81205797",
+        "1261fa7d",
+        "bc9176cb",
+        "184eb71f",
+        "8591fbd2",
+        "5a9607ac",
+        "1c6ec4ba",
+        "3834e6fa",
+        "177cbe26",
+        "fbd3e478",
+        "19e5480a"
+      ]
+    },
+    "generators/component/inferTypes.cjs": {
+      "helper_imports": {},
+      "template_hashes": [
+        "32825e4e",
+        "54d40d58"
+      ]
+    },
+    "generators/component.cjs": {
+      "helper_imports": {
         "setCurrentComponent": {
           "source": "./expressions.cjs",
           "imported": "setCurrentComponent"
@@ -456,14 +1069,137 @@
           "source": "./timelineGenerator.cjs",
           "imported": "generateTimelineAttributes"
         },
-        "convertRazorMarkdownToCSharp": {
-          "source": "./razorMarkdown.cjs",
-          "imported": "convertRazorMarkdownToCSharp"
+        "generateLoopTemplateAttributes": {
+          "source": "./component/generateAttributes.cjs",
+          "imported": "generateLoopTemplateAttributes"
+        },
+        "generateStateXAttributes": {
+          "source": "./component/generateAttributes.cjs",
+          "imported": "generateStateXAttributes"
+        },
+        "generateTemplateProperties": {
+          "source": "./component/generateFields.cjs",
+          "imported": "generateTemplateProperties"
+        },
+        "generatePropFields": {
+          "source": "./component/generateFields.cjs",
+          "imported": "generatePropFields"
+        },
+        "generateStateFields": {
+          "source": "./component/generateFields.cjs",
+          "imported": "generateStateFields"
+        },
+        "generateMvcStateFields": {
+          "source": "./component/generateFields.cjs",
+          "imported": "generateMvcStateFields"
+        },
+        "generateMvcViewModelFields": {
+          "source": "./component/generateFields.cjs",
+          "imported": "generateMvcViewModelFields"
+        },
+        "generateStateXFields": {
+          "source": "./component/generateFields.cjs",
+          "imported": "generateStateXFields"
+        },
+        "generateRefFields": {
+          "source": "./component/generateFields.cjs",
+          "imported": "generateRefFields"
+        },
+        "generateMarkdownFields": {
+          "source": "./component/generateFields.cjs",
+          "imported": "generateMarkdownFields"
+        },
+        "generateRazorMarkdownFields": {
+          "source": "./component/generateFields.cjs",
+          "imported": "generateRazorMarkdownFields"
+        },
+        "generateValidationFields": {
+          "source": "./component/generateFields.cjs",
+          "imported": "generateValidationFields"
+        },
+        "generateModalFields": {
+          "source": "./component/generateFields.cjs",
+          "imported": "generateModalFields"
+        },
+        "generateToggleFields": {
+          "source": "./component/generateFields.cjs",
+          "imported": "generateToggleFields"
+        },
+        "generateDropdownFields": {
+          "source": "./component/generateFields.cjs",
+          "imported": "generateDropdownFields"
+        },
+        "generatePubSubFields": {
+          "source": "./component/generateFields.cjs",
+          "imported": "generatePubSubFields"
+        },
+        "generateTaskSchedulingFields": {
+          "source": "./component/generateFields.cjs",
+          "imported": "generateTaskSchedulingFields"
+        },
+        "generateSignalRFields": {
+          "source": "./component/generateFields.cjs",
+          "imported": "generateSignalRFields"
+        },
+        "generatePredictHintFields": {
+          "source": "./component/generateFields.cjs",
+          "imported": "generatePredictHintFields"
+        },
+        "generateClientComputedProperties": {
+          "source": "./component/generateFields.cjs",
+          "imported": "generateClientComputedProperties"
+        },
+        "generateRenderMethod": {
+          "source": "./component/generateMethods.cjs",
+          "imported": "generateRenderMethod"
+        },
+        "generateEffectMethods": {
+          "source": "./component/generateMethods.cjs",
+          "imported": "generateEffectMethods"
+        },
+        "generateEventHandlers": {
+          "source": "./component/generateMethods.cjs",
+          "imported": "generateEventHandlers"
+        },
+        "generateToggleMethods": {
+          "source": "./component/generateMethods.cjs",
+          "imported": "generateToggleMethods"
+        },
+        "generateClientHandlersMethod": {
+          "source": "./component/generateMethods.cjs",
+          "imported": "generateClientHandlersMethod"
+        },
+        "generateClientEffectsMethod": {
+          "source": "./component/generateMethods.cjs",
+          "imported": "generateClientEffectsMethod"
+        },
+        "generatePubSubMethods": {
+          "source": "./component/generateMethods.cjs",
+          "imported": "generatePubSubMethods"
+        },
+        "generateSignalRMethods": {
+          "source": "./component/generateMethods.cjs",
+          "imported": "generateSignalRMethods"
+        },
+        "generateMvcStateSetters": {
+          "source": "./component/generateMethods.cjs",
+          "imported": "generateMvcStateSetters"
+        },
+        "generateOnInitializedMethod": {
+          "source": "./component/generateMethods.cjs",
+          "imported": "generateOnInitializedMethod"
+        },
+        "generateHelperFunctions": {
+          "source": "./component/generateMethods.cjs",
+          "imported": "generateHelperFunctions"
+        },
+        "inferCSharpTypeFromInit": {
+          "source": "./component/inferTypes.cjs",
+          "imported": "inferCSharpTypeFromInit"
         }
       },
       "template_hashes": [
-        "cdc9b34c",
-        "32825e4e"
+        "77337306"
       ]
     },
     "generators/csharpFile.cjs": {
@@ -479,6 +1215,75 @@
       },
       "template_hashes": [
         "bb71725f"
+      ]
+    },
+    "generators/expressions/arrays.cjs": {
+      "helper_imports": {},
+      "template_hashes": [
+        "09a81e56"
+      ]
+    },
+    "generators/expressions/calls.cjs": {
+      "helper_imports": {
+        "generateJSXElement": {
+          "source": "../jsx.cjs",
+          "imported": "generateJSXElement"
+        }
+      },
+      "template_hashes": [
+        "ba3a7f64",
+        "1e78dcef"
+      ]
+    },
+    "generators/expressions/functions.cjs": {
+      "helper_imports": {},
+      "template_hashes": [
+        "d8a15b84"
+      ]
+    },
+    "generators/expressions/identifiers.cjs": {
+      "helper_imports": {},
+      "template_hashes": [
+        "c213e2ea",
+        "0bca2fa9",
+        "8a4408fc"
+      ]
+    },
+    "generators/expressions/literals.cjs": {
+      "helper_imports": {
+        "escapeCSharpString": {
+          "source": "../../utils/helpers.cjs",
+          "imported": "escapeCSharpString"
+        }
+      },
+      "template_hashes": [
+        "018e995c",
+        "604774ba",
+        "34f5c970",
+        "23db1d55",
+        "24702f56"
+      ]
+    },
+    "generators/expressions/newExpressions.cjs": {
+      "helper_imports": {},
+      "template_hashes": [
+        "a3a70252"
+      ]
+    },
+    "generators/expressions/objects.cjs": {
+      "helper_imports": {},
+      "template_hashes": [
+        "7c8dc0a4"
+      ]
+    },
+    "generators/expressions/operators.cjs": {
+      "helper_imports": {},
+      "template_hashes": [
+        "57313844",
+        "e008602b",
+        "b56ea096",
+        "643adbbd",
+        "f2340336"
       ]
     },
     "generators/expressions.cjs": {
@@ -506,6 +1311,82 @@
         "getPathFromNode": {
           "source": "../utils/pathAssignment.cjs",
           "imported": "getPathFromNode"
+        },
+        "generateStringLiteral": {
+          "source": "./expressions/literals.cjs",
+          "imported": "generateStringLiteral"
+        },
+        "generateNumericLiteral": {
+          "source": "./expressions/literals.cjs",
+          "imported": "generateNumericLiteral"
+        },
+        "generateBooleanLiteral": {
+          "source": "./expressions/literals.cjs",
+          "imported": "generateBooleanLiteral"
+        },
+        "generateNullLiteral": {
+          "source": "./expressions/literals.cjs",
+          "imported": "generateNullLiteral"
+        },
+        "generateTemplateLiteral": {
+          "source": "./expressions/literals.cjs",
+          "imported": "generateTemplateLiteral"
+        },
+        "generateUnaryExpression": {
+          "source": "./expressions/operators.cjs",
+          "imported": "generateUnaryExpression"
+        },
+        "generateBinaryExpression": {
+          "source": "./expressions/operators.cjs",
+          "imported": "generateBinaryExpression"
+        },
+        "generateLogicalExpression": {
+          "source": "./expressions/operators.cjs",
+          "imported": "generateLogicalExpression"
+        },
+        "generateConditionalExpression": {
+          "source": "./expressions/operators.cjs",
+          "imported": "generateConditionalExpression"
+        },
+        "generateAssignmentExpression": {
+          "source": "./expressions/operators.cjs",
+          "imported": "generateAssignmentExpression"
+        },
+        "generateIdentifier": {
+          "source": "./expressions/identifiers.cjs",
+          "imported": "generateIdentifier"
+        },
+        "generateMemberExpression": {
+          "source": "./expressions/identifiers.cjs",
+          "imported": "generateMemberExpression"
+        },
+        "generateOptionalMemberExpression": {
+          "source": "./expressions/identifiers.cjs",
+          "imported": "generateOptionalMemberExpression"
+        },
+        "generateArrayExpression": {
+          "source": "./expressions/arrays.cjs",
+          "imported": "generateArrayExpression"
+        },
+        "generateObjectExpression": {
+          "source": "./expressions/objects.cjs",
+          "imported": "generateObjectExpression"
+        },
+        "generateFunctionExpression": {
+          "source": "./expressions/functions.cjs",
+          "imported": "generateFunctionExpression"
+        },
+        "generateCallExpression": {
+          "source": "./expressions/calls.cjs",
+          "imported": "generateCallExpression"
+        },
+        "generateOptionalCallExpression": {
+          "source": "./expressions/calls.cjs",
+          "imported": "generateOptionalCallExpression"
+        },
+        "generateNewExpression": {
+          "source": "./expressions/newExpressions.cjs",
+          "imported": "generateNewExpression"
         }
       },
       "template_hashes": [
@@ -516,7 +1397,7 @@
         "3aea3559",
         "090c13ff",
         "94d8002a",
-        "e2cb890e",
+        "7f437ac3",
         "d12b3e93",
         "39a13ef5",
         "e43456c6"
@@ -769,5 +1650,5 @@
       ]
     }
   },
-  "template_count": 282
+  "template_count": 332
 }

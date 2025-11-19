@@ -1,0 +1,188 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "buildPathKey",
+  "params": [
+    {
+      "name": "tagName",
+      "inferredType": "&str",
+      "defaultValue": null
+    },
+    {
+      "name": "index",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "parentPath",
+      "inferredType": "&Path",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function buildPathKey(tagName, index, parentPath) {\r\n  const parentKeys = [];\r\n  let currentPath = parentPath;\r\n\r\n  // Build parent path from indices\r\n  // This is simplified - in production we'd track tag names\r\n  for (let i = 0; i < currentPath.length; i++) {\r\n    parentKeys.push(`[${currentPath[i]}]`);\r\n  }\r\n\r\n  return `${parentKeys.join('.')}.${tagName}[${index}]`.replace(/^\\./, '');\r\n}",
+  "body_templates": [
+    {
+      "hash": "c9a6954c",
+      "type": "VariableDeclaration",
+      "babel_source": "const parentKeys = [];",
+      "parentContext": {
+        "functionName": "buildPathKey",
+        "functionParams": [
+          "tagName",
+          "index",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "buildPathKey",
+        "functionParams": [
+          "tagName",
+          "index",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ed88e99",
+      "type": "VariableDeclaration",
+      "babel_source": "let currentPath = parentPath;",
+      "parentContext": {
+        "functionName": "buildPathKey",
+        "functionParams": [
+          "tagName",
+          "index",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e7e83096",
+      "type": "ForStatement",
+      "babel_source": "for (let i = 0; i < currentPath.length; i++) {\r\n    parentKeys.push(`[${currentPath[i]}]`);\r\n  }",
+      "parentContext": {
+        "functionName": "buildPathKey",
+        "functionParams": [
+          "tagName",
+          "index",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ecb911a1",
+      "type": "VariableDeclaration",
+      "babel_source": "let i = 0",
+      "parentContext": {
+        "functionName": "buildPathKey",
+        "functionParams": [
+          "tagName",
+          "index",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e8ebefd1",
+      "type": "BinaryExpression",
+      "operator": "<",
+      "babel_source": "i < currentPath.length",
+      "parentContext": {
+        "functionName": "buildPathKey",
+        "functionParams": [
+          "tagName",
+          "index",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e8dee0e1",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "i++",
+      "parentContext": {
+        "functionName": "buildPathKey",
+        "functionParams": [
+          "tagName",
+          "index",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cff87f7e",
+      "type": "TemplateLiteral",
+      "babel_source": "`[${currentPath[i]}]`",
+      "parentContext": {
+        "functionName": "buildPathKey",
+        "functionParams": [
+          "tagName",
+          "index",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "398bb6f9",
+      "type": "ReturnStatement",
+      "babel_source": "return `${parentKeys.join('.')}.${tagName}[${index}]`.replace(/^\\./, '');",
+      "parentContext": {
+        "functionName": "buildPathKey",
+        "functionParams": [
+          "tagName",
+          "index",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d6a0ed0a",
+      "type": "TemplateLiteral",
+      "babel_source": "`${parentKeys.join('.')}.${tagName}[${index}]`",
+      "parentContext": {
+        "functionName": "buildPathKey",
+        "functionParams": [
+          "tagName",
+          "index",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f51f176e",
+      "type": "RegExpLiteral",
+      "pattern": "^\\.",
+      "flags": "",
+      "babel_source": "/^\\./",
+      "parentContext": {
+        "functionName": "buildPathKey",
+        "functionParams": [
+          "tagName",
+          "index",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/templates/pathHelpers.cjs"
+  ]
+}

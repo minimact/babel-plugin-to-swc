@@ -1,0 +1,260 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generatePubSubMethods",
+  "params": [
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "lines",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generatePubSubMethods(component, lines) {\r\n  // Pub methods\r\n  if (component.usePub) {\r\n    for (const pub of component.usePub) {\r\n      lines.push('');\r\n      lines.push(`    // Publish to ${pub.name}_channel`);\r\n      lines.push(`    private void ${pub.name}(dynamic value, PubSubOptions? options = null)`);\r\n      lines.push('    {');\r\n      lines.push(`        EventAggregator.Instance.Publish(${pub.name}_channel, value, options);`);\r\n      lines.push('    }');\r\n    }\r\n  }\r\n\r\n  // Sub methods\r\n  if (component.useSub) {\r\n    for (const sub of component.useSub) {\r\n      lines.push('');\r\n      lines.push(`    // Subscribe to ${sub.name}_channel`);\r\n      lines.push(`    protected override void OnInitialized()`);\r\n      lines.push('    {');\r\n      lines.push(`        base.OnInitialized();`);\r\n      lines.push(`        `);\r\n      lines.push(`        // Subscribe to ${sub.name}_channel`);\r\n      lines.push(`        EventAggregator.Instance.Subscribe(${sub.name}_channel, (msg) => {`);\r\n      lines.push(`            ${sub.name}_value = msg.Value;`);\r\n      lines.push(`            SetState(\"${sub.name}_value\", ${sub.name}_value);`);\r\n      lines.push(`        });`);\r\n      lines.push('    }');\r\n    }\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "1ae5fadd",
+      "type": "IfStatement",
+      "condition": "component.usePub",
+      "babel_source": "if (component.usePub) {\r\n    for (const pub of component.usePub) {\r\n      lines.push('');\r\n      lines.push(`    // Publish to ${pub.name}_channel`);\r\n      lines.push(`    private void ${pub.name}(dynamic value, PubSubOptions? options = null)`);\r\n      lines.push('    {');\r\n      lines.push(`        EventAggregator.Instance.Publish(${pub.name}_channel, value, options);`);\r\n      lines.push('    }');\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generatePubSubMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5556bc91",
+      "type": "ForOfStatement",
+      "babel_source": "for (const pub of component.usePub) {\r\n      lines.push('');\r\n      lines.push(`    // Publish to ${pub.name}_channel`);\r\n      lines.push(`    private void ${pub.name}(dynamic value, PubSubOptions? options = null)`);\r\n      lines.push('    {');\r\n      lines.push(`        EventAggregator.Instance.Publish(${pub.name}_channel, value, options);`);\r\n      lines.push('    }');\r\n    }",
+      "parentContext": {
+        "functionName": "generatePubSubMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "87eb847e",
+      "type": "VariableDeclaration",
+      "babel_source": "const pub",
+      "parentContext": {
+        "functionName": "generatePubSubMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e1039d85",
+      "type": "TemplateLiteral",
+      "babel_source": "`    // Publish to ${pub.name}_channel`",
+      "parentContext": {
+        "functionName": "generatePubSubMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f313a467",
+      "type": "TemplateLiteral",
+      "babel_source": "`    private void ${pub.name}(dynamic value, PubSubOptions? options = null)`",
+      "parentContext": {
+        "functionName": "generatePubSubMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "528c21e3",
+      "type": "TemplateLiteral",
+      "babel_source": "`        EventAggregator.Instance.Publish(${pub.name}_channel, value, options);`",
+      "parentContext": {
+        "functionName": "generatePubSubMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "73521f2e",
+      "type": "IfStatement",
+      "condition": "component.useSub",
+      "babel_source": "if (component.useSub) {\r\n    for (const sub of component.useSub) {\r\n      lines.push('');\r\n      lines.push(`    // Subscribe to ${sub.name}_channel`);\r\n      lines.push(`    protected override void OnInitialized()`);\r\n      lines.push('    {');\r\n      lines.push(`        base.OnInitialized();`);\r\n      lines.push(`        `);\r\n      lines.push(`        // Subscribe to ${sub.name}_channel`);\r\n      lines.push(`        EventAggregator.Instance.Subscribe(${sub.name}_channel, (msg) => {`);\r\n      lines.push(`            ${sub.name}_value = msg.Value;`);\r\n      lines.push(`            SetState(\"${sub.name}_value\", ${sub.name}_value);`);\r\n      lines.push(`        });`);\r\n      lines.push('    }');\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generatePubSubMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "13e7578c",
+      "type": "ForOfStatement",
+      "babel_source": "for (const sub of component.useSub) {\r\n      lines.push('');\r\n      lines.push(`    // Subscribe to ${sub.name}_channel`);\r\n      lines.push(`    protected override void OnInitialized()`);\r\n      lines.push('    {');\r\n      lines.push(`        base.OnInitialized();`);\r\n      lines.push(`        `);\r\n      lines.push(`        // Subscribe to ${sub.name}_channel`);\r\n      lines.push(`        EventAggregator.Instance.Subscribe(${sub.name}_channel, (msg) => {`);\r\n      lines.push(`            ${sub.name}_value = msg.Value;`);\r\n      lines.push(`            SetState(\"${sub.name}_value\", ${sub.name}_value);`);\r\n      lines.push(`        });`);\r\n      lines.push('    }');\r\n    }",
+      "parentContext": {
+        "functionName": "generatePubSubMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "43c95233",
+      "type": "VariableDeclaration",
+      "babel_source": "const sub",
+      "parentContext": {
+        "functionName": "generatePubSubMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "effdd43a",
+      "type": "TemplateLiteral",
+      "babel_source": "`    // Subscribe to ${sub.name}_channel`",
+      "parentContext": {
+        "functionName": "generatePubSubMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab843014",
+      "type": "TemplateLiteral",
+      "babel_source": "`    protected override void OnInitialized()`",
+      "parentContext": {
+        "functionName": "generatePubSubMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "afb37029",
+      "type": "TemplateLiteral",
+      "babel_source": "`        base.OnInitialized();`",
+      "parentContext": {
+        "functionName": "generatePubSubMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ed6b2cc4",
+      "type": "TemplateLiteral",
+      "babel_source": "`        `",
+      "parentContext": {
+        "functionName": "generatePubSubMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "af1e33af",
+      "type": "TemplateLiteral",
+      "babel_source": "`        // Subscribe to ${sub.name}_channel`",
+      "parentContext": {
+        "functionName": "generatePubSubMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d631da95",
+      "type": "TemplateLiteral",
+      "babel_source": "`        EventAggregator.Instance.Subscribe(${sub.name}_channel, (msg) => {`",
+      "parentContext": {
+        "functionName": "generatePubSubMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2dde2823",
+      "type": "TemplateLiteral",
+      "babel_source": "`            ${sub.name}_value = msg.Value;`",
+      "parentContext": {
+        "functionName": "generatePubSubMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fc423c58",
+      "type": "TemplateLiteral",
+      "babel_source": "`            SetState(\"${sub.name}_value\", ${sub.name}_value);`",
+      "parentContext": {
+        "functionName": "generatePubSubMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f8434dd0",
+      "type": "TemplateLiteral",
+      "babel_source": "`        });`",
+      "parentContext": {
+        "functionName": "generatePubSubMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/component/generateMethods.cjs"
+  ]
+}

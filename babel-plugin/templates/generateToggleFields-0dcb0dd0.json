@@ -1,0 +1,76 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateToggleFields",
+  "params": [
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "lines",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateToggleFields(component, lines) {\r\n  for (const toggle of component.useToggle) {\r\n    lines.push(`    [State]`);\r\n    lines.push(`    private bool ${toggle.name} = ${toggle.initialValue};`);\r\n    lines.push('');\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "58b0838e",
+      "type": "ForOfStatement",
+      "babel_source": "for (const toggle of component.useToggle) {\r\n    lines.push(`    [State]`);\r\n    lines.push(`    private bool ${toggle.name} = ${toggle.initialValue};`);\r\n    lines.push('');\r\n  }",
+      "parentContext": {
+        "functionName": "generateToggleFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0f9f37a6",
+      "type": "VariableDeclaration",
+      "babel_source": "const toggle",
+      "parentContext": {
+        "functionName": "generateToggleFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "634a1d52",
+      "type": "TemplateLiteral",
+      "babel_source": "`    [State]`",
+      "parentContext": {
+        "functionName": "generateToggleFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "995ad57d",
+      "type": "TemplateLiteral",
+      "babel_source": "`    private bool ${toggle.name} = ${toggle.initialValue};`",
+      "parentContext": {
+        "functionName": "generateToggleFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/component/generateFields.cjs"
+  ]
+}

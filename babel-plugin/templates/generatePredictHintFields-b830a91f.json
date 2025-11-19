@@ -1,0 +1,184 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generatePredictHintFields",
+  "params": [
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "lines",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generatePredictHintFields(component, lines) {\r\n  if (component.usePredictHint) {\r\n    for (let i = 0; i < component.usePredictHint.length; i++) {\r\n      const hint = component.usePredictHint[i];\r\n      const hintIdStr = hint.hintId ? `\"${hint.hintId}\"` : `\"hint_${i}\"`;\r\n      lines.push(`    // usePredictHint: ${hintIdStr}`);\r\n      lines.push(`    private string _hintId_${i} = ${hintIdStr};`);\r\n      lines.push('');\r\n    }\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "fd986bcf",
+      "type": "IfStatement",
+      "condition": "component.usePredictHint",
+      "babel_source": "if (component.usePredictHint) {\r\n    for (let i = 0; i < component.usePredictHint.length; i++) {\r\n      const hint = component.usePredictHint[i];\r\n      const hintIdStr = hint.hintId ? `\"${hint.hintId}\"` : `\"hint_${i}\"`;\r\n      lines.push(`    // usePredictHint: ${hintIdStr}`);\r\n      lines.push(`    private string _hintId_${i} = ${hintIdStr};`);\r\n      lines.push('');\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generatePredictHintFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6302962c",
+      "type": "ForStatement",
+      "babel_source": "for (let i = 0; i < component.usePredictHint.length; i++) {\r\n      const hint = component.usePredictHint[i];\r\n      const hintIdStr = hint.hintId ? `\"${hint.hintId}\"` : `\"hint_${i}\"`;\r\n      lines.push(`    // usePredictHint: ${hintIdStr}`);\r\n      lines.push(`    private string _hintId_${i} = ${hintIdStr};`);\r\n      lines.push('');\r\n    }",
+      "parentContext": {
+        "functionName": "generatePredictHintFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ecb911a1",
+      "type": "VariableDeclaration",
+      "babel_source": "let i = 0",
+      "parentContext": {
+        "functionName": "generatePredictHintFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d0791353",
+      "type": "BinaryExpression",
+      "operator": "<",
+      "babel_source": "i < component.usePredictHint.length",
+      "parentContext": {
+        "functionName": "generatePredictHintFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e8dee0e1",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "i++",
+      "parentContext": {
+        "functionName": "generatePredictHintFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "986ea091",
+      "type": "VariableDeclaration",
+      "babel_source": "const hint = component.usePredictHint[i];",
+      "parentContext": {
+        "functionName": "generatePredictHintFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a01ba0f4",
+      "type": "VariableDeclaration",
+      "babel_source": "const hintIdStr = hint.hintId ? `\"${hint.hintId}\"` : `\"hint_${i}\"`;",
+      "parentContext": {
+        "functionName": "generatePredictHintFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a36aefe8",
+      "type": "ConditionalExpression",
+      "babel_source": "hint.hintId ? `\"${hint.hintId}\"` : `\"hint_${i}\"`",
+      "parentContext": {
+        "functionName": "generatePredictHintFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1d1f1bcc",
+      "type": "TemplateLiteral",
+      "babel_source": "`\"${hint.hintId}\"`",
+      "parentContext": {
+        "functionName": "generatePredictHintFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8158a648",
+      "type": "TemplateLiteral",
+      "babel_source": "`\"hint_${i}\"`",
+      "parentContext": {
+        "functionName": "generatePredictHintFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "301cce83",
+      "type": "TemplateLiteral",
+      "babel_source": "`    // usePredictHint: ${hintIdStr}`",
+      "parentContext": {
+        "functionName": "generatePredictHintFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dff826b5",
+      "type": "TemplateLiteral",
+      "babel_source": "`    private string _hintId_${i} = ${hintIdStr};`",
+      "parentContext": {
+        "functionName": "generatePredictHintFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/component/generateFields.cjs"
+  ]
+}

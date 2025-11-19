@@ -1,0 +1,89 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateToggleMethods",
+  "params": [
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "lines",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateToggleMethods(component, lines) {\r\n  for (const toggle of component.useToggle) {\r\n    lines.push('');\r\n    lines.push(`    private void ${toggle.toggleFunc}()`);\r\n    lines.push('    {');\r\n    lines.push(`        ${toggle.name} = !${toggle.name};`);\r\n    lines.push(`        SetState(\"${toggle.name}\", ${toggle.name});`);\r\n    lines.push('    }');\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "2c4b2b24",
+      "type": "ForOfStatement",
+      "babel_source": "for (const toggle of component.useToggle) {\r\n    lines.push('');\r\n    lines.push(`    private void ${toggle.toggleFunc}()`);\r\n    lines.push('    {');\r\n    lines.push(`        ${toggle.name} = !${toggle.name};`);\r\n    lines.push(`        SetState(\"${toggle.name}\", ${toggle.name});`);\r\n    lines.push('    }');\r\n  }",
+      "parentContext": {
+        "functionName": "generateToggleMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0f9f37a6",
+      "type": "VariableDeclaration",
+      "babel_source": "const toggle",
+      "parentContext": {
+        "functionName": "generateToggleMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1bb02496",
+      "type": "TemplateLiteral",
+      "babel_source": "`    private void ${toggle.toggleFunc}()`",
+      "parentContext": {
+        "functionName": "generateToggleMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0fb90a1d",
+      "type": "TemplateLiteral",
+      "babel_source": "`        ${toggle.name} = !${toggle.name};`",
+      "parentContext": {
+        "functionName": "generateToggleMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "626ffb77",
+      "type": "TemplateLiteral",
+      "babel_source": "`        SetState(\"${toggle.name}\", ${toggle.name});`",
+      "parentContext": {
+        "functionName": "generateToggleMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/component/generateMethods.cjs"
+  ]
+}

@@ -1,0 +1,133 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateLoopTemplateAttributes",
+  "params": [
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "lines",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateLoopTemplateAttributes(component, lines) {\r\n  if (component.loopTemplates && component.loopTemplates.length > 0) {\r\n    for (const loopTemplate of component.loopTemplates) {\r\n      const templateJson = JSON.stringify(loopTemplate)\r\n        .replace(/\"/g, '\"\"'); // Escape quotes for C# verbatim string\r\n\r\n      lines.push(`[LoopTemplate(\"${loopTemplate.stateKey}\", @\"${templateJson}\")]`);\r\n    }\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "35c4a1c1",
+      "type": "IfStatement",
+      "condition": "component.loopTemplates && component.loopTemplates.length > 0",
+      "babel_source": "if (component.loopTemplates && component.loopTemplates.length > 0) {\r\n    for (const loopTemplate of component.loopTemplates) {\r\n      const templateJson = JSON.stringify(loopTemplate)\r\n        .replace(/\"/g, '\"\"'); // Escape quotes for C# verbatim string\r\n\r\n      lines.push(`[LoopTemplate(\"${loopTemplate.stateKey}\", @\"${templateJson}\")]`);\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generateLoopTemplateAttributes",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "050326e6",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "component.loopTemplates && component.loopTemplates.length > 0",
+      "parentContext": {
+        "functionName": "generateLoopTemplateAttributes",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "64ab2205",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "component.loopTemplates.length > 0",
+      "parentContext": {
+        "functionName": "generateLoopTemplateAttributes",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5c552e4e",
+      "type": "ForOfStatement",
+      "babel_source": "for (const loopTemplate of component.loopTemplates) {\r\n      const templateJson = JSON.stringify(loopTemplate)\r\n        .replace(/\"/g, '\"\"'); // Escape quotes for C# verbatim string\r\n\r\n      lines.push(`[LoopTemplate(\"${loopTemplate.stateKey}\", @\"${templateJson}\")]`);\r\n    }",
+      "parentContext": {
+        "functionName": "generateLoopTemplateAttributes",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b4011c23",
+      "type": "VariableDeclaration",
+      "babel_source": "const loopTemplate",
+      "parentContext": {
+        "functionName": "generateLoopTemplateAttributes",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c0fb1573",
+      "type": "VariableDeclaration",
+      "babel_source": "const templateJson = JSON.stringify(loopTemplate)\r\n        .replace(/\"/g, '\"\"');",
+      "parentContext": {
+        "functionName": "generateLoopTemplateAttributes",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab9aeb8a",
+      "type": "RegExpLiteral",
+      "pattern": "\"",
+      "flags": "g",
+      "babel_source": "/\"/g",
+      "parentContext": {
+        "functionName": "generateLoopTemplateAttributes",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "61b5c89f",
+      "type": "TemplateLiteral",
+      "babel_source": "`[LoopTemplate(\"${loopTemplate.stateKey}\", @\"${templateJson}\")]`",
+      "parentContext": {
+        "functionName": "generateLoopTemplateAttributes",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/component/generateAttributes.cjs"
+  ]
+}

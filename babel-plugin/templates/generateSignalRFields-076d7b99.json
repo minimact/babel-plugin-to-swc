@@ -1,0 +1,168 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateSignalRFields",
+  "params": [
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "lines",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateSignalRFields(component, lines) {\r\n  if (component.useSignalR) {\r\n    for (const signalR of component.useSignalR) {\r\n      const hubUrlStr = signalR.hubUrl ? `\"${signalR.hubUrl}\"` : 'null';\r\n      lines.push(`    // useSignalR: ${signalR.name}`);\r\n      lines.push(`    private string ${signalR.name}_hubUrl = ${hubUrlStr};`);\r\n      lines.push(`    private bool ${signalR.name}_connected = false;`);\r\n      lines.push(`    private string ${signalR.name}_connectionId = null;`);\r\n      lines.push(`    private string ${signalR.name}_error = null;`);\r\n      lines.push('');\r\n    }\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "a06d8462",
+      "type": "IfStatement",
+      "condition": "component.useSignalR",
+      "babel_source": "if (component.useSignalR) {\r\n    for (const signalR of component.useSignalR) {\r\n      const hubUrlStr = signalR.hubUrl ? `\"${signalR.hubUrl}\"` : 'null';\r\n      lines.push(`    // useSignalR: ${signalR.name}`);\r\n      lines.push(`    private string ${signalR.name}_hubUrl = ${hubUrlStr};`);\r\n      lines.push(`    private bool ${signalR.name}_connected = false;`);\r\n      lines.push(`    private string ${signalR.name}_connectionId = null;`);\r\n      lines.push(`    private string ${signalR.name}_error = null;`);\r\n      lines.push('');\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generateSignalRFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4efd7c3e",
+      "type": "ForOfStatement",
+      "babel_source": "for (const signalR of component.useSignalR) {\r\n      const hubUrlStr = signalR.hubUrl ? `\"${signalR.hubUrl}\"` : 'null';\r\n      lines.push(`    // useSignalR: ${signalR.name}`);\r\n      lines.push(`    private string ${signalR.name}_hubUrl = ${hubUrlStr};`);\r\n      lines.push(`    private bool ${signalR.name}_connected = false;`);\r\n      lines.push(`    private string ${signalR.name}_connectionId = null;`);\r\n      lines.push(`    private string ${signalR.name}_error = null;`);\r\n      lines.push('');\r\n    }",
+      "parentContext": {
+        "functionName": "generateSignalRFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "439462f1",
+      "type": "VariableDeclaration",
+      "babel_source": "const signalR",
+      "parentContext": {
+        "functionName": "generateSignalRFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "79bd7f66",
+      "type": "VariableDeclaration",
+      "babel_source": "const hubUrlStr = signalR.hubUrl ? `\"${signalR.hubUrl}\"` : 'null';",
+      "parentContext": {
+        "functionName": "generateSignalRFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cf4fedb3",
+      "type": "ConditionalExpression",
+      "babel_source": "signalR.hubUrl ? `\"${signalR.hubUrl}\"` : 'null'",
+      "parentContext": {
+        "functionName": "generateSignalRFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4e7282c6",
+      "type": "TemplateLiteral",
+      "babel_source": "`\"${signalR.hubUrl}\"`",
+      "parentContext": {
+        "functionName": "generateSignalRFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b5b999b6",
+      "type": "TemplateLiteral",
+      "babel_source": "`    // useSignalR: ${signalR.name}`",
+      "parentContext": {
+        "functionName": "generateSignalRFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9ae63846",
+      "type": "TemplateLiteral",
+      "babel_source": "`    private string ${signalR.name}_hubUrl = ${hubUrlStr};`",
+      "parentContext": {
+        "functionName": "generateSignalRFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ceaba0c9",
+      "type": "TemplateLiteral",
+      "babel_source": "`    private bool ${signalR.name}_connected = false;`",
+      "parentContext": {
+        "functionName": "generateSignalRFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6945e22e",
+      "type": "TemplateLiteral",
+      "babel_source": "`    private string ${signalR.name}_connectionId = null;`",
+      "parentContext": {
+        "functionName": "generateSignalRFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "83d4e44a",
+      "type": "TemplateLiteral",
+      "babel_source": "`    private string ${signalR.name}_error = null;`",
+      "parentContext": {
+        "functionName": "generateSignalRFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/component/generateFields.cjs"
+  ]
+}

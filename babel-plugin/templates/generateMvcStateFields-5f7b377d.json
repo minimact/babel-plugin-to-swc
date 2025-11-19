@@ -1,0 +1,117 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateMvcStateFields",
+  "params": [
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "lines",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateMvcStateFields(component, lines) {\r\n  if (component.useMvcState) {\r\n    for (const mvcState of component.useMvcState) {\r\n      const csharpType = mvcState.type || 'dynamic';\r\n      lines.push(`    // MVC State property: ${mvcState.propertyName}`);\r\n      lines.push(`    private ${csharpType} ${mvcState.name} => GetState<${csharpType}>(\"${mvcState.propertyName}\");`);\r\n      lines.push('');\r\n    }\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "924af714",
+      "type": "IfStatement",
+      "condition": "component.useMvcState",
+      "babel_source": "if (component.useMvcState) {\r\n    for (const mvcState of component.useMvcState) {\r\n      const csharpType = mvcState.type || 'dynamic';\r\n      lines.push(`    // MVC State property: ${mvcState.propertyName}`);\r\n      lines.push(`    private ${csharpType} ${mvcState.name} => GetState<${csharpType}>(\"${mvcState.propertyName}\");`);\r\n      lines.push('');\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generateMvcStateFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d7b7698d",
+      "type": "ForOfStatement",
+      "babel_source": "for (const mvcState of component.useMvcState) {\r\n      const csharpType = mvcState.type || 'dynamic';\r\n      lines.push(`    // MVC State property: ${mvcState.propertyName}`);\r\n      lines.push(`    private ${csharpType} ${mvcState.name} => GetState<${csharpType}>(\"${mvcState.propertyName}\");`);\r\n      lines.push('');\r\n    }",
+      "parentContext": {
+        "functionName": "generateMvcStateFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0bcd8c24",
+      "type": "VariableDeclaration",
+      "babel_source": "const mvcState",
+      "parentContext": {
+        "functionName": "generateMvcStateFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6f260afb",
+      "type": "VariableDeclaration",
+      "babel_source": "const csharpType = mvcState.type || 'dynamic';",
+      "parentContext": {
+        "functionName": "generateMvcStateFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7b1e3ab0",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "mvcState.type || 'dynamic'",
+      "parentContext": {
+        "functionName": "generateMvcStateFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4475f5c7",
+      "type": "TemplateLiteral",
+      "babel_source": "`    // MVC State property: ${mvcState.propertyName}`",
+      "parentContext": {
+        "functionName": "generateMvcStateFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0926b188",
+      "type": "TemplateLiteral",
+      "babel_source": "`    private ${csharpType} ${mvcState.name} => GetState<${csharpType}>(\"${mvcState.propertyName}\");`",
+      "parentContext": {
+        "functionName": "generateMvcStateFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/component/generateFields.cjs"
+  ]
+}

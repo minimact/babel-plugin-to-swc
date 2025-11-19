@@ -1,0 +1,90 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateMvcViewModelFields",
+  "params": [
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "lines",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateMvcViewModelFields(component, lines) {\r\n  if (component.useMvcViewModel) {\r\n    for (const viewModel of component.useMvcViewModel) {\r\n      lines.push(`    // useMvcViewModel - read-only access to entire ViewModel`);\r\n      lines.push(`    private dynamic ${viewModel.name} = null;`);\r\n      lines.push('');\r\n    }\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "9c82a126",
+      "type": "IfStatement",
+      "condition": "component.useMvcViewModel",
+      "babel_source": "if (component.useMvcViewModel) {\r\n    for (const viewModel of component.useMvcViewModel) {\r\n      lines.push(`    // useMvcViewModel - read-only access to entire ViewModel`);\r\n      lines.push(`    private dynamic ${viewModel.name} = null;`);\r\n      lines.push('');\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generateMvcViewModelFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "24db08fb",
+      "type": "ForOfStatement",
+      "babel_source": "for (const viewModel of component.useMvcViewModel) {\r\n      lines.push(`    // useMvcViewModel - read-only access to entire ViewModel`);\r\n      lines.push(`    private dynamic ${viewModel.name} = null;`);\r\n      lines.push('');\r\n    }",
+      "parentContext": {
+        "functionName": "generateMvcViewModelFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d9002dcf",
+      "type": "VariableDeclaration",
+      "babel_source": "const viewModel",
+      "parentContext": {
+        "functionName": "generateMvcViewModelFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1f8a7ca7",
+      "type": "TemplateLiteral",
+      "babel_source": "`    // useMvcViewModel - read-only access to entire ViewModel`",
+      "parentContext": {
+        "functionName": "generateMvcViewModelFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "379c29a3",
+      "type": "TemplateLiteral",
+      "babel_source": "`    private dynamic ${viewModel.name} = null;`",
+      "parentContext": {
+        "functionName": "generateMvcViewModelFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/component/generateFields.cjs"
+  ]
+}

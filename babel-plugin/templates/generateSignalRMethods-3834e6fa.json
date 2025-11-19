@@ -1,0 +1,181 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateSignalRMethods",
+  "params": [
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "lines",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateSignalRMethods(component, lines) {\r\n  if (component.useSignalR) {\r\n    for (const signalR of component.useSignalR) {\r\n      lines.push('');\r\n      lines.push(`    // SignalR send method for ${signalR.name}`);\r\n      lines.push(`    // Note: useSignalR is primarily client-side.`);\r\n      lines.push(`    // Server-side SignalR invocation can use HubContext directly if needed.`);\r\n      lines.push(`    private async Task ${signalR.name}_send(string methodName, params object[] args)`);\r\n      lines.push('    {');\r\n      lines.push(`        if (HubContext != null && ConnectionId != null)`);\r\n      lines.push(`        {`);\r\n      lines.push(`            // Send message to specific client connection`);\r\n      lines.push(`            await HubContext.Clients.Client(ConnectionId).SendAsync(methodName, args);`);\r\n      lines.push(`        }`);\r\n      lines.push('    }');\r\n    }\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "7f62c245",
+      "type": "IfStatement",
+      "condition": "component.useSignalR",
+      "babel_source": "if (component.useSignalR) {\r\n    for (const signalR of component.useSignalR) {\r\n      lines.push('');\r\n      lines.push(`    // SignalR send method for ${signalR.name}`);\r\n      lines.push(`    // Note: useSignalR is primarily client-side.`);\r\n      lines.push(`    // Server-side SignalR invocation can use HubContext directly if needed.`);\r\n      lines.push(`    private async Task ${signalR.name}_send(string methodName, params object[] args)`);\r\n      lines.push('    {');\r\n      lines.push(`        if (HubContext != null && ConnectionId != null)`);\r\n      lines.push(`        {`);\r\n      lines.push(`            // Send message to specific client connection`);\r\n      lines.push(`            await HubContext.Clients.Client(ConnectionId).SendAsync(methodName, args);`);\r\n      lines.push(`        }`);\r\n      lines.push('    }');\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generateSignalRMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "199b1f28",
+      "type": "ForOfStatement",
+      "babel_source": "for (const signalR of component.useSignalR) {\r\n      lines.push('');\r\n      lines.push(`    // SignalR send method for ${signalR.name}`);\r\n      lines.push(`    // Note: useSignalR is primarily client-side.`);\r\n      lines.push(`    // Server-side SignalR invocation can use HubContext directly if needed.`);\r\n      lines.push(`    private async Task ${signalR.name}_send(string methodName, params object[] args)`);\r\n      lines.push('    {');\r\n      lines.push(`        if (HubContext != null && ConnectionId != null)`);\r\n      lines.push(`        {`);\r\n      lines.push(`            // Send message to specific client connection`);\r\n      lines.push(`            await HubContext.Clients.Client(ConnectionId).SendAsync(methodName, args);`);\r\n      lines.push(`        }`);\r\n      lines.push('    }');\r\n    }",
+      "parentContext": {
+        "functionName": "generateSignalRMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "439462f1",
+      "type": "VariableDeclaration",
+      "babel_source": "const signalR",
+      "parentContext": {
+        "functionName": "generateSignalRMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c2617e14",
+      "type": "TemplateLiteral",
+      "babel_source": "`    // SignalR send method for ${signalR.name}`",
+      "parentContext": {
+        "functionName": "generateSignalRMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0d1fa626",
+      "type": "TemplateLiteral",
+      "babel_source": "`    // Note: useSignalR is primarily client-side.`",
+      "parentContext": {
+        "functionName": "generateSignalRMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "581d2ce8",
+      "type": "TemplateLiteral",
+      "babel_source": "`    // Server-side SignalR invocation can use HubContext directly if needed.`",
+      "parentContext": {
+        "functionName": "generateSignalRMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c42d476e",
+      "type": "TemplateLiteral",
+      "babel_source": "`    private async Task ${signalR.name}_send(string methodName, params object[] args)`",
+      "parentContext": {
+        "functionName": "generateSignalRMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7c64d7c6",
+      "type": "TemplateLiteral",
+      "babel_source": "`        if (HubContext != null && ConnectionId != null)`",
+      "parentContext": {
+        "functionName": "generateSignalRMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e1705d81",
+      "type": "TemplateLiteral",
+      "babel_source": "`        {`",
+      "parentContext": {
+        "functionName": "generateSignalRMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0a9ae28c",
+      "type": "TemplateLiteral",
+      "babel_source": "`            // Send message to specific client connection`",
+      "parentContext": {
+        "functionName": "generateSignalRMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6d2779f9",
+      "type": "TemplateLiteral",
+      "babel_source": "`            await HubContext.Clients.Client(ConnectionId).SendAsync(methodName, args);`",
+      "parentContext": {
+        "functionName": "generateSignalRMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "66da7315",
+      "type": "TemplateLiteral",
+      "babel_source": "`        }`",
+      "parentContext": {
+        "functionName": "generateSignalRMethods",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/component/generateMethods.cjs"
+  ]
+}

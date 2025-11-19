@@ -1,0 +1,103 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateRazorMarkdownFields",
+  "params": [
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "lines",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateRazorMarkdownFields(component, lines) {\r\n  if (component.useRazorMarkdown) {\r\n    for (const md of component.useRazorMarkdown) {\r\n      lines.push(`    [RazorMarkdown]`);\r\n      lines.push(`    [State]`);\r\n      lines.push(`    private string ${md.name} = null!;`);\r\n      lines.push('');\r\n    }\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "4d062a73",
+      "type": "IfStatement",
+      "condition": "component.useRazorMarkdown",
+      "babel_source": "if (component.useRazorMarkdown) {\r\n    for (const md of component.useRazorMarkdown) {\r\n      lines.push(`    [RazorMarkdown]`);\r\n      lines.push(`    [State]`);\r\n      lines.push(`    private string ${md.name} = null!;`);\r\n      lines.push('');\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generateRazorMarkdownFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d9680fcb",
+      "type": "ForOfStatement",
+      "babel_source": "for (const md of component.useRazorMarkdown) {\r\n      lines.push(`    [RazorMarkdown]`);\r\n      lines.push(`    [State]`);\r\n      lines.push(`    private string ${md.name} = null!;`);\r\n      lines.push('');\r\n    }",
+      "parentContext": {
+        "functionName": "generateRazorMarkdownFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b975b76b",
+      "type": "VariableDeclaration",
+      "babel_source": "const md",
+      "parentContext": {
+        "functionName": "generateRazorMarkdownFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5fae6403",
+      "type": "TemplateLiteral",
+      "babel_source": "`    [RazorMarkdown]`",
+      "parentContext": {
+        "functionName": "generateRazorMarkdownFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "634a1d52",
+      "type": "TemplateLiteral",
+      "babel_source": "`    [State]`",
+      "parentContext": {
+        "functionName": "generateRazorMarkdownFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c66b2867",
+      "type": "TemplateLiteral",
+      "babel_source": "`    private string ${md.name} = null!;`",
+      "parentContext": {
+        "functionName": "generateRazorMarkdownFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/component/generateFields.cjs"
+  ]
+}

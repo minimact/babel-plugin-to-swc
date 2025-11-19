@@ -1,0 +1,118 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateTemplateProperties",
+  "params": [
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "lines",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateTemplateProperties(component, lines) {\r\n  if (component.useTemplate && component.useTemplate.props) {\r\n    for (const [propName, propValue] of Object.entries(component.useTemplate.props)) {\r\n      // Capitalize first letter for C# property name\r\n      const csharpPropName = propName.charAt(0).toUpperCase() + propName.slice(1);\r\n      lines.push(`    public override string ${csharpPropName} => \"${propValue}\";`);\r\n      lines.push('');\r\n    }\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "08d58daf",
+      "type": "IfStatement",
+      "condition": "component.useTemplate && component.useTemplate.props",
+      "babel_source": "if (component.useTemplate && component.useTemplate.props) {\r\n    for (const [propName, propValue] of Object.entries(component.useTemplate.props)) {\r\n      // Capitalize first letter for C# property name\r\n      const csharpPropName = propName.charAt(0).toUpperCase() + propName.slice(1);\r\n      lines.push(`    public override string ${csharpPropName} => \"${propValue}\";`);\r\n      lines.push('');\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generateTemplateProperties",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8350f103",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "component.useTemplate && component.useTemplate.props",
+      "parentContext": {
+        "functionName": "generateTemplateProperties",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "21af1885",
+      "type": "ForOfStatement",
+      "babel_source": "for (const [propName, propValue] of Object.entries(component.useTemplate.props)) {\r\n      // Capitalize first letter for C# property name\r\n      const csharpPropName = propName.charAt(0).toUpperCase() + propName.slice(1);\r\n      lines.push(`    public override string ${csharpPropName} => \"${propValue}\";`);\r\n      lines.push('');\r\n    }",
+      "parentContext": {
+        "functionName": "generateTemplateProperties",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ae0fd90",
+      "type": "VariableDeclaration",
+      "babel_source": "const [propName, propValue]",
+      "parentContext": {
+        "functionName": "generateTemplateProperties",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a787476b",
+      "type": "VariableDeclaration",
+      "babel_source": "const csharpPropName = propName.charAt(0).toUpperCase() + propName.slice(1);",
+      "parentContext": {
+        "functionName": "generateTemplateProperties",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bad94dc5",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "propName.charAt(0).toUpperCase() + propName.slice(1)",
+      "parentContext": {
+        "functionName": "generateTemplateProperties",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3d85680d",
+      "type": "TemplateLiteral",
+      "babel_source": "`    public override string ${csharpPropName} => \"${propValue}\";`",
+      "parentContext": {
+        "functionName": "generateTemplateProperties",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/component/generateFields.cjs"
+  ]
+}

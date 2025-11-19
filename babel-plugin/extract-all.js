@@ -520,6 +520,25 @@ function createExtractPlugin() {
   };
 }
 
+// Recursively get all .cjs and .js files from a directory
+function getAllFiles(dirPath, arrayOfFiles = [], baseDir = '') {
+  const files = fs.readdirSync(dirPath);
+
+  files.forEach(file => {
+    const fullPath = path.join(dirPath, file);
+    const relativePath = baseDir ? `${baseDir}/${file}` : file;
+
+    if (fs.statSync(fullPath).isDirectory()) {
+      // Recurse into subdirectories
+      getAllFiles(fullPath, arrayOfFiles, relativePath);
+    } else if (file.endsWith('.cjs') || file.endsWith('.js')) {
+      arrayOfFiles.push({ fullPath, relativePath });
+    }
+  });
+
+  return arrayOfFiles;
+}
+
 // Process all files
 console.log('Extracting templates from babel-plugin-minimact...\n');
 
@@ -531,11 +550,11 @@ helperDirs.forEach(dir => {
     return;
   }
 
-  const files = fs.readdirSync(dirPath).filter(f => f.endsWith('.cjs') || f.endsWith('.js'));
+  const files = getAllFiles(dirPath);
 
-  files.forEach(file => {
-    const filePath = path.join(dirPath, file);
-    const relativePath = `${dir}/${file}`;
+  files.forEach(({ fullPath, relativePath: fileRelPath }) => {
+    const filePath = fullPath;
+    const relativePath = `${dir}/${fileRelPath}`;
 
     try {
       const code = fs.readFileSync(filePath, 'utf-8');

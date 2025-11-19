@@ -1,0 +1,76 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateStateFields",
+  "params": [
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "lines",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateStateFields(component, lines) {\r\n  for (const state of component.useState) {\r\n    lines.push(`    [State]`);\r\n    lines.push(`    private ${state.type} ${state.name} = ${state.initialValue};`);\r\n    lines.push('');\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "5c12643a",
+      "type": "ForOfStatement",
+      "babel_source": "for (const state of component.useState) {\r\n    lines.push(`    [State]`);\r\n    lines.push(`    private ${state.type} ${state.name} = ${state.initialValue};`);\r\n    lines.push('');\r\n  }",
+      "parentContext": {
+        "functionName": "generateStateFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3b3631ea",
+      "type": "VariableDeclaration",
+      "babel_source": "const state",
+      "parentContext": {
+        "functionName": "generateStateFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "634a1d52",
+      "type": "TemplateLiteral",
+      "babel_source": "`    [State]`",
+      "parentContext": {
+        "functionName": "generateStateFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "951fae41",
+      "type": "TemplateLiteral",
+      "babel_source": "`    private ${state.type} ${state.name} = ${state.initialValue};`",
+      "parentContext": {
+        "functionName": "generateStateFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/component/generateFields.cjs"
+  ]
+}

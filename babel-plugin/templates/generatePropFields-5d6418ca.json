@@ -1,0 +1,76 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generatePropFields",
+  "params": [
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "lines",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generatePropFields(component, lines) {\r\n  for (const prop of component.props) {\r\n    lines.push(`    [Prop]`);\r\n    lines.push(`    public ${prop.type} ${prop.name} { get; set; }`);\r\n    lines.push('');\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "4d9fed42",
+      "type": "ForOfStatement",
+      "babel_source": "for (const prop of component.props) {\r\n    lines.push(`    [Prop]`);\r\n    lines.push(`    public ${prop.type} ${prop.name} { get; set; }`);\r\n    lines.push('');\r\n  }",
+      "parentContext": {
+        "functionName": "generatePropFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "098a3cb5",
+      "type": "VariableDeclaration",
+      "babel_source": "const prop",
+      "parentContext": {
+        "functionName": "generatePropFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "26f64555",
+      "type": "TemplateLiteral",
+      "babel_source": "`    [Prop]`",
+      "parentContext": {
+        "functionName": "generatePropFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "03f39402",
+      "type": "TemplateLiteral",
+      "babel_source": "`    public ${prop.type} ${prop.name} { get; set; }`",
+      "parentContext": {
+        "functionName": "generatePropFields",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/component/generateFields.cjs"
+  ]
+}

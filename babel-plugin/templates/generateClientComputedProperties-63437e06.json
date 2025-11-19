@@ -1,0 +1,143 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateClientComputedProperties",
+  "params": [
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "lines",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateClientComputedProperties(component, lines) {\r\n  const clientComputedVars = component.localVariables.filter(v => v.isClientComputed);\r\n  if (clientComputedVars.length > 0) {\r\n    lines.push('    // Client-computed properties (external libraries)');\r\n    for (const clientVar of clientComputedVars) {\r\n      const csharpType = inferCSharpTypeFromInit(clientVar.init);\r\n      lines.push(`    [ClientComputed(\"${clientVar.name}\")]`);\r\n      lines.push(`    private ${csharpType} ${clientVar.name} => GetClientState<${csharpType}>(\"${clientVar.name}\", default);`);\r\n      lines.push('');\r\n    }\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "c769a31a",
+      "type": "VariableDeclaration",
+      "babel_source": "const clientComputedVars = component.localVariables.filter(v => v.isClientComputed);",
+      "parentContext": {
+        "functionName": "generateClientComputedProperties",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f2466a9d",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "v => v.isClientComputed",
+      "parentContext": {
+        "functionName": "generateClientComputedProperties",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8b359ff4",
+      "type": "IfStatement",
+      "condition": "clientComputedVars.length > 0",
+      "babel_source": "if (clientComputedVars.length > 0) {\r\n    lines.push('    // Client-computed properties (external libraries)');\r\n    for (const clientVar of clientComputedVars) {\r\n      const csharpType = inferCSharpTypeFromInit(clientVar.init);\r\n      lines.push(`    [ClientComputed(\"${clientVar.name}\")]`);\r\n      lines.push(`    private ${csharpType} ${clientVar.name} => GetClientState<${csharpType}>(\"${clientVar.name}\", default);`);\r\n      lines.push('');\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generateClientComputedProperties",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9af6022d",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "clientComputedVars.length > 0",
+      "parentContext": {
+        "functionName": "generateClientComputedProperties",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "16cb891f",
+      "type": "ForOfStatement",
+      "babel_source": "for (const clientVar of clientComputedVars) {\r\n      const csharpType = inferCSharpTypeFromInit(clientVar.init);\r\n      lines.push(`    [ClientComputed(\"${clientVar.name}\")]`);\r\n      lines.push(`    private ${csharpType} ${clientVar.name} => GetClientState<${csharpType}>(\"${clientVar.name}\", default);`);\r\n      lines.push('');\r\n    }",
+      "parentContext": {
+        "functionName": "generateClientComputedProperties",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ef016239",
+      "type": "VariableDeclaration",
+      "babel_source": "const clientVar",
+      "parentContext": {
+        "functionName": "generateClientComputedProperties",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "af613394",
+      "type": "VariableDeclaration",
+      "babel_source": "const csharpType = inferCSharpTypeFromInit(clientVar.init);",
+      "parentContext": {
+        "functionName": "generateClientComputedProperties",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b028e2aa",
+      "type": "TemplateLiteral",
+      "babel_source": "`    [ClientComputed(\"${clientVar.name}\")]`",
+      "parentContext": {
+        "functionName": "generateClientComputedProperties",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "782a3fb8",
+      "type": "TemplateLiteral",
+      "babel_source": "`    private ${csharpType} ${clientVar.name} => GetClientState<${csharpType}>(\"${clientVar.name}\", default);`",
+      "parentContext": {
+        "functionName": "generateClientComputedProperties",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/component/generateFields.cjs"
+  ]
+}

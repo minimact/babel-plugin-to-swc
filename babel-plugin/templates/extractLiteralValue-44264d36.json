@@ -1,0 +1,183 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractLiteralValue",
+  "params": [
+    {
+      "name": "expr",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractLiteralValue(expr) {\r\n  if (t.isStringLiteral(expr)) {\r\n    return expr.value;\r\n  } else if (t.isNumericLiteral(expr)) {\r\n    return expr.value;\r\n  } else if (t.isBooleanLiteral(expr)) {\r\n    return expr.value;\r\n  } else if (t.isNullLiteral(expr)) {\r\n    return null;\r\n  }\r\n  return null; // Complex expression\r\n}",
+  "body_templates": [
+    {
+      "hash": "cce9dfec",
+      "type": "IfStatement",
+      "condition": "t.isStringLiteral(expr)",
+      "babel_source": "if (t.isStringLiteral(expr)) {\r\n    return expr.value;\r\n  } else if (t.isNumericLiteral(expr)) {\r\n    return expr.value;\r\n  } else if (t.isBooleanLiteral(expr)) {\r\n    return expr.value;\r\n  } else if (t.isNullLiteral(expr)) {\r\n    return null;\r\n  }",
+      "parentContext": {
+        "functionName": "extractLiteralValue",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "81d695ea",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(expr)",
+      "parentContext": {
+        "functionName": "extractLiteralValue",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b341dc00",
+      "type": "ReturnStatement",
+      "babel_source": "return expr.value;",
+      "parentContext": {
+        "functionName": "extractLiteralValue",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7ff7ac54",
+      "type": "IfStatement",
+      "condition": "t.isNumericLiteral(expr)",
+      "babel_source": "if (t.isNumericLiteral(expr)) {\r\n    return expr.value;\r\n  } else if (t.isBooleanLiteral(expr)) {\r\n    return expr.value;\r\n  } else if (t.isNullLiteral(expr)) {\r\n    return null;\r\n  }",
+      "parentContext": {
+        "functionName": "extractLiteralValue",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bed165a3",
+      "type": "BabelTypeCheck",
+      "method": "isNumericLiteral",
+      "babel_source": "t.isNumericLiteral(expr)",
+      "parentContext": {
+        "functionName": "extractLiteralValue",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b341dc00",
+      "type": "ReturnStatement",
+      "babel_source": "return expr.value;",
+      "parentContext": {
+        "functionName": "extractLiteralValue",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0fef3341",
+      "type": "IfStatement",
+      "condition": "t.isBooleanLiteral(expr)",
+      "babel_source": "if (t.isBooleanLiteral(expr)) {\r\n    return expr.value;\r\n  } else if (t.isNullLiteral(expr)) {\r\n    return null;\r\n  }",
+      "parentContext": {
+        "functionName": "extractLiteralValue",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b9190750",
+      "type": "BabelTypeCheck",
+      "method": "isBooleanLiteral",
+      "babel_source": "t.isBooleanLiteral(expr)",
+      "parentContext": {
+        "functionName": "extractLiteralValue",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b341dc00",
+      "type": "ReturnStatement",
+      "babel_source": "return expr.value;",
+      "parentContext": {
+        "functionName": "extractLiteralValue",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "18b7b999",
+      "type": "IfStatement",
+      "condition": "t.isNullLiteral(expr)",
+      "babel_source": "if (t.isNullLiteral(expr)) {\r\n    return null;\r\n  }",
+      "parentContext": {
+        "functionName": "extractLiteralValue",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "65e02bf2",
+      "type": "BabelTypeCheck",
+      "method": "isNullLiteral",
+      "babel_source": "t.isNullLiteral(expr)",
+      "parentContext": {
+        "functionName": "extractLiteralValue",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractLiteralValue",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractLiteralValue",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/loopTemplates/extractLiteralValue.cjs"
+  ]
+}

@@ -1,0 +1,637 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractPropTemplates",
+  "params": [
+    {
+      "name": "attributes",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "itemVar",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "indexVar",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractPropTemplates(attributes, itemVar, indexVar) {\r\n  const templates = {};\r\n\r\n  for (const attr of attributes) {\r\n    // Skip non-JSXAttribute (spreads, etc.)\r\n    if (!t.isJSXAttribute(attr)) continue;\r\n\r\n    // Skip key attribute (handled separately)\r\n    if (attr.name.name === 'key') continue;\r\n\r\n    const propName = attr.name.name;\r\n    const propValue = attr.value;\r\n\r\n    // Static string: className=\"static\"\r\n    if (t.isStringLiteral(propValue)) {\r\n      templates[propName] = {\r\n        template: propValue.value,\r\n        bindings: [],\r\n        slots: [],\r\n        type: 'static'\r\n      };\r\n      continue;\r\n    }\r\n\r\n    // Expression: {todo.done}, {todo.done ? 'yes' : 'no'}\r\n    if (t.isJSXExpressionContainer(propValue)) {\r\n      const expr = propValue.expression;\r\n\r\n      // Conditional: {todo.done ? 'active' : 'inactive'}\r\n      if (t.isConditionalExpression(expr)) {\r\n        const conditionalTemplate = extractConditionalTemplate(expr, itemVar, indexVar);\r\n        if (conditionalTemplate) {\r\n          templates[propName] = conditionalTemplate;\r\n          continue;\r\n        }\r\n      }\r\n\r\n      // Template literal: {`item-${todo.id}`}\r\n      if (t.isTemplateLiteral(expr)) {\r\n        const template = extractTemplateFromTemplateLiteral(expr, itemVar, indexVar);\r\n        if (template) {\r\n          templates[propName] = template;\r\n          continue;\r\n        }\r\n      }\r\n\r\n      // Simple binding: {todo.text}, {todo.done}\r\n      const binding = buildBindingPath(expr, itemVar, indexVar);\r\n      if (binding) {\r\n        templates[propName] = {\r\n          template: '{0}',\r\n          bindings: [binding],\r\n          slots: [0],\r\n          type: 'binding'\r\n        };\r\n      }\r\n    }\r\n  }\r\n\r\n  return templates;\r\n}",
+  "body_templates": [
+    {
+      "hash": "7353dcfd",
+      "type": "VariableDeclaration",
+      "babel_source": "const templates = {};",
+      "parentContext": {
+        "functionName": "extractPropTemplates",
+        "functionParams": [
+          "attributes",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "44136fa3",
+      "type": "ObjectExpression",
+      "babel_source": "{}",
+      "parentContext": {
+        "functionName": "extractPropTemplates",
+        "functionParams": [
+          "attributes",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fffe047a",
+      "type": "ForOfStatement",
+      "babel_source": "for (const attr of attributes) {\r\n    // Skip non-JSXAttribute (spreads, etc.)\r\n    if (!t.isJSXAttribute(attr)) continue;\r\n\r\n    // Skip key attribute (handled separately)\r\n    if (attr.name.name === 'key') continue;\r\n\r\n    const propName = attr.name.name;\r\n    const propValue = attr.value;\r\n\r\n    // Static string: className=\"static\"\r\n    if (t.isStringLiteral(propValue)) {\r\n      templates[propName] = {\r\n        template: propValue.value,\r\n        bindings: [],\r\n        slots: [],\r\n        type: 'static'\r\n      };\r\n      continue;\r\n    }\r\n\r\n    // Expression: {todo.done}, {todo.done ? 'yes' : 'no'}\r\n    if (t.isJSXExpressionContainer(propValue)) {\r\n      const expr = propValue.expression;\r\n\r\n      // Conditional: {todo.done ? 'active' : 'inactive'}\r\n      if (t.isConditionalExpression(expr)) {\r\n        const conditionalTemplate = extractConditionalTemplate(expr, itemVar, indexVar);\r\n        if (conditionalTemplate) {\r\n          templates[propName] = conditionalTemplate;\r\n          continue;\r\n        }\r\n      }\r\n\r\n      // Template literal: {`item-${todo.id}`}\r\n      if (t.isTemplateLiteral(expr)) {\r\n        const template = extractTemplateFromTemplateLiteral(expr, itemVar, indexVar);\r\n        if (template) {\r\n          templates[propName] = template;\r\n          continue;\r\n        }\r\n      }\r\n\r\n      // Simple binding: {todo.text}, {todo.done}\r\n      const binding = buildBindingPath(expr, itemVar, indexVar);\r\n      if (binding) {\r\n        templates[propName] = {\r\n          template: '{0}',\r\n          bindings: [binding],\r\n          slots: [0],\r\n          type: 'binding'\r\n        };\r\n      }\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "extractPropTemplates",
+        "functionParams": [
+          "attributes",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "02ca2e7f",
+      "type": "VariableDeclaration",
+      "babel_source": "const attr",
+      "parentContext": {
+        "functionName": "extractPropTemplates",
+        "functionParams": [
+          "attributes",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3d46f864",
+      "type": "IfStatement",
+      "condition": "!t.isJSXAttribute(attr)",
+      "babel_source": "if (!t.isJSXAttribute(attr)) continue;",
+      "parentContext": {
+        "functionName": "extractPropTemplates",
+        "functionParams": [
+          "attributes",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bb6c8d4f",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isJSXAttribute(attr)",
+      "parentContext": {
+        "functionName": "extractPropTemplates",
+        "functionParams": [
+          "attributes",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7468026c",
+      "type": "BabelTypeCheck",
+      "method": "isJSXAttribute",
+      "babel_source": "t.isJSXAttribute(attr)",
+      "parentContext": {
+        "functionName": "extractPropTemplates",
+        "functionParams": [
+          "attributes",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0bf37874",
+      "type": "ContinueStatement",
+      "babel_source": "continue;",
+      "parentContext": {
+        "functionName": "extractPropTemplates",
+        "functionParams": [
+          "attributes",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "edebf1a2",
+      "type": "IfStatement",
+      "condition": "attr.name.name === 'key'",
+      "babel_source": "if (attr.name.name === 'key') continue;",
+      "parentContext": {
+        "functionName": "extractPropTemplates",
+        "functionParams": [
+          "attributes",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ebff5543",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "attr.name.name === 'key'",
+      "parentContext": {
+        "functionName": "extractPropTemplates",
+        "functionParams": [
+          "attributes",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0bf37874",
+      "type": "ContinueStatement",
+      "babel_source": "continue;",
+      "parentContext": {
+        "functionName": "extractPropTemplates",
+        "functionParams": [
+          "attributes",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7ec4be49",
+      "type": "VariableDeclaration",
+      "babel_source": "const propName = attr.name.name;",
+      "parentContext": {
+        "functionName": "extractPropTemplates",
+        "functionParams": [
+          "attributes",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "36298b97",
+      "type": "VariableDeclaration",
+      "babel_source": "const propValue = attr.value;",
+      "parentContext": {
+        "functionName": "extractPropTemplates",
+        "functionParams": [
+          "attributes",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9ff2d849",
+      "type": "IfStatement",
+      "condition": "t.isStringLiteral(propValue)",
+      "babel_source": "if (t.isStringLiteral(propValue)) {\r\n      templates[propName] = {\r\n        template: propValue.value,\r\n        bindings: [],\r\n        slots: [],\r\n        type: 'static'\r\n      };\r\n      continue;\r\n    }",
+      "parentContext": {
+        "functionName": "extractPropTemplates",
+        "functionParams": [
+          "attributes",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d5e588e0",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(propValue)",
+      "parentContext": {
+        "functionName": "extractPropTemplates",
+        "functionParams": [
+          "attributes",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "07065e13",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "templates[propName] = {\r\n        template: propValue.value,\r\n        bindings: [],\r\n        slots: [],\r\n        type: 'static'\r\n      }",
+      "parentContext": {
+        "functionName": "extractPropTemplates",
+        "functionParams": [
+          "attributes",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e0cafc8f",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n        template: propValue.value,\r\n        bindings: [],\r\n        slots: [],\r\n        type: 'static'\r\n      }",
+      "parentContext": {
+        "functionName": "extractPropTemplates",
+        "functionParams": [
+          "attributes",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractPropTemplates",
+        "functionParams": [
+          "attributes",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractPropTemplates",
+        "functionParams": [
+          "attributes",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0bf37874",
+      "type": "ContinueStatement",
+      "babel_source": "continue;",
+      "parentContext": {
+        "functionName": "extractPropTemplates",
+        "functionParams": [
+          "attributes",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "727f8e05",
+      "type": "IfStatement",
+      "condition": "t.isJSXExpressionContainer(propValue)",
+      "babel_source": "if (t.isJSXExpressionContainer(propValue)) {\r\n      const expr = propValue.expression;\r\n\r\n      // Conditional: {todo.done ? 'active' : 'inactive'}\r\n      if (t.isConditionalExpression(expr)) {\r\n        const conditionalTemplate = extractConditionalTemplate(expr, itemVar, indexVar);\r\n        if (conditionalTemplate) {\r\n          templates[propName] = conditionalTemplate;\r\n          continue;\r\n        }\r\n      }\r\n\r\n      // Template literal: {`item-${todo.id}`}\r\n      if (t.isTemplateLiteral(expr)) {\r\n        const template = extractTemplateFromTemplateLiteral(expr, itemVar, indexVar);\r\n        if (template) {\r\n          templates[propName] = template;\r\n          continue;\r\n        }\r\n      }\r\n\r\n      // Simple binding: {todo.text}, {todo.done}\r\n      const binding = buildBindingPath(expr, itemVar, indexVar);\r\n      if (binding) {\r\n        templates[propName] = {\r\n          template: '{0}',\r\n          bindings: [binding],\r\n          slots: [0],\r\n          type: 'binding'\r\n        };\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "extractPropTemplates",
+        "functionParams": [
+          "attributes",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c1bf261c",
+      "type": "BabelTypeCheck",
+      "method": "isJSXExpressionContainer",
+      "babel_source": "t.isJSXExpressionContainer(propValue)",
+      "parentContext": {
+        "functionName": "extractPropTemplates",
+        "functionParams": [
+          "attributes",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2a180b1f",
+      "type": "VariableDeclaration",
+      "babel_source": "const expr = propValue.expression;",
+      "parentContext": {
+        "functionName": "extractPropTemplates",
+        "functionParams": [
+          "attributes",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b5744dda",
+      "type": "IfStatement",
+      "condition": "t.isConditionalExpression(expr)",
+      "babel_source": "if (t.isConditionalExpression(expr)) {\r\n        const conditionalTemplate = extractConditionalTemplate(expr, itemVar, indexVar);\r\n        if (conditionalTemplate) {\r\n          templates[propName] = conditionalTemplate;\r\n          continue;\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "extractPropTemplates",
+        "functionParams": [
+          "attributes",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5574ecc1",
+      "type": "BabelTypeCheck",
+      "method": "isConditionalExpression",
+      "babel_source": "t.isConditionalExpression(expr)",
+      "parentContext": {
+        "functionName": "extractPropTemplates",
+        "functionParams": [
+          "attributes",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f5b6354b",
+      "type": "VariableDeclaration",
+      "babel_source": "const conditionalTemplate = extractConditionalTemplate(expr, itemVar, indexVar);",
+      "parentContext": {
+        "functionName": "extractPropTemplates",
+        "functionParams": [
+          "attributes",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9ce96597",
+      "type": "IfStatement",
+      "condition": "conditionalTemplate",
+      "babel_source": "if (conditionalTemplate) {\r\n          templates[propName] = conditionalTemplate;\r\n          continue;\r\n        }",
+      "parentContext": {
+        "functionName": "extractPropTemplates",
+        "functionParams": [
+          "attributes",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0866562d",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "templates[propName] = conditionalTemplate",
+      "parentContext": {
+        "functionName": "extractPropTemplates",
+        "functionParams": [
+          "attributes",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0bf37874",
+      "type": "ContinueStatement",
+      "babel_source": "continue;",
+      "parentContext": {
+        "functionName": "extractPropTemplates",
+        "functionParams": [
+          "attributes",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "14ded951",
+      "type": "IfStatement",
+      "condition": "t.isTemplateLiteral(expr)",
+      "babel_source": "if (t.isTemplateLiteral(expr)) {\r\n        const template = extractTemplateFromTemplateLiteral(expr, itemVar, indexVar);\r\n        if (template) {\r\n          templates[propName] = template;\r\n          continue;\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "extractPropTemplates",
+        "functionParams": [
+          "attributes",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5d9a6de7",
+      "type": "BabelTypeCheck",
+      "method": "isTemplateLiteral",
+      "babel_source": "t.isTemplateLiteral(expr)",
+      "parentContext": {
+        "functionName": "extractPropTemplates",
+        "functionParams": [
+          "attributes",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3d353462",
+      "type": "VariableDeclaration",
+      "babel_source": "const template = extractTemplateFromTemplateLiteral(expr, itemVar, indexVar);",
+      "parentContext": {
+        "functionName": "extractPropTemplates",
+        "functionParams": [
+          "attributes",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dbda45dd",
+      "type": "IfStatement",
+      "condition": "template",
+      "babel_source": "if (template) {\r\n          templates[propName] = template;\r\n          continue;\r\n        }",
+      "parentContext": {
+        "functionName": "extractPropTemplates",
+        "functionParams": [
+          "attributes",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ed18a535",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "templates[propName] = template",
+      "parentContext": {
+        "functionName": "extractPropTemplates",
+        "functionParams": [
+          "attributes",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0bf37874",
+      "type": "ContinueStatement",
+      "babel_source": "continue;",
+      "parentContext": {
+        "functionName": "extractPropTemplates",
+        "functionParams": [
+          "attributes",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "729e5717",
+      "type": "VariableDeclaration",
+      "babel_source": "const binding = buildBindingPath(expr, itemVar, indexVar);",
+      "parentContext": {
+        "functionName": "extractPropTemplates",
+        "functionParams": [
+          "attributes",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5b6d7c7c",
+      "type": "IfStatement",
+      "condition": "binding",
+      "babel_source": "if (binding) {\r\n        templates[propName] = {\r\n          template: '{0}',\r\n          bindings: [binding],\r\n          slots: [0],\r\n          type: 'binding'\r\n        };\r\n      }",
+      "parentContext": {
+        "functionName": "extractPropTemplates",
+        "functionParams": [
+          "attributes",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "aaacd43b",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "templates[propName] = {\r\n          template: '{0}',\r\n          bindings: [binding],\r\n          slots: [0],\r\n          type: 'binding'\r\n        }",
+      "parentContext": {
+        "functionName": "extractPropTemplates",
+        "functionParams": [
+          "attributes",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c83cc108",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n          template: '{0}',\r\n          bindings: [binding],\r\n          slots: [0],\r\n          type: 'binding'\r\n        }",
+      "parentContext": {
+        "functionName": "extractPropTemplates",
+        "functionParams": [
+          "attributes",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b854dc8e",
+      "type": "ArrayExpression",
+      "babel_source": "[binding]",
+      "parentContext": {
+        "functionName": "extractPropTemplates",
+        "functionParams": [
+          "attributes",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d0bca111",
+      "type": "ArrayExpression",
+      "babel_source": "[0]",
+      "parentContext": {
+        "functionName": "extractPropTemplates",
+        "functionParams": [
+          "attributes",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ce7c3aac",
+      "type": "ReturnStatement",
+      "babel_source": "return templates;",
+      "parentContext": {
+        "functionName": "extractPropTemplates",
+        "functionParams": [
+          "attributes",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/loopTemplates/extractPropTemplates.cjs"
+  ]
+}

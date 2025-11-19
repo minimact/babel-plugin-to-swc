@@ -1,0 +1,213 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateOptionalMemberExpression",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "generateCSharpExpression",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    },
+    {
+      "name": "inInterpolation",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateOptionalMemberExpression(node, generateCSharpExpression, inInterpolation) {\r\n  const object = generateCSharpExpression(node.object, inInterpolation);\r\n  const propertyName = t.isIdentifier(node.property) ? node.property.name : null;\r\n\r\n  // Capitalize first letter for C# property convention (userEmail → UserEmail)\r\n  const csharpProperty = propertyName\r\n    ? propertyName.charAt(0).toUpperCase() + propertyName.slice(1)\r\n    : propertyName;\r\n\r\n  const property = node.computed\r\n    ? `?[${generateCSharpExpression(node.property, inInterpolation)}]`\r\n    : `?.${csharpProperty}`;\r\n  return `${object}${property}`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "043f1448",
+      "type": "VariableDeclaration",
+      "babel_source": "const object = generateCSharpExpression(node.object, inInterpolation);",
+      "parentContext": {
+        "functionName": "generateOptionalMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e37f6b6e",
+      "type": "VariableDeclaration",
+      "babel_source": "const propertyName = t.isIdentifier(node.property) ? node.property.name : null;",
+      "parentContext": {
+        "functionName": "generateOptionalMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9d2fd11c",
+      "type": "ConditionalExpression",
+      "babel_source": "t.isIdentifier(node.property) ? node.property.name : null",
+      "parentContext": {
+        "functionName": "generateOptionalMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a42af9c4",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.property)",
+      "parentContext": {
+        "functionName": "generateOptionalMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d4c7740b",
+      "type": "VariableDeclaration",
+      "babel_source": "const csharpProperty = propertyName\r\n    ? propertyName.charAt(0).toUpperCase() + propertyName.slice(1)\r\n    : propertyName;",
+      "parentContext": {
+        "functionName": "generateOptionalMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c7d937fd",
+      "type": "ConditionalExpression",
+      "babel_source": "propertyName\r\n    ? propertyName.charAt(0).toUpperCase() + propertyName.slice(1)\r\n    : propertyName",
+      "parentContext": {
+        "functionName": "generateOptionalMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e6e1c507",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "propertyName.charAt(0).toUpperCase() + propertyName.slice(1)",
+      "parentContext": {
+        "functionName": "generateOptionalMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fe8b8f08",
+      "type": "VariableDeclaration",
+      "babel_source": "const property = node.computed\r\n    ? `?[${generateCSharpExpression(node.property, inInterpolation)}]`\r\n    : `?.${csharpProperty}`;",
+      "parentContext": {
+        "functionName": "generateOptionalMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6f242da0",
+      "type": "ConditionalExpression",
+      "babel_source": "node.computed\r\n    ? `?[${generateCSharpExpression(node.property, inInterpolation)}]`\r\n    : `?.${csharpProperty}`",
+      "parentContext": {
+        "functionName": "generateOptionalMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cdd58692",
+      "type": "TemplateLiteral",
+      "babel_source": "`?[${generateCSharpExpression(node.property, inInterpolation)}]`",
+      "parentContext": {
+        "functionName": "generateOptionalMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9fed85c9",
+      "type": "TemplateLiteral",
+      "babel_source": "`?.${csharpProperty}`",
+      "parentContext": {
+        "functionName": "generateOptionalMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "94eadeaf",
+      "type": "ReturnStatement",
+      "babel_source": "return `${object}${property}`;",
+      "parentContext": {
+        "functionName": "generateOptionalMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6e90232d",
+      "type": "TemplateLiteral",
+      "babel_source": "`${object}${property}`",
+      "parentContext": {
+        "functionName": "generateOptionalMemberExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "inInterpolation"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/expressions/identifiers.cjs"
+  ]
+}

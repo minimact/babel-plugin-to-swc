@@ -1,0 +1,582 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateEventHandlers",
+  "params": [
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "lines",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateEventHandlers(component, lines) {\r\n  for (const handler of component.eventHandlers) {\r\n    lines.push('');\r\n\r\n    // Generate parameter list\r\n    const params = handler.params || [];\r\n    let paramList = params.length > 0\r\n      ? params.map(p => t.isIdentifier(p) ? `dynamic ${p.name}` : 'dynamic arg')\r\n      : [];\r\n\r\n    // Add captured parameters\r\n    const capturedParams = handler.capturedParams || [];\r\n    if (capturedParams.length > 0) {\r\n      paramList = paramList.concat(capturedParams.map(p => `dynamic ${p}`));\r\n    }\r\n\r\n    const paramStr = paramList.join(', ');\r\n    const returnType = handler.isAsync ? 'async Task' : 'void';\r\n    lines.push(`    public ${returnType} ${handler.name}(${paramStr})`);\r\n    lines.push('    {');\r\n\r\n    // Check if this is a curried function error\r\n    if (handler.isCurriedError) {\r\n      lines.push(`        throw new InvalidOperationException(`);\r\n      lines.push(`            \"Event handler '${handler.name}' returns a function instead of executing an action. \" +`);\r\n      lines.push(`            \"This is a curried function pattern (e.g., (e) => (id) => action(id)) which is invalid for event handlers. \" +`);\r\n      lines.push(`            \"The returned function is never called by the event system. \" +`);\r\n      lines.push(`            \"Fix: Use (e) => action(someValue) or create a properly bound handler.\"`);\r\n      lines.push(`        );`);\r\n    } else if (handler.body) {\r\n      if (t.isBlockStatement(handler.body)) {\r\n        for (const statement of handler.body.body) {\r\n          const csharpStmt = generateCSharpStatement(statement);\r\n          if (csharpStmt) {\r\n            lines.push(`        ${csharpStmt}`);\r\n          }\r\n        }\r\n      } else {\r\n        const csharpExpr = generateCSharpExpression(handler.body);\r\n        lines.push(`        ${csharpExpr};`);\r\n      }\r\n    }\r\n\r\n    lines.push('    }');\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "b287f8d1",
+      "type": "ForOfStatement",
+      "babel_source": "for (const handler of component.eventHandlers) {\r\n    lines.push('');\r\n\r\n    // Generate parameter list\r\n    const params = handler.params || [];\r\n    let paramList = params.length > 0\r\n      ? params.map(p => t.isIdentifier(p) ? `dynamic ${p.name}` : 'dynamic arg')\r\n      : [];\r\n\r\n    // Add captured parameters\r\n    const capturedParams = handler.capturedParams || [];\r\n    if (capturedParams.length > 0) {\r\n      paramList = paramList.concat(capturedParams.map(p => `dynamic ${p}`));\r\n    }\r\n\r\n    const paramStr = paramList.join(', ');\r\n    const returnType = handler.isAsync ? 'async Task' : 'void';\r\n    lines.push(`    public ${returnType} ${handler.name}(${paramStr})`);\r\n    lines.push('    {');\r\n\r\n    // Check if this is a curried function error\r\n    if (handler.isCurriedError) {\r\n      lines.push(`        throw new InvalidOperationException(`);\r\n      lines.push(`            \"Event handler '${handler.name}' returns a function instead of executing an action. \" +`);\r\n      lines.push(`            \"This is a curried function pattern (e.g., (e) => (id) => action(id)) which is invalid for event handlers. \" +`);\r\n      lines.push(`            \"The returned function is never called by the event system. \" +`);\r\n      lines.push(`            \"Fix: Use (e) => action(someValue) or create a properly bound handler.\"`);\r\n      lines.push(`        );`);\r\n    } else if (handler.body) {\r\n      if (t.isBlockStatement(handler.body)) {\r\n        for (const statement of handler.body.body) {\r\n          const csharpStmt = generateCSharpStatement(statement);\r\n          if (csharpStmt) {\r\n            lines.push(`        ${csharpStmt}`);\r\n          }\r\n        }\r\n      } else {\r\n        const csharpExpr = generateCSharpExpression(handler.body);\r\n        lines.push(`        ${csharpExpr};`);\r\n      }\r\n    }\r\n\r\n    lines.push('    }');\r\n  }",
+      "parentContext": {
+        "functionName": "generateEventHandlers",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "16fd9c0a",
+      "type": "VariableDeclaration",
+      "babel_source": "const handler",
+      "parentContext": {
+        "functionName": "generateEventHandlers",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bec38f17",
+      "type": "VariableDeclaration",
+      "babel_source": "const params = handler.params || [];",
+      "parentContext": {
+        "functionName": "generateEventHandlers",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c9313d08",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "handler.params || []",
+      "parentContext": {
+        "functionName": "generateEventHandlers",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "generateEventHandlers",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "14711344",
+      "type": "VariableDeclaration",
+      "babel_source": "let paramList = params.length > 0\r\n      ? params.map(p => t.isIdentifier(p) ? `dynamic ${p.name}` : 'dynamic arg')\r\n      : [];",
+      "parentContext": {
+        "functionName": "generateEventHandlers",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c53157c4",
+      "type": "ConditionalExpression",
+      "babel_source": "params.length > 0\r\n      ? params.map(p => t.isIdentifier(p) ? `dynamic ${p.name}` : 'dynamic arg')\r\n      : []",
+      "parentContext": {
+        "functionName": "generateEventHandlers",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "89679c4a",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "params.length > 0",
+      "parentContext": {
+        "functionName": "generateEventHandlers",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2fcc2f10",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "p => t.isIdentifier(p) ? `dynamic ${p.name}` : 'dynamic arg'",
+      "parentContext": {
+        "functionName": "generateEventHandlers",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ffcddfd",
+      "type": "ConditionalExpression",
+      "babel_source": "t.isIdentifier(p) ? `dynamic ${p.name}` : 'dynamic arg'",
+      "parentContext": {
+        "functionName": "generateEventHandlers",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d43d6349",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(p)",
+      "parentContext": {
+        "functionName": "generateEventHandlers",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7c83f8eb",
+      "type": "TemplateLiteral",
+      "babel_source": "`dynamic ${p.name}`",
+      "parentContext": {
+        "functionName": "generateEventHandlers",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "generateEventHandlers",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "798fe240",
+      "type": "VariableDeclaration",
+      "babel_source": "const capturedParams = handler.capturedParams || [];",
+      "parentContext": {
+        "functionName": "generateEventHandlers",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "23ec1d72",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "handler.capturedParams || []",
+      "parentContext": {
+        "functionName": "generateEventHandlers",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "generateEventHandlers",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a2a87ebd",
+      "type": "IfStatement",
+      "condition": "capturedParams.length > 0",
+      "babel_source": "if (capturedParams.length > 0) {\r\n      paramList = paramList.concat(capturedParams.map(p => `dynamic ${p}`));\r\n    }",
+      "parentContext": {
+        "functionName": "generateEventHandlers",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3c584ac2",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "capturedParams.length > 0",
+      "parentContext": {
+        "functionName": "generateEventHandlers",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e4342f4f",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "paramList = paramList.concat(capturedParams.map(p => `dynamic ${p}`))",
+      "parentContext": {
+        "functionName": "generateEventHandlers",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c760fcad",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "p => `dynamic ${p}`",
+      "parentContext": {
+        "functionName": "generateEventHandlers",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ef9bbb84",
+      "type": "TemplateLiteral",
+      "babel_source": "`dynamic ${p}`",
+      "parentContext": {
+        "functionName": "generateEventHandlers",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f5a4ab81",
+      "type": "VariableDeclaration",
+      "babel_source": "const paramStr = paramList.join(', ');",
+      "parentContext": {
+        "functionName": "generateEventHandlers",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6eb0a3e9",
+      "type": "VariableDeclaration",
+      "babel_source": "const returnType = handler.isAsync ? 'async Task' : 'void';",
+      "parentContext": {
+        "functionName": "generateEventHandlers",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "21ae610c",
+      "type": "ConditionalExpression",
+      "babel_source": "handler.isAsync ? 'async Task' : 'void'",
+      "parentContext": {
+        "functionName": "generateEventHandlers",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "55421384",
+      "type": "TemplateLiteral",
+      "babel_source": "`    public ${returnType} ${handler.name}(${paramStr})`",
+      "parentContext": {
+        "functionName": "generateEventHandlers",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8360f606",
+      "type": "IfStatement",
+      "condition": "handler.isCurriedError",
+      "babel_source": "if (handler.isCurriedError) {\r\n      lines.push(`        throw new InvalidOperationException(`);\r\n      lines.push(`            \"Event handler '${handler.name}' returns a function instead of executing an action. \" +`);\r\n      lines.push(`            \"This is a curried function pattern (e.g., (e) => (id) => action(id)) which is invalid for event handlers. \" +`);\r\n      lines.push(`            \"The returned function is never called by the event system. \" +`);\r\n      lines.push(`            \"Fix: Use (e) => action(someValue) or create a properly bound handler.\"`);\r\n      lines.push(`        );`);\r\n    } else if (handler.body) {\r\n      if (t.isBlockStatement(handler.body)) {\r\n        for (const statement of handler.body.body) {\r\n          const csharpStmt = generateCSharpStatement(statement);\r\n          if (csharpStmt) {\r\n            lines.push(`        ${csharpStmt}`);\r\n          }\r\n        }\r\n      } else {\r\n        const csharpExpr = generateCSharpExpression(handler.body);\r\n        lines.push(`        ${csharpExpr};`);\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "generateEventHandlers",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f5bb093e",
+      "type": "TemplateLiteral",
+      "babel_source": "`        throw new InvalidOperationException(`",
+      "parentContext": {
+        "functionName": "generateEventHandlers",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "989bc19b",
+      "type": "TemplateLiteral",
+      "babel_source": "`            \"Event handler '${handler.name}' returns a function instead of executing an action. \" +`",
+      "parentContext": {
+        "functionName": "generateEventHandlers",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ea18d099",
+      "type": "TemplateLiteral",
+      "babel_source": "`            \"This is a curried function pattern (e.g., (e) => (id) => action(id)) which is invalid for event handlers. \" +`",
+      "parentContext": {
+        "functionName": "generateEventHandlers",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a1f892d9",
+      "type": "TemplateLiteral",
+      "babel_source": "`            \"The returned function is never called by the event system. \" +`",
+      "parentContext": {
+        "functionName": "generateEventHandlers",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f5e0b825",
+      "type": "TemplateLiteral",
+      "babel_source": "`            \"Fix: Use (e) => action(someValue) or create a properly bound handler.\"`",
+      "parentContext": {
+        "functionName": "generateEventHandlers",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8e150828",
+      "type": "TemplateLiteral",
+      "babel_source": "`        );`",
+      "parentContext": {
+        "functionName": "generateEventHandlers",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "315a671c",
+      "type": "IfStatement",
+      "condition": "handler.body",
+      "babel_source": "if (handler.body) {\r\n      if (t.isBlockStatement(handler.body)) {\r\n        for (const statement of handler.body.body) {\r\n          const csharpStmt = generateCSharpStatement(statement);\r\n          if (csharpStmt) {\r\n            lines.push(`        ${csharpStmt}`);\r\n          }\r\n        }\r\n      } else {\r\n        const csharpExpr = generateCSharpExpression(handler.body);\r\n        lines.push(`        ${csharpExpr};`);\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "generateEventHandlers",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e8c7f221",
+      "type": "IfStatement",
+      "condition": "t.isBlockStatement(handler.body)",
+      "babel_source": "if (t.isBlockStatement(handler.body)) {\r\n        for (const statement of handler.body.body) {\r\n          const csharpStmt = generateCSharpStatement(statement);\r\n          if (csharpStmt) {\r\n            lines.push(`        ${csharpStmt}`);\r\n          }\r\n        }\r\n      } else {\r\n        const csharpExpr = generateCSharpExpression(handler.body);\r\n        lines.push(`        ${csharpExpr};`);\r\n      }",
+      "parentContext": {
+        "functionName": "generateEventHandlers",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e8bae848",
+      "type": "BabelTypeCheck",
+      "method": "isBlockStatement",
+      "babel_source": "t.isBlockStatement(handler.body)",
+      "parentContext": {
+        "functionName": "generateEventHandlers",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d0aef207",
+      "type": "ForOfStatement",
+      "babel_source": "for (const statement of handler.body.body) {\r\n          const csharpStmt = generateCSharpStatement(statement);\r\n          if (csharpStmt) {\r\n            lines.push(`        ${csharpStmt}`);\r\n          }\r\n        }",
+      "parentContext": {
+        "functionName": "generateEventHandlers",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f397d33c",
+      "type": "VariableDeclaration",
+      "babel_source": "const statement",
+      "parentContext": {
+        "functionName": "generateEventHandlers",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d935ae0c",
+      "type": "VariableDeclaration",
+      "babel_source": "const csharpStmt = generateCSharpStatement(statement);",
+      "parentContext": {
+        "functionName": "generateEventHandlers",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0bc4efc0",
+      "type": "IfStatement",
+      "condition": "csharpStmt",
+      "babel_source": "if (csharpStmt) {\r\n            lines.push(`        ${csharpStmt}`);\r\n          }",
+      "parentContext": {
+        "functionName": "generateEventHandlers",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2aa03bfc",
+      "type": "TemplateLiteral",
+      "babel_source": "`        ${csharpStmt}`",
+      "parentContext": {
+        "functionName": "generateEventHandlers",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f5119d7",
+      "type": "VariableDeclaration",
+      "babel_source": "const csharpExpr = generateCSharpExpression(handler.body);",
+      "parentContext": {
+        "functionName": "generateEventHandlers",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "55823357",
+      "type": "TemplateLiteral",
+      "babel_source": "`        ${csharpExpr};`",
+      "parentContext": {
+        "functionName": "generateEventHandlers",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/component/generateMethods.cjs"
+  ]
+}

@@ -1,0 +1,651 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateArrayExpression",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "generateCSharpExpression",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateArrayExpression(node, generateCSharpExpression) {\r\n  // Check if array contains spread elements\r\n  const hasSpread = node.elements.some(e => t.isSpreadElement(e));\r\n\r\n  if (hasSpread) {\r\n    // Handle spread operator: [...array, item] → array.Concat(new[] { item }).ToList()\r\n    const parts = [];\r\n    let currentLiteral = [];\r\n\r\n    for (const element of node.elements) {\r\n      if (t.isSpreadElement(element)) {\r\n        // Flush current literal elements\r\n        if (currentLiteral.length > 0) {\r\n          const literalCode = currentLiteral.map(e => generateCSharpExpression(e)).join(', ');\r\n          parts.push(`new[] { ${literalCode} }`);\r\n          currentLiteral = [];\r\n        }\r\n        // Add spread array (cast to preserve type)\r\n        parts.push(generateCSharpExpression(element.argument));\r\n      } else {\r\n        currentLiteral.push(element);\r\n      }\r\n    }\r\n\r\n    // Flush remaining literals\r\n    if (currentLiteral.length > 0) {\r\n      const literalCode = currentLiteral.map(e => generateCSharpExpression(e)).join(', ');\r\n      parts.push(`new[] { ${literalCode} }`);\r\n    }\r\n\r\n    // Combine with Concat\r\n    if (parts.length === 1) {\r\n      return `${parts[0]}.ToList()`;\r\n    } else {\r\n      const concats = parts.slice(1).map(p => `.Concat(${p})`).join('');\r\n      return `${parts[0]}${concats}.ToList()`;\r\n    }\r\n  }\r\n\r\n  // No spread - simple array literal\r\n  const elements = node.elements.map(e => generateCSharpExpression(e)).join(', ');\r\n\r\n  // Infer type from first element if all are string literals\r\n  if (node.elements.length > 0 && node.elements.every(e => t.isStringLiteral(e))) {\r\n    return `new List<string> { ${elements} }`;\r\n  }\r\n\r\n  // Use List<dynamic> for empty arrays to be compatible with dynamic LINQ results\r\n  const listType = elements.length === 0 ? 'dynamic' : 'object';\r\n  return `new List<${listType}> { ${elements} }`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "7cbfcda0",
+      "type": "VariableDeclaration",
+      "babel_source": "const hasSpread = node.elements.some(e => t.isSpreadElement(e));",
+      "parentContext": {
+        "functionName": "generateArrayExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "31122ea4",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "e => t.isSpreadElement(e)",
+      "parentContext": {
+        "functionName": "generateArrayExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8b8ed60f",
+      "type": "BabelTypeCheck",
+      "method": "isSpreadElement",
+      "babel_source": "t.isSpreadElement(e)",
+      "parentContext": {
+        "functionName": "generateArrayExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "81504918",
+      "type": "IfStatement",
+      "condition": "hasSpread",
+      "babel_source": "if (hasSpread) {\r\n    // Handle spread operator: [...array, item] → array.Concat(new[] { item }).ToList()\r\n    const parts = [];\r\n    let currentLiteral = [];\r\n\r\n    for (const element of node.elements) {\r\n      if (t.isSpreadElement(element)) {\r\n        // Flush current literal elements\r\n        if (currentLiteral.length > 0) {\r\n          const literalCode = currentLiteral.map(e => generateCSharpExpression(e)).join(', ');\r\n          parts.push(`new[] { ${literalCode} }`);\r\n          currentLiteral = [];\r\n        }\r\n        // Add spread array (cast to preserve type)\r\n        parts.push(generateCSharpExpression(element.argument));\r\n      } else {\r\n        currentLiteral.push(element);\r\n      }\r\n    }\r\n\r\n    // Flush remaining literals\r\n    if (currentLiteral.length > 0) {\r\n      const literalCode = currentLiteral.map(e => generateCSharpExpression(e)).join(', ');\r\n      parts.push(`new[] { ${literalCode} }`);\r\n    }\r\n\r\n    // Combine with Concat\r\n    if (parts.length === 1) {\r\n      return `${parts[0]}.ToList()`;\r\n    } else {\r\n      const concats = parts.slice(1).map(p => `.Concat(${p})`).join('');\r\n      return `${parts[0]}${concats}.ToList()`;\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generateArrayExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c4133e54",
+      "type": "VariableDeclaration",
+      "babel_source": "const parts = [];",
+      "parentContext": {
+        "functionName": "generateArrayExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "generateArrayExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f8af995c",
+      "type": "VariableDeclaration",
+      "babel_source": "let currentLiteral = [];",
+      "parentContext": {
+        "functionName": "generateArrayExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "generateArrayExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "616819c9",
+      "type": "ForOfStatement",
+      "babel_source": "for (const element of node.elements) {\r\n      if (t.isSpreadElement(element)) {\r\n        // Flush current literal elements\r\n        if (currentLiteral.length > 0) {\r\n          const literalCode = currentLiteral.map(e => generateCSharpExpression(e)).join(', ');\r\n          parts.push(`new[] { ${literalCode} }`);\r\n          currentLiteral = [];\r\n        }\r\n        // Add spread array (cast to preserve type)\r\n        parts.push(generateCSharpExpression(element.argument));\r\n      } else {\r\n        currentLiteral.push(element);\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "generateArrayExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "854a2b81",
+      "type": "VariableDeclaration",
+      "babel_source": "const element",
+      "parentContext": {
+        "functionName": "generateArrayExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "036a8318",
+      "type": "IfStatement",
+      "condition": "t.isSpreadElement(element)",
+      "babel_source": "if (t.isSpreadElement(element)) {\r\n        // Flush current literal elements\r\n        if (currentLiteral.length > 0) {\r\n          const literalCode = currentLiteral.map(e => generateCSharpExpression(e)).join(', ');\r\n          parts.push(`new[] { ${literalCode} }`);\r\n          currentLiteral = [];\r\n        }\r\n        // Add spread array (cast to preserve type)\r\n        parts.push(generateCSharpExpression(element.argument));\r\n      } else {\r\n        currentLiteral.push(element);\r\n      }",
+      "parentContext": {
+        "functionName": "generateArrayExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "237c7b03",
+      "type": "BabelTypeCheck",
+      "method": "isSpreadElement",
+      "babel_source": "t.isSpreadElement(element)",
+      "parentContext": {
+        "functionName": "generateArrayExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "73e4ce2c",
+      "type": "IfStatement",
+      "condition": "currentLiteral.length > 0",
+      "babel_source": "if (currentLiteral.length > 0) {\r\n          const literalCode = currentLiteral.map(e => generateCSharpExpression(e)).join(', ');\r\n          parts.push(`new[] { ${literalCode} }`);\r\n          currentLiteral = [];\r\n        }",
+      "parentContext": {
+        "functionName": "generateArrayExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f9c1fb2b",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "currentLiteral.length > 0",
+      "parentContext": {
+        "functionName": "generateArrayExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "56dc7e1a",
+      "type": "VariableDeclaration",
+      "babel_source": "const literalCode = currentLiteral.map(e => generateCSharpExpression(e)).join(', ');",
+      "parentContext": {
+        "functionName": "generateArrayExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b78b3469",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "e => generateCSharpExpression(e)",
+      "parentContext": {
+        "functionName": "generateArrayExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "53b27af3",
+      "type": "TemplateLiteral",
+      "babel_source": "`new[] { ${literalCode} }`",
+      "parentContext": {
+        "functionName": "generateArrayExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "da4fec94",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "currentLiteral = []",
+      "parentContext": {
+        "functionName": "generateArrayExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "generateArrayExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "03906b81",
+      "type": "IfStatement",
+      "condition": "currentLiteral.length > 0",
+      "babel_source": "if (currentLiteral.length > 0) {\r\n      const literalCode = currentLiteral.map(e => generateCSharpExpression(e)).join(', ');\r\n      parts.push(`new[] { ${literalCode} }`);\r\n    }",
+      "parentContext": {
+        "functionName": "generateArrayExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f9c1fb2b",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "currentLiteral.length > 0",
+      "parentContext": {
+        "functionName": "generateArrayExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "56dc7e1a",
+      "type": "VariableDeclaration",
+      "babel_source": "const literalCode = currentLiteral.map(e => generateCSharpExpression(e)).join(', ');",
+      "parentContext": {
+        "functionName": "generateArrayExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b78b3469",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "e => generateCSharpExpression(e)",
+      "parentContext": {
+        "functionName": "generateArrayExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "53b27af3",
+      "type": "TemplateLiteral",
+      "babel_source": "`new[] { ${literalCode} }`",
+      "parentContext": {
+        "functionName": "generateArrayExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f05e7fc",
+      "type": "IfStatement",
+      "condition": "parts.length === 1",
+      "babel_source": "if (parts.length === 1) {\r\n      return `${parts[0]}.ToList()`;\r\n    } else {\r\n      const concats = parts.slice(1).map(p => `.Concat(${p})`).join('');\r\n      return `${parts[0]}${concats}.ToList()`;\r\n    }",
+      "parentContext": {
+        "functionName": "generateArrayExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9211d478",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "parts.length === 1",
+      "parentContext": {
+        "functionName": "generateArrayExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a85283ae",
+      "type": "ReturnStatement",
+      "babel_source": "return `${parts[0]}.ToList()`;",
+      "parentContext": {
+        "functionName": "generateArrayExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "07659ae7",
+      "type": "TemplateLiteral",
+      "babel_source": "`${parts[0]}.ToList()`",
+      "parentContext": {
+        "functionName": "generateArrayExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "05685273",
+      "type": "VariableDeclaration",
+      "babel_source": "const concats = parts.slice(1).map(p => `.Concat(${p})`).join('');",
+      "parentContext": {
+        "functionName": "generateArrayExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1f8b9068",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "p => `.Concat(${p})`",
+      "parentContext": {
+        "functionName": "generateArrayExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "826f932e",
+      "type": "TemplateLiteral",
+      "babel_source": "`.Concat(${p})`",
+      "parentContext": {
+        "functionName": "generateArrayExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "71db1f80",
+      "type": "ReturnStatement",
+      "babel_source": "return `${parts[0]}${concats}.ToList()`;",
+      "parentContext": {
+        "functionName": "generateArrayExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f0061794",
+      "type": "TemplateLiteral",
+      "babel_source": "`${parts[0]}${concats}.ToList()`",
+      "parentContext": {
+        "functionName": "generateArrayExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "25af9f6d",
+      "type": "VariableDeclaration",
+      "babel_source": "const elements = node.elements.map(e => generateCSharpExpression(e)).join(', ');",
+      "parentContext": {
+        "functionName": "generateArrayExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b78b3469",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "e => generateCSharpExpression(e)",
+      "parentContext": {
+        "functionName": "generateArrayExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "843b3ce4",
+      "type": "IfStatement",
+      "condition": "node.elements.length > 0 && node.elements.every(e => t.isStringLiteral(e))",
+      "babel_source": "if (node.elements.length > 0 && node.elements.every(e => t.isStringLiteral(e))) {\r\n    return `new List<string> { ${elements} }`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateArrayExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "545cbab2",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "node.elements.length > 0 && node.elements.every(e => t.isStringLiteral(e))",
+      "parentContext": {
+        "functionName": "generateArrayExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0c3f0d63",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "node.elements.length > 0",
+      "parentContext": {
+        "functionName": "generateArrayExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ce43084a",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "e => t.isStringLiteral(e)",
+      "parentContext": {
+        "functionName": "generateArrayExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "967d5fc7",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(e)",
+      "parentContext": {
+        "functionName": "generateArrayExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2f204f20",
+      "type": "ReturnStatement",
+      "babel_source": "return `new List<string> { ${elements} }`;",
+      "parentContext": {
+        "functionName": "generateArrayExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2da96894",
+      "type": "TemplateLiteral",
+      "babel_source": "`new List<string> { ${elements} }`",
+      "parentContext": {
+        "functionName": "generateArrayExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "16e28584",
+      "type": "VariableDeclaration",
+      "babel_source": "const listType = elements.length === 0 ? 'dynamic' : 'object';",
+      "parentContext": {
+        "functionName": "generateArrayExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1a45c3dd",
+      "type": "ConditionalExpression",
+      "babel_source": "elements.length === 0 ? 'dynamic' : 'object'",
+      "parentContext": {
+        "functionName": "generateArrayExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c9f10beb",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "elements.length === 0",
+      "parentContext": {
+        "functionName": "generateArrayExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b99ec9cc",
+      "type": "ReturnStatement",
+      "babel_source": "return `new List<${listType}> { ${elements} }`;",
+      "parentContext": {
+        "functionName": "generateArrayExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c28eda15",
+      "type": "TemplateLiteral",
+      "babel_source": "`new List<${listType}> { ${elements} }`",
+      "parentContext": {
+        "functionName": "generateArrayExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/expressions/arrays.cjs"
+  ]
+}

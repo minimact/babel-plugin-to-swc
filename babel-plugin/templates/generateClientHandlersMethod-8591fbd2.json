@@ -1,0 +1,274 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateClientHandlersMethod",
+  "params": [
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "lines",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateClientHandlersMethod(component, lines) {\r\n  if (component.clientHandlers && component.clientHandlers.length > 0) {\r\n    lines.push('');\r\n    lines.push('    /// <summary>');\r\n    lines.push('    /// Returns JavaScript event handlers for client-side execution');\r\n    lines.push('    /// These execute in the browser with bound hook context');\r\n    lines.push('    /// </summary>');\r\n    lines.push('    protected override Dictionary<string, string> GetClientHandlers()');\r\n    lines.push('    {');\r\n    lines.push('        return new Dictionary<string, string>');\r\n    lines.push('        {');\r\n\r\n    for (let i = 0; i < component.clientHandlers.length; i++) {\r\n      const handler = component.clientHandlers[i];\r\n      const escapedJs = handler.jsCode\r\n        .replace(/\\\\/g, '\\\\\\\\')\r\n        .replace(/\"/g, '\\\\\"')\r\n        .replace(/\\n/g, '\\\\n')\r\n        .replace(/\\r/g, '');\r\n\r\n      const comma = i < component.clientHandlers.length - 1 ? ',' : '';\r\n      lines.push(`            [\"${handler.name}\"] = @\"${escapedJs}\"${comma}`);\r\n    }\r\n\r\n    lines.push('        };');\r\n    lines.push('    }');\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "311a8836",
+      "type": "IfStatement",
+      "condition": "component.clientHandlers && component.clientHandlers.length > 0",
+      "babel_source": "if (component.clientHandlers && component.clientHandlers.length > 0) {\r\n    lines.push('');\r\n    lines.push('    /// <summary>');\r\n    lines.push('    /// Returns JavaScript event handlers for client-side execution');\r\n    lines.push('    /// These execute in the browser with bound hook context');\r\n    lines.push('    /// </summary>');\r\n    lines.push('    protected override Dictionary<string, string> GetClientHandlers()');\r\n    lines.push('    {');\r\n    lines.push('        return new Dictionary<string, string>');\r\n    lines.push('        {');\r\n\r\n    for (let i = 0; i < component.clientHandlers.length; i++) {\r\n      const handler = component.clientHandlers[i];\r\n      const escapedJs = handler.jsCode\r\n        .replace(/\\\\/g, '\\\\\\\\')\r\n        .replace(/\"/g, '\\\\\"')\r\n        .replace(/\\n/g, '\\\\n')\r\n        .replace(/\\r/g, '');\r\n\r\n      const comma = i < component.clientHandlers.length - 1 ? ',' : '';\r\n      lines.push(`            [\"${handler.name}\"] = @\"${escapedJs}\"${comma}`);\r\n    }\r\n\r\n    lines.push('        };');\r\n    lines.push('    }');\r\n  }",
+      "parentContext": {
+        "functionName": "generateClientHandlersMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "52264956",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "component.clientHandlers && component.clientHandlers.length > 0",
+      "parentContext": {
+        "functionName": "generateClientHandlersMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "12ae245d",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "component.clientHandlers.length > 0",
+      "parentContext": {
+        "functionName": "generateClientHandlersMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "84e108ae",
+      "type": "ForStatement",
+      "babel_source": "for (let i = 0; i < component.clientHandlers.length; i++) {\r\n      const handler = component.clientHandlers[i];\r\n      const escapedJs = handler.jsCode\r\n        .replace(/\\\\/g, '\\\\\\\\')\r\n        .replace(/\"/g, '\\\\\"')\r\n        .replace(/\\n/g, '\\\\n')\r\n        .replace(/\\r/g, '');\r\n\r\n      const comma = i < component.clientHandlers.length - 1 ? ',' : '';\r\n      lines.push(`            [\"${handler.name}\"] = @\"${escapedJs}\"${comma}`);\r\n    }",
+      "parentContext": {
+        "functionName": "generateClientHandlersMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ecb911a1",
+      "type": "VariableDeclaration",
+      "babel_source": "let i = 0",
+      "parentContext": {
+        "functionName": "generateClientHandlersMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9142e37a",
+      "type": "BinaryExpression",
+      "operator": "<",
+      "babel_source": "i < component.clientHandlers.length",
+      "parentContext": {
+        "functionName": "generateClientHandlersMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e8dee0e1",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "i++",
+      "parentContext": {
+        "functionName": "generateClientHandlersMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bd5497eb",
+      "type": "VariableDeclaration",
+      "babel_source": "const handler = component.clientHandlers[i];",
+      "parentContext": {
+        "functionName": "generateClientHandlersMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5dbd8743",
+      "type": "VariableDeclaration",
+      "babel_source": "const escapedJs = handler.jsCode\r\n        .replace(/\\\\/g, '\\\\\\\\')\r\n        .replace(/\"/g, '\\\\\"')\r\n        .replace(/\\n/g, '\\\\n')\r\n        .replace(/\\r/g, '');",
+      "parentContext": {
+        "functionName": "generateClientHandlersMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7de23ca2",
+      "type": "RegExpLiteral",
+      "pattern": "\\\\",
+      "flags": "g",
+      "babel_source": "/\\\\/g",
+      "parentContext": {
+        "functionName": "generateClientHandlersMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab9aeb8a",
+      "type": "RegExpLiteral",
+      "pattern": "\"",
+      "flags": "g",
+      "babel_source": "/\"/g",
+      "parentContext": {
+        "functionName": "generateClientHandlersMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5ddaeb03",
+      "type": "RegExpLiteral",
+      "pattern": "\\n",
+      "flags": "g",
+      "babel_source": "/\\n/g",
+      "parentContext": {
+        "functionName": "generateClientHandlersMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "549672df",
+      "type": "RegExpLiteral",
+      "pattern": "\\r",
+      "flags": "g",
+      "babel_source": "/\\r/g",
+      "parentContext": {
+        "functionName": "generateClientHandlersMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "22f89739",
+      "type": "VariableDeclaration",
+      "babel_source": "const comma = i < component.clientHandlers.length - 1 ? ',' : '';",
+      "parentContext": {
+        "functionName": "generateClientHandlersMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "478f8b70",
+      "type": "ConditionalExpression",
+      "babel_source": "i < component.clientHandlers.length - 1 ? ',' : ''",
+      "parentContext": {
+        "functionName": "generateClientHandlersMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3248e4e8",
+      "type": "BinaryExpression",
+      "operator": "<",
+      "babel_source": "i < component.clientHandlers.length - 1",
+      "parentContext": {
+        "functionName": "generateClientHandlersMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b47a1ffb",
+      "type": "BinaryExpression",
+      "operator": "-",
+      "babel_source": "component.clientHandlers.length - 1",
+      "parentContext": {
+        "functionName": "generateClientHandlersMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "60193b2e",
+      "type": "TemplateLiteral",
+      "babel_source": "`            [\"${handler.name}\"] = @\"${escapedJs}\"${comma}`",
+      "parentContext": {
+        "functionName": "generateClientHandlersMethod",
+        "functionParams": [
+          "component",
+          "lines"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/component/generateMethods.cjs"
+  ]
+}
