@@ -63,6 +63,7 @@ pub enum TokenKind {
     Matches,
     Traverse,
     Using,
+    Capturing,
 
     // Types
     Str,
@@ -192,6 +193,7 @@ impl fmt::Display for TokenKind {
             TokenKind::Matches => write!(f, "matches!"),
             TokenKind::Traverse => write!(f, "traverse"),
             TokenKind::Using => write!(f, "using"),
+            TokenKind::Capturing => write!(f, "capturing"),
 
             TokenKind::Str => write!(f, "Str"),
             TokenKind::Bool => write!(f, "bool"),

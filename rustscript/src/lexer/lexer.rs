@@ -463,6 +463,7 @@ impl<'a> Lexer<'a> {
             "match" => TokenKind::Match,
             "traverse" => TokenKind::Traverse,
             "using" => TokenKind::Using,
+            "capturing" => TokenKind::Capturing,
 
             // Type keywords
             "Str" => TokenKind::Str,

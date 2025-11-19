@@ -511,8 +511,11 @@ impl SwcGenerator {
                 self.emit(";\n");
             }
             Stmt::If(if_stmt) => {
-                // Check if condition is matches!(var, Type)
-                if let Some((var_name, type_name)) = self.extract_matches_pattern(&if_stmt.condition) {
+                // Check for if-let pattern first
+                if let Some(pattern) = &if_stmt.pattern {
+                    self.gen_if_let_stmt(if_stmt, pattern);
+                } else if let Some((var_name, type_name)) = self.extract_matches_pattern(&if_stmt.condition) {
+                    // Check if condition is matches!(var, Type)
                     // Look up the variable's type to determine the correct context
                     let var_type = self.type_env.lookup(&var_name)
                         .map(|ctx| ctx.swc_type.clone())
@@ -687,15 +690,76 @@ impl SwcGenerator {
         }
     }
 
+    fn gen_if_let_stmt(&mut self, if_stmt: &IfStmt, pattern: &Pattern) {
+        // Generate if-let pattern matching for SWC/Rust
+        self.emit_indent();
+        self.emit("if let ");
+        self.gen_pattern(pattern);
+        self.emit(" = ");
+        self.gen_expr(&if_stmt.condition);
+        self.emit(" {\n");
+
+        self.indent += 1;
+        self.type_env.push_scope();
+
+        // If pattern binds a variable, add it to the environment
+        if let Pattern::Variant { name, inner } = pattern {
+            if let Some(inner_pat) = inner {
+                if let Pattern::Ident(binding) = inner_pat.as_ref() {
+                    // For Some(x), the binding 'x' gets the inner type
+                    // For now, use unknown type - could be improved with type inference
+                    let ctx = TypeContext::unknown();
+                    self.type_env.define(binding, ctx);
+                }
+            }
+        } else if let Pattern::Ident(binding) = pattern {
+            let ctx = TypeContext::unknown();
+            self.type_env.define(binding, ctx);
+        }
+
+        self.gen_block(&if_stmt.then_branch);
+
+        self.type_env.pop_scope();
+        self.indent -= 1;
+
+        // Handle else branch
+        if let Some(else_block) = &if_stmt.else_branch {
+            self.emit_indent();
+            self.emit("} else {\n");
+            self.indent += 1;
+            self.gen_block(else_block);
+            self.indent -= 1;
+        }
+
+        self.emit_line("}");
+    }
+
     fn gen_traverse_stmt(&mut self, traverse_stmt: &crate::parser::TraverseStmt) {
         match &traverse_stmt.kind {
             crate::parser::TraverseKind::Inline(inline) => {
                 // Generate a unique struct name for this inline visitor
                 let struct_name = format!("__InlineVisitor_{}", self.hoisted_visitors.len());
 
+                // Check if we have captures (need lifetime parameter)
+                let has_captures = !traverse_stmt.captures.is_empty();
+                let lifetime = if has_captures { "<'a>" } else { "" };
+
                 // Build the hoisted struct definition
                 let mut struct_def = String::new();
-                struct_def.push_str(&format!("struct {} {{\n", struct_name));
+                struct_def.push_str(&format!("struct {}{} {{\n", struct_name, lifetime));
+
+                // Add captured variables as reference fields
+                for capture in &traverse_stmt.captures {
+                    let ref_type = if capture.mutable {
+                        "&'a mut"
+                    } else {
+                        "&'a"
+                    };
+                    // TODO: Infer actual type from scope
+                    struct_def.push_str(&format!("    {}: {} _CapturedType_,\n", capture.name, ref_type));
+                }
+
+                // Add local state fields
                 for let_stmt in &inline.state {
                     let ty = if let Some(ref ty) = let_stmt.ty {
                         self.type_to_rust(ty)
@@ -707,7 +771,8 @@ impl SwcGenerator {
                 struct_def.push_str("}\n\n");
 
                 // Generate impl VisitMut for the struct
-                struct_def.push_str(&format!("impl VisitMut for {} {{\n", struct_name));
+                let impl_lifetime = if has_captures { "<'a>" } else { "" };
+                struct_def.push_str(&format!("impl{} VisitMut for {}{} {{\n", impl_lifetime, struct_name, lifetime));
                 for method in &inline.methods {
                     // Convert visit_xxx to visit_mut_xxx
                     let swc_method = self.visitor_method_to_swc(&method.name);
@@ -752,6 +817,22 @@ impl SwcGenerator {
                 self.emit_indent();
                 self.emit(&format!("let mut __visitor = {} {{\n", struct_name));
                 self.indent += 1;
+
+                // Initialize captured variables (pass references)
+                for capture in &traverse_stmt.captures {
+                    self.emit_indent();
+                    self.emit(&capture.name);
+                    self.emit(": ");
+                    if capture.mutable {
+                        self.emit("&mut ");
+                    } else {
+                        self.emit("&");
+                    }
+                    self.emit(&capture.name);
+                    self.emit(",\n");
+                }
+
+                // Initialize local state
                 for let_stmt in &inline.state {
                     self.emit_indent();
                     self.emit(&let_stmt.name);
@@ -933,6 +1014,14 @@ impl SwcGenerator {
                     self.gen_pattern(fpat);
                 }
                 self.emit(" }");
+            }
+            Pattern::Variant { name, inner } => {
+                self.emit(name);
+                if let Some(inner_pat) = inner {
+                    self.emit("(");
+                    self.gen_pattern(inner_pat);
+                    self.emit(")");
+                }
             }
             Pattern::Or(patterns) => {
                 for (i, p) in patterns.iter().enumerate() {

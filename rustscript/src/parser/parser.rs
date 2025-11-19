@@ -432,7 +432,17 @@ impl Parser {
     fn parse_if_stmt(&mut self) -> ParseResult<Stmt> {
         let start_span = self.current_span();
         self.expect(TokenKind::If)?;
-        let condition = self.parse_expr()?;
+
+        // Check for if-let pattern: `if let Pattern = expr`
+        let (pattern, condition) = if self.match_token(TokenKind::Let) {
+            let pat = self.parse_pattern()?;
+            self.expect(TokenKind::Eq)?;
+            let expr = self.parse_expr()?;
+            (Some(pat), expr)
+        } else {
+            (None, self.parse_expr()?)
+        };
+
         let then_branch = self.parse_block()?;
 
         let mut else_if_branches = Vec::new();
@@ -440,6 +450,7 @@ impl Parser {
 
         while self.match_token(TokenKind::Else) {
             if self.match_token(TokenKind::If) {
+                // Note: else-if with let not supported yet, just regular condition
                 let cond = self.parse_expr()?;
                 let block = self.parse_block()?;
                 else_if_branches.push((cond, block));
@@ -451,6 +462,7 @@ impl Parser {
 
         Ok(Stmt::If(IfStmt {
             condition,
+            pattern,
             then_branch,
             else_if_branches,
             else_branch,
@@ -514,11 +526,11 @@ impl Parser {
             return Ok(Pattern::Literal(lit));
         }
 
-        // Identifier or struct pattern
+        // Identifier, struct pattern, or variant pattern
         let name = self.expect_ident()?;
 
         if self.check(TokenKind::LBrace) {
-            // Struct pattern
+            // Struct pattern: Name { field: pattern, ... }
             self.advance();
             let mut fields = Vec::new();
             loop {
@@ -537,6 +549,16 @@ impl Parser {
             }
             self.expect(TokenKind::RBrace)?;
             Ok(Pattern::Struct { name, fields })
+        } else if self.check(TokenKind::LParen) {
+            // Variant pattern: Some(x), Ok(value), Err(e)
+            self.advance();
+            let inner = if self.check(TokenKind::RParen) {
+                None
+            } else {
+                Some(Box::new(self.parse_pattern()?))
+            };
+            self.expect(TokenKind::RParen)?;
+            Ok(Pattern::Variant { name, inner })
         } else if self.match_token(TokenKind::Pipe) {
             // Or pattern
             let mut patterns = vec![Pattern::Ident(name)];
@@ -548,7 +570,12 @@ impl Parser {
             }
             Ok(Pattern::Or(patterns))
         } else {
-            Ok(Pattern::Ident(name))
+            // Check if this is a unit variant like None
+            if name == "None" || name == "true" || name == "false" {
+                Ok(Pattern::Variant { name, inner: None })
+            } else {
+                Ok(Pattern::Ident(name))
+            }
         }
     }
 
@@ -631,13 +658,20 @@ impl Parser {
     }
 
     /// Parse traverse statement
-    /// `traverse(node) { ... }` or `traverse(node) using Visitor;`
+    /// `traverse(node) { ... }` or `traverse(node) capturing [...] { ... }` or `traverse(node) using Visitor;`
     fn parse_traverse_stmt(&mut self) -> ParseResult<Stmt> {
         let start_span = self.current_span();
         self.expect(TokenKind::Traverse)?;
         self.expect(TokenKind::LParen)?;
         let target = self.parse_expr()?;
         self.expect(TokenKind::RParen)?;
+
+        // Parse optional capturing clause
+        let captures = if self.match_token(TokenKind::Capturing) {
+            self.parse_capture_list()?
+        } else {
+            Vec::new()
+        };
 
         let kind = if self.match_token(TokenKind::Using) {
             // Delegated traversal: `traverse(node) using OtherVisitor;`
@@ -702,9 +736,48 @@ impl Parser {
 
         Ok(Stmt::Traverse(TraverseStmt {
             target,
+            captures,
             kind,
             span: start_span,
         }))
+    }
+
+    /// Parse capture list: `[&mut x, &y, &mut z]`
+    fn parse_capture_list(&mut self) -> ParseResult<Vec<Capture>> {
+        self.expect(TokenKind::LBracket)?;
+        let mut captures = Vec::new();
+
+        loop {
+            self.skip_newlines();
+            if self.check(TokenKind::RBracket) {
+                break;
+            }
+
+            let capture_span = self.current_span();
+
+            // Expect & for reference
+            self.expect(TokenKind::Ampersand)?;
+
+            // Check for mut
+            let mutable = self.match_token(TokenKind::Mut);
+
+            // Get variable name
+            let name = self.expect_ident()?;
+
+            captures.push(Capture {
+                name,
+                mutable,
+                span: capture_span,
+            });
+
+            // Check for comma or end
+            if !self.match_token(TokenKind::Comma) {
+                break;
+            }
+        }
+
+        self.expect(TokenKind::RBracket)?;
+        Ok(captures)
     }
 
     /// Parse expression statement

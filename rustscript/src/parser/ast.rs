@@ -322,6 +322,8 @@ pub struct ExprStmt {
 #[derive(Debug, Clone)]
 pub struct IfStmt {
     pub condition: Expr,
+    /// Optional pattern for if-let: `if let Some(x) = expr`
+    pub pattern: Option<Pattern>,
     pub then_branch: Block,
     pub else_if_branches: Vec<(Expr, Block)>,
     pub else_branch: Option<Block>,
@@ -353,6 +355,11 @@ pub enum Pattern {
     Struct {
         name: String,
         fields: Vec<(String, Pattern)>,
+    },
+    /// Enum variant pattern: Some(x), None, Ok(x), Err(e)
+    Variant {
+        name: String,
+        inner: Option<Box<Pattern>>,
     },
     Or(Vec<Pattern>),
 }
@@ -406,8 +413,22 @@ pub struct ContinueStmt {
 pub struct TraverseStmt {
     /// The node to traverse
     pub target: Expr,
+    /// Captured variables from outer scope
+    /// `traverse(node) capturing [&mut x, &y] { ... }`
+    pub captures: Vec<Capture>,
     /// The kind of traversal (inline visitor or delegated to another visitor)
     pub kind: TraverseKind,
+    pub span: Span,
+}
+
+/// A captured variable reference in a traverse block
+/// Used in `capturing [&mut x, &y]` syntax
+#[derive(Debug, Clone)]
+pub struct Capture {
+    /// Name of the captured variable
+    pub name: String,
+    /// Whether the capture is mutable (&mut vs &)
+    pub mutable: bool,
     pub span: Span,
 }
 

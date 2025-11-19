@@ -542,6 +542,7 @@ impl UnwrapHoister {
             // Step 5: Create the if statement with the pattern match
             let if_stmt = Stmt::If(IfStmt {
                 condition: matches_condition,
+                pattern: None, // Not an if-let, just a regular if with matches!
                 then_branch: Block {
                     stmts: vec![inner_assign],
                     span,

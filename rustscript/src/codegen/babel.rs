@@ -268,33 +268,39 @@ impl BabelGenerator {
                 self.emit(";\n");
             }
             Stmt::If(if_stmt) => {
-                self.emit_indent();
-                self.emit("if (");
-                self.gen_expr(&if_stmt.condition);
-                self.emit(") {\n");
-                self.indent += 1;
-                self.gen_block(&if_stmt.then_branch);
-                self.indent -= 1;
-
-                for (cond, block) in &if_stmt.else_if_branches {
+                if let Some(pattern) = &if_stmt.pattern {
+                    // if-let pattern matching
+                    self.gen_if_let_stmt(if_stmt, pattern);
+                } else {
+                    // Regular if statement
                     self.emit_indent();
-                    self.emit("} else if (");
-                    self.gen_expr(cond);
+                    self.emit("if (");
+                    self.gen_expr(&if_stmt.condition);
                     self.emit(") {\n");
                     self.indent += 1;
-                    self.gen_block(block);
+                    self.gen_block(&if_stmt.then_branch);
                     self.indent -= 1;
-                }
 
-                if let Some(else_block) = &if_stmt.else_branch {
-                    self.emit_indent();
-                    self.emit("} else {\n");
-                    self.indent += 1;
-                    self.gen_block(else_block);
-                    self.indent -= 1;
-                }
+                    for (cond, block) in &if_stmt.else_if_branches {
+                        self.emit_indent();
+                        self.emit("} else if (");
+                        self.gen_expr(cond);
+                        self.emit(") {\n");
+                        self.indent += 1;
+                        self.gen_block(block);
+                        self.indent -= 1;
+                    }
 
-                self.emit_line("}");
+                    if let Some(else_block) = &if_stmt.else_branch {
+                        self.emit_indent();
+                        self.emit("} else {\n");
+                        self.indent += 1;
+                        self.gen_block(else_block);
+                        self.indent -= 1;
+                    }
+
+                    self.emit_line("}");
+                }
             }
             Stmt::For(for_stmt) => {
                 self.emit_indent();
@@ -351,6 +357,16 @@ impl BabelGenerator {
     fn gen_traverse_stmt(&mut self, traverse_stmt: &crate::parser::TraverseStmt) {
         match &traverse_stmt.kind {
             crate::parser::TraverseKind::Inline(inline) => {
+                // Note: In JavaScript, captured variables are automatically available
+                // via closure semantics. The captures list is for documentation.
+                if !traverse_stmt.captures.is_empty() {
+                    self.emit_indent();
+                    let capture_names: Vec<_> = traverse_stmt.captures.iter()
+                        .map(|c| if c.mutable { format!("&mut {}", c.name) } else { format!("&{}", c.name) })
+                        .collect();
+                    self.emit(&format!("// Captures: [{}]\n", capture_names.join(", ")));
+                }
+
                 // Generate inline visitor object
                 self.emit_indent();
                 self.emit("const __nestedVisitor = {\n");
@@ -410,6 +426,106 @@ impl BabelGenerator {
                 self.emit(&format!(".traverse({});\n", visitor_name));
             }
         }
+    }
+
+    fn gen_if_let_stmt(&mut self, if_stmt: &IfStmt, pattern: &Pattern) {
+        // Generate if-let as:
+        // const __temp = expr;
+        // if (__temp !== null && __temp !== undefined) {
+        //     const binding = __temp; // or destructure
+        //     ...then_branch
+        // } else { ...else_branch }
+
+        let temp_var = format!("__iflet_{}", self.indent);
+
+        // Generate temp variable
+        self.emit_indent();
+        self.emit(&format!("const {} = ", temp_var));
+        self.gen_expr(&if_stmt.condition);
+        self.emit(";\n");
+
+        // Generate condition check based on pattern
+        self.emit_indent();
+        match pattern {
+            Pattern::Variant { name, inner } => {
+                match name.as_str() {
+                    "Some" => {
+                        // if (__temp !== null && __temp !== undefined)
+                        self.emit(&format!("if ({} !== null && {} !== undefined) {{\n", temp_var, temp_var));
+                        self.indent += 1;
+
+                        // Bind inner pattern
+                        if let Some(inner_pat) = inner {
+                            if let Pattern::Ident(binding) = inner_pat.as_ref() {
+                                self.emit_indent();
+                                self.emit(&format!("const {} = {};\n", binding, temp_var));
+                            }
+                        }
+                    }
+                    "None" => {
+                        // if (__temp === null || __temp === undefined)
+                        self.emit(&format!("if ({} === null || {} === undefined) {{\n", temp_var, temp_var));
+                        self.indent += 1;
+                    }
+                    "Ok" => {
+                        // For Result types - check for success
+                        self.emit(&format!("if ({} && !{}.error) {{\n", temp_var, temp_var));
+                        self.indent += 1;
+
+                        if let Some(inner_pat) = inner {
+                            if let Pattern::Ident(binding) = inner_pat.as_ref() {
+                                self.emit_indent();
+                                self.emit(&format!("const {} = {}.value;\n", binding, temp_var));
+                            }
+                        }
+                    }
+                    "Err" => {
+                        // For Result types - check for error
+                        self.emit(&format!("if ({} && {}.error) {{\n", temp_var, temp_var));
+                        self.indent += 1;
+
+                        if let Some(inner_pat) = inner {
+                            if let Pattern::Ident(binding) = inner_pat.as_ref() {
+                                self.emit_indent();
+                                self.emit(&format!("const {} = {}.error;\n", binding, temp_var));
+                            }
+                        }
+                    }
+                    _ => {
+                        // Generic variant check
+                        self.emit(&format!("if ({} !== null) {{\n", temp_var));
+                        self.indent += 1;
+                    }
+                }
+            }
+            Pattern::Ident(binding) => {
+                // Simple binding: if let x = expr
+                self.emit(&format!("if ({} !== null && {} !== undefined) {{\n", temp_var, temp_var));
+                self.indent += 1;
+                self.emit_indent();
+                self.emit(&format!("const {} = {};\n", binding, temp_var));
+            }
+            _ => {
+                // Fallback for other patterns
+                self.emit(&format!("if ({} !== null) {{\n", temp_var));
+                self.indent += 1;
+            }
+        }
+
+        // Generate then branch
+        self.gen_block(&if_stmt.then_branch);
+        self.indent -= 1;
+
+        // Generate else branch
+        if let Some(else_block) = &if_stmt.else_branch {
+            self.emit_indent();
+            self.emit("} else {\n");
+            self.indent += 1;
+            self.gen_block(else_block);
+            self.indent -= 1;
+        }
+
+        self.emit_line("}");
     }
 
     fn visitor_method_to_node_type(&self, method_name: &str) -> String {
@@ -498,6 +614,27 @@ impl BabelGenerator {
                     // Create nested scrutinee for field
                     let field_access = format!("{}.{}", self.expr_to_string(scrutinee), field_name);
                     self.gen_pattern_condition_str(field_pattern, &field_access);
+                }
+            }
+            Pattern::Variant { name, inner: _ } => {
+                // Variant pattern matching for Option/Result types
+                let scrutinee_str = self.expr_to_string(scrutinee);
+                match name.as_str() {
+                    "Some" => {
+                        self.emit(&format!("{} !== null && {} !== undefined", scrutinee_str, scrutinee_str));
+                    }
+                    "None" => {
+                        self.emit(&format!("{} === null || {} === undefined", scrutinee_str, scrutinee_str));
+                    }
+                    "Ok" => {
+                        self.emit(&format!("{} && !{}.error", scrutinee_str, scrutinee_str));
+                    }
+                    "Err" => {
+                        self.emit(&format!("{} && {}.error", scrutinee_str, scrutinee_str));
+                    }
+                    _ => {
+                        self.emit(&format!("{} !== null", scrutinee_str));
+                    }
                 }
             }
         }

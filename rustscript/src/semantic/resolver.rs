@@ -343,6 +343,12 @@ impl Resolver {
                     self.resolve_pattern(pat);
                 }
             }
+            Pattern::Variant { inner, .. } => {
+                // Resolve inner pattern if present (e.g., Some(x) -> resolve x)
+                if let Some(inner_pat) = inner {
+                    self.resolve_pattern(inner_pat);
+                }
+            }
             Pattern::Literal(_) | Pattern::Wildcard => {}
         }
     }
