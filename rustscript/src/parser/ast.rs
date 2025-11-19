@@ -1,0 +1,468 @@
+//! AST definitions for RustScript
+
+use crate::lexer::Span;
+
+/// Root of the AST - a program containing a plugin or writer declaration
+#[derive(Debug, Clone)]
+pub struct Program {
+    pub decl: TopLevelDecl,
+    pub span: Span,
+}
+
+/// Top-level declaration
+#[derive(Debug, Clone)]
+pub enum TopLevelDecl {
+    Plugin(PluginDecl),
+    Writer(WriterDecl),
+}
+
+/// Plugin declaration: `plugin Name { ... }`
+#[derive(Debug, Clone)]
+pub struct PluginDecl {
+    pub name: String,
+    pub body: Vec<PluginItem>,
+    pub span: Span,
+}
+
+/// Writer declaration: `writer Name { ... }`
+#[derive(Debug, Clone)]
+pub struct WriterDecl {
+    pub name: String,
+    pub body: Vec<PluginItem>,
+    pub span: Span,
+}
+
+/// Items that can appear inside a plugin/writer
+#[derive(Debug, Clone)]
+pub enum PluginItem {
+    Struct(StructDecl),
+    Enum(EnumDecl),
+    Function(FnDecl),
+    Impl(ImplBlock),
+}
+
+/// Struct declaration
+#[derive(Debug, Clone)]
+pub struct StructDecl {
+    pub name: String,
+    pub fields: Vec<StructField>,
+    pub span: Span,
+}
+
+/// Struct field
+#[derive(Debug, Clone)]
+pub struct StructField {
+    pub name: String,
+    pub ty: Type,
+    pub span: Span,
+}
+
+/// Enum declaration
+#[derive(Debug, Clone)]
+pub struct EnumDecl {
+    pub name: String,
+    pub variants: Vec<EnumVariant>,
+    pub span: Span,
+}
+
+/// Enum variant
+#[derive(Debug, Clone)]
+pub struct EnumVariant {
+    pub name: String,
+    pub fields: Option<Vec<Type>>,
+    pub span: Span,
+}
+
+/// Function declaration
+#[derive(Debug, Clone)]
+pub struct FnDecl {
+    pub is_pub: bool,
+    pub name: String,
+    pub params: Vec<Param>,
+    pub return_type: Option<Type>,
+    pub body: Block,
+    pub span: Span,
+}
+
+/// Function parameter
+#[derive(Debug, Clone)]
+pub struct Param {
+    pub name: String,
+    pub ty: Type,
+    pub span: Span,
+}
+
+/// Impl block
+#[derive(Debug, Clone)]
+pub struct ImplBlock {
+    pub target: String,
+    pub items: Vec<FnDecl>,
+    pub span: Span,
+}
+
+/// Type representation
+#[derive(Debug, Clone)]
+pub enum Type {
+    /// Primitive types: Str, i32, f64, bool, ()
+    Primitive(String),
+    /// Reference type: &T or &mut T
+    Reference {
+        mutable: bool,
+        inner: Box<Type>,
+    },
+    /// Container types: Vec<T>, Option<T>, HashMap<K,V>, etc.
+    Container {
+        name: String,
+        type_args: Vec<Type>,
+    },
+    /// User-defined type or AST node type
+    Named(String),
+}
+
+/// Block of statements
+#[derive(Debug, Clone)]
+pub struct Block {
+    pub stmts: Vec<Stmt>,
+    pub span: Span,
+}
+
+/// Statement
+#[derive(Debug, Clone)]
+pub enum Stmt {
+    Let(LetStmt),
+    Const(ConstStmt),
+    Expr(ExprStmt),
+    If(IfStmt),
+    Match(MatchStmt),
+    For(ForStmt),
+    While(WhileStmt),
+    Loop(LoopStmt),
+    Return(ReturnStmt),
+    Break(BreakStmt),
+    Continue(ContinueStmt),
+}
+
+/// Let statement: `let [mut] name [: Type] = expr;`
+#[derive(Debug, Clone)]
+pub struct LetStmt {
+    pub mutable: bool,
+    pub name: String,
+    pub ty: Option<Type>,
+    pub init: Expr,
+    pub span: Span,
+}
+
+/// Const statement: `const NAME = expr;`
+#[derive(Debug, Clone)]
+pub struct ConstStmt {
+    pub name: String,
+    pub ty: Option<Type>,
+    pub init: Expr,
+    pub span: Span,
+}
+
+/// Expression statement
+#[derive(Debug, Clone)]
+pub struct ExprStmt {
+    pub expr: Expr,
+    pub span: Span,
+}
+
+/// If statement
+#[derive(Debug, Clone)]
+pub struct IfStmt {
+    pub condition: Expr,
+    pub then_branch: Block,
+    pub else_if_branches: Vec<(Expr, Block)>,
+    pub else_branch: Option<Block>,
+    pub span: Span,
+}
+
+/// Match statement
+#[derive(Debug, Clone)]
+pub struct MatchStmt {
+    pub scrutinee: Expr,
+    pub arms: Vec<MatchArm>,
+    pub span: Span,
+}
+
+/// Match arm
+#[derive(Debug, Clone)]
+pub struct MatchArm {
+    pub pattern: Pattern,
+    pub body: Expr,
+    pub span: Span,
+}
+
+/// Pattern for matching
+#[derive(Debug, Clone)]
+pub enum Pattern {
+    Literal(Literal),
+    Ident(String),
+    Wildcard,
+    Struct {
+        name: String,
+        fields: Vec<(String, Pattern)>,
+    },
+    Or(Vec<Pattern>),
+}
+
+/// For loop
+#[derive(Debug, Clone)]
+pub struct ForStmt {
+    pub var: String,
+    pub iter: Expr,
+    pub body: Block,
+    pub span: Span,
+}
+
+/// While loop
+#[derive(Debug, Clone)]
+pub struct WhileStmt {
+    pub condition: Expr,
+    pub body: Block,
+    pub span: Span,
+}
+
+/// Loop (infinite)
+#[derive(Debug, Clone)]
+pub struct LoopStmt {
+    pub body: Block,
+    pub span: Span,
+}
+
+/// Return statement
+#[derive(Debug, Clone)]
+pub struct ReturnStmt {
+    pub value: Option<Expr>,
+    pub span: Span,
+}
+
+/// Break statement
+#[derive(Debug, Clone)]
+pub struct BreakStmt {
+    pub span: Span,
+}
+
+/// Continue statement
+#[derive(Debug, Clone)]
+pub struct ContinueStmt {
+    pub span: Span,
+}
+
+/// Expression
+#[derive(Debug, Clone)]
+pub enum Expr {
+    /// Literal value
+    Literal(Literal),
+    /// Identifier
+    Ident(IdentExpr),
+    /// Binary operation
+    Binary(BinaryExpr),
+    /// Unary operation
+    Unary(UnaryExpr),
+    /// Function/method call
+    Call(CallExpr),
+    /// Member access: expr.field
+    Member(MemberExpr),
+    /// Index access: expr[index]
+    Index(IndexExpr),
+    /// Struct initialization
+    StructInit(StructInitExpr),
+    /// Vec initialization: vec![...]
+    VecInit(VecInitExpr),
+    /// If expression (when used as expression)
+    If(Box<IfExpr>),
+    /// Match expression
+    Match(Box<MatchExpr>),
+    /// Closure/lambda
+    Closure(ClosureExpr),
+    /// Reference: &expr or &mut expr
+    Ref(RefExpr),
+    /// Dereference: *expr
+    Deref(DerefExpr),
+    /// Assignment: lhs = rhs
+    Assign(AssignExpr),
+    /// Compound assignment: lhs += rhs, etc.
+    CompoundAssign(CompoundAssignExpr),
+    /// Range: start..end
+    Range(RangeExpr),
+    /// Parenthesized expression
+    Paren(Box<Expr>),
+}
+
+/// Literal values
+#[derive(Debug, Clone)]
+pub enum Literal {
+    String(String),
+    Int(i64),
+    Float(f64),
+    Bool(bool),
+    Null,
+}
+
+/// Identifier expression
+#[derive(Debug, Clone)]
+pub struct IdentExpr {
+    pub name: String,
+    pub span: Span,
+}
+
+/// Binary expression
+#[derive(Debug, Clone)]
+pub struct BinaryExpr {
+    pub op: BinaryOp,
+    pub left: Box<Expr>,
+    pub right: Box<Expr>,
+    pub span: Span,
+}
+
+/// Binary operators
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BinaryOp {
+    Add,
+    Sub,
+    Mul,
+    Div,
+    Mod,
+    Eq,
+    NotEq,
+    Lt,
+    Gt,
+    LtEq,
+    GtEq,
+    And,
+    Or,
+}
+
+/// Unary expression
+#[derive(Debug, Clone)]
+pub struct UnaryExpr {
+    pub op: UnaryOp,
+    pub operand: Box<Expr>,
+    pub span: Span,
+}
+
+/// Unary operators
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum UnaryOp {
+    Neg,
+    Not,
+    Deref,
+    Ref,
+    RefMut,
+}
+
+/// Call expression
+#[derive(Debug, Clone)]
+pub struct CallExpr {
+    pub callee: Box<Expr>,
+    pub args: Vec<Expr>,
+    pub span: Span,
+}
+
+/// Member access expression
+#[derive(Debug, Clone)]
+pub struct MemberExpr {
+    pub object: Box<Expr>,
+    pub property: String,
+    pub span: Span,
+}
+
+/// Index expression
+#[derive(Debug, Clone)]
+pub struct IndexExpr {
+    pub object: Box<Expr>,
+    pub index: Box<Expr>,
+    pub span: Span,
+}
+
+/// Struct initialization
+#[derive(Debug, Clone)]
+pub struct StructInitExpr {
+    pub name: String,
+    pub fields: Vec<(String, Expr)>,
+    pub span: Span,
+}
+
+/// Vec initialization
+#[derive(Debug, Clone)]
+pub struct VecInitExpr {
+    pub elements: Vec<Expr>,
+    pub span: Span,
+}
+
+/// If expression
+#[derive(Debug, Clone)]
+pub struct IfExpr {
+    pub condition: Expr,
+    pub then_branch: Block,
+    pub else_branch: Option<Block>,
+    pub span: Span,
+}
+
+/// Match expression
+#[derive(Debug, Clone)]
+pub struct MatchExpr {
+    pub scrutinee: Expr,
+    pub arms: Vec<MatchArm>,
+    pub span: Span,
+}
+
+/// Closure expression
+#[derive(Debug, Clone)]
+pub struct ClosureExpr {
+    pub params: Vec<String>,
+    pub body: Box<Expr>,
+    pub span: Span,
+}
+
+/// Reference expression
+#[derive(Debug, Clone)]
+pub struct RefExpr {
+    pub mutable: bool,
+    pub expr: Box<Expr>,
+    pub span: Span,
+}
+
+/// Dereference expression
+#[derive(Debug, Clone)]
+pub struct DerefExpr {
+    pub expr: Box<Expr>,
+    pub span: Span,
+}
+
+/// Assignment expression
+#[derive(Debug, Clone)]
+pub struct AssignExpr {
+    pub target: Box<Expr>,
+    pub value: Box<Expr>,
+    pub span: Span,
+}
+
+/// Compound assignment expression
+#[derive(Debug, Clone)]
+pub struct CompoundAssignExpr {
+    pub op: CompoundAssignOp,
+    pub target: Box<Expr>,
+    pub value: Box<Expr>,
+    pub span: Span,
+}
+
+/// Compound assignment operators
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CompoundAssignOp {
+    AddAssign,
+    SubAssign,
+    MulAssign,
+    DivAssign,
+}
+
+/// Range expression
+#[derive(Debug, Clone)]
+pub struct RangeExpr {
+    pub start: Option<Box<Expr>>,
+    pub end: Option<Box<Expr>>,
+    pub inclusive: bool,
+    pub span: Span,
+}
