@@ -290,7 +290,17 @@ impl SwcGenerator {
 
         self.emit_line(&format!("{}fn {}({}){} {{", pub_str, f.name, params.join(", "), ret_type));
         self.indent += 1;
+
+        // Track parameter types in the environment
+        self.type_env.push_scope();
+        for param in &f.params {
+            let param_ctx = self.type_from_ast(&param.ty);
+            self.type_env.define(&param.name, param_ctx);
+        }
+
         self.gen_block(&f.body);
+
+        self.type_env.pop_scope();
         self.indent -= 1;
         self.emit_line("}");
     }
@@ -447,7 +457,8 @@ impl SwcGenerator {
             }
             Type::Named(name) => {
                 // Map RustScript AST types to SWC types
-                self.rustscript_to_swc_type(&name.to_lowercase())
+                // Don't lowercase - preserve original case for user-defined types
+                self.rustscript_to_swc_type(name)
             }
             Type::Array { element } => {
                 format!("Vec<{}>", self.type_to_rust(element))
@@ -531,8 +542,10 @@ impl SwcGenerator {
                         var_name, type_name, var_type, swc_enum, swc_variant, swc_struct);
 
                     self.emit_indent();
-                    self.emit(&format!("if let {}::{}({}) = &{} {{\n",
-                        swc_enum, swc_variant, var_name, var_name));
+                    // Handle nested patterns like Expr::Lit(Lit::Str(x))
+                    let extra_close = if swc_variant.contains('(') { ")" } else { "" };
+                    self.emit(&format!("if let {}::{}({}){} = &{} {{\n",
+                        swc_enum, swc_variant, var_name, extra_close, var_name));
 
                     self.indent += 1;
                     self.type_env.push_scope();
@@ -546,7 +559,50 @@ impl SwcGenerator {
                     self.type_env.pop_scope();
                     self.indent -= 1;
 
-                    // Handle else branches (no type narrowing for these)
+                    // Handle else-if branches - each might also be a matches! pattern
+                    for (cond, block) in &if_stmt.else_if_branches {
+                        if let Some((else_var_name, else_type_name)) = self.extract_matches_pattern(cond) {
+                            // This else-if is also a matches! pattern
+                            let else_var_type = self.type_env.lookup(&else_var_name)
+                                .map(|ctx| ctx.swc_type.clone())
+                                .unwrap_or_else(|| "Expr".to_string());
+
+                            let (else_swc_enum, else_swc_variant, else_swc_struct) =
+                                get_swc_variant_in_context(&else_type_name, &else_var_type);
+
+                            #[cfg(debug_assertions)]
+                            eprintln!("[swc] else if matches!({}, {}) -> var_type={}, enum={}, variant={}, struct={}",
+                                else_var_name, else_type_name, else_var_type, else_swc_enum, else_swc_variant, else_swc_struct);
+
+                            self.emit_indent();
+                            // Handle nested patterns like Expr::Lit(Lit::Str(x))
+                            let else_extra_close = if else_swc_variant.contains('(') { ")" } else { "" };
+                            self.emit(&format!("}} else if let {}::{}({}){} = &{} {{\n",
+                                else_swc_enum, else_swc_variant, else_var_name, else_extra_close, else_var_name));
+
+                            self.indent += 1;
+                            self.type_env.push_scope();
+
+                            let else_narrowed_ctx = TypeContext::narrowed(&else_type_name, &else_swc_struct);
+                            self.type_env.define(&else_var_name, else_narrowed_ctx);
+
+                            self.gen_block(block);
+
+                            self.type_env.pop_scope();
+                            self.indent -= 1;
+                        } else {
+                            // Regular else-if condition
+                            self.emit_indent();
+                            self.emit("} else if ");
+                            self.gen_expr(cond);
+                            self.emit(" {\n");
+                            self.indent += 1;
+                            self.gen_block(block);
+                            self.indent -= 1;
+                        }
+                    }
+
+                    // Handle final else branch
                     if let Some(else_block) = &if_stmt.else_branch {
                         self.emit_indent();
                         self.emit("} else {\n");
@@ -1208,7 +1264,8 @@ impl SwcGenerator {
             }
             Expr::StructInit(init) => {
                 // Map RustScript AST types to SWC types
-                let swc_type = self.rustscript_to_swc_type(&init.name.to_lowercase());
+                // Don't lowercase - preserve original case for user-defined types
+                let swc_type = self.rustscript_to_swc_type(&init.name);
 
                 // Handle special SWC struct field mappings
                 let is_ident = swc_type == "Ident";

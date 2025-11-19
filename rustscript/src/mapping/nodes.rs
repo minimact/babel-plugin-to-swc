@@ -172,6 +172,16 @@ pub static NODE_MAPPINGS: Lazy<Vec<NodeMapping>> = Lazy::new(|| vec![
 
     // === Expressions ===
     NodeMapping {
+        rustscript: "Expression",
+        babel: "Expression",
+        swc: "Expr",
+        swc_enum: None,
+        babel_checker: "isExpression",
+        swc_pattern: "Expr",
+        visitor_method: "visit_expression",
+        swc_visitor: "visit_mut_expr",
+    },
+    NodeMapping {
         rustscript: "Identifier",
         babel: "Identifier",
         swc: "Ident",
@@ -701,6 +711,16 @@ pub static NODE_MAPPINGS: Lazy<Vec<NodeMapping>> = Lazy::new(|| vec![
     },
 
     // === Patterns ===
+    NodeMapping {
+        rustscript: "Pattern",
+        babel: "Pattern",
+        swc: "Pat",
+        swc_enum: None,
+        babel_checker: "isPattern",
+        swc_pattern: "Pat",
+        visitor_method: "visit_pattern",
+        swc_visitor: "visit_mut_pat",
+    },
     NodeMapping {
         rustscript: "ArrayPattern",
         babel: "ArrayPattern",

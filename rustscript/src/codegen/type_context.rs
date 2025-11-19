@@ -448,9 +448,13 @@ pub fn get_swc_variant_in_context(rs_type: &str, context: &str) -> (String, Stri
         "ObjectExpression" => ("Expr".into(), "Object".into(), "ObjectLit".into()),
         "FunctionExpression" => ("Expr".into(), "Fn".into(), "FnExpr".into()),
         "ArrowFunctionExpression" => ("Expr".into(), "Arrow".into(), "ArrowExpr".into()),
-        "StringLiteral" => ("Lit".into(), "Str".into(), "Str".into()),
-        "NumericLiteral" => ("Lit".into(), "Num".into(), "Number".into()),
-        "BooleanLiteral" => ("Lit".into(), "Bool".into(), "Bool".into()),
+        // Literals - when context is Expr, we need Expr::Lit(Lit::X) pattern
+        // But the current pattern generation doesn't support nested patterns
+        // For now, map to Expr::Lit for literals in Expr context
+        "StringLiteral" => ("Expr".into(), "Lit(Lit::Str".into(), "Str".into()),
+        "NumericLiteral" => ("Expr".into(), "Lit(Lit::Num".into(), "Number".into()),
+        "BooleanLiteral" => ("Expr".into(), "Lit(Lit::Bool".into(), "Bool".into()),
+        "NullLiteral" => ("Expr".into(), "Lit(Lit::Null".into(), "Null".into()),
 
         // Statements
         "BlockStatement" => ("Stmt".into(), "Block".into(), "BlockStmt".into()),

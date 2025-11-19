@@ -16,8 +16,8 @@ pub struct UseStateInfo {
 
 #[derive(Debug, Clone)]
 pub struct Component {
-    pub use_state: Vec<Usestateinfo>,
-    pub use_client_state: Vec<Usestateinfo>,
+    pub use_state: Vec<UseStateInfo>,
+    pub use_client_state: Vec<UseStateInfo>,
 }
 
 pub struct ExtractUseStateTest {
@@ -29,8 +29,8 @@ impl ExtractUseStateTest {
         Self {}
     }
     
-    pub fn extract_use_state(call: &Callexpression, var_name: &Pattern, component: &mut Component, hook_type: &String) {
-        if let Unknown::ArrayPattern(var_name) = &var_name {
+    pub fn extract_use_state(call: &CallExpr, var_name: &Pat, component: &mut Component, hook_type: &String) {
+        if let Pat::Array(var_name) = &var_name {
             let arr = var_name.clone();
             let mut state_var = None;
             if (arr.elements.len() > 0) {
@@ -54,7 +54,7 @@ impl ExtractUseStateTest {
                     initial_value = generate_csharp_expression(first_arg);
                     state_type = infer_csharp_type(first_arg);
                 }
-                let info = Usestateinfo { var_name: name.clone(), setter_name: setter_var, initial_value: initial_value.to_string(), state_type: state_type.to_string(), is_client_state: (hook_type == "useClientState") };
+                let info = UseStateInfo { var_name: name.clone(), setter_name: setter_var, initial_value: initial_value.to_string(), state_type: state_type.to_string(), is_client_state: (hook_type == "useClientState") };
                 if (hook_type == "useClientState") {
                     component.use_client_state.push(info);
                 } else {
@@ -64,17 +64,33 @@ impl ExtractUseStateTest {
         }
     }
     
-    fn generate_csharp_expression(expr: &Expression) -> String {
-        if let Lit::Str(expr) = &expr {
+    fn generate_csharp_expression(expr: &Expr) -> String {
+        if let Expr::Lit(Lit::Str(expr)) = &expr {
             let s = expr.value.clone();
             return format!("\"{}\"", s);
+        } else if let Expr::Lit(Lit::Num(expr)) = &expr {
+            return expr.value.to_string();
+        } else if let Expr::Lit(Lit::Bool(expr)) = &expr {
+            return expr.value.to_string();
+        } else if let Expr::Lit(Lit::Null(expr)) = &expr {
+            return "null";
+        } else if let Expr::Ident(expr) = &expr {
+            return expr.sym.clone();
         }
         return "null";
     }
     
-    fn infer_csharp_type(expr: &Expression) -> String {
-        if let Lit::Str(expr) = &expr {
+    fn infer_csharp_type(expr: &Expr) -> String {
+        if let Expr::Lit(Lit::Str(expr)) = &expr {
             return "string";
+        } else if let Expr::Lit(Lit::Num(expr)) = &expr {
+            return "int";
+        } else if let Expr::Lit(Lit::Bool(expr)) = &expr {
+            return "bool";
+        } else if let Expr::Array(expr) = &expr {
+            return "List<dynamic>";
+        } else if let Expr::Object(expr) = &expr {
+            return "Dictionary<string, dynamic>";
         }
         return "dynamic";
     }
