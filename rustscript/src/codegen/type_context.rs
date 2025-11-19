@@ -219,6 +219,33 @@ pub fn map_rustscript_to_swc(rs_type: &str) -> (String, SwcTypeKind) {
         "MemberProp" => ("MemberProp".into(), SwcTypeKind::WrapperEnum),
         "PropName" => ("PropName".into(), SwcTypeKind::WrapperEnum),
         "Callee" => ("Callee".into(), SwcTypeKind::WrapperEnum),
+        "JSXObject" => ("JSXObject".into(), SwcTypeKind::WrapperEnum),
+        "JSXElementName" => ("JSXElementName".into(), SwcTypeKind::WrapperEnum),
+        "JSXAttrValue" => ("JSXAttrValue".into(), SwcTypeKind::WrapperEnum),
+        "JSXAttrOrSpread" => ("JSXAttrOrSpread".into(), SwcTypeKind::WrapperEnum),
+
+        // Literal types (Struct after unwrapping from Lit)
+        "StringLiteral" => ("Str".into(), SwcTypeKind::Struct),
+        "NumericLiteral" => ("Number".into(), SwcTypeKind::Struct),
+        "BooleanLiteral" => ("Bool".into(), SwcTypeKind::Struct),
+        "NullLiteral" => ("Null".into(), SwcTypeKind::Struct),
+        "RegExpLiteral" => ("Regex".into(), SwcTypeKind::Struct),
+        "BigIntLiteral" => ("BigInt".into(), SwcTypeKind::Struct),
+
+        // Pattern types (Struct after unwrapping from Pat)
+        "ArrayPattern" => ("ArrayPat".into(), SwcTypeKind::Struct),
+        "ObjectPattern" => ("ObjectPat".into(), SwcTypeKind::Struct),
+        "RestElement" => ("RestPat".into(), SwcTypeKind::Struct),
+        "AssignmentPattern" => ("AssignPat".into(), SwcTypeKind::Struct),
+        "BindingIdentifier" => ("BindingIdent".into(), SwcTypeKind::Struct),
+
+        // JSX types (Struct)
+        "JSXElement" => ("JSXElement".into(), SwcTypeKind::Struct),
+        "JSXFragment" => ("JSXFragment".into(), SwcTypeKind::Struct),
+        "JSXAttribute" => ("JSXAttr".into(), SwcTypeKind::Struct),
+        "JSXExpressionContainer" => ("JSXExprContainer".into(), SwcTypeKind::Struct),
+        "JSXMemberExpression" => ("JSXMemberExpr".into(), SwcTypeKind::Struct),
+        "JSXNamespacedName" => ("JSXNamespacedName".into(), SwcTypeKind::Struct),
 
         // Atom types
         "JsWord" => ("JsWord".into(), SwcTypeKind::Atom),
@@ -244,13 +271,27 @@ pub fn classify_swc_type(type_name: &str) -> SwcTypeKind {
         "Expr" | "Stmt" | "Decl" | "Pat" | "Lit" | "ModuleItem" => SwcTypeKind::Enum,
 
         // Wrapper enums
-        "MemberProp" | "PropName" | "JSXObject" | "Callee" => SwcTypeKind::WrapperEnum,
+        "MemberProp" | "PropName" | "Callee" |
+        "JSXObject" | "JSXElementName" | "JSXAttrValue" | "JSXAttrOrSpread" => SwcTypeKind::WrapperEnum,
 
-        // Structs
-        "Ident" | "MemberExpr" | "CallExpr" | "FnDecl" | "BinExpr" |
+        // Structs - Expressions
+        "Ident" | "MemberExpr" | "CallExpr" | "BinExpr" | "UnaryExpr" |
+        "AssignExpr" | "ArrayLit" | "ObjectLit" | "FnExpr" | "ArrowExpr" |
+        "CondExpr" | "NewExpr" | "SeqExpr" | "ThisExpr" | "Tpl" |
+        // Structs - Statements
         "BlockStmt" | "ReturnStmt" | "IfStmt" | "WhileStmt" | "ForStmt" |
-        "VarDecl" | "ClassDecl" | "FnExpr" | "ArrowExpr" | "AssignExpr" |
-        "ArrayLit" | "ObjectLit" | "ExprStmt" | "UnaryExpr" => SwcTypeKind::Struct,
+        "ForInStmt" | "ForOfStmt" | "SwitchStmt" | "ThrowStmt" | "TryStmt" |
+        "DoWhileStmt" | "BreakStmt" | "ContinueStmt" | "ExprStmt" |
+        // Structs - Declarations
+        "FnDecl" | "VarDecl" | "ClassDecl" |
+        // Structs - Patterns
+        "BindingIdent" | "ArrayPat" | "ObjectPat" | "RestPat" | "AssignPat" |
+        // Structs - Literals
+        "Str" | "Number" | "Bool" | "Null" | "Regex" | "BigInt" |
+        // Structs - JSX
+        "JSXElement" | "JSXFragment" | "JSXAttr" | "JSXExprContainer" |
+        "JSXMemberExpr" | "JSXNamespacedName" | "JSXOpeningElement" |
+        "JSXClosingElement" | "JSXText" | "JSXSpreadChild" => SwcTypeKind::Struct,
 
         // Atoms
         "JsWord" | "Atom" => SwcTypeKind::Atom,
@@ -301,6 +342,82 @@ pub fn get_swc_variant_in_context(rs_type: &str, context: &str) -> (String, Stri
             "Import" => ("Callee".into(), "Import".into(), "Import".into()),
             // Everything else is Callee::Expr(Box<Expr>)
             _ => ("Callee".into(), "Expr".into(), "Expr".into()),
+        };
+    }
+
+    // Handle Lit context - literals
+    if context == "Lit" {
+        return match rs_type {
+            "StringLiteral" => ("Lit".into(), "Str".into(), "Str".into()),
+            "NumericLiteral" => ("Lit".into(), "Num".into(), "Number".into()),
+            "BooleanLiteral" => ("Lit".into(), "Bool".into(), "Bool".into()),
+            "NullLiteral" => ("Lit".into(), "Null".into(), "Null".into()),
+            "RegExpLiteral" => ("Lit".into(), "Regex".into(), "Regex".into()),
+            "BigIntLiteral" => ("Lit".into(), "BigInt".into(), "BigInt".into()),
+            _ => ("Lit".into(), rs_type.to_string(), rs_type.to_string()),
+        };
+    }
+
+    // Handle Pat context - patterns
+    if context == "Pat" {
+        return match rs_type {
+            "Identifier" => ("Pat".into(), "Ident".into(), "BindingIdent".into()),
+            "ArrayPattern" => ("Pat".into(), "Array".into(), "ArrayPat".into()),
+            "ObjectPattern" => ("Pat".into(), "Object".into(), "ObjectPat".into()),
+            "RestElement" => ("Pat".into(), "Rest".into(), "RestPat".into()),
+            "AssignmentPattern" => ("Pat".into(), "Assign".into(), "AssignPat".into()),
+            _ => ("Pat".into(), rs_type.to_string(), rs_type.to_string()),
+        };
+    }
+
+    // Handle PropName context - property names in objects
+    if context == "PropName" {
+        return match rs_type {
+            "Identifier" => ("PropName".into(), "Ident".into(), "Ident".into()),
+            "StringLiteral" => ("PropName".into(), "Str".into(), "Str".into()),
+            "NumericLiteral" => ("PropName".into(), "Num".into(), "Number".into()),
+            "ComputedPropName" => ("PropName".into(), "Computed".into(), "ComputedPropName".into()),
+            "BigIntLiteral" => ("PropName".into(), "BigInt".into(), "BigInt".into()),
+            _ => ("PropName".into(), rs_type.to_string(), rs_type.to_string()),
+        };
+    }
+
+    // Handle JSXObject context - JSX member expression objects
+    if context == "JSXObject" {
+        return match rs_type {
+            "Identifier" => ("JSXObject".into(), "Ident".into(), "Ident".into()),
+            "JSXMemberExpression" => ("JSXObject".into(), "JSXMemberExpr".into(), "JSXMemberExpr".into()),
+            _ => ("JSXObject".into(), rs_type.to_string(), rs_type.to_string()),
+        };
+    }
+
+    // Handle JSXElementName context - JSX element tag names
+    if context == "JSXElementName" {
+        return match rs_type {
+            "Identifier" => ("JSXElementName".into(), "Ident".into(), "Ident".into()),
+            "JSXMemberExpression" => ("JSXElementName".into(), "JSXMemberExpr".into(), "JSXMemberExpr".into()),
+            "JSXNamespacedName" => ("JSXElementName".into(), "JSXNamespacedName".into(), "JSXNamespacedName".into()),
+            _ => ("JSXElementName".into(), rs_type.to_string(), rs_type.to_string()),
+        };
+    }
+
+    // Handle JSXAttrValue context - JSX attribute values
+    if context == "JSXAttrValue" {
+        return match rs_type {
+            "StringLiteral" => ("JSXAttrValue".into(), "Lit".into(), "Lit".into()),
+            "JSXExpressionContainer" => ("JSXAttrValue".into(), "JSXExprContainer".into(), "JSXExprContainer".into()),
+            "JSXElement" => ("JSXAttrValue".into(), "JSXElement".into(), "JSXElement".into()),
+            "JSXFragment" => ("JSXAttrValue".into(), "JSXFragment".into(), "JSXFragment".into()),
+            _ => ("JSXAttrValue".into(), rs_type.to_string(), rs_type.to_string()),
+        };
+    }
+
+    // Handle JSXAttrOrSpread context - JSX attributes
+    if context == "JSXAttrOrSpread" {
+        return match rs_type {
+            "JSXAttribute" => ("JSXAttrOrSpread".into(), "JSXAttr".into(), "JSXAttr".into()),
+            "SpreadElement" => ("JSXAttrOrSpread".into(), "SpreadElement".into(), "SpreadElement".into()),
+            _ => ("JSXAttrOrSpread".into(), rs_type.to_string(), rs_type.to_string()),
         };
     }
 
@@ -446,6 +563,165 @@ pub fn get_typed_field_mapping(parent_swc_type: &str, field: &str) -> Option<Typ
             write_conversion: "",
         }),
 
+        // Literal fields
+        ("Str", "value") => Some(TypedFieldMapping {
+            rustscript_field: "value",
+            swc_field: "value",
+            needs_deref: false,
+            result_type_rs: "Str",
+            result_type_swc: "JsWord",
+            read_conversion: ".to_string()",
+            write_conversion: ".into()",
+        }),
+        ("Number", "value") => Some(TypedFieldMapping {
+            rustscript_field: "value",
+            swc_field: "value",
+            needs_deref: false,
+            result_type_rs: "f64",
+            result_type_swc: "f64",
+            read_conversion: "",
+            write_conversion: "",
+        }),
+        ("Bool", "value") => Some(TypedFieldMapping {
+            rustscript_field: "value",
+            swc_field: "value",
+            needs_deref: false,
+            result_type_rs: "bool",
+            result_type_swc: "bool",
+            read_conversion: "",
+            write_conversion: "",
+        }),
+
+        // Pattern fields
+        ("BindingIdent", "name") | ("BindingIdent", "id") => Some(TypedFieldMapping {
+            rustscript_field: "name",
+            swc_field: "id.sym",
+            needs_deref: false,
+            result_type_rs: "Str",
+            result_type_swc: "JsWord",
+            read_conversion: ".to_string()",
+            write_conversion: ".into()",
+        }),
+        ("ArrayPat", "elements") => Some(TypedFieldMapping {
+            rustscript_field: "elements",
+            swc_field: "elems",
+            needs_deref: false,
+            result_type_rs: "Vec<Option<Pat>>",
+            result_type_swc: "Vec<Option<Pat>>",
+            read_conversion: "",
+            write_conversion: "",
+        }),
+        ("ObjectPat", "properties") => Some(TypedFieldMapping {
+            rustscript_field: "properties",
+            swc_field: "props",
+            needs_deref: false,
+            result_type_rs: "Vec<ObjectPatProp>",
+            result_type_swc: "Vec<ObjectPatProp>",
+            read_conversion: "",
+            write_conversion: "",
+        }),
+        ("RestPat", "argument") => Some(TypedFieldMapping {
+            rustscript_field: "argument",
+            swc_field: "arg",
+            needs_deref: true,
+            result_type_rs: "Pat",
+            result_type_swc: "Pat",
+            read_conversion: "",
+            write_conversion: "",
+        }),
+
+        // JSX fields
+        ("JSXElement", "openingElement") => Some(TypedFieldMapping {
+            rustscript_field: "openingElement",
+            swc_field: "opening",
+            needs_deref: false,
+            result_type_rs: "JSXOpeningElement",
+            result_type_swc: "JSXOpeningElement",
+            read_conversion: "",
+            write_conversion: "",
+        }),
+        ("JSXElement", "closingElement") => Some(TypedFieldMapping {
+            rustscript_field: "closingElement",
+            swc_field: "closing",
+            needs_deref: false,
+            result_type_rs: "Option<JSXClosingElement>",
+            result_type_swc: "Option<JSXClosingElement>",
+            read_conversion: "",
+            write_conversion: "",
+        }),
+        ("JSXElement", "children") => Some(TypedFieldMapping {
+            rustscript_field: "children",
+            swc_field: "children",
+            needs_deref: false,
+            result_type_rs: "Vec<JSXElementChild>",
+            result_type_swc: "Vec<JSXElementChild>",
+            read_conversion: "",
+            write_conversion: "",
+        }),
+        ("JSXOpeningElement", "name") => Some(TypedFieldMapping {
+            rustscript_field: "name",
+            swc_field: "name",
+            needs_deref: false,
+            result_type_rs: "JSXElementName",
+            result_type_swc: "JSXElementName",
+            read_conversion: "",
+            write_conversion: "",
+        }),
+        ("JSXOpeningElement", "attributes") => Some(TypedFieldMapping {
+            rustscript_field: "attributes",
+            swc_field: "attrs",
+            needs_deref: false,
+            result_type_rs: "Vec<JSXAttrOrSpread>",
+            result_type_swc: "Vec<JSXAttrOrSpread>",
+            read_conversion: "",
+            write_conversion: "",
+        }),
+        ("JSXAttr", "name") => Some(TypedFieldMapping {
+            rustscript_field: "name",
+            swc_field: "name",
+            needs_deref: false,
+            result_type_rs: "JSXAttrName",
+            result_type_swc: "JSXAttrName",
+            read_conversion: "",
+            write_conversion: "",
+        }),
+        ("JSXAttr", "value") => Some(TypedFieldMapping {
+            rustscript_field: "value",
+            swc_field: "value",
+            needs_deref: false,
+            result_type_rs: "Option<JSXAttrValue>",
+            result_type_swc: "Option<JSXAttrValue>",
+            read_conversion: "",
+            write_conversion: "",
+        }),
+        ("JSXExprContainer", "expression") => Some(TypedFieldMapping {
+            rustscript_field: "expression",
+            swc_field: "expr",
+            needs_deref: false,
+            result_type_rs: "JSXExpr",
+            result_type_swc: "JSXExpr",
+            read_conversion: "",
+            write_conversion: "",
+        }),
+        ("JSXMemberExpr", "object") => Some(TypedFieldMapping {
+            rustscript_field: "object",
+            swc_field: "obj",
+            needs_deref: false,
+            result_type_rs: "JSXObject",
+            result_type_swc: "JSXObject",
+            read_conversion: "",
+            write_conversion: "",
+        }),
+        ("JSXMemberExpr", "property") => Some(TypedFieldMapping {
+            rustscript_field: "property",
+            swc_field: "prop",
+            needs_deref: false,
+            result_type_rs: "Identifier",
+            result_type_swc: "Ident",
+            read_conversion: "",
+            write_conversion: "",
+        }),
+
         _ => None,
     }
 }
@@ -486,5 +762,105 @@ mod tests {
         assert!(matches!(classify_swc_type("MemberExpr"), SwcTypeKind::Struct));
         assert!(matches!(classify_swc_type("MemberProp"), SwcTypeKind::WrapperEnum));
         assert!(matches!(classify_swc_type("JsWord"), SwcTypeKind::Atom));
+    }
+
+    #[test]
+    fn test_lit_context_patterns() {
+        // Test Lit context mapping
+        let (enum_name, variant, struct_name) = get_swc_variant_in_context("StringLiteral", "Lit");
+        assert_eq!(enum_name, "Lit");
+        assert_eq!(variant, "Str");
+        assert_eq!(struct_name, "Str");
+
+        let (enum_name, variant, struct_name) = get_swc_variant_in_context("NumericLiteral", "Lit");
+        assert_eq!(enum_name, "Lit");
+        assert_eq!(variant, "Num");
+        assert_eq!(struct_name, "Number");
+
+        let (enum_name, variant, struct_name) = get_swc_variant_in_context("BooleanLiteral", "Lit");
+        assert_eq!(enum_name, "Lit");
+        assert_eq!(variant, "Bool");
+        assert_eq!(struct_name, "Bool");
+    }
+
+    #[test]
+    fn test_pat_context_patterns() {
+        // Test Pat context mapping
+        let (enum_name, variant, struct_name) = get_swc_variant_in_context("Identifier", "Pat");
+        assert_eq!(enum_name, "Pat");
+        assert_eq!(variant, "Ident");
+        assert_eq!(struct_name, "BindingIdent");
+
+        let (enum_name, variant, struct_name) = get_swc_variant_in_context("ArrayPattern", "Pat");
+        assert_eq!(enum_name, "Pat");
+        assert_eq!(variant, "Array");
+        assert_eq!(struct_name, "ArrayPat");
+
+        let (enum_name, variant, struct_name) = get_swc_variant_in_context("ObjectPattern", "Pat");
+        assert_eq!(enum_name, "Pat");
+        assert_eq!(variant, "Object");
+        assert_eq!(struct_name, "ObjectPat");
+    }
+
+    #[test]
+    fn test_prop_name_context_patterns() {
+        // Test PropName context mapping
+        let (enum_name, variant, struct_name) = get_swc_variant_in_context("Identifier", "PropName");
+        assert_eq!(enum_name, "PropName");
+        assert_eq!(variant, "Ident");
+        assert_eq!(struct_name, "Ident");
+
+        let (enum_name, variant, struct_name) = get_swc_variant_in_context("StringLiteral", "PropName");
+        assert_eq!(enum_name, "PropName");
+        assert_eq!(variant, "Str");
+        assert_eq!(struct_name, "Str");
+    }
+
+    #[test]
+    fn test_jsx_context_patterns() {
+        // Test JSXObject context mapping
+        let (enum_name, variant, struct_name) = get_swc_variant_in_context("Identifier", "JSXObject");
+        assert_eq!(enum_name, "JSXObject");
+        assert_eq!(variant, "Ident");
+        assert_eq!(struct_name, "Ident");
+
+        let (enum_name, variant, struct_name) = get_swc_variant_in_context("JSXMemberExpression", "JSXObject");
+        assert_eq!(enum_name, "JSXObject");
+        assert_eq!(variant, "JSXMemberExpr");
+        assert_eq!(struct_name, "JSXMemberExpr");
+
+        // Test JSXAttrValue context
+        let (enum_name, variant, struct_name) = get_swc_variant_in_context("StringLiteral", "JSXAttrValue");
+        assert_eq!(enum_name, "JSXAttrValue");
+        assert_eq!(variant, "Lit");
+        assert_eq!(struct_name, "Lit");
+
+        let (enum_name, variant, struct_name) = get_swc_variant_in_context("JSXExpressionContainer", "JSXAttrValue");
+        assert_eq!(enum_name, "JSXAttrValue");
+        assert_eq!(variant, "JSXExprContainer");
+        assert_eq!(struct_name, "JSXExprContainer");
+    }
+
+    #[test]
+    fn test_field_mappings_literals() {
+        // Test literal field mappings
+        let mapping = get_typed_field_mapping("Str", "value").unwrap();
+        assert_eq!(mapping.swc_field, "value");
+        assert_eq!(mapping.result_type_swc, "JsWord");
+
+        let mapping = get_typed_field_mapping("Number", "value").unwrap();
+        assert_eq!(mapping.swc_field, "value");
+        assert_eq!(mapping.result_type_swc, "f64");
+    }
+
+    #[test]
+    fn test_field_mappings_jsx() {
+        // Test JSX field mappings
+        let mapping = get_typed_field_mapping("JSXElement", "openingElement").unwrap();
+        assert_eq!(mapping.swc_field, "opening");
+
+        let mapping = get_typed_field_mapping("JSXOpeningElement", "attributes").unwrap();
+        assert_eq!(mapping.swc_field, "attrs");
+        assert_eq!(mapping.result_type_swc, "Vec<JSXAttrOrSpread>");
     }
 }
