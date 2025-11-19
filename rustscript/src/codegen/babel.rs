@@ -6,6 +6,8 @@ use crate::parser::*;
 pub struct BabelGenerator {
     output: String,
     indent: usize,
+    /// Maps parameter names to their aliases (e.g., "func" -> "node")
+    param_aliases: std::collections::HashMap<String, String>,
 }
 
 impl BabelGenerator {
@@ -13,6 +15,7 @@ impl BabelGenerator {
         Self {
             output: String::new(),
             indent: 0,
+            param_aliases: std::collections::HashMap::new(),
         }
     }
 
@@ -186,10 +189,21 @@ impl BabelGenerator {
         self.emit("\n");
         self.indent += 1;
 
-        // Add node alias
+        // Add node alias and track the parameter rename
         self.emit_line("const node = path.node;");
 
+        // Set up parameter alias: original param name -> "node"
+        if !f.params.is_empty() {
+            let original_name = &f.params[0].name;
+            self.param_aliases.insert(original_name.clone(), "node".to_string());
+        }
+
         self.gen_block(&f.body);
+
+        // Clear the alias after generating the method
+        if !f.params.is_empty() {
+            self.param_aliases.remove(&f.params[0].name);
+        }
 
         self.indent -= 1;
         self.emit_indent();
@@ -504,7 +518,15 @@ impl BabelGenerator {
                 // Handle special cases
                 match ident.name.as_str() {
                     "self" => self.emit("this"),
-                    _ => self.emit(&ident.name),
+                    _ => {
+                        // Check if this identifier has an alias
+                        let output = if let Some(alias) = self.param_aliases.get(&ident.name) {
+                            alias.clone()
+                        } else {
+                            ident.name.clone()
+                        };
+                        self.emit(&output);
+                    }
                 }
             }
             Expr::Binary(bin) => {
@@ -609,17 +631,22 @@ impl BabelGenerator {
                 self.emit("]");
             }
             Expr::StructInit(init) => {
-                // Generate as object literal or constructor call
-                self.emit("{ ");
-                for (i, (name, value)) in init.fields.iter().enumerate() {
-                    if i > 0 {
-                        self.emit(", ");
+                // Check if this is an AST node type that should use Babel builders
+                if let Some(babel_builder) = self.ast_type_to_babel_builder(&init.name) {
+                    self.gen_babel_node_construction(&babel_builder, &init.fields);
+                } else {
+                    // Generate as object literal
+                    self.emit("{ ");
+                    for (i, (name, value)) in init.fields.iter().enumerate() {
+                        if i > 0 {
+                            self.emit(", ");
+                        }
+                        self.emit(name);
+                        self.emit(": ");
+                        self.gen_expr(value);
                     }
-                    self.emit(name);
-                    self.emit(": ");
-                    self.gen_expr(value);
+                    self.emit(" }");
                 }
-                self.emit(" }");
             }
             Expr::VecInit(vec) => {
                 self.emit("[");
@@ -687,14 +714,14 @@ impl BabelGenerator {
             }
             Expr::Assign(assign) => {
                 // Statement lowering: *node = ... becomes path.replaceWith(...)
+                // This applies to any deref assignment, not just "node"
                 if let Expr::Deref(deref) = assign.target.as_ref() {
-                    if let Expr::Ident(ident) = deref.expr.as_ref() {
-                        if ident.name == "node" {
-                            self.emit("path.replaceWith(");
-                            self.gen_expr(&assign.value);
-                            self.emit(")");
-                            return;
-                        }
+                    if let Expr::Ident(_ident) = deref.expr.as_ref() {
+                        // Any dereference assignment in a visitor should use path.replaceWith
+                        self.emit("path.replaceWith(");
+                        self.gen_expr(&assign.value);
+                        self.emit(")");
+                        return;
                     }
                 }
                 // Regular assignment
@@ -786,6 +813,10 @@ impl BabelGenerator {
             "push" => "push".to_string(),
             "clone" => "".to_string(), // Clone is no-op in JS, strip it
             "unwrap_or" => "??".to_string(), // Will need special handling
+            // RustScript to Babel field mappings
+            "stmts" => "body".to_string(), // BlockStatement.stmts -> BlockStatement.body
+            "is_if_statement" => "isIfStatement".to_string(),
+            "is_abstract" => "abstract".to_string(),
             _ => name.to_string(),
         }
     }
@@ -846,6 +877,243 @@ impl BabelGenerator {
                 self.gen_expr(pattern);
             }
         }
+    }
+
+    /// Convert RustScript AST type names to Babel builder function names
+    fn ast_type_to_babel_builder(&self, type_name: &str) -> Option<String> {
+        let builder = match type_name {
+            // Identifiers
+            "Identifier" => "identifier",
+
+            // Literals
+            "StringLiteral" => "stringLiteral",
+            "NumericLiteral" => "numericLiteral",
+            "BooleanLiteral" => "booleanLiteral",
+            "NullLiteral" => "nullLiteral",
+
+            // Expressions
+            "CallExpression" => "callExpression",
+            "MemberExpression" => "memberExpression",
+            "BinaryExpression" => "binaryExpression",
+            "UnaryExpression" => "unaryExpression",
+            "AssignmentExpression" => "assignmentExpression",
+            "ConditionalExpression" => "conditionalExpression",
+            "ArrayExpression" => "arrayExpression",
+            "ObjectExpression" => "objectExpression",
+            "ArrowFunctionExpression" => "arrowFunctionExpression",
+            "FunctionExpression" => "functionExpression",
+            "AwaitExpression" => "awaitExpression",
+            "SpreadElement" => "spreadElement",
+
+            // Statements
+            "ExpressionStatement" => "expressionStatement",
+            "ReturnStatement" => "returnStatement",
+            "IfStatement" => "ifStatement",
+            "BlockStatement" => "blockStatement",
+            "VariableDeclaration" => "variableDeclaration",
+            "VariableDeclarator" => "variableDeclarator",
+            "ForStatement" => "forStatement",
+            "ForOfStatement" => "forOfStatement",
+            "WhileStatement" => "whileStatement",
+            "ThrowStatement" => "throwStatement",
+            "TryStatement" => "tryStatement",
+            "CatchClause" => "catchClause",
+
+            // Declarations
+            "FunctionDeclaration" => "functionDeclaration",
+            "ClassDeclaration" => "classDeclaration",
+            "ImportDeclaration" => "importDeclaration",
+            "ExportDeclaration" => "exportDeclaration",
+
+            // Object/Class members
+            "ObjectProperty" => "objectProperty",
+            "ObjectMethod" => "objectMethod",
+            "ClassMethod" => "classMethod",
+            "ClassProperty" => "classProperty",
+
+            // JSX
+            "JSXElement" => "jsxElement",
+            "JSXFragment" => "jsxFragment",
+            "JSXOpeningElement" => "jsxOpeningElement",
+            "JSXClosingElement" => "jsxClosingElement",
+            "JSXAttribute" => "jsxAttribute",
+            "JSXIdentifier" => "jsxIdentifier",
+            "JSXText" => "jsxText",
+            "JSXExpressionContainer" => "jsxExpressionContainer",
+            "JSXSpreadAttribute" => "jsxSpreadAttribute",
+
+            // Patterns
+            "ObjectPattern" => "objectPattern",
+            "ArrayPattern" => "arrayPattern",
+            "RestElement" => "restElement",
+            "AssignmentPattern" => "assignmentPattern",
+
+            // Not an AST node type
+            _ => return None,
+        };
+        Some(builder.to_string())
+    }
+
+    /// Generate Babel node construction call
+    fn gen_babel_node_construction(&mut self, builder: &str, fields: &[(String, Expr)]) {
+        self.emit(&format!("t.{}(", builder));
+
+        // Different builders take different argument orders
+        // We'll generate based on common patterns
+        match builder {
+            "identifier" => {
+                // t.identifier(name)
+                if let Some((_, value)) = fields.iter().find(|(k, _)| k == "name") {
+                    self.gen_expr(value);
+                }
+            }
+            "stringLiteral" => {
+                // t.stringLiteral(value)
+                if let Some((_, value)) = fields.iter().find(|(k, _)| k == "value") {
+                    self.gen_expr(value);
+                }
+            }
+            "numericLiteral" => {
+                // t.numericLiteral(value)
+                if let Some((_, value)) = fields.iter().find(|(k, _)| k == "value") {
+                    self.gen_expr(value);
+                }
+            }
+            "booleanLiteral" => {
+                // t.booleanLiteral(value)
+                if let Some((_, value)) = fields.iter().find(|(k, _)| k == "value") {
+                    self.gen_expr(value);
+                }
+            }
+            "callExpression" => {
+                // t.callExpression(callee, arguments)
+                if let Some((_, callee)) = fields.iter().find(|(k, _)| k == "callee") {
+                    self.gen_expr(callee);
+                }
+                self.emit(", ");
+                if let Some((_, args)) = fields.iter().find(|(k, _)| k == "arguments") {
+                    self.gen_expr(args);
+                } else {
+                    self.emit("[]");
+                }
+            }
+            "memberExpression" => {
+                // t.memberExpression(object, property, computed, optional)
+                if let Some((_, obj)) = fields.iter().find(|(k, _)| k == "object") {
+                    self.gen_expr(obj);
+                }
+                self.emit(", ");
+                if let Some((_, prop)) = fields.iter().find(|(k, _)| k == "property") {
+                    self.gen_expr(prop);
+                }
+                // Add computed flag if present
+                if let Some((_, computed)) = fields.iter().find(|(k, _)| k == "computed") {
+                    self.emit(", ");
+                    self.gen_expr(computed);
+                }
+            }
+            "expressionStatement" => {
+                // t.expressionStatement(expression)
+                if let Some((_, expr)) = fields.iter().find(|(k, _)| k == "expression") {
+                    self.gen_expr(expr);
+                }
+            }
+            "returnStatement" => {
+                // t.returnStatement(argument)
+                if let Some((_, arg)) = fields.iter().find(|(k, _)| k == "argument") {
+                    self.gen_expr(arg);
+                } else {
+                    self.emit("null");
+                }
+            }
+            "blockStatement" => {
+                // t.blockStatement(body)
+                if let Some((_, body)) = fields.iter().find(|(k, _)| k == "body") {
+                    self.gen_expr(body);
+                } else {
+                    self.emit("[]");
+                }
+            }
+            "variableDeclaration" => {
+                // t.variableDeclaration(kind, declarations)
+                if let Some((_, kind)) = fields.iter().find(|(k, _)| k == "kind") {
+                    self.gen_expr(kind);
+                } else {
+                    self.emit("\"const\"");
+                }
+                self.emit(", ");
+                if let Some((_, decls)) = fields.iter().find(|(k, _)| k == "declarations") {
+                    self.gen_expr(decls);
+                } else {
+                    self.emit("[]");
+                }
+            }
+            "variableDeclarator" => {
+                // t.variableDeclarator(id, init)
+                if let Some((_, id)) = fields.iter().find(|(k, _)| k == "id") {
+                    self.gen_expr(id);
+                }
+                if let Some((_, init)) = fields.iter().find(|(k, _)| k == "init") {
+                    self.emit(", ");
+                    self.gen_expr(init);
+                }
+            }
+            "jsxElement" => {
+                // t.jsxElement(openingElement, closingElement, children)
+                if let Some((_, open)) = fields.iter().find(|(k, _)| k == "openingElement") {
+                    self.gen_expr(open);
+                }
+                self.emit(", ");
+                if let Some((_, close)) = fields.iter().find(|(k, _)| k == "closingElement") {
+                    self.gen_expr(close);
+                } else {
+                    self.emit("null");
+                }
+                self.emit(", ");
+                if let Some((_, children)) = fields.iter().find(|(k, _)| k == "children") {
+                    self.gen_expr(children);
+                } else {
+                    self.emit("[]");
+                }
+            }
+            "jsxIdentifier" => {
+                // t.jsxIdentifier(name)
+                if let Some((_, name)) = fields.iter().find(|(k, _)| k == "name") {
+                    self.gen_expr(name);
+                }
+            }
+            "jsxAttribute" => {
+                // t.jsxAttribute(name, value)
+                if let Some((_, name)) = fields.iter().find(|(k, _)| k == "name") {
+                    self.gen_expr(name);
+                }
+                if let Some((_, value)) = fields.iter().find(|(k, _)| k == "value") {
+                    self.emit(", ");
+                    self.gen_expr(value);
+                }
+            }
+            "jsxExpressionContainer" => {
+                // t.jsxExpressionContainer(expression)
+                if let Some((_, expr)) = fields.iter().find(|(k, _)| k == "expression") {
+                    self.gen_expr(expr);
+                }
+            }
+            _ => {
+                // For other builders, generate as object with fields
+                self.emit("{ ");
+                for (i, (name, value)) in fields.iter().enumerate() {
+                    if i > 0 {
+                        self.emit(", ");
+                    }
+                    self.emit(name);
+                    self.emit(": ");
+                    self.gen_expr(value);
+                }
+                self.emit(" }");
+            }
+        }
+
+        self.emit(")");
     }
 }
 

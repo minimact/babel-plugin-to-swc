@@ -7,12 +7,29 @@ module.exports = function({ types: t }) {
   
   return {
     visitor: {
-      CallExpression(path) {
+      FunctionDeclaration(path) {
         const node = path.node;
-        if ((t.isMemberExpression(node.callee) && t.isIdentifier(node.callee.object) && node.callee.object.name === "console" && t.isIdentifier(node.callee.property) && node.callee.property.name === "log")) {
-          path.replaceWith({ callee: { name: "void" }, arguments: [{ value: 0 }] });
+        for (const stmt of node.body.body) {
+          if (stmt.isIfStatement()) {
+            const __nestedVisitor = {
+              state: {
+                return_count: 0,
+              },
+              ReturnStatement(path) {
+                const ret = path.node;
+                path.replaceWith(t.returnStatement(null));
+                this.return_count += 1;
+              },
+            };
+            stmt.traverse(__nestedVisitor);
+          }
         }
-        /* Babel auto-traverses */;
+      },
+      ClassDeclaration(path) {
+        const node = path.node;
+        if (node.abstract) {
+          node.traverse(CleanupVisitor);
+        }
       }
     }
   };

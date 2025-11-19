@@ -1,0 +1,18 @@
+//! AST Mapping Tables for RustScript
+//!
+//! This module provides comprehensive mappings between:
+//! - RustScript unified AST types
+//! - Babel (ESTree) AST types
+//! - SWC (swc_ecma_ast) types
+//!
+//! These mappings are used by code generators to emit correct platform-specific code.
+
+mod nodes;
+mod fields;
+mod helpers;
+mod patterns;
+
+pub use nodes::{NodeMapping, NODE_MAPPINGS, get_node_mapping};
+pub use fields::{FieldMapping, get_field_mapping};
+pub use helpers::{HelperMapping, get_helper_for_field};
+pub use patterns::{PatternMapping, get_pattern_check};

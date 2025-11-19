@@ -592,9 +592,16 @@ impl SwcGenerator {
                         "Expr".to_string()
                     };
 
-                    struct_def.push_str(&format!("    fn {}(&mut self, n: &mut {}) {{\n", swc_method, param_type));
+                    // Get the original parameter name from the method
+                    let param_name = if !method.params.is_empty() {
+                        &method.params[0].name
+                    } else {
+                        "n"
+                    };
 
-                    // Generate method body (simplified for now)
+                    struct_def.push_str(&format!("    fn {}(&mut self, {}: &mut {}) {{\n", swc_method, param_name, param_type));
+
+                    // Generate method body
                     let mut body_gen = SwcGenerator::new();
                     body_gen.indent = 2;
                     body_gen.gen_block(&method.body);

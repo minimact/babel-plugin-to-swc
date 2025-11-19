@@ -5,25 +5,46 @@ use swc_common::{Span, DUMMY_SP};
 use swc_ecma_ast::*;
 use swc_ecma_visit::{VisitMut, VisitMutWith};
 
-pub struct ConsoleStripper {
+pub struct TraverseTest {
     // Plugin state
 }
 
-impl ConsoleStripper {
+impl TraverseTest {
     pub fn new() -> Self {
         Self {}
     }
 }
 
-impl VisitMut for ConsoleStripper {
+impl VisitMut for TraverseTest {
     
-    fn visit_mut_call_expr(&mut self, n: &mut CallExpr) {
-        if {
-            let __matched = matches!(n.callee, Expr::Member(_)) && { if let Expr::Member(mem) = &n.callee { matches!((*mem.obj), Expr::Ident(_)) && { if let Expr::Ident(id) = &(*mem.obj) { &*id.sym == "console" } else { false } } } else { false } } && { if let Expr::Member(mem) = &n.callee { matches!(mem.prop, MemberProp::Ident(_)) && { if let MemberProp::Ident(id) = &mem.prop { &*id.sym == "log" } else { false } } } else { false } };
-            __matched
-        } {
-            *n = CallExpr { callee: Callee::Expr(Box::new(Expr::Ident(Ident { sym: "void".into(), span: DUMMY_SP, ..Default::default() }))), args: vec![], span: DUMMY_SP, ..Default::default() };
+    fn visit_mut_fn_decl(&mut self, n: &mut FnDecl) {
+        for stmt in &mut n.body.stmts {
+            if stmt.is_if_statement() {
+                let mut __visitor = __InlineVisitor_0 {
+                    return_count: 0,
+                };
+                stmt.visit_mut_with(&mut __visitor);
+            }
         }
-        n.visit_mut_children_with(self);
+    }
+    
+    fn visit_mut_class_declaration(&mut self, n: &mut ClassDeclaration) {
+        if n.is_abstract {
+            let mut __visitor = CleanupVisitor::default();
+            n.visit_mut_with(&mut __visitor);
+        }
     }
 }
+
+// Hoisted inline visitors for traverse blocks
+struct __InlineVisitor_0 {
+    return_count: i32,
+}
+
+impl VisitMut for __InlineVisitor_0 {
+    fn visit_mut_return_statement(&mut self, ret: &mut ReturnStmt) {
+        *ret = ReturnStmt { argument: None };
+        self.return_count += 1;
+    }
+}
+

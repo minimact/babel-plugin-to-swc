@@ -1,0 +1,620 @@
+//! Field mappings between RustScript, Babel, and SWC
+//!
+//! This module handles the field-level divergence between platforms.
+//! For example: `node.name` in Babel vs `node.sym` in SWC.
+
+use std::collections::HashMap;
+use once_cell::sync::Lazy;
+
+/// Field mapping for a specific node type
+#[derive(Debug, Clone)]
+pub struct FieldMapping {
+    /// Node type this field belongs to
+    pub node_type: &'static str,
+    /// RustScript field name
+    pub rustscript: &'static str,
+    /// Babel field access
+    pub babel: &'static str,
+    /// SWC field access (may include conversions)
+    pub swc: &'static str,
+    /// SWC type of this field
+    pub swc_type: &'static str,
+    /// Whether this field needs Box unwrapping in SWC
+    pub needs_box_unwrap: bool,
+    /// Whether this field is optional
+    pub optional: bool,
+    /// Conversion needed when reading (e.g., JsWord → String)
+    pub read_conversion: Option<&'static str>,
+    /// Conversion needed when writing (e.g., String → JsWord)
+    pub write_conversion: Option<&'static str>,
+}
+
+/// All field mappings
+pub static FIELD_MAPPINGS: Lazy<Vec<FieldMapping>> = Lazy::new(|| vec![
+    // === Identifier ===
+    FieldMapping {
+        node_type: "Identifier",
+        rustscript: "name",
+        babel: "name",
+        swc: "sym",
+        swc_type: "Atom",
+        needs_box_unwrap: false,
+        optional: false,
+        read_conversion: Some(".to_string()"),
+        write_conversion: Some(".into()"),
+    },
+
+    // === FunctionDeclaration ===
+    FieldMapping {
+        node_type: "FunctionDeclaration",
+        rustscript: "id",
+        babel: "id",
+        swc: "ident",
+        swc_type: "Ident",
+        needs_box_unwrap: false,
+        optional: false,
+        read_conversion: None,
+        write_conversion: None,
+    },
+    FieldMapping {
+        node_type: "FunctionDeclaration",
+        rustscript: "params",
+        babel: "params",
+        swc: "function.params",
+        swc_type: "Vec<Param>",
+        needs_box_unwrap: false,
+        optional: false,
+        read_conversion: None,
+        write_conversion: None,
+    },
+    FieldMapping {
+        node_type: "FunctionDeclaration",
+        rustscript: "body",
+        babel: "body",
+        swc: "function.body",
+        swc_type: "Option<BlockStmt>",
+        needs_box_unwrap: false,
+        optional: true,
+        read_conversion: None,
+        write_conversion: None,
+    },
+    FieldMapping {
+        node_type: "FunctionDeclaration",
+        rustscript: "async",
+        babel: "async",
+        swc: "function.is_async",
+        swc_type: "bool",
+        needs_box_unwrap: false,
+        optional: false,
+        read_conversion: None,
+        write_conversion: None,
+    },
+    FieldMapping {
+        node_type: "FunctionDeclaration",
+        rustscript: "generator",
+        babel: "generator",
+        swc: "function.is_generator",
+        swc_type: "bool",
+        needs_box_unwrap: false,
+        optional: false,
+        read_conversion: None,
+        write_conversion: None,
+    },
+
+    // === CallExpression ===
+    FieldMapping {
+        node_type: "CallExpression",
+        rustscript: "callee",
+        babel: "callee",
+        swc: "callee",
+        swc_type: "Callee",
+        needs_box_unwrap: false,
+        optional: false,
+        read_conversion: None,
+        write_conversion: None,
+    },
+    FieldMapping {
+        node_type: "CallExpression",
+        rustscript: "arguments",
+        babel: "arguments",
+        swc: "args",
+        swc_type: "Vec<ExprOrSpread>",
+        needs_box_unwrap: false,
+        optional: false,
+        read_conversion: None,
+        write_conversion: None,
+    },
+
+    // === MemberExpression ===
+    FieldMapping {
+        node_type: "MemberExpression",
+        rustscript: "object",
+        babel: "object",
+        swc: "obj",
+        swc_type: "Box<Expr>",
+        needs_box_unwrap: true,
+        optional: false,
+        read_conversion: None,
+        write_conversion: None,
+    },
+    FieldMapping {
+        node_type: "MemberExpression",
+        rustscript: "property",
+        babel: "property",
+        swc: "prop",
+        swc_type: "MemberProp",
+        needs_box_unwrap: false,
+        optional: false,
+        read_conversion: None,
+        write_conversion: None,
+    },
+    FieldMapping {
+        node_type: "MemberExpression",
+        rustscript: "computed",
+        babel: "computed",
+        swc: "computed", // Inferred from MemberProp variant
+        swc_type: "bool",
+        needs_box_unwrap: false,
+        optional: false,
+        read_conversion: Some("matches!(prop, MemberProp::Computed(_))"),
+        write_conversion: None,
+    },
+
+    // === BinaryExpression ===
+    FieldMapping {
+        node_type: "BinaryExpression",
+        rustscript: "left",
+        babel: "left",
+        swc: "left",
+        swc_type: "Box<Expr>",
+        needs_box_unwrap: true,
+        optional: false,
+        read_conversion: None,
+        write_conversion: None,
+    },
+    FieldMapping {
+        node_type: "BinaryExpression",
+        rustscript: "right",
+        babel: "right",
+        swc: "right",
+        swc_type: "Box<Expr>",
+        needs_box_unwrap: true,
+        optional: false,
+        read_conversion: None,
+        write_conversion: None,
+    },
+    FieldMapping {
+        node_type: "BinaryExpression",
+        rustscript: "operator",
+        babel: "operator",
+        swc: "op",
+        swc_type: "BinaryOp",
+        needs_box_unwrap: false,
+        optional: false,
+        read_conversion: Some("op_to_string()"),
+        write_conversion: Some("string_to_op()"),
+    },
+
+    // === AssignmentExpression ===
+    FieldMapping {
+        node_type: "AssignmentExpression",
+        rustscript: "left",
+        babel: "left",
+        swc: "left",
+        swc_type: "AssignTarget",
+        needs_box_unwrap: false,
+        optional: false,
+        read_conversion: None,
+        write_conversion: None,
+    },
+    FieldMapping {
+        node_type: "AssignmentExpression",
+        rustscript: "right",
+        babel: "right",
+        swc: "right",
+        swc_type: "Box<Expr>",
+        needs_box_unwrap: true,
+        optional: false,
+        read_conversion: None,
+        write_conversion: None,
+    },
+    FieldMapping {
+        node_type: "AssignmentExpression",
+        rustscript: "operator",
+        babel: "operator",
+        swc: "op",
+        swc_type: "AssignOp",
+        needs_box_unwrap: false,
+        optional: false,
+        read_conversion: None,
+        write_conversion: None,
+    },
+
+    // === VariableDeclaration ===
+    FieldMapping {
+        node_type: "VariableDeclaration",
+        rustscript: "kind",
+        babel: "kind",
+        swc: "kind",
+        swc_type: "VarDeclKind",
+        needs_box_unwrap: false,
+        optional: false,
+        read_conversion: None,
+        write_conversion: None,
+    },
+    FieldMapping {
+        node_type: "VariableDeclaration",
+        rustscript: "declarations",
+        babel: "declarations",
+        swc: "decls",
+        swc_type: "Vec<VarDeclarator>",
+        needs_box_unwrap: false,
+        optional: false,
+        read_conversion: None,
+        write_conversion: None,
+    },
+
+    // === VariableDeclarator ===
+    FieldMapping {
+        node_type: "VariableDeclarator",
+        rustscript: "id",
+        babel: "id",
+        swc: "name",
+        swc_type: "Pat",
+        needs_box_unwrap: false,
+        optional: false,
+        read_conversion: None,
+        write_conversion: None,
+    },
+    FieldMapping {
+        node_type: "VariableDeclarator",
+        rustscript: "init",
+        babel: "init",
+        swc: "init",
+        swc_type: "Option<Box<Expr>>",
+        needs_box_unwrap: true,
+        optional: true,
+        read_conversion: None,
+        write_conversion: None,
+    },
+
+    // === ReturnStatement ===
+    FieldMapping {
+        node_type: "ReturnStatement",
+        rustscript: "argument",
+        babel: "argument",
+        swc: "arg",
+        swc_type: "Option<Box<Expr>>",
+        needs_box_unwrap: true,
+        optional: true,
+        read_conversion: None,
+        write_conversion: None,
+    },
+
+    // === IfStatement ===
+    FieldMapping {
+        node_type: "IfStatement",
+        rustscript: "test",
+        babel: "test",
+        swc: "test",
+        swc_type: "Box<Expr>",
+        needs_box_unwrap: true,
+        optional: false,
+        read_conversion: None,
+        write_conversion: None,
+    },
+    FieldMapping {
+        node_type: "IfStatement",
+        rustscript: "consequent",
+        babel: "consequent",
+        swc: "cons",
+        swc_type: "Box<Stmt>",
+        needs_box_unwrap: true,
+        optional: false,
+        read_conversion: None,
+        write_conversion: None,
+    },
+    FieldMapping {
+        node_type: "IfStatement",
+        rustscript: "alternate",
+        babel: "alternate",
+        swc: "alt",
+        swc_type: "Option<Box<Stmt>>",
+        needs_box_unwrap: true,
+        optional: true,
+        read_conversion: None,
+        write_conversion: None,
+    },
+
+    // === BlockStatement ===
+    FieldMapping {
+        node_type: "BlockStatement",
+        rustscript: "body",
+        babel: "body",
+        swc: "stmts",
+        swc_type: "Vec<Stmt>",
+        needs_box_unwrap: false,
+        optional: false,
+        read_conversion: None,
+        write_conversion: None,
+    },
+
+    // === ArrowFunctionExpression ===
+    FieldMapping {
+        node_type: "ArrowFunctionExpression",
+        rustscript: "params",
+        babel: "params",
+        swc: "params",
+        swc_type: "Vec<Pat>",
+        needs_box_unwrap: false,
+        optional: false,
+        read_conversion: None,
+        write_conversion: None,
+    },
+    FieldMapping {
+        node_type: "ArrowFunctionExpression",
+        rustscript: "body",
+        babel: "body",
+        swc: "body",
+        swc_type: "Box<BlockStmtOrExpr>",
+        needs_box_unwrap: true,
+        optional: false,
+        read_conversion: None,
+        write_conversion: None,
+    },
+    FieldMapping {
+        node_type: "ArrowFunctionExpression",
+        rustscript: "async",
+        babel: "async",
+        swc: "is_async",
+        swc_type: "bool",
+        needs_box_unwrap: false,
+        optional: false,
+        read_conversion: None,
+        write_conversion: None,
+    },
+
+    // === StringLiteral ===
+    FieldMapping {
+        node_type: "StringLiteral",
+        rustscript: "value",
+        babel: "value",
+        swc: "value",
+        swc_type: "Atom",
+        needs_box_unwrap: false,
+        optional: false,
+        read_conversion: Some(".to_string()"),
+        write_conversion: Some(".into()"),
+    },
+
+    // === NumericLiteral ===
+    FieldMapping {
+        node_type: "NumericLiteral",
+        rustscript: "value",
+        babel: "value",
+        swc: "value",
+        swc_type: "f64",
+        needs_box_unwrap: false,
+        optional: false,
+        read_conversion: None,
+        write_conversion: None,
+    },
+
+    // === ArrayExpression ===
+    FieldMapping {
+        node_type: "ArrayExpression",
+        rustscript: "elements",
+        babel: "elements",
+        swc: "elems",
+        swc_type: "Vec<Option<ExprOrSpread>>",
+        needs_box_unwrap: false,
+        optional: false,
+        read_conversion: None,
+        write_conversion: None,
+    },
+
+    // === ObjectExpression ===
+    FieldMapping {
+        node_type: "ObjectExpression",
+        rustscript: "properties",
+        babel: "properties",
+        swc: "props",
+        swc_type: "Vec<PropOrSpread>",
+        needs_box_unwrap: false,
+        optional: false,
+        read_conversion: None,
+        write_conversion: None,
+    },
+
+    // === ImportDeclaration ===
+    FieldMapping {
+        node_type: "ImportDeclaration",
+        rustscript: "source",
+        babel: "source",
+        swc: "src",
+        swc_type: "Box<Str>",
+        needs_box_unwrap: true,
+        optional: false,
+        read_conversion: None,
+        write_conversion: None,
+    },
+    FieldMapping {
+        node_type: "ImportDeclaration",
+        rustscript: "specifiers",
+        babel: "specifiers",
+        swc: "specifiers",
+        swc_type: "Vec<ImportSpecifier>",
+        needs_box_unwrap: false,
+        optional: false,
+        read_conversion: None,
+        write_conversion: None,
+    },
+
+    // === JSXElement ===
+    FieldMapping {
+        node_type: "JSXElement",
+        rustscript: "openingElement",
+        babel: "openingElement",
+        swc: "opening",
+        swc_type: "JSXOpeningElement",
+        needs_box_unwrap: false,
+        optional: false,
+        read_conversion: None,
+        write_conversion: None,
+    },
+    FieldMapping {
+        node_type: "JSXElement",
+        rustscript: "children",
+        babel: "children",
+        swc: "children",
+        swc_type: "Vec<JSXElementChild>",
+        needs_box_unwrap: false,
+        optional: false,
+        read_conversion: None,
+        write_conversion: None,
+    },
+    FieldMapping {
+        node_type: "JSXElement",
+        rustscript: "closingElement",
+        babel: "closingElement",
+        swc: "closing",
+        swc_type: "Option<JSXClosingElement>",
+        needs_box_unwrap: false,
+        optional: true,
+        read_conversion: None,
+        write_conversion: None,
+    },
+
+    // === JSXOpeningElement ===
+    FieldMapping {
+        node_type: "JSXOpeningElement",
+        rustscript: "name",
+        babel: "name",
+        swc: "name",
+        swc_type: "JSXElementName",
+        needs_box_unwrap: false,
+        optional: false,
+        read_conversion: None,
+        write_conversion: None,
+    },
+    FieldMapping {
+        node_type: "JSXOpeningElement",
+        rustscript: "attributes",
+        babel: "attributes",
+        swc: "attrs",
+        swc_type: "Vec<JSXAttrOrSpread>",
+        needs_box_unwrap: false,
+        optional: false,
+        read_conversion: None,
+        write_conversion: None,
+    },
+    FieldMapping {
+        node_type: "JSXOpeningElement",
+        rustscript: "selfClosing",
+        babel: "selfClosing",
+        swc: "self_closing",
+        swc_type: "bool",
+        needs_box_unwrap: false,
+        optional: false,
+        read_conversion: None,
+        write_conversion: None,
+    },
+
+    // === JSXAttribute ===
+    FieldMapping {
+        node_type: "JSXAttribute",
+        rustscript: "name",
+        babel: "name",
+        swc: "name",
+        swc_type: "JSXAttrName",
+        needs_box_unwrap: false,
+        optional: false,
+        read_conversion: None,
+        write_conversion: None,
+    },
+    FieldMapping {
+        node_type: "JSXAttribute",
+        rustscript: "value",
+        babel: "value",
+        swc: "value",
+        swc_type: "Option<JSXAttrValue>",
+        needs_box_unwrap: false,
+        optional: true,
+        read_conversion: None,
+        write_conversion: None,
+    },
+]);
+
+/// Index for fast lookup by (node_type, field_name)
+pub static FIELD_MAP: Lazy<HashMap<(&'static str, &'static str), &'static FieldMapping>> = Lazy::new(|| {
+    FIELD_MAPPINGS
+        .iter()
+        .map(|m| ((m.node_type, m.rustscript), m))
+        .collect()
+});
+
+/// Get field mapping
+pub fn get_field_mapping(node_type: &str, field_name: &str) -> Option<&'static FieldMapping> {
+    FIELD_MAP.get(&(node_type, field_name)).copied()
+}
+
+/// Get all fields for a node type
+pub fn get_fields_for_node(node_type: &str) -> Vec<&'static FieldMapping> {
+    FIELD_MAPPINGS
+        .iter()
+        .filter(|m| m.node_type == node_type)
+        .collect()
+}
+
+/// Generate Babel field access code
+pub fn gen_babel_field_access(node_var: &str, node_type: &str, field_name: &str) -> String {
+    if let Some(mapping) = get_field_mapping(node_type, field_name) {
+        format!("{}.{}", node_var, mapping.babel)
+    } else {
+        format!("{}.{}", node_var, field_name)
+    }
+}
+
+/// Generate SWC field access code
+pub fn gen_swc_field_access(node_var: &str, node_type: &str, field_name: &str) -> String {
+    if let Some(mapping) = get_field_mapping(node_type, field_name) {
+        let base = format!("{}.{}", node_var, mapping.swc);
+        if let Some(conversion) = mapping.read_conversion {
+            format!("{}{}", base, conversion)
+        } else if mapping.needs_box_unwrap {
+            format!("&*{}", base)
+        } else {
+            base
+        }
+    } else {
+        format!("{}.{}", node_var, field_name)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_identifier_name_mapping() {
+        let mapping = get_field_mapping("Identifier", "name").unwrap();
+        assert_eq!(mapping.babel, "name");
+        assert_eq!(mapping.swc, "sym");
+        assert_eq!(mapping.read_conversion, Some(".to_string()"));
+    }
+
+    #[test]
+    fn test_call_expression_arguments() {
+        let mapping = get_field_mapping("CallExpression", "arguments").unwrap();
+        assert_eq!(mapping.babel, "arguments");
+        assert_eq!(mapping.swc, "args");
+    }
+
+    #[test]
+    fn test_gen_field_access() {
+        let babel = gen_babel_field_access("node", "Identifier", "name");
+        let swc = gen_swc_field_access("node", "Identifier", "name");
+        assert_eq!(babel, "node.name");
+        assert_eq!(swc, "node.sym.to_string()");
+    }
+}
