@@ -1,0 +1,437 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateRustTaskFiles",
+  "params": [
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "outputDir",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateRustTaskFiles(component, outputDir) {\r\n  if (!component.useServerTask || component.useServerTask.length === 0) {\r\n    return [];\r\n  }\r\n\r\n  const rustTasks = component.useServerTask.filter(task => task.runtime === 'rust');\r\n\r\n  if (rustTasks.length === 0) {\r\n    return [];\r\n  }\r\n\r\n  const generatedFiles = [];\r\n\r\n  for (let i = 0; i < rustTasks.length; i++) {\r\n    const task = rustTasks[i];\r\n    const taskId = `server_task_${i}`;\r\n    const fileName = `${taskId}.rs`;\r\n    const filePath = path.join(outputDir, fileName);\r\n\r\n    // Generate Rust code\r\n    const rustCode = generateRustTask(task, taskId, i);\r\n\r\n    // Write file\r\n    fs.mkdirSync(outputDir, { recursive: true });\r\n    fs.writeFileSync(filePath, rustCode);\r\n\r\n    generatedFiles.push({\r\n      taskId,\r\n      fileName,\r\n      filePath,\r\n      parallel: task.parallel\r\n    });\r\n\r\n    console.log(`[Rust] Generated ${fileName} (${task.parallel ? 'parallel' : 'sequential'})`);\r\n  }\r\n\r\n  return generatedFiles;\r\n}",
+  "body_templates": [
+    {
+      "hash": "ea78a580",
+      "type": "IfStatement",
+      "condition": "!component.useServerTask || component.useServerTask.length === 0",
+      "babel_source": "if (!component.useServerTask || component.useServerTask.length === 0) {\r\n    return [];\r\n  }",
+      "parentContext": {
+        "functionName": "generateRustTaskFiles",
+        "functionParams": [
+          "component",
+          "outputDir"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6f0a19d9",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "!component.useServerTask || component.useServerTask.length === 0",
+      "parentContext": {
+        "functionName": "generateRustTaskFiles",
+        "functionParams": [
+          "component",
+          "outputDir"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6123203e",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!component.useServerTask",
+      "parentContext": {
+        "functionName": "generateRustTaskFiles",
+        "functionParams": [
+          "component",
+          "outputDir"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "166f2e7e",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "component.useServerTask.length === 0",
+      "parentContext": {
+        "functionName": "generateRustTaskFiles",
+        "functionParams": [
+          "component",
+          "outputDir"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c7221e11",
+      "type": "ReturnStatement",
+      "babel_source": "return [];",
+      "parentContext": {
+        "functionName": "generateRustTaskFiles",
+        "functionParams": [
+          "component",
+          "outputDir"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "generateRustTaskFiles",
+        "functionParams": [
+          "component",
+          "outputDir"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1736690e",
+      "type": "VariableDeclaration",
+      "babel_source": "const rustTasks = component.useServerTask.filter(task => task.runtime === 'rust');",
+      "parentContext": {
+        "functionName": "generateRustTaskFiles",
+        "functionParams": [
+          "component",
+          "outputDir"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f42fc70b",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "task => task.runtime === 'rust'",
+      "parentContext": {
+        "functionName": "generateRustTaskFiles",
+        "functionParams": [
+          "component",
+          "outputDir"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b2d31041",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "task.runtime === 'rust'",
+      "parentContext": {
+        "functionName": "generateRustTaskFiles",
+        "functionParams": [
+          "component",
+          "outputDir"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "43cfda6d",
+      "type": "IfStatement",
+      "condition": "rustTasks.length === 0",
+      "babel_source": "if (rustTasks.length === 0) {\r\n    return [];\r\n  }",
+      "parentContext": {
+        "functionName": "generateRustTaskFiles",
+        "functionParams": [
+          "component",
+          "outputDir"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9a09a164",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "rustTasks.length === 0",
+      "parentContext": {
+        "functionName": "generateRustTaskFiles",
+        "functionParams": [
+          "component",
+          "outputDir"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c7221e11",
+      "type": "ReturnStatement",
+      "babel_source": "return [];",
+      "parentContext": {
+        "functionName": "generateRustTaskFiles",
+        "functionParams": [
+          "component",
+          "outputDir"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "generateRustTaskFiles",
+        "functionParams": [
+          "component",
+          "outputDir"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c7c4e17d",
+      "type": "VariableDeclaration",
+      "babel_source": "const generatedFiles = [];",
+      "parentContext": {
+        "functionName": "generateRustTaskFiles",
+        "functionParams": [
+          "component",
+          "outputDir"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "generateRustTaskFiles",
+        "functionParams": [
+          "component",
+          "outputDir"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "00e1f384",
+      "type": "ForStatement",
+      "babel_source": "for (let i = 0; i < rustTasks.length; i++) {\r\n    const task = rustTasks[i];\r\n    const taskId = `server_task_${i}`;\r\n    const fileName = `${taskId}.rs`;\r\n    const filePath = path.join(outputDir, fileName);\r\n\r\n    // Generate Rust code\r\n    const rustCode = generateRustTask(task, taskId, i);\r\n\r\n    // Write file\r\n    fs.mkdirSync(outputDir, { recursive: true });\r\n    fs.writeFileSync(filePath, rustCode);\r\n\r\n    generatedFiles.push({\r\n      taskId,\r\n      fileName,\r\n      filePath,\r\n      parallel: task.parallel\r\n    });\r\n\r\n    console.log(`[Rust] Generated ${fileName} (${task.parallel ? 'parallel' : 'sequential'})`);\r\n  }",
+      "parentContext": {
+        "functionName": "generateRustTaskFiles",
+        "functionParams": [
+          "component",
+          "outputDir"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ecb911a1",
+      "type": "VariableDeclaration",
+      "babel_source": "let i = 0",
+      "parentContext": {
+        "functionName": "generateRustTaskFiles",
+        "functionParams": [
+          "component",
+          "outputDir"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3169d499",
+      "type": "BinaryExpression",
+      "operator": "<",
+      "babel_source": "i < rustTasks.length",
+      "parentContext": {
+        "functionName": "generateRustTaskFiles",
+        "functionParams": [
+          "component",
+          "outputDir"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e8dee0e1",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "i++",
+      "parentContext": {
+        "functionName": "generateRustTaskFiles",
+        "functionParams": [
+          "component",
+          "outputDir"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6b4776fb",
+      "type": "VariableDeclaration",
+      "babel_source": "const task = rustTasks[i];",
+      "parentContext": {
+        "functionName": "generateRustTaskFiles",
+        "functionParams": [
+          "component",
+          "outputDir"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b46ba27d",
+      "type": "VariableDeclaration",
+      "babel_source": "const taskId = `server_task_${i}`;",
+      "parentContext": {
+        "functionName": "generateRustTaskFiles",
+        "functionParams": [
+          "component",
+          "outputDir"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0c597145",
+      "type": "TemplateLiteral",
+      "babel_source": "`server_task_${i}`",
+      "parentContext": {
+        "functionName": "generateRustTaskFiles",
+        "functionParams": [
+          "component",
+          "outputDir"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6b718d4d",
+      "type": "VariableDeclaration",
+      "babel_source": "const fileName = `${taskId}.rs`;",
+      "parentContext": {
+        "functionName": "generateRustTaskFiles",
+        "functionParams": [
+          "component",
+          "outputDir"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6136f960",
+      "type": "TemplateLiteral",
+      "babel_source": "`${taskId}.rs`",
+      "parentContext": {
+        "functionName": "generateRustTaskFiles",
+        "functionParams": [
+          "component",
+          "outputDir"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d09c78b2",
+      "type": "VariableDeclaration",
+      "babel_source": "const filePath = path.join(outputDir, fileName);",
+      "parentContext": {
+        "functionName": "generateRustTaskFiles",
+        "functionParams": [
+          "component",
+          "outputDir"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ce47b8fa",
+      "type": "VariableDeclaration",
+      "babel_source": "const rustCode = generateRustTask(task, taskId, i);",
+      "parentContext": {
+        "functionName": "generateRustTaskFiles",
+        "functionParams": [
+          "component",
+          "outputDir"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1eb881bc",
+      "type": "ObjectExpression",
+      "babel_source": "{ recursive: true }",
+      "parentContext": {
+        "functionName": "generateRustTaskFiles",
+        "functionParams": [
+          "component",
+          "outputDir"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "28aa342e",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n      taskId,\r\n      fileName,\r\n      filePath,\r\n      parallel: task.parallel\r\n    }",
+      "parentContext": {
+        "functionName": "generateRustTaskFiles",
+        "functionParams": [
+          "component",
+          "outputDir"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "84ba0c50",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Rust] Generated ${fileName} (${task.parallel ? 'parallel' : 'sequential'})`",
+      "parentContext": {
+        "functionName": "generateRustTaskFiles",
+        "functionParams": [
+          "component",
+          "outputDir"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "29342eb9",
+      "type": "ConditionalExpression",
+      "babel_source": "task.parallel ? 'parallel' : 'sequential'",
+      "parentContext": {
+        "functionName": "generateRustTaskFiles",
+        "functionParams": [
+          "component",
+          "outputDir"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ee869082",
+      "type": "ReturnStatement",
+      "babel_source": "return generatedFiles;",
+      "parentContext": {
+        "functionName": "generateRustTaskFiles",
+        "functionParams": [
+          "component",
+          "outputDir"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/rustTask.cjs"
+  ]
+}

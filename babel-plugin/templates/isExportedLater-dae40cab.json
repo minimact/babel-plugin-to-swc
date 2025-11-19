@@ -1,0 +1,271 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "isExportedLater",
+  "params": [
+    {
+      "name": "ast",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "funcName",
+      "inferredType": "&str",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "bool",
+  "babel_source": "function isExportedLater(ast, funcName) {\r\n  let exportType = null;\r\n\r\n  babel.traverse(ast, {\r\n    ExportDefaultDeclaration(path) {\r\n      if (t.isIdentifier(path.node.declaration) &&\r\n          path.node.declaration.name === funcName) {\r\n        exportType = 'default';\r\n      }\r\n    },\r\n    ExportNamedDeclaration(path) {\r\n      if (path.node.specifiers) {\r\n        for (const spec of path.node.specifiers) {\r\n          if (t.isExportSpecifier(spec) &&\r\n              t.isIdentifier(spec.exported) &&\r\n              spec.exported.name === funcName) {\r\n            exportType = 'named';\r\n          }\r\n        }\r\n      }\r\n    }\r\n  });\r\n\r\n  return exportType;\r\n}",
+  "body_templates": [
+    {
+      "hash": "37d97dce",
+      "type": "VariableDeclaration",
+      "babel_source": "let exportType = null;",
+      "parentContext": {
+        "functionName": "isExportedLater",
+        "functionParams": [
+          "ast",
+          "funcName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6936ec4b",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    ExportDefaultDeclaration(path) {\r\n      if (t.isIdentifier(path.node.declaration) &&\r\n          path.node.declaration.name === funcName) {\r\n        exportType = 'default';\r\n      }\r\n    },\r\n    ExportNamedDeclaration(path) {\r\n      if (path.node.specifiers) {\r\n        for (const spec of path.node.specifiers) {\r\n          if (t.isExportSpecifier(spec) &&\r\n              t.isIdentifier(spec.exported) &&\r\n              spec.exported.name === funcName) {\r\n            exportType = 'named';\r\n          }\r\n        }\r\n      }\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "isExportedLater",
+        "functionParams": [
+          "ast",
+          "funcName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "23f9e8ac",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(path.node.declaration) &&\r\n          path.node.declaration.name === funcName",
+      "babel_source": "if (t.isIdentifier(path.node.declaration) &&\r\n          path.node.declaration.name === funcName) {\r\n        exportType = 'default';\r\n      }",
+      "parentContext": {
+        "functionName": "isExportedLater",
+        "functionParams": [
+          "ast",
+          "funcName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1832f9c2",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isIdentifier(path.node.declaration) &&\r\n          path.node.declaration.name === funcName",
+      "parentContext": {
+        "functionName": "isExportedLater",
+        "functionParams": [
+          "ast",
+          "funcName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1a51b98b",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(path.node.declaration)",
+      "parentContext": {
+        "functionName": "isExportedLater",
+        "functionParams": [
+          "ast",
+          "funcName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d29e68e8",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "path.node.declaration.name === funcName",
+      "parentContext": {
+        "functionName": "isExportedLater",
+        "functionParams": [
+          "ast",
+          "funcName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8635b157",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "exportType = 'default'",
+      "parentContext": {
+        "functionName": "isExportedLater",
+        "functionParams": [
+          "ast",
+          "funcName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7191ff56",
+      "type": "IfStatement",
+      "condition": "path.node.specifiers",
+      "babel_source": "if (path.node.specifiers) {\r\n        for (const spec of path.node.specifiers) {\r\n          if (t.isExportSpecifier(spec) &&\r\n              t.isIdentifier(spec.exported) &&\r\n              spec.exported.name === funcName) {\r\n            exportType = 'named';\r\n          }\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "isExportedLater",
+        "functionParams": [
+          "ast",
+          "funcName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6eb7ada7",
+      "type": "ForOfStatement",
+      "babel_source": "for (const spec of path.node.specifiers) {\r\n          if (t.isExportSpecifier(spec) &&\r\n              t.isIdentifier(spec.exported) &&\r\n              spec.exported.name === funcName) {\r\n            exportType = 'named';\r\n          }\r\n        }",
+      "parentContext": {
+        "functionName": "isExportedLater",
+        "functionParams": [
+          "ast",
+          "funcName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "011fa8e6",
+      "type": "VariableDeclaration",
+      "babel_source": "const spec",
+      "parentContext": {
+        "functionName": "isExportedLater",
+        "functionParams": [
+          "ast",
+          "funcName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e69f7e48",
+      "type": "IfStatement",
+      "condition": "t.isExportSpecifier(spec) &&\r\n              t.isIdentifier(spec.exported) &&\r\n              spec.exported.name === funcName",
+      "babel_source": "if (t.isExportSpecifier(spec) &&\r\n              t.isIdentifier(spec.exported) &&\r\n              spec.exported.name === funcName) {\r\n            exportType = 'named';\r\n          }",
+      "parentContext": {
+        "functionName": "isExportedLater",
+        "functionParams": [
+          "ast",
+          "funcName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b6c5121d",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isExportSpecifier(spec) &&\r\n              t.isIdentifier(spec.exported) &&\r\n              spec.exported.name === funcName",
+      "parentContext": {
+        "functionName": "isExportedLater",
+        "functionParams": [
+          "ast",
+          "funcName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "021821a1",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isExportSpecifier(spec) &&\r\n              t.isIdentifier(spec.exported)",
+      "parentContext": {
+        "functionName": "isExportedLater",
+        "functionParams": [
+          "ast",
+          "funcName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b264ea6d",
+      "type": "BabelTypeCheck",
+      "method": "isExportSpecifier",
+      "babel_source": "t.isExportSpecifier(spec)",
+      "parentContext": {
+        "functionName": "isExportedLater",
+        "functionParams": [
+          "ast",
+          "funcName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6af32992",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(spec.exported)",
+      "parentContext": {
+        "functionName": "isExportedLater",
+        "functionParams": [
+          "ast",
+          "funcName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7cc233f7",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "spec.exported.name === funcName",
+      "parentContext": {
+        "functionName": "isExportedLater",
+        "functionParams": [
+          "ast",
+          "funcName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9613bb02",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "exportType = 'named'",
+      "parentContext": {
+        "functionName": "isExportedLater",
+        "functionParams": [
+          "ast",
+          "funcName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "251a4b3b",
+      "type": "ReturnStatement",
+      "babel_source": "return exportType;",
+      "parentContext": {
+        "functionName": "isExportedLater",
+        "functionParams": [
+          "ast",
+          "funcName"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/hookImports.cjs"
+  ]
+}

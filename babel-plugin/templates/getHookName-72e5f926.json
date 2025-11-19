@@ -1,0 +1,133 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "getHookName",
+  "params": [
+    {
+      "name": "path",
+      "inferredType": "&Path",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function getHookName(path) {\r\n  if (t.isFunctionDeclaration(path.node)) {\r\n    return path.node.id?.name || null;\r\n  }\r\n  if (t.isVariableDeclarator(path.node)) {\r\n    return path.node.id?.name || null;\r\n  }\r\n  return null;\r\n}",
+  "body_templates": [
+    {
+      "hash": "0eca90c8",
+      "type": "IfStatement",
+      "condition": "t.isFunctionDeclaration(path.node)",
+      "babel_source": "if (t.isFunctionDeclaration(path.node)) {\r\n    return path.node.id?.name || null;\r\n  }",
+      "parentContext": {
+        "functionName": "getHookName",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3633f955",
+      "type": "BabelTypeCheck",
+      "method": "isFunctionDeclaration",
+      "babel_source": "t.isFunctionDeclaration(path.node)",
+      "parentContext": {
+        "functionName": "getHookName",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0a887a99",
+      "type": "ReturnStatement",
+      "babel_source": "return path.node.id?.name || null;",
+      "parentContext": {
+        "functionName": "getHookName",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a7d44cc7",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "path.node.id?.name || null",
+      "parentContext": {
+        "functionName": "getHookName",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "14c72802",
+      "type": "IfStatement",
+      "condition": "t.isVariableDeclarator(path.node)",
+      "babel_source": "if (t.isVariableDeclarator(path.node)) {\r\n    return path.node.id?.name || null;\r\n  }",
+      "parentContext": {
+        "functionName": "getHookName",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d06bdb04",
+      "type": "BabelTypeCheck",
+      "method": "isVariableDeclarator",
+      "babel_source": "t.isVariableDeclarator(path.node)",
+      "parentContext": {
+        "functionName": "getHookName",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0a887a99",
+      "type": "ReturnStatement",
+      "babel_source": "return path.node.id?.name || null;",
+      "parentContext": {
+        "functionName": "getHookName",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a7d44cc7",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "path.node.id?.name || null",
+      "parentContext": {
+        "functionName": "getHookName",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "getHookName",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/hookDetector.cjs"
+  ]
+}

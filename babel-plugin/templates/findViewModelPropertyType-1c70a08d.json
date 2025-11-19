@@ -1,0 +1,1012 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "findViewModelPropertyType",
+  "params": [
+    {
+      "name": "path",
+      "inferredType": "&Path",
+      "defaultValue": null
+    },
+    {
+      "name": "propertyName",
+      "inferredType": "&str",
+      "defaultValue": null
+    },
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "&'static str",
+  "babel_source": "function findViewModelPropertyType(path, propertyName, component) {\r\n  // Find the program (top-level) node\r\n  let programPath = path;\r\n  while (programPath && !t.isProgram(programPath.node)) {\r\n    programPath = programPath.parentPath;\r\n  }\r\n\r\n  if (!programPath) {\r\n    console.log(`[findViewModelPropertyType] No program path found for ${propertyName}`);\r\n    return null;\r\n  }\r\n\r\n  // ⚠️ CRITICAL: Check metadata first (interfaces stored before transformation)\r\n  // The TranspilerService stores interfaces in metadata before @babel/preset-typescript strips them\r\n  let viewModelInterface = null;\r\n  const programNode = programPath.node;\r\n\r\n  if (programNode.metadata && programNode.metadata.viewModelInterfaces) {\r\n    const interfaces = programNode.metadata.viewModelInterfaces;\r\n    console.log(`[findViewModelPropertyType] Found ${interfaces.length} interfaces in metadata`);\r\n\r\n    for (const iface of interfaces) {\r\n      if (iface.id && iface.id.name && iface.id.name.endsWith('ViewModel')) {\r\n        viewModelInterface = iface;\r\n        console.log(`[findViewModelPropertyType] ✅ Using interface from metadata: ${iface.id.name}`);\r\n        break;\r\n      }\r\n    }\r\n  } else {\r\n    // Fallback: Search program body (won't work if TypeScript preset already ran)\r\n    console.log(`[findViewModelPropertyType] No metadata found, searching program body`);\r\n\r\n    if (!programNode || !programNode.body) {\r\n      console.log(`[findViewModelPropertyType] No program body found`);\r\n      return null;\r\n    }\r\n\r\n    console.log(`[findViewModelPropertyType] Program body has ${programNode.body.length} statements`);\r\n\r\n    // Debug: Log all statement types\r\n    programNode.body.forEach((stmt, idx) => {\r\n      console.log(`[findViewModelPropertyType] Statement ${idx}: ${stmt.type}`);\r\n    });\r\n\r\n    // Iterate through top-level statements to find interface declarations\r\n    let interfaceCount = 0;\r\n    for (const statement of programNode.body) {\r\n      if (t.isTSInterfaceDeclaration(statement)) {\r\n        interfaceCount++;\r\n        const interfaceName = statement.id.name;\r\n        console.log(`[findViewModelPropertyType] Found interface #${interfaceCount}: ${interfaceName}`);\r\n\r\n        // Look for interfaces ending with \"ViewModel\"\r\n        if (interfaceName.endsWith('ViewModel')) {\r\n          viewModelInterface = statement;\r\n          console.log(`[findViewModelPropertyType] ✅ Using interface: ${interfaceName}`);\r\n          break; // Use the first matching interface\r\n        }\r\n      }\r\n    }\r\n\r\n    console.log(`[findViewModelPropertyType] Total interfaces found: ${interfaceCount}`);\r\n  }\r\n\r\n  if (!viewModelInterface) {\r\n    console.log(`[findViewModelPropertyType] ❌ No ViewModel interface found`);\r\n    return null;\r\n  }\r\n\r\n  // Find the property in the interface\r\n  for (const member of viewModelInterface.body.body) {\r\n    if (t.isTSPropertySignature(member)) {\r\n      const key = member.key;\r\n\r\n      if (t.isIdentifier(key) && key.name === propertyName) {\r\n        // Found the property! Extract its type\r\n        const typeAnnotation = member.typeAnnotation?.typeAnnotation;\r\n        console.log(`[findViewModelPropertyType] Found property ${propertyName}, typeAnnotation:`, typeAnnotation);\r\n        if (typeAnnotation) {\r\n          const csharpType = tsTypeToCSharpType(typeAnnotation);\r\n          console.log(`[findViewModelPropertyType] Mapped ${propertyName} type to: ${csharpType}`);\r\n          return csharpType;\r\n        }\r\n      }\r\n    }\r\n  }\r\n\r\n  console.log(`[findViewModelPropertyType] Property ${propertyName} not found in interface`);\r\n  return null;\r\n}",
+  "body_templates": [
+    {
+      "hash": "0e6d4250",
+      "type": "VariableDeclaration",
+      "babel_source": "let programPath = path;",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "24935759",
+      "type": "WhileStatement",
+      "babel_source": "while (programPath && !t.isProgram(programPath.node)) {\r\n    programPath = programPath.parentPath;\r\n  }",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6765d207",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "programPath && !t.isProgram(programPath.node)",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d9702cf5",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isProgram(programPath.node)",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "554465be",
+      "type": "BabelTypeCheck",
+      "method": "isProgram",
+      "babel_source": "t.isProgram(programPath.node)",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a88d1947",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "programPath = programPath.parentPath",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "eb44b36d",
+      "type": "IfStatement",
+      "condition": "!programPath",
+      "babel_source": "if (!programPath) {\r\n    console.log(`[findViewModelPropertyType] No program path found for ${propertyName}`);\r\n    return null;\r\n  }",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a22a193a",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!programPath",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "db0097ab",
+      "type": "TemplateLiteral",
+      "babel_source": "`[findViewModelPropertyType] No program path found for ${propertyName}`",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d88bdd46",
+      "type": "VariableDeclaration",
+      "babel_source": "let viewModelInterface = null;",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3f879e76",
+      "type": "VariableDeclaration",
+      "babel_source": "const programNode = programPath.node;",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9fff592a",
+      "type": "IfStatement",
+      "condition": "programNode.metadata && programNode.metadata.viewModelInterfaces",
+      "babel_source": "if (programNode.metadata && programNode.metadata.viewModelInterfaces) {\r\n    const interfaces = programNode.metadata.viewModelInterfaces;\r\n    console.log(`[findViewModelPropertyType] Found ${interfaces.length} interfaces in metadata`);\r\n\r\n    for (const iface of interfaces) {\r\n      if (iface.id && iface.id.name && iface.id.name.endsWith('ViewModel')) {\r\n        viewModelInterface = iface;\r\n        console.log(`[findViewModelPropertyType] ✅ Using interface from metadata: ${iface.id.name}`);\r\n        break;\r\n      }\r\n    }\r\n  } else {\r\n    // Fallback: Search program body (won't work if TypeScript preset already ran)\r\n    console.log(`[findViewModelPropertyType] No metadata found, searching program body`);\r\n\r\n    if (!programNode || !programNode.body) {\r\n      console.log(`[findViewModelPropertyType] No program body found`);\r\n      return null;\r\n    }\r\n\r\n    console.log(`[findViewModelPropertyType] Program body has ${programNode.body.length} statements`);\r\n\r\n    // Debug: Log all statement types\r\n    programNode.body.forEach((stmt, idx) => {\r\n      console.log(`[findViewModelPropertyType] Statement ${idx}: ${stmt.type}`);\r\n    });\r\n\r\n    // Iterate through top-level statements to find interface declarations\r\n    let interfaceCount = 0;\r\n    for (const statement of programNode.body) {\r\n      if (t.isTSInterfaceDeclaration(statement)) {\r\n        interfaceCount++;\r\n        const interfaceName = statement.id.name;\r\n        console.log(`[findViewModelPropertyType] Found interface #${interfaceCount}: ${interfaceName}`);\r\n\r\n        // Look for interfaces ending with \"ViewModel\"\r\n        if (interfaceName.endsWith('ViewModel')) {\r\n          viewModelInterface = statement;\r\n          console.log(`[findViewModelPropertyType] ✅ Using interface: ${interfaceName}`);\r\n          break; // Use the first matching interface\r\n        }\r\n      }\r\n    }\r\n\r\n    console.log(`[findViewModelPropertyType] Total interfaces found: ${interfaceCount}`);\r\n  }",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2eac465b",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "programNode.metadata && programNode.metadata.viewModelInterfaces",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "241131e1",
+      "type": "VariableDeclaration",
+      "babel_source": "const interfaces = programNode.metadata.viewModelInterfaces;",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "96d25f68",
+      "type": "TemplateLiteral",
+      "babel_source": "`[findViewModelPropertyType] Found ${interfaces.length} interfaces in metadata`",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ce972b89",
+      "type": "ForOfStatement",
+      "babel_source": "for (const iface of interfaces) {\r\n      if (iface.id && iface.id.name && iface.id.name.endsWith('ViewModel')) {\r\n        viewModelInterface = iface;\r\n        console.log(`[findViewModelPropertyType] ✅ Using interface from metadata: ${iface.id.name}`);\r\n        break;\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "137549b6",
+      "type": "VariableDeclaration",
+      "babel_source": "const iface",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2e900303",
+      "type": "IfStatement",
+      "condition": "iface.id && iface.id.name && iface.id.name.endsWith('ViewModel')",
+      "babel_source": "if (iface.id && iface.id.name && iface.id.name.endsWith('ViewModel')) {\r\n        viewModelInterface = iface;\r\n        console.log(`[findViewModelPropertyType] ✅ Using interface from metadata: ${iface.id.name}`);\r\n        break;\r\n      }",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "84e200b6",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "iface.id && iface.id.name && iface.id.name.endsWith('ViewModel')",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7dce5934",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "iface.id && iface.id.name",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9388ea72",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "viewModelInterface = iface",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4a770f47",
+      "type": "TemplateLiteral",
+      "babel_source": "`[findViewModelPropertyType] ✅ Using interface from metadata: ${iface.id.name}`",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42af036c",
+      "type": "BreakStatement",
+      "babel_source": "break;",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "231147f4",
+      "type": "TemplateLiteral",
+      "babel_source": "`[findViewModelPropertyType] No metadata found, searching program body`",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2c307195",
+      "type": "IfStatement",
+      "condition": "!programNode || !programNode.body",
+      "babel_source": "if (!programNode || !programNode.body) {\r\n      console.log(`[findViewModelPropertyType] No program body found`);\r\n      return null;\r\n    }",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "66123fa9",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "!programNode || !programNode.body",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f2a9f707",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!programNode",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "76942934",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!programNode.body",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c1fd495d",
+      "type": "TemplateLiteral",
+      "babel_source": "`[findViewModelPropertyType] No program body found`",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "16a871ed",
+      "type": "TemplateLiteral",
+      "babel_source": "`[findViewModelPropertyType] Program body has ${programNode.body.length} statements`",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4b0f0137",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "(stmt, idx) => {\r\n      console.log(`[findViewModelPropertyType] Statement ${idx}: ${stmt.type}`);\r\n    }",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2c8bacb6",
+      "type": "TemplateLiteral",
+      "babel_source": "`[findViewModelPropertyType] Statement ${idx}: ${stmt.type}`",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1811ceed",
+      "type": "VariableDeclaration",
+      "babel_source": "let interfaceCount = 0;",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e916f073",
+      "type": "ForOfStatement",
+      "babel_source": "for (const statement of programNode.body) {\r\n      if (t.isTSInterfaceDeclaration(statement)) {\r\n        interfaceCount++;\r\n        const interfaceName = statement.id.name;\r\n        console.log(`[findViewModelPropertyType] Found interface #${interfaceCount}: ${interfaceName}`);\r\n\r\n        // Look for interfaces ending with \"ViewModel\"\r\n        if (interfaceName.endsWith('ViewModel')) {\r\n          viewModelInterface = statement;\r\n          console.log(`[findViewModelPropertyType] ✅ Using interface: ${interfaceName}`);\r\n          break; // Use the first matching interface\r\n        }\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f397d33c",
+      "type": "VariableDeclaration",
+      "babel_source": "const statement",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8c7f0737",
+      "type": "IfStatement",
+      "condition": "t.isTSInterfaceDeclaration(statement)",
+      "babel_source": "if (t.isTSInterfaceDeclaration(statement)) {\r\n        interfaceCount++;\r\n        const interfaceName = statement.id.name;\r\n        console.log(`[findViewModelPropertyType] Found interface #${interfaceCount}: ${interfaceName}`);\r\n\r\n        // Look for interfaces ending with \"ViewModel\"\r\n        if (interfaceName.endsWith('ViewModel')) {\r\n          viewModelInterface = statement;\r\n          console.log(`[findViewModelPropertyType] ✅ Using interface: ${interfaceName}`);\r\n          break; // Use the first matching interface\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9ecd2524",
+      "type": "BabelTypeCheck",
+      "method": "isTSInterfaceDeclaration",
+      "babel_source": "t.isTSInterfaceDeclaration(statement)",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "85257da8",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "interfaceCount++",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d499c5f1",
+      "type": "VariableDeclaration",
+      "babel_source": "const interfaceName = statement.id.name;",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3cc5c797",
+      "type": "TemplateLiteral",
+      "babel_source": "`[findViewModelPropertyType] Found interface #${interfaceCount}: ${interfaceName}`",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a44c876b",
+      "type": "IfStatement",
+      "condition": "interfaceName.endsWith('ViewModel')",
+      "babel_source": "if (interfaceName.endsWith('ViewModel')) {\r\n          viewModelInterface = statement;\r\n          console.log(`[findViewModelPropertyType] ✅ Using interface: ${interfaceName}`);\r\n          break; // Use the first matching interface\r\n        }",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dd64cbd5",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "viewModelInterface = statement",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "686b3302",
+      "type": "TemplateLiteral",
+      "babel_source": "`[findViewModelPropertyType] ✅ Using interface: ${interfaceName}`",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42af036c",
+      "type": "BreakStatement",
+      "babel_source": "break;",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4403c1a2",
+      "type": "TemplateLiteral",
+      "babel_source": "`[findViewModelPropertyType] Total interfaces found: ${interfaceCount}`",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "10658642",
+      "type": "IfStatement",
+      "condition": "!viewModelInterface",
+      "babel_source": "if (!viewModelInterface) {\r\n    console.log(`[findViewModelPropertyType] ❌ No ViewModel interface found`);\r\n    return null;\r\n  }",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "29a27644",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!viewModelInterface",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e65eae12",
+      "type": "TemplateLiteral",
+      "babel_source": "`[findViewModelPropertyType] ❌ No ViewModel interface found`",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "845e8f98",
+      "type": "ForOfStatement",
+      "babel_source": "for (const member of viewModelInterface.body.body) {\r\n    if (t.isTSPropertySignature(member)) {\r\n      const key = member.key;\r\n\r\n      if (t.isIdentifier(key) && key.name === propertyName) {\r\n        // Found the property! Extract its type\r\n        const typeAnnotation = member.typeAnnotation?.typeAnnotation;\r\n        console.log(`[findViewModelPropertyType] Found property ${propertyName}, typeAnnotation:`, typeAnnotation);\r\n        if (typeAnnotation) {\r\n          const csharpType = tsTypeToCSharpType(typeAnnotation);\r\n          console.log(`[findViewModelPropertyType] Mapped ${propertyName} type to: ${csharpType}`);\r\n          return csharpType;\r\n        }\r\n      }\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4c0be01d",
+      "type": "VariableDeclaration",
+      "babel_source": "const member",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1f09e7fb",
+      "type": "IfStatement",
+      "condition": "t.isTSPropertySignature(member)",
+      "babel_source": "if (t.isTSPropertySignature(member)) {\r\n      const key = member.key;\r\n\r\n      if (t.isIdentifier(key) && key.name === propertyName) {\r\n        // Found the property! Extract its type\r\n        const typeAnnotation = member.typeAnnotation?.typeAnnotation;\r\n        console.log(`[findViewModelPropertyType] Found property ${propertyName}, typeAnnotation:`, typeAnnotation);\r\n        if (typeAnnotation) {\r\n          const csharpType = tsTypeToCSharpType(typeAnnotation);\r\n          console.log(`[findViewModelPropertyType] Mapped ${propertyName} type to: ${csharpType}`);\r\n          return csharpType;\r\n        }\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "86a628a8",
+      "type": "BabelTypeCheck",
+      "method": "isTSPropertySignature",
+      "babel_source": "t.isTSPropertySignature(member)",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e92c3d4c",
+      "type": "VariableDeclaration",
+      "babel_source": "const key = member.key;",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0da494c3",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(key) && key.name === propertyName",
+      "babel_source": "if (t.isIdentifier(key) && key.name === propertyName) {\r\n        // Found the property! Extract its type\r\n        const typeAnnotation = member.typeAnnotation?.typeAnnotation;\r\n        console.log(`[findViewModelPropertyType] Found property ${propertyName}, typeAnnotation:`, typeAnnotation);\r\n        if (typeAnnotation) {\r\n          const csharpType = tsTypeToCSharpType(typeAnnotation);\r\n          console.log(`[findViewModelPropertyType] Mapped ${propertyName} type to: ${csharpType}`);\r\n          return csharpType;\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "61acf97c",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isIdentifier(key) && key.name === propertyName",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9577e9d4",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(key)",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2b86c5ed",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "key.name === propertyName",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4914e016",
+      "type": "VariableDeclaration",
+      "babel_source": "const typeAnnotation = member.typeAnnotation?.typeAnnotation;",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cd857bc0",
+      "type": "TemplateLiteral",
+      "babel_source": "`[findViewModelPropertyType] Found property ${propertyName}, typeAnnotation:`",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0a8137ee",
+      "type": "IfStatement",
+      "condition": "typeAnnotation",
+      "babel_source": "if (typeAnnotation) {\r\n          const csharpType = tsTypeToCSharpType(typeAnnotation);\r\n          console.log(`[findViewModelPropertyType] Mapped ${propertyName} type to: ${csharpType}`);\r\n          return csharpType;\r\n        }",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "404dce36",
+      "type": "VariableDeclaration",
+      "babel_source": "const csharpType = tsTypeToCSharpType(typeAnnotation);",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7b2513cb",
+      "type": "TemplateLiteral",
+      "babel_source": "`[findViewModelPropertyType] Mapped ${propertyName} type to: ${csharpType}`",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "aae50a1b",
+      "type": "ReturnStatement",
+      "babel_source": "return csharpType;",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3127b9ad",
+      "type": "TemplateLiteral",
+      "babel_source": "`[findViewModelPropertyType] Property ${propertyName} not found in interface`",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "findViewModelPropertyType",
+        "functionParams": [
+          "path",
+          "propertyName",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/hooks.cjs"
+  ]
+}

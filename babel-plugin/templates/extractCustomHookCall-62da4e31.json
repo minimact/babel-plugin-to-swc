@@ -1,0 +1,1031 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractCustomHookCall",
+  "params": [
+    {
+      "name": "path",
+      "inferredType": "&Path",
+      "defaultValue": null
+    },
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "hookName",
+      "inferredType": "&str",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractCustomHookCall(path, component, hookName) {\r\n  const parent = path.parent;\r\n\r\n  // Must be: const [x, y, z, ui] = useCounter('namespace', ...params)\r\n  if (!t.isVariableDeclarator(parent)) return;\r\n  if (!t.isArrayPattern(parent.id)) return;\r\n\r\n  const args = path.node.arguments;\r\n  if (args.length === 0) return;\r\n\r\n  // First argument must be namespace (string literal)\r\n  const namespaceArg = args[0];\r\n  if (!t.isStringLiteral(namespaceArg)) {\r\n    console.warn(`[Custom Hook] ${hookName} first argument must be a string literal (namespace)`);\r\n    return;\r\n  }\r\n\r\n  const namespace = namespaceArg.value;\r\n  const hookParams = args.slice(1); // Remaining params become InitialState\r\n\r\n  // Extract destructured variables\r\n  const elements = parent.id.elements;\r\n\r\n  // 🔥 NEW: Get hook metadata from imported hooks or inline hook\r\n  let hookMetadata = null;\r\n\r\n  // Check if this hook was imported\r\n  if (component.importedHookMetadata && component.importedHookMetadata.has(hookName)) {\r\n    hookMetadata = component.importedHookMetadata.get(hookName);\r\n    console.log(`[Custom Hook] Using imported metadata for ${hookName}`);\r\n  } else {\r\n    // TODO: Check if hook is defined inline in same file\r\n    console.log(`[Custom Hook] No metadata found for ${hookName}, assuming last return value is UI`);\r\n  }\r\n\r\n  // 🔥 NEW: Use returnValues from metadata to identify UI variable\r\n  let uiVarName = null;\r\n  if (hookMetadata && hookMetadata.returnValues) {\r\n    // Find the JSX return value\r\n    const jsxReturnIndex = hookMetadata.returnValues.findIndex(rv => rv.type === 'jsx');\r\n    if (jsxReturnIndex !== -1 && jsxReturnIndex < elements.length) {\r\n      const uiElement = elements[jsxReturnIndex];\r\n      if (uiElement && t.isIdentifier(uiElement)) {\r\n        uiVarName = uiElement.name;\r\n        console.log(`[Custom Hook] Found UI variable from metadata at index ${jsxReturnIndex}: ${uiVarName}`);\r\n      }\r\n    }\r\n  } else {\r\n    // Fallback: Assume last element is UI (old behavior)\r\n    const lastElement = elements[elements.length - 1];\r\n    if (lastElement && t.isIdentifier(lastElement)) {\r\n      uiVarName = lastElement.name;\r\n      console.log(`[Custom Hook] Using fallback: assuming last element is UI: ${uiVarName}`);\r\n    }\r\n  }\r\n\r\n  if (!uiVarName) {\r\n    console.warn(`[Custom Hook] ${hookName} could not identify UI variable`);\r\n    return;\r\n  }\r\n\r\n  // Store custom hook instance in component\r\n  if (!component.customHooks) {\r\n    component.customHooks = [];\r\n  }\r\n\r\n  const generate = require('@babel/generator').default;\r\n\r\n  const className = hookMetadata ? hookMetadata.className : `${capitalize(hookName)}Hook`;\r\n\r\n  component.customHooks.push({\r\n    hookName,\r\n    className,\r\n    namespace,\r\n    uiVarName, // Variable name that holds the UI (e.g., 'counterUI')\r\n    params: hookParams.map(p => generate(p).code),\r\n    returnValues: elements.map(e => e ? e.name : null).filter(Boolean),\r\n    metadata: hookMetadata // 🔥 NEW: Store full metadata for later use\r\n  });\r\n\r\n  console.log(`[Custom Hook] Found ${hookName}('${namespace}') → UI in {${uiVarName}}`);\r\n}",
+  "body_templates": [
+    {
+      "hash": "356fe96c",
+      "type": "VariableDeclaration",
+      "babel_source": "const parent = path.parent;",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1cfe78c4",
+      "type": "IfStatement",
+      "condition": "!t.isVariableDeclarator(parent)",
+      "babel_source": "if (!t.isVariableDeclarator(parent)) return;",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dc772752",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isVariableDeclarator(parent)",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "27a39ea7",
+      "type": "BabelTypeCheck",
+      "method": "isVariableDeclarator",
+      "babel_source": "t.isVariableDeclarator(parent)",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8beaabe2",
+      "type": "ReturnStatement",
+      "babel_source": "return;",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a5d71bd4",
+      "type": "IfStatement",
+      "condition": "!t.isArrayPattern(parent.id)",
+      "babel_source": "if (!t.isArrayPattern(parent.id)) return;",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8b6a1332",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isArrayPattern(parent.id)",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ac18b505",
+      "type": "BabelTypeCheck",
+      "method": "isArrayPattern",
+      "babel_source": "t.isArrayPattern(parent.id)",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8beaabe2",
+      "type": "ReturnStatement",
+      "babel_source": "return;",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e24fd4b1",
+      "type": "VariableDeclaration",
+      "babel_source": "const args = path.node.arguments;",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c229be77",
+      "type": "IfStatement",
+      "condition": "args.length === 0",
+      "babel_source": "if (args.length === 0) return;",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "07e53a59",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "args.length === 0",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8beaabe2",
+      "type": "ReturnStatement",
+      "babel_source": "return;",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "85e630e4",
+      "type": "VariableDeclaration",
+      "babel_source": "const namespaceArg = args[0];",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4c0c17dd",
+      "type": "IfStatement",
+      "condition": "!t.isStringLiteral(namespaceArg)",
+      "babel_source": "if (!t.isStringLiteral(namespaceArg)) {\r\n    console.warn(`[Custom Hook] ${hookName} first argument must be a string literal (namespace)`);\r\n    return;\r\n  }",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "72ddcb66",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isStringLiteral(namespaceArg)",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "baa06528",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(namespaceArg)",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1e865fe4",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Custom Hook] ${hookName} first argument must be a string literal (namespace)`",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8beaabe2",
+      "type": "ReturnStatement",
+      "babel_source": "return;",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ed142400",
+      "type": "VariableDeclaration",
+      "babel_source": "const namespace = namespaceArg.value;",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "da1bf802",
+      "type": "VariableDeclaration",
+      "babel_source": "const hookParams = args.slice(1);",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e9dbe09c",
+      "type": "VariableDeclaration",
+      "babel_source": "const elements = parent.id.elements;",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2c43f313",
+      "type": "VariableDeclaration",
+      "babel_source": "let hookMetadata = null;",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a4e5f078",
+      "type": "IfStatement",
+      "condition": "component.importedHookMetadata && component.importedHookMetadata.has(hookName)",
+      "babel_source": "if (component.importedHookMetadata && component.importedHookMetadata.has(hookName)) {\r\n    hookMetadata = component.importedHookMetadata.get(hookName);\r\n    console.log(`[Custom Hook] Using imported metadata for ${hookName}`);\r\n  } else {\r\n    // TODO: Check if hook is defined inline in same file\r\n    console.log(`[Custom Hook] No metadata found for ${hookName}, assuming last return value is UI`);\r\n  }",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "18648454",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "component.importedHookMetadata && component.importedHookMetadata.has(hookName)",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "98e275cd",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "hookMetadata = component.importedHookMetadata.get(hookName)",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2e0ac659",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Custom Hook] Using imported metadata for ${hookName}`",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6db502b4",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Custom Hook] No metadata found for ${hookName}, assuming last return value is UI`",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e3664ee1",
+      "type": "VariableDeclaration",
+      "babel_source": "let uiVarName = null;",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "544b398f",
+      "type": "IfStatement",
+      "condition": "hookMetadata && hookMetadata.returnValues",
+      "babel_source": "if (hookMetadata && hookMetadata.returnValues) {\r\n    // Find the JSX return value\r\n    const jsxReturnIndex = hookMetadata.returnValues.findIndex(rv => rv.type === 'jsx');\r\n    if (jsxReturnIndex !== -1 && jsxReturnIndex < elements.length) {\r\n      const uiElement = elements[jsxReturnIndex];\r\n      if (uiElement && t.isIdentifier(uiElement)) {\r\n        uiVarName = uiElement.name;\r\n        console.log(`[Custom Hook] Found UI variable from metadata at index ${jsxReturnIndex}: ${uiVarName}`);\r\n      }\r\n    }\r\n  } else {\r\n    // Fallback: Assume last element is UI (old behavior)\r\n    const lastElement = elements[elements.length - 1];\r\n    if (lastElement && t.isIdentifier(lastElement)) {\r\n      uiVarName = lastElement.name;\r\n      console.log(`[Custom Hook] Using fallback: assuming last element is UI: ${uiVarName}`);\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f65972ad",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "hookMetadata && hookMetadata.returnValues",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fba67a3e",
+      "type": "VariableDeclaration",
+      "babel_source": "const jsxReturnIndex = hookMetadata.returnValues.findIndex(rv => rv.type === 'jsx');",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b953ac13",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "rv => rv.type === 'jsx'",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c5b16ab3",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "rv.type === 'jsx'",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b1ef493b",
+      "type": "IfStatement",
+      "condition": "jsxReturnIndex !== -1 && jsxReturnIndex < elements.length",
+      "babel_source": "if (jsxReturnIndex !== -1 && jsxReturnIndex < elements.length) {\r\n      const uiElement = elements[jsxReturnIndex];\r\n      if (uiElement && t.isIdentifier(uiElement)) {\r\n        uiVarName = uiElement.name;\r\n        console.log(`[Custom Hook] Found UI variable from metadata at index ${jsxReturnIndex}: ${uiVarName}`);\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a35e0bef",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "jsxReturnIndex !== -1 && jsxReturnIndex < elements.length",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "22a29527",
+      "type": "BinaryExpression",
+      "operator": "!==",
+      "babel_source": "jsxReturnIndex !== -1",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1bad6b8c",
+      "type": "UnaryExpression",
+      "operator": "-",
+      "babel_source": "-1",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3d715a39",
+      "type": "BinaryExpression",
+      "operator": "<",
+      "babel_source": "jsxReturnIndex < elements.length",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "583055fd",
+      "type": "VariableDeclaration",
+      "babel_source": "const uiElement = elements[jsxReturnIndex];",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "28653742",
+      "type": "IfStatement",
+      "condition": "uiElement && t.isIdentifier(uiElement)",
+      "babel_source": "if (uiElement && t.isIdentifier(uiElement)) {\r\n        uiVarName = uiElement.name;\r\n        console.log(`[Custom Hook] Found UI variable from metadata at index ${jsxReturnIndex}: ${uiVarName}`);\r\n      }",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "748a53b0",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "uiElement && t.isIdentifier(uiElement)",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fa072d2d",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(uiElement)",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "613b4c29",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "uiVarName = uiElement.name",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a17a075a",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Custom Hook] Found UI variable from metadata at index ${jsxReturnIndex}: ${uiVarName}`",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4c6c7629",
+      "type": "VariableDeclaration",
+      "babel_source": "const lastElement = elements[elements.length - 1];",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ee0fc683",
+      "type": "BinaryExpression",
+      "operator": "-",
+      "babel_source": "elements.length - 1",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e41bdaf6",
+      "type": "IfStatement",
+      "condition": "lastElement && t.isIdentifier(lastElement)",
+      "babel_source": "if (lastElement && t.isIdentifier(lastElement)) {\r\n      uiVarName = lastElement.name;\r\n      console.log(`[Custom Hook] Using fallback: assuming last element is UI: ${uiVarName}`);\r\n    }",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0549c4da",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "lastElement && t.isIdentifier(lastElement)",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e5f38f08",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(lastElement)",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "407779e4",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "uiVarName = lastElement.name",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b49005f1",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Custom Hook] Using fallback: assuming last element is UI: ${uiVarName}`",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d5000b05",
+      "type": "IfStatement",
+      "condition": "!uiVarName",
+      "babel_source": "if (!uiVarName) {\r\n    console.warn(`[Custom Hook] ${hookName} could not identify UI variable`);\r\n    return;\r\n  }",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7d0ae32c",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!uiVarName",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "954a0cce",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Custom Hook] ${hookName} could not identify UI variable`",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8beaabe2",
+      "type": "ReturnStatement",
+      "babel_source": "return;",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "38180dc3",
+      "type": "IfStatement",
+      "condition": "!component.customHooks",
+      "babel_source": "if (!component.customHooks) {\r\n    component.customHooks = [];\r\n  }",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f411c735",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!component.customHooks",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "85f1b277",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "component.customHooks = []",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a497c1e9",
+      "type": "VariableDeclaration",
+      "babel_source": "const generate = require('@babel/generator').default;",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4fa7364e",
+      "type": "VariableDeclaration",
+      "babel_source": "const className = hookMetadata ? hookMetadata.className : `${capitalize(hookName)}Hook`;",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dcc47d10",
+      "type": "ConditionalExpression",
+      "babel_source": "hookMetadata ? hookMetadata.className : `${capitalize(hookName)}Hook`",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2b4e929c",
+      "type": "TemplateLiteral",
+      "babel_source": "`${capitalize(hookName)}Hook`",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a44a3731",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    hookName,\r\n    className,\r\n    namespace,\r\n    uiVarName, // Variable name that holds the UI (e.g., 'counterUI')\r\n    params: hookParams.map(p => generate(p).code),\r\n    returnValues: elements.map(e => e ? e.name : null).filter(Boolean),\r\n    metadata: hookMetadata // 🔥 NEW: Store full metadata for later use\r\n  }",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "36f9db93",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "p => generate(p).code",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4b50fff6",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "e => e ? e.name : null",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1dc3162a",
+      "type": "ConditionalExpression",
+      "babel_source": "e ? e.name : null",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "53d80c28",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Custom Hook] Found ${hookName}('${namespace}') → UI in {${uiVarName}}`",
+      "parentContext": {
+        "functionName": "extractCustomHookCall",
+        "functionParams": [
+          "path",
+          "component",
+          "hookName"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/hooks.cjs"
+  ]
+}

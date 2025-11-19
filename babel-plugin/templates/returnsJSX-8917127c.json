@@ -1,0 +1,131 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "returnsJSX",
+  "params": [
+    {
+      "name": "path",
+      "inferredType": "&Path",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function returnsJSX(path) {\r\n  const body = getHookBody(path);\r\n  if (!body) return false;\r\n\r\n  let hasJSX = false;\r\n\r\n  path.traverse({\r\n    JSXElement(jsxPath) {\r\n      hasJSX = true;\r\n      jsxPath.stop();\r\n    },\r\n    JSXFragment(jsxPath) {\r\n      hasJSX = true;\r\n      jsxPath.stop();\r\n    }\r\n  });\r\n\r\n  return hasJSX;\r\n}",
+  "body_templates": [
+    {
+      "hash": "827d62a0",
+      "type": "VariableDeclaration",
+      "babel_source": "const body = getHookBody(path);",
+      "parentContext": {
+        "functionName": "returnsJSX",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "30fcce4c",
+      "type": "IfStatement",
+      "condition": "!body",
+      "babel_source": "if (!body) return false;",
+      "parentContext": {
+        "functionName": "returnsJSX",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5de10c93",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!body",
+      "parentContext": {
+        "functionName": "returnsJSX",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dabbdf16",
+      "type": "ReturnStatement",
+      "babel_source": "return false;",
+      "parentContext": {
+        "functionName": "returnsJSX",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6d6f90c5",
+      "type": "VariableDeclaration",
+      "babel_source": "let hasJSX = false;",
+      "parentContext": {
+        "functionName": "returnsJSX",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a05bc9b1",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    JSXElement(jsxPath) {\r\n      hasJSX = true;\r\n      jsxPath.stop();\r\n    },\r\n    JSXFragment(jsxPath) {\r\n      hasJSX = true;\r\n      jsxPath.stop();\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "returnsJSX",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "656e3eaa",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "hasJSX = true",
+      "parentContext": {
+        "functionName": "returnsJSX",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "656e3eaa",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "hasJSX = true",
+      "parentContext": {
+        "functionName": "returnsJSX",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "05f1ac0c",
+      "type": "ReturnStatement",
+      "babel_source": "return hasJSX;",
+      "parentContext": {
+        "functionName": "returnsJSX",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/hookDetector.cjs"
+  ]
+}

@@ -1,0 +1,1189 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateHookClass",
+  "params": [
+    {
+      "name": "analysis",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateHookClass(analysis, component) {\r\n  const lines = [];\r\n\r\n  // Class declaration with [Hook] attribute\r\n  lines.push(`// ============================================================`);\r\n  lines.push(`// HOOK CLASS - Generated from ${analysis.name}`);\r\n  lines.push(`// ============================================================`);\r\n  lines.push(`[Hook]`);\r\n  lines.push(`public partial class ${analysis.className} : MinimactComponent`);\r\n  lines.push(`{`);\r\n\r\n  // Configuration properties (from hook parameters)\r\n  if (analysis.params && analysis.params.length > 0) {\r\n    lines.push(`    // Configuration (from hook arguments)`);\r\n    analysis.params.forEach(param => {\r\n      const csharpType = mapTypeToCSharp(param.type);\r\n      lines.push(`    private ${csharpType} ${param.name} => GetState<${csharpType}>(\"_config.${param.name}\");`);\r\n    });\r\n    lines.push(``);\r\n  }\r\n\r\n  // State fields\r\n  if (analysis.states && analysis.states.length > 0) {\r\n    lines.push(`    // Hook state`);\r\n    analysis.states.forEach(state => {\r\n      const csharpType = mapTypeToCSharp(state.type);\r\n      const initialValue = state.initialValue || getDefaultValue(csharpType);\r\n      lines.push(`    [State]`);\r\n      lines.push(`    private ${csharpType} ${state.varName} = ${initialValue};`);\r\n      lines.push(``);\r\n    });\r\n  }\r\n\r\n  // Setter methods for state\r\n  if (analysis.states && analysis.states.length > 0) {\r\n    lines.push(`    // State setters`);\r\n    analysis.states.forEach(state => {\r\n      const csharpType = mapTypeToCSharp(state.type);\r\n      lines.push(`    private void ${state.setterName}(${csharpType} value)`);\r\n      lines.push(`    {`);\r\n      lines.push(`        SetState(nameof(${state.varName}), value);`);\r\n      lines.push(`    }`);\r\n      lines.push(``);\r\n    });\r\n  }\r\n\r\n  // Methods\r\n  if (analysis.methods && analysis.methods.length > 0) {\r\n    lines.push(`    // Hook methods`);\r\n    analysis.methods.forEach(method => {\r\n      const returnType = mapTypeToCSharp(method.returnType);\r\n      const params = method.params.map(p => {\r\n        const type = mapTypeToCSharp(p.type);\r\n        return `${type} ${p.name}`;\r\n      }).join(', ');\r\n\r\n      lines.push(`    private ${returnType} ${method.name}(${params})`);\r\n      lines.push(`    {`);\r\n      // TODO: Transpile method body properly\r\n      lines.push(`        ${method.body}`);\r\n      lines.push(`    }`);\r\n      lines.push(``);\r\n    });\r\n  }\r\n\r\n  // Render method (if hook has JSX)\r\n  if (analysis.jsxElements && analysis.jsxElements.length > 0) {\r\n    const jsx = analysis.jsxElements[0]; // Take first JSX element\r\n\r\n    lines.push(`    // Hook UI rendering`);\r\n    lines.push(`    protected override VNode Render()`);\r\n    lines.push(`    {`);\r\n    lines.push(`        StateManager.SyncMembersToState(this);`);\r\n    lines.push(``);\r\n\r\n    if (jsx && jsx.node) {\r\n      try {\r\n        // Assign hex paths to JSX tree\r\n        const pathGen = new HexPathGenerator();\r\n        assignPathsToJSX(jsx.node, '', pathGen, t);\r\n\r\n        // Generate VNode code using existing generator\r\n        const renderCode = generateRenderBody(jsx.node, component, 2);\r\n        lines.push(`        ${renderCode.trim()}`);\r\n      } catch (e) {\r\n        console.error('[hookClassGenerator] Error generating JSX:', e.message);\r\n        console.error(e.stack);\r\n        lines.push(`        // TODO: Generate VNode tree from JSX`);\r\n        lines.push(`        return new VNull(\"1\");`);\r\n      }\r\n    } else {\r\n      lines.push(`        // TODO: Generate VNode tree from JSX`);\r\n      lines.push(`        return new VNull(\"1\");`);\r\n    }\r\n\r\n    lines.push(`    }`);\r\n    lines.push(``);\r\n\r\n    // Event handlers (if any)\r\n    if (component.eventHandlers && component.eventHandlers.length > 0) {\r\n      lines.push(`    // Event handlers`);\r\n      component.eventHandlers.forEach((handler, index) => {\r\n        lines.push(`    public void Handle${index}(dynamic e)`);\r\n        lines.push(`    {`);\r\n        lines.push(`        ${handler.methodCall}`);\r\n        lines.push(`    }`);\r\n        lines.push(``);\r\n      });\r\n    }\r\n  }\r\n\r\n  lines.push(`}`);\r\n  lines.push(``);\r\n\r\n  return lines.join('\\n');\r\n}",
+  "body_templates": [
+    {
+      "hash": "87b71d01",
+      "type": "VariableDeclaration",
+      "babel_source": "const lines = [];",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6a6b36c2",
+      "type": "TemplateLiteral",
+      "babel_source": "`// ============================================================`",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b287981b",
+      "type": "TemplateLiteral",
+      "babel_source": "`// HOOK CLASS - Generated from ${analysis.name}`",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6a6b36c2",
+      "type": "TemplateLiteral",
+      "babel_source": "`// ============================================================`",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fbae2346",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Hook]`",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e1e8e100",
+      "type": "TemplateLiteral",
+      "babel_source": "`public partial class ${analysis.className} : MinimactComponent`",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "95b43a02",
+      "type": "TemplateLiteral",
+      "babel_source": "`{`",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4d8ccef5",
+      "type": "IfStatement",
+      "condition": "analysis.params && analysis.params.length > 0",
+      "babel_source": "if (analysis.params && analysis.params.length > 0) {\r\n    lines.push(`    // Configuration (from hook arguments)`);\r\n    analysis.params.forEach(param => {\r\n      const csharpType = mapTypeToCSharp(param.type);\r\n      lines.push(`    private ${csharpType} ${param.name} => GetState<${csharpType}>(\"_config.${param.name}\");`);\r\n    });\r\n    lines.push(``);\r\n  }",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c80f8174",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "analysis.params && analysis.params.length > 0",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6776fbfa",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "analysis.params.length > 0",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "08c099f6",
+      "type": "TemplateLiteral",
+      "babel_source": "`    // Configuration (from hook arguments)`",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "011bb6a8",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "param => {\r\n      const csharpType = mapTypeToCSharp(param.type);\r\n      lines.push(`    private ${csharpType} ${param.name} => GetState<${csharpType}>(\"_config.${param.name}\");`);\r\n    }",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8050a39c",
+      "type": "VariableDeclaration",
+      "babel_source": "const csharpType = mapTypeToCSharp(param.type);",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "31f3f922",
+      "type": "TemplateLiteral",
+      "babel_source": "`    private ${csharpType} ${param.name} => GetState<${csharpType}>(\"_config.${param.name}\");`",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "059b8502",
+      "type": "TemplateLiteral",
+      "babel_source": "``",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b5dcb4a2",
+      "type": "IfStatement",
+      "condition": "analysis.states && analysis.states.length > 0",
+      "babel_source": "if (analysis.states && analysis.states.length > 0) {\r\n    lines.push(`    // Hook state`);\r\n    analysis.states.forEach(state => {\r\n      const csharpType = mapTypeToCSharp(state.type);\r\n      const initialValue = state.initialValue || getDefaultValue(csharpType);\r\n      lines.push(`    [State]`);\r\n      lines.push(`    private ${csharpType} ${state.varName} = ${initialValue};`);\r\n      lines.push(``);\r\n    });\r\n  }",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d2977084",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "analysis.states && analysis.states.length > 0",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "afdaa914",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "analysis.states.length > 0",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "09e1e8bd",
+      "type": "TemplateLiteral",
+      "babel_source": "`    // Hook state`",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a004f51d",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "state => {\r\n      const csharpType = mapTypeToCSharp(state.type);\r\n      const initialValue = state.initialValue || getDefaultValue(csharpType);\r\n      lines.push(`    [State]`);\r\n      lines.push(`    private ${csharpType} ${state.varName} = ${initialValue};`);\r\n      lines.push(``);\r\n    }",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a0231694",
+      "type": "VariableDeclaration",
+      "babel_source": "const csharpType = mapTypeToCSharp(state.type);",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "925f3c58",
+      "type": "VariableDeclaration",
+      "babel_source": "const initialValue = state.initialValue || getDefaultValue(csharpType);",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f1160c68",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "state.initialValue || getDefaultValue(csharpType)",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "634a1d52",
+      "type": "TemplateLiteral",
+      "babel_source": "`    [State]`",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e6956dd3",
+      "type": "TemplateLiteral",
+      "babel_source": "`    private ${csharpType} ${state.varName} = ${initialValue};`",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "059b8502",
+      "type": "TemplateLiteral",
+      "babel_source": "``",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e5ac58e4",
+      "type": "IfStatement",
+      "condition": "analysis.states && analysis.states.length > 0",
+      "babel_source": "if (analysis.states && analysis.states.length > 0) {\r\n    lines.push(`    // State setters`);\r\n    analysis.states.forEach(state => {\r\n      const csharpType = mapTypeToCSharp(state.type);\r\n      lines.push(`    private void ${state.setterName}(${csharpType} value)`);\r\n      lines.push(`    {`);\r\n      lines.push(`        SetState(nameof(${state.varName}), value);`);\r\n      lines.push(`    }`);\r\n      lines.push(``);\r\n    });\r\n  }",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d2977084",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "analysis.states && analysis.states.length > 0",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "afdaa914",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "analysis.states.length > 0",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e530c2d5",
+      "type": "TemplateLiteral",
+      "babel_source": "`    // State setters`",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "31a54522",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "state => {\r\n      const csharpType = mapTypeToCSharp(state.type);\r\n      lines.push(`    private void ${state.setterName}(${csharpType} value)`);\r\n      lines.push(`    {`);\r\n      lines.push(`        SetState(nameof(${state.varName}), value);`);\r\n      lines.push(`    }`);\r\n      lines.push(``);\r\n    }",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a0231694",
+      "type": "VariableDeclaration",
+      "babel_source": "const csharpType = mapTypeToCSharp(state.type);",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2498c563",
+      "type": "TemplateLiteral",
+      "babel_source": "`    private void ${state.setterName}(${csharpType} value)`",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "497895ef",
+      "type": "TemplateLiteral",
+      "babel_source": "`    {`",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3ca28746",
+      "type": "TemplateLiteral",
+      "babel_source": "`        SetState(nameof(${state.varName}), value);`",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5bb88761",
+      "type": "TemplateLiteral",
+      "babel_source": "`    }`",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "059b8502",
+      "type": "TemplateLiteral",
+      "babel_source": "``",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e9b9ee16",
+      "type": "IfStatement",
+      "condition": "analysis.methods && analysis.methods.length > 0",
+      "babel_source": "if (analysis.methods && analysis.methods.length > 0) {\r\n    lines.push(`    // Hook methods`);\r\n    analysis.methods.forEach(method => {\r\n      const returnType = mapTypeToCSharp(method.returnType);\r\n      const params = method.params.map(p => {\r\n        const type = mapTypeToCSharp(p.type);\r\n        return `${type} ${p.name}`;\r\n      }).join(', ');\r\n\r\n      lines.push(`    private ${returnType} ${method.name}(${params})`);\r\n      lines.push(`    {`);\r\n      // TODO: Transpile method body properly\r\n      lines.push(`        ${method.body}`);\r\n      lines.push(`    }`);\r\n      lines.push(``);\r\n    });\r\n  }",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "31f08008",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "analysis.methods && analysis.methods.length > 0",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "57b68394",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "analysis.methods.length > 0",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e5e59c98",
+      "type": "TemplateLiteral",
+      "babel_source": "`    // Hook methods`",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d59dd3ca",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "method => {\r\n      const returnType = mapTypeToCSharp(method.returnType);\r\n      const params = method.params.map(p => {\r\n        const type = mapTypeToCSharp(p.type);\r\n        return `${type} ${p.name}`;\r\n      }).join(', ');\r\n\r\n      lines.push(`    private ${returnType} ${method.name}(${params})`);\r\n      lines.push(`    {`);\r\n      // TODO: Transpile method body properly\r\n      lines.push(`        ${method.body}`);\r\n      lines.push(`    }`);\r\n      lines.push(``);\r\n    }",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7cda0e02",
+      "type": "VariableDeclaration",
+      "babel_source": "const returnType = mapTypeToCSharp(method.returnType);",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "66084086",
+      "type": "VariableDeclaration",
+      "babel_source": "const params = method.params.map(p => {\r\n        const type = mapTypeToCSharp(p.type);\r\n        return `${type} ${p.name}`;\r\n      }).join(', ');",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4eb7c93a",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "p => {\r\n        const type = mapTypeToCSharp(p.type);\r\n        return `${type} ${p.name}`;\r\n      }",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "80fb9f83",
+      "type": "VariableDeclaration",
+      "babel_source": "const type = mapTypeToCSharp(p.type);",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f644f36a",
+      "type": "ReturnStatement",
+      "babel_source": "return `${type} ${p.name}`;",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "99fd6332",
+      "type": "TemplateLiteral",
+      "babel_source": "`${type} ${p.name}`",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "50e6994d",
+      "type": "TemplateLiteral",
+      "babel_source": "`    private ${returnType} ${method.name}(${params})`",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "497895ef",
+      "type": "TemplateLiteral",
+      "babel_source": "`    {`",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0ba48df9",
+      "type": "TemplateLiteral",
+      "babel_source": "`        ${method.body}`",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5bb88761",
+      "type": "TemplateLiteral",
+      "babel_source": "`    }`",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "059b8502",
+      "type": "TemplateLiteral",
+      "babel_source": "``",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "752f08ef",
+      "type": "IfStatement",
+      "condition": "analysis.jsxElements && analysis.jsxElements.length > 0",
+      "babel_source": "if (analysis.jsxElements && analysis.jsxElements.length > 0) {\r\n    const jsx = analysis.jsxElements[0]; // Take first JSX element\r\n\r\n    lines.push(`    // Hook UI rendering`);\r\n    lines.push(`    protected override VNode Render()`);\r\n    lines.push(`    {`);\r\n    lines.push(`        StateManager.SyncMembersToState(this);`);\r\n    lines.push(``);\r\n\r\n    if (jsx && jsx.node) {\r\n      try {\r\n        // Assign hex paths to JSX tree\r\n        const pathGen = new HexPathGenerator();\r\n        assignPathsToJSX(jsx.node, '', pathGen, t);\r\n\r\n        // Generate VNode code using existing generator\r\n        const renderCode = generateRenderBody(jsx.node, component, 2);\r\n        lines.push(`        ${renderCode.trim()}`);\r\n      } catch (e) {\r\n        console.error('[hookClassGenerator] Error generating JSX:', e.message);\r\n        console.error(e.stack);\r\n        lines.push(`        // TODO: Generate VNode tree from JSX`);\r\n        lines.push(`        return new VNull(\"1\");`);\r\n      }\r\n    } else {\r\n      lines.push(`        // TODO: Generate VNode tree from JSX`);\r\n      lines.push(`        return new VNull(\"1\");`);\r\n    }\r\n\r\n    lines.push(`    }`);\r\n    lines.push(``);\r\n\r\n    // Event handlers (if any)\r\n    if (component.eventHandlers && component.eventHandlers.length > 0) {\r\n      lines.push(`    // Event handlers`);\r\n      component.eventHandlers.forEach((handler, index) => {\r\n        lines.push(`    public void Handle${index}(dynamic e)`);\r\n        lines.push(`    {`);\r\n        lines.push(`        ${handler.methodCall}`);\r\n        lines.push(`    }`);\r\n        lines.push(``);\r\n      });\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7892847f",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "analysis.jsxElements && analysis.jsxElements.length > 0",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "371856e2",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "analysis.jsxElements.length > 0",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "43e6bb6c",
+      "type": "VariableDeclaration",
+      "babel_source": "const jsx = analysis.jsxElements[0];",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4eb5e18f",
+      "type": "TemplateLiteral",
+      "babel_source": "`    // Hook UI rendering`",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1b2bb83b",
+      "type": "TemplateLiteral",
+      "babel_source": "`    protected override VNode Render()`",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "497895ef",
+      "type": "TemplateLiteral",
+      "babel_source": "`    {`",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a7059e53",
+      "type": "TemplateLiteral",
+      "babel_source": "`        StateManager.SyncMembersToState(this);`",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "059b8502",
+      "type": "TemplateLiteral",
+      "babel_source": "``",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bdf1d0c7",
+      "type": "IfStatement",
+      "condition": "jsx && jsx.node",
+      "babel_source": "if (jsx && jsx.node) {\r\n      try {\r\n        // Assign hex paths to JSX tree\r\n        const pathGen = new HexPathGenerator();\r\n        assignPathsToJSX(jsx.node, '', pathGen, t);\r\n\r\n        // Generate VNode code using existing generator\r\n        const renderCode = generateRenderBody(jsx.node, component, 2);\r\n        lines.push(`        ${renderCode.trim()}`);\r\n      } catch (e) {\r\n        console.error('[hookClassGenerator] Error generating JSX:', e.message);\r\n        console.error(e.stack);\r\n        lines.push(`        // TODO: Generate VNode tree from JSX`);\r\n        lines.push(`        return new VNull(\"1\");`);\r\n      }\r\n    } else {\r\n      lines.push(`        // TODO: Generate VNode tree from JSX`);\r\n      lines.push(`        return new VNull(\"1\");`);\r\n    }",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5fe5bb2d",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "jsx && jsx.node",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "953ea317",
+      "type": "VariableDeclaration",
+      "babel_source": "const pathGen = new HexPathGenerator();",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "23e7c556",
+      "type": "NewExpression",
+      "babel_source": "new HexPathGenerator()",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "90e2d0f8",
+      "type": "VariableDeclaration",
+      "babel_source": "const renderCode = generateRenderBody(jsx.node, component, 2);",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9bce0057",
+      "type": "TemplateLiteral",
+      "babel_source": "`        ${renderCode.trim()}`",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "72dc927f",
+      "type": "TemplateLiteral",
+      "babel_source": "`        // TODO: Generate VNode tree from JSX`",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "30d0f9ea",
+      "type": "TemplateLiteral",
+      "babel_source": "`        return new VNull(\"1\");`",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "72dc927f",
+      "type": "TemplateLiteral",
+      "babel_source": "`        // TODO: Generate VNode tree from JSX`",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "30d0f9ea",
+      "type": "TemplateLiteral",
+      "babel_source": "`        return new VNull(\"1\");`",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5bb88761",
+      "type": "TemplateLiteral",
+      "babel_source": "`    }`",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "059b8502",
+      "type": "TemplateLiteral",
+      "babel_source": "``",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c7de118b",
+      "type": "IfStatement",
+      "condition": "component.eventHandlers && component.eventHandlers.length > 0",
+      "babel_source": "if (component.eventHandlers && component.eventHandlers.length > 0) {\r\n      lines.push(`    // Event handlers`);\r\n      component.eventHandlers.forEach((handler, index) => {\r\n        lines.push(`    public void Handle${index}(dynamic e)`);\r\n        lines.push(`    {`);\r\n        lines.push(`        ${handler.methodCall}`);\r\n        lines.push(`    }`);\r\n        lines.push(``);\r\n      });\r\n    }",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1b52778f",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "component.eventHandlers && component.eventHandlers.length > 0",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "daf05653",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "component.eventHandlers.length > 0",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e33fff01",
+      "type": "TemplateLiteral",
+      "babel_source": "`    // Event handlers`",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1271c5b1",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "(handler, index) => {\r\n        lines.push(`    public void Handle${index}(dynamic e)`);\r\n        lines.push(`    {`);\r\n        lines.push(`        ${handler.methodCall}`);\r\n        lines.push(`    }`);\r\n        lines.push(``);\r\n      }",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8e01a09d",
+      "type": "TemplateLiteral",
+      "babel_source": "`    public void Handle${index}(dynamic e)`",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "497895ef",
+      "type": "TemplateLiteral",
+      "babel_source": "`    {`",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "309d3ca3",
+      "type": "TemplateLiteral",
+      "babel_source": "`        ${handler.methodCall}`",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5bb88761",
+      "type": "TemplateLiteral",
+      "babel_source": "`    }`",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "059b8502",
+      "type": "TemplateLiteral",
+      "babel_source": "``",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8edaa7d1",
+      "type": "TemplateLiteral",
+      "babel_source": "`}`",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "059b8502",
+      "type": "TemplateLiteral",
+      "babel_source": "``",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ea8c77e3",
+      "type": "ReturnStatement",
+      "babel_source": "return lines.join('\\n');",
+      "parentContext": {
+        "functionName": "generateHookClass",
+        "functionParams": [
+          "analysis",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/hookClassGenerator.cjs"
+  ]
+}

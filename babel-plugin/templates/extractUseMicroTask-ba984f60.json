@@ -1,0 +1,91 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractUseMicroTask",
+  "params": [
+    {
+      "name": "path",
+      "inferredType": "&Path",
+      "defaultValue": null
+    },
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractUseMicroTask(path, component) {\r\n  const callback = path.node.arguments[0];\r\n\r\n  component.useMicroTask = component.useMicroTask || [];\r\n  component.useMicroTask.push({\r\n    body: callback\r\n  });\r\n}",
+  "body_templates": [
+    {
+      "hash": "0f136048",
+      "type": "VariableDeclaration",
+      "babel_source": "const callback = path.node.arguments[0];",
+      "parentContext": {
+        "functionName": "extractUseMicroTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "371cc37f",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "component.useMicroTask = component.useMicroTask || []",
+      "parentContext": {
+        "functionName": "extractUseMicroTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7831d81c",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "component.useMicroTask || []",
+      "parentContext": {
+        "functionName": "extractUseMicroTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractUseMicroTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8eb1aa97",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    body: callback\r\n  }",
+      "parentContext": {
+        "functionName": "extractUseMicroTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/hooks.cjs"
+  ]
+}

@@ -1,0 +1,350 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "inferStateType",
+  "params": [
+    {
+      "name": "bindingName",
+      "inferredType": "&str",
+      "defaultValue": null
+    },
+    {
+      "name": "componentState",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "&'static str",
+  "babel_source": "function inferStateType(bindingName, componentState) {\r\n  // Check useState declarations\r\n  if (componentState.useState) {\r\n    const stateDecl = componentState.useState.find(s =>\r\n      s.name === bindingName || s.setterName === bindingName\r\n    );\r\n    if (stateDecl) {\r\n      return stateDecl.type || 'object';\r\n    }\r\n  }\r\n\r\n  // Check props\r\n  if (componentState.props) {\r\n    const prop = componentState.props.find(p => p.name === bindingName);\r\n    if (prop) {\r\n      return prop.type || 'object';\r\n    }\r\n  }\r\n\r\n  // Check local variables\r\n  if (componentState.localVariables) {\r\n    const localVar = componentState.localVariables.find(v => v.name === bindingName);\r\n    if (localVar) {\r\n      return localVar.type || 'object';\r\n    }\r\n  }\r\n\r\n  // Default to object if we can't infer\r\n  return 'object';\r\n}",
+  "body_templates": [
+    {
+      "hash": "ca42bbdd",
+      "type": "IfStatement",
+      "condition": "componentState.useState",
+      "babel_source": "if (componentState.useState) {\r\n    const stateDecl = componentState.useState.find(s =>\r\n      s.name === bindingName || s.setterName === bindingName\r\n    );\r\n    if (stateDecl) {\r\n      return stateDecl.type || 'object';\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "inferStateType",
+        "functionParams": [
+          "bindingName",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "983fd969",
+      "type": "VariableDeclaration",
+      "babel_source": "const stateDecl = componentState.useState.find(s =>\r\n      s.name === bindingName || s.setterName === bindingName\r\n    );",
+      "parentContext": {
+        "functionName": "inferStateType",
+        "functionParams": [
+          "bindingName",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "79f1a29d",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "s =>\r\n      s.name === bindingName || s.setterName === bindingName",
+      "parentContext": {
+        "functionName": "inferStateType",
+        "functionParams": [
+          "bindingName",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ebc3cbf4",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "s.name === bindingName || s.setterName === bindingName",
+      "parentContext": {
+        "functionName": "inferStateType",
+        "functionParams": [
+          "bindingName",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a954fd55",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "s.name === bindingName",
+      "parentContext": {
+        "functionName": "inferStateType",
+        "functionParams": [
+          "bindingName",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c655c10a",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "s.setterName === bindingName",
+      "parentContext": {
+        "functionName": "inferStateType",
+        "functionParams": [
+          "bindingName",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c7fe834d",
+      "type": "IfStatement",
+      "condition": "stateDecl",
+      "babel_source": "if (stateDecl) {\r\n      return stateDecl.type || 'object';\r\n    }",
+      "parentContext": {
+        "functionName": "inferStateType",
+        "functionParams": [
+          "bindingName",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "11004309",
+      "type": "ReturnStatement",
+      "babel_source": "return stateDecl.type || 'object';",
+      "parentContext": {
+        "functionName": "inferStateType",
+        "functionParams": [
+          "bindingName",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "560422c1",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "stateDecl.type || 'object'",
+      "parentContext": {
+        "functionName": "inferStateType",
+        "functionParams": [
+          "bindingName",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ccd9e3c5",
+      "type": "IfStatement",
+      "condition": "componentState.props",
+      "babel_source": "if (componentState.props) {\r\n    const prop = componentState.props.find(p => p.name === bindingName);\r\n    if (prop) {\r\n      return prop.type || 'object';\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "inferStateType",
+        "functionParams": [
+          "bindingName",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e000d7fa",
+      "type": "VariableDeclaration",
+      "babel_source": "const prop = componentState.props.find(p => p.name === bindingName);",
+      "parentContext": {
+        "functionName": "inferStateType",
+        "functionParams": [
+          "bindingName",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e7a6c8a9",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "p => p.name === bindingName",
+      "parentContext": {
+        "functionName": "inferStateType",
+        "functionParams": [
+          "bindingName",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2ec65142",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "p.name === bindingName",
+      "parentContext": {
+        "functionName": "inferStateType",
+        "functionParams": [
+          "bindingName",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "43241ca3",
+      "type": "IfStatement",
+      "condition": "prop",
+      "babel_source": "if (prop) {\r\n      return prop.type || 'object';\r\n    }",
+      "parentContext": {
+        "functionName": "inferStateType",
+        "functionParams": [
+          "bindingName",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "af6d01c0",
+      "type": "ReturnStatement",
+      "babel_source": "return prop.type || 'object';",
+      "parentContext": {
+        "functionName": "inferStateType",
+        "functionParams": [
+          "bindingName",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "11e622b4",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "prop.type || 'object'",
+      "parentContext": {
+        "functionName": "inferStateType",
+        "functionParams": [
+          "bindingName",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a6950e21",
+      "type": "IfStatement",
+      "condition": "componentState.localVariables",
+      "babel_source": "if (componentState.localVariables) {\r\n    const localVar = componentState.localVariables.find(v => v.name === bindingName);\r\n    if (localVar) {\r\n      return localVar.type || 'object';\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "inferStateType",
+        "functionParams": [
+          "bindingName",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0c48fbd7",
+      "type": "VariableDeclaration",
+      "babel_source": "const localVar = componentState.localVariables.find(v => v.name === bindingName);",
+      "parentContext": {
+        "functionName": "inferStateType",
+        "functionParams": [
+          "bindingName",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ecfeb7ba",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "v => v.name === bindingName",
+      "parentContext": {
+        "functionName": "inferStateType",
+        "functionParams": [
+          "bindingName",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c9ffb024",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "v.name === bindingName",
+      "parentContext": {
+        "functionName": "inferStateType",
+        "functionParams": [
+          "bindingName",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e2f86cd1",
+      "type": "IfStatement",
+      "condition": "localVar",
+      "babel_source": "if (localVar) {\r\n      return localVar.type || 'object';\r\n    }",
+      "parentContext": {
+        "functionName": "inferStateType",
+        "functionParams": [
+          "bindingName",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "990cf677",
+      "type": "ReturnStatement",
+      "babel_source": "return localVar.type || 'object';",
+      "parentContext": {
+        "functionName": "inferStateType",
+        "functionParams": [
+          "bindingName",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d7e7d17d",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "localVar.type || 'object'",
+      "parentContext": {
+        "functionName": "inferStateType",
+        "functionParams": [
+          "bindingName",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1827bbd0",
+      "type": "ReturnStatement",
+      "babel_source": "return 'object';",
+      "parentContext": {
+        "functionName": "inferStateType",
+        "functionParams": [
+          "bindingName",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/analyzePluginUsage.cjs"
+  ]
+}

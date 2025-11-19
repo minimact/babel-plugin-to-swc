@@ -1,0 +1,839 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "analyzeTimeline",
+  "params": [
+    {
+      "name": "componentPath",
+      "inferredType": "&Path",
+      "defaultValue": null
+    },
+    {
+      "name": "componentName",
+      "inferredType": "&str",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "AnalysisResult",
+  "babel_source": "function analyzeTimeline(componentPath, componentName) {\r\n  let timeline = null;\r\n\r\n  // 1. Find useTimeline() call\r\n  componentPath.traverse({\r\n    VariableDeclarator(path) {\r\n      const init = path.node.init;\r\n\r\n      if (\r\n        t.isCallExpression(init) &&\r\n        t.isIdentifier(init.callee) &&\r\n        init.callee.name === 'useTimeline'\r\n      ) {\r\n        // Initialize timeline metadata\r\n        timeline = {\r\n          timelineId: `${componentName}_Timeline`,\r\n          variableName: t.isIdentifier(path.node.id) ? path.node.id.name : 'timeline',\r\n          duration: 0,\r\n          repeat: false,\r\n          repeatCount: -1,\r\n          easing: 'linear',\r\n          autoPlay: false,\r\n          stateBindings: new Map(),\r\n          keyframes: [],\r\n          controlMethods: []\r\n        };\r\n\r\n        // Extract config object\r\n        const configArg = init.arguments[0];\r\n        if (t.isObjectExpression(configArg)) {\r\n          extractTimelineConfig(configArg, timeline);\r\n        }\r\n\r\n        // Extract optional name argument\r\n        const nameArg = init.arguments[1];\r\n        if (t.isStringLiteral(nameArg)) {\r\n          timeline.timelineId = `${componentName}_${nameArg.value}`;\r\n        }\r\n\r\n        console.log(`[Timeline] Detected useTimeline() in ${componentName}: ${timeline.variableName}`);\r\n      }\r\n    }\r\n  });\r\n\r\n  if (!timeline) {\r\n    return null; // No timeline found\r\n  }\r\n\r\n  // 2. Find useTimelineState() calls\r\n  componentPath.traverse({\r\n    CallExpression(path) {\r\n      if (\r\n        t.isIdentifier(path.node.callee) &&\r\n        path.node.callee.name === 'useTimelineState'\r\n      ) {\r\n        extractStateBinding(path.node, timeline);\r\n      }\r\n    }\r\n  });\r\n\r\n  // 3. Find timeline.keyframes() or timeline.keyframe() calls\r\n  componentPath.traverse({\r\n    CallExpression(path) {\r\n      const callee = path.node.callee;\r\n\r\n      if (\r\n        t.isMemberExpression(callee) &&\r\n        t.isIdentifier(callee.object) &&\r\n        callee.object.name === timeline.variableName &&\r\n        t.isIdentifier(callee.property)\r\n      ) {\r\n        const methodName = callee.property.name;\r\n\r\n        if (methodName === 'keyframes') {\r\n          extractKeyframesArray(path.node, timeline);\r\n        } else if (methodName === 'keyframe') {\r\n          extractSingleKeyframe(path.node, timeline);\r\n        } else if (['play', 'pause', 'stop', 'seek', 'reverse'].includes(methodName)) {\r\n          extractControlMethod(path.node, timeline, methodName);\r\n        }\r\n      }\r\n    }\r\n  });\r\n\r\n  // 4. Validate timeline\r\n  const validation = validateTimeline(timeline);\r\n  if (!validation.valid) {\r\n    console.error(`[Timeline] Validation failed for ${componentName}:`);\r\n    validation.errors.forEach(err => console.error(`  - ${err}`));\r\n    return null;\r\n  }\r\n\r\n  return timeline;\r\n}",
+  "body_templates": [
+    {
+      "hash": "e068b17d",
+      "type": "VariableDeclaration",
+      "babel_source": "let timeline = null;",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "11165592",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    VariableDeclarator(path) {\r\n      const init = path.node.init;\r\n\r\n      if (\r\n        t.isCallExpression(init) &&\r\n        t.isIdentifier(init.callee) &&\r\n        init.callee.name === 'useTimeline'\r\n      ) {\r\n        // Initialize timeline metadata\r\n        timeline = {\r\n          timelineId: `${componentName}_Timeline`,\r\n          variableName: t.isIdentifier(path.node.id) ? path.node.id.name : 'timeline',\r\n          duration: 0,\r\n          repeat: false,\r\n          repeatCount: -1,\r\n          easing: 'linear',\r\n          autoPlay: false,\r\n          stateBindings: new Map(),\r\n          keyframes: [],\r\n          controlMethods: []\r\n        };\r\n\r\n        // Extract config object\r\n        const configArg = init.arguments[0];\r\n        if (t.isObjectExpression(configArg)) {\r\n          extractTimelineConfig(configArg, timeline);\r\n        }\r\n\r\n        // Extract optional name argument\r\n        const nameArg = init.arguments[1];\r\n        if (t.isStringLiteral(nameArg)) {\r\n          timeline.timelineId = `${componentName}_${nameArg.value}`;\r\n        }\r\n\r\n        console.log(`[Timeline] Detected useTimeline() in ${componentName}: ${timeline.variableName}`);\r\n      }\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d97ea1ee",
+      "type": "VariableDeclaration",
+      "babel_source": "const init = path.node.init;",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dbb1c628",
+      "type": "IfStatement",
+      "condition": "t.isCallExpression(init) &&\r\n        t.isIdentifier(init.callee) &&\r\n        init.callee.name === 'useTimeline'",
+      "babel_source": "if (\r\n        t.isCallExpression(init) &&\r\n        t.isIdentifier(init.callee) &&\r\n        init.callee.name === 'useTimeline'\r\n      ) {\r\n        // Initialize timeline metadata\r\n        timeline = {\r\n          timelineId: `${componentName}_Timeline`,\r\n          variableName: t.isIdentifier(path.node.id) ? path.node.id.name : 'timeline',\r\n          duration: 0,\r\n          repeat: false,\r\n          repeatCount: -1,\r\n          easing: 'linear',\r\n          autoPlay: false,\r\n          stateBindings: new Map(),\r\n          keyframes: [],\r\n          controlMethods: []\r\n        };\r\n\r\n        // Extract config object\r\n        const configArg = init.arguments[0];\r\n        if (t.isObjectExpression(configArg)) {\r\n          extractTimelineConfig(configArg, timeline);\r\n        }\r\n\r\n        // Extract optional name argument\r\n        const nameArg = init.arguments[1];\r\n        if (t.isStringLiteral(nameArg)) {\r\n          timeline.timelineId = `${componentName}_${nameArg.value}`;\r\n        }\r\n\r\n        console.log(`[Timeline] Detected useTimeline() in ${componentName}: ${timeline.variableName}`);\r\n      }",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3f87da6d",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isCallExpression(init) &&\r\n        t.isIdentifier(init.callee) &&\r\n        init.callee.name === 'useTimeline'",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7d999cd8",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isCallExpression(init) &&\r\n        t.isIdentifier(init.callee)",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e0cd5011",
+      "type": "BabelTypeCheck",
+      "method": "isCallExpression",
+      "babel_source": "t.isCallExpression(init)",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ac7282b",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(init.callee)",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9abc1125",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "init.callee.name === 'useTimeline'",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b5f00e3d",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "timeline = {\r\n          timelineId: `${componentName}_Timeline`,\r\n          variableName: t.isIdentifier(path.node.id) ? path.node.id.name : 'timeline',\r\n          duration: 0,\r\n          repeat: false,\r\n          repeatCount: -1,\r\n          easing: 'linear',\r\n          autoPlay: false,\r\n          stateBindings: new Map(),\r\n          keyframes: [],\r\n          controlMethods: []\r\n        }",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0e726d5a",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n          timelineId: `${componentName}_Timeline`,\r\n          variableName: t.isIdentifier(path.node.id) ? path.node.id.name : 'timeline',\r\n          duration: 0,\r\n          repeat: false,\r\n          repeatCount: -1,\r\n          easing: 'linear',\r\n          autoPlay: false,\r\n          stateBindings: new Map(),\r\n          keyframes: [],\r\n          controlMethods: []\r\n        }",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3c61fefc",
+      "type": "TemplateLiteral",
+      "babel_source": "`${componentName}_Timeline`",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "efd1c543",
+      "type": "ConditionalExpression",
+      "babel_source": "t.isIdentifier(path.node.id) ? path.node.id.name : 'timeline'",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "da4c9d16",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(path.node.id)",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1bad6b8c",
+      "type": "UnaryExpression",
+      "operator": "-",
+      "babel_source": "-1",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cc227fdc",
+      "type": "NewExpression",
+      "babel_source": "new Map()",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6b7f7f75",
+      "type": "VariableDeclaration",
+      "babel_source": "const configArg = init.arguments[0];",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "27a3756f",
+      "type": "IfStatement",
+      "condition": "t.isObjectExpression(configArg)",
+      "babel_source": "if (t.isObjectExpression(configArg)) {\r\n          extractTimelineConfig(configArg, timeline);\r\n        }",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "733acff0",
+      "type": "BabelTypeCheck",
+      "method": "isObjectExpression",
+      "babel_source": "t.isObjectExpression(configArg)",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c5f01303",
+      "type": "VariableDeclaration",
+      "babel_source": "const nameArg = init.arguments[1];",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b477e138",
+      "type": "IfStatement",
+      "condition": "t.isStringLiteral(nameArg)",
+      "babel_source": "if (t.isStringLiteral(nameArg)) {\r\n          timeline.timelineId = `${componentName}_${nameArg.value}`;\r\n        }",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "30430860",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(nameArg)",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "59977d8a",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "timeline.timelineId = `${componentName}_${nameArg.value}`",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ba63272f",
+      "type": "TemplateLiteral",
+      "babel_source": "`${componentName}_${nameArg.value}`",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2342c35b",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Timeline] Detected useTimeline() in ${componentName}: ${timeline.variableName}`",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "802deb74",
+      "type": "IfStatement",
+      "condition": "!timeline",
+      "babel_source": "if (!timeline) {\r\n    return null; // No timeline found\r\n  }",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ca1abbea",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!timeline",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fc17844b",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    CallExpression(path) {\r\n      if (\r\n        t.isIdentifier(path.node.callee) &&\r\n        path.node.callee.name === 'useTimelineState'\r\n      ) {\r\n        extractStateBinding(path.node, timeline);\r\n      }\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "029fab44",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(path.node.callee) &&\r\n        path.node.callee.name === 'useTimelineState'",
+      "babel_source": "if (\r\n        t.isIdentifier(path.node.callee) &&\r\n        path.node.callee.name === 'useTimelineState'\r\n      ) {\r\n        extractStateBinding(path.node, timeline);\r\n      }",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8b7dbc8c",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isIdentifier(path.node.callee) &&\r\n        path.node.callee.name === 'useTimelineState'",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c08568ed",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(path.node.callee)",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ad78f327",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "path.node.callee.name === 'useTimelineState'",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bc0112df",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    CallExpression(path) {\r\n      const callee = path.node.callee;\r\n\r\n      if (\r\n        t.isMemberExpression(callee) &&\r\n        t.isIdentifier(callee.object) &&\r\n        callee.object.name === timeline.variableName &&\r\n        t.isIdentifier(callee.property)\r\n      ) {\r\n        const methodName = callee.property.name;\r\n\r\n        if (methodName === 'keyframes') {\r\n          extractKeyframesArray(path.node, timeline);\r\n        } else if (methodName === 'keyframe') {\r\n          extractSingleKeyframe(path.node, timeline);\r\n        } else if (['play', 'pause', 'stop', 'seek', 'reverse'].includes(methodName)) {\r\n          extractControlMethod(path.node, timeline, methodName);\r\n        }\r\n      }\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cc7bd85b",
+      "type": "VariableDeclaration",
+      "babel_source": "const callee = path.node.callee;",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b36bf29c",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(callee) &&\r\n        t.isIdentifier(callee.object) &&\r\n        callee.object.name === timeline.variableName &&\r\n        t.isIdentifier(callee.property)",
+      "babel_source": "if (\r\n        t.isMemberExpression(callee) &&\r\n        t.isIdentifier(callee.object) &&\r\n        callee.object.name === timeline.variableName &&\r\n        t.isIdentifier(callee.property)\r\n      ) {\r\n        const methodName = callee.property.name;\r\n\r\n        if (methodName === 'keyframes') {\r\n          extractKeyframesArray(path.node, timeline);\r\n        } else if (methodName === 'keyframe') {\r\n          extractSingleKeyframe(path.node, timeline);\r\n        } else if (['play', 'pause', 'stop', 'seek', 'reverse'].includes(methodName)) {\r\n          extractControlMethod(path.node, timeline, methodName);\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3821469c",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isMemberExpression(callee) &&\r\n        t.isIdentifier(callee.object) &&\r\n        callee.object.name === timeline.variableName &&\r\n        t.isIdentifier(callee.property)",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "69cf4c33",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isMemberExpression(callee) &&\r\n        t.isIdentifier(callee.object) &&\r\n        callee.object.name === timeline.variableName",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "96e0db7d",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isMemberExpression(callee) &&\r\n        t.isIdentifier(callee.object)",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "20d9afa3",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(callee)",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "adaf9b83",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(callee.object)",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bc2346d1",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "callee.object.name === timeline.variableName",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0adf570d",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(callee.property)",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0ea37fc2",
+      "type": "VariableDeclaration",
+      "babel_source": "const methodName = callee.property.name;",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d9c4c3b4",
+      "type": "IfStatement",
+      "condition": "methodName === 'keyframes'",
+      "babel_source": "if (methodName === 'keyframes') {\r\n          extractKeyframesArray(path.node, timeline);\r\n        } else if (methodName === 'keyframe') {\r\n          extractSingleKeyframe(path.node, timeline);\r\n        } else if (['play', 'pause', 'stop', 'seek', 'reverse'].includes(methodName)) {\r\n          extractControlMethod(path.node, timeline, methodName);\r\n        }",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "15d7b26e",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "methodName === 'keyframes'",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "49d807f2",
+      "type": "IfStatement",
+      "condition": "methodName === 'keyframe'",
+      "babel_source": "if (methodName === 'keyframe') {\r\n          extractSingleKeyframe(path.node, timeline);\r\n        } else if (['play', 'pause', 'stop', 'seek', 'reverse'].includes(methodName)) {\r\n          extractControlMethod(path.node, timeline, methodName);\r\n        }",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3405e120",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "methodName === 'keyframe'",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b1dd0ab3",
+      "type": "IfStatement",
+      "condition": "['play', 'pause', 'stop', 'seek', 'reverse'].includes(methodName)",
+      "babel_source": "if (['play', 'pause', 'stop', 'seek', 'reverse'].includes(methodName)) {\r\n          extractControlMethod(path.node, timeline, methodName);\r\n        }",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0c8c9e71",
+      "type": "ArrayExpression",
+      "babel_source": "['play', 'pause', 'stop', 'seek', 'reverse']",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2ea08cfa",
+      "type": "VariableDeclaration",
+      "babel_source": "const validation = validateTimeline(timeline);",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6bfe56b0",
+      "type": "IfStatement",
+      "condition": "!validation.valid",
+      "babel_source": "if (!validation.valid) {\r\n    console.error(`[Timeline] Validation failed for ${componentName}:`);\r\n    validation.errors.forEach(err => console.error(`  - ${err}`));\r\n    return null;\r\n  }",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1e36126f",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!validation.valid",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0bc0deef",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Timeline] Validation failed for ${componentName}:`",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0d7c8b1b",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "err => console.error(`  - ${err}`)",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bc05c903",
+      "type": "TemplateLiteral",
+      "babel_source": "`  - ${err}`",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7cc43c58",
+      "type": "ReturnStatement",
+      "babel_source": "return timeline;",
+      "parentContext": {
+        "functionName": "analyzeTimeline",
+        "functionParams": [
+          "componentPath",
+          "componentName"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/timelineAnalyzer.cjs"
+  ]
+}

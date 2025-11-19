@@ -1,0 +1,980 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "assignPathsToChildren",
+  "params": [
+    {
+      "name": "children",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "parentPath",
+      "inferredType": "&Path",
+      "defaultValue": null
+    },
+    {
+      "name": "pathGen",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "t",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "structuralChanges",
+      "inferredType": "unknown",
+      "defaultValue": "[]"
+    },
+    {
+      "name": "isHotReload",
+      "inferredType": "unknown",
+      "defaultValue": "false"
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function assignPathsToChildren(children, parentPath, pathGen, t, structuralChanges = [], isHotReload = false) {\r\n  let previousKey = null; // Track previous sibling's key for sort order validation\r\n\r\n  for (let i = 0; i < children.length; i++) {\r\n    const child = children[i];\r\n\r\n    if (t.isJSXElement(child)) {\r\n      // Look ahead to find next sibling's key (if it exists)\r\n      let nextKey = null;\r\n      for (let j = i + 1; j < children.length; j++) {\r\n        if (t.isJSXElement(children[j])) {\r\n          const nextKeyAttr = children[j].openingElement?.attributes?.find(attr =>\r\n            t.isJSXAttribute(attr) && t.isJSXIdentifier(attr.name) && attr.name.name === 'key'\r\n          );\r\n          if (nextKeyAttr && t.isStringLiteral(nextKeyAttr.value)) {\r\n            nextKey = nextKeyAttr.value.value;\r\n            break;\r\n          }\r\n        }\r\n      }\r\n\r\n      // Nested JSX element - pass previous and next keys for validation\r\n      assignPathsToJSX(child, parentPath, pathGen, t, previousKey, nextKey, structuralChanges, isHotReload);\r\n\r\n      // Update previousKey for next sibling\r\n      if (child.__minimactPath) {\r\n        previousKey = child.__minimactPath;\r\n      }\r\n    } else if (t.isJSXText(child)) {\r\n      // Static text node\r\n      const text = child.value.trim();\r\n      if (text) {\r\n        const textHex = pathGen.next(parentPath);\r\n        const textPath = pathGen.buildPath(parentPath, textHex);\r\n        const textSegments = pathGen.parsePath(textPath);\r\n\r\n        // Mutate text node with path\r\n        child.__minimactPath = textPath;\r\n        child.__minimactPathSegments = textSegments;\r\n      }\r\n    } else if (t.isJSXExpressionContainer(child)) {\r\n      // Expression container - assign path and recurse into structural JSX\r\n      const expr = child.expression;\r\n\r\n      // Skip JSX comments (empty expressions like {/* comment */})\r\n      if (t.isJSXEmptyExpression(expr)) {\r\n        // Don't assign path, don't increment counter - comments are ignored\r\n        continue;\r\n      }\r\n\r\n      // Generate path for the expression container\r\n      const exprHex = pathGen.next(parentPath);\r\n      const exprPath = pathGen.buildPath(parentPath, exprHex);\r\n      const exprSegments = pathGen.parsePath(exprPath);\r\n\r\n      // Mutate expression container with path\r\n      child.__minimactPath = exprPath;\r\n      child.__minimactPathSegments = exprSegments;\r\n\r\n      // Recurse into structural expressions (conditionals, loops)\r\n      assignPathsToExpression(expr, exprPath, pathGen, t, structuralChanges);\r\n    } else if (t.isJSXFragment(child)) {\r\n      // Fragment - flatten children\r\n      assignPathsToJSX(child, parentPath, pathGen, t, null, null, structuralChanges);\r\n    }\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "10c3989d",
+      "type": "VariableDeclaration",
+      "babel_source": "let previousKey = null;",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4c357681",
+      "type": "ForStatement",
+      "babel_source": "for (let i = 0; i < children.length; i++) {\r\n    const child = children[i];\r\n\r\n    if (t.isJSXElement(child)) {\r\n      // Look ahead to find next sibling's key (if it exists)\r\n      let nextKey = null;\r\n      for (let j = i + 1; j < children.length; j++) {\r\n        if (t.isJSXElement(children[j])) {\r\n          const nextKeyAttr = children[j].openingElement?.attributes?.find(attr =>\r\n            t.isJSXAttribute(attr) && t.isJSXIdentifier(attr.name) && attr.name.name === 'key'\r\n          );\r\n          if (nextKeyAttr && t.isStringLiteral(nextKeyAttr.value)) {\r\n            nextKey = nextKeyAttr.value.value;\r\n            break;\r\n          }\r\n        }\r\n      }\r\n\r\n      // Nested JSX element - pass previous and next keys for validation\r\n      assignPathsToJSX(child, parentPath, pathGen, t, previousKey, nextKey, structuralChanges, isHotReload);\r\n\r\n      // Update previousKey for next sibling\r\n      if (child.__minimactPath) {\r\n        previousKey = child.__minimactPath;\r\n      }\r\n    } else if (t.isJSXText(child)) {\r\n      // Static text node\r\n      const text = child.value.trim();\r\n      if (text) {\r\n        const textHex = pathGen.next(parentPath);\r\n        const textPath = pathGen.buildPath(parentPath, textHex);\r\n        const textSegments = pathGen.parsePath(textPath);\r\n\r\n        // Mutate text node with path\r\n        child.__minimactPath = textPath;\r\n        child.__minimactPathSegments = textSegments;\r\n      }\r\n    } else if (t.isJSXExpressionContainer(child)) {\r\n      // Expression container - assign path and recurse into structural JSX\r\n      const expr = child.expression;\r\n\r\n      // Skip JSX comments (empty expressions like {/* comment */})\r\n      if (t.isJSXEmptyExpression(expr)) {\r\n        // Don't assign path, don't increment counter - comments are ignored\r\n        continue;\r\n      }\r\n\r\n      // Generate path for the expression container\r\n      const exprHex = pathGen.next(parentPath);\r\n      const exprPath = pathGen.buildPath(parentPath, exprHex);\r\n      const exprSegments = pathGen.parsePath(exprPath);\r\n\r\n      // Mutate expression container with path\r\n      child.__minimactPath = exprPath;\r\n      child.__minimactPathSegments = exprSegments;\r\n\r\n      // Recurse into structural expressions (conditionals, loops)\r\n      assignPathsToExpression(expr, exprPath, pathGen, t, structuralChanges);\r\n    } else if (t.isJSXFragment(child)) {\r\n      // Fragment - flatten children\r\n      assignPathsToJSX(child, parentPath, pathGen, t, null, null, structuralChanges);\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ecb911a1",
+      "type": "VariableDeclaration",
+      "babel_source": "let i = 0",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1eb28ccf",
+      "type": "BinaryExpression",
+      "operator": "<",
+      "babel_source": "i < children.length",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e8dee0e1",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "i++",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "01b3c5c1",
+      "type": "VariableDeclaration",
+      "babel_source": "const child = children[i];",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8b8f48f0",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(child)",
+      "babel_source": "if (t.isJSXElement(child)) {\r\n      // Look ahead to find next sibling's key (if it exists)\r\n      let nextKey = null;\r\n      for (let j = i + 1; j < children.length; j++) {\r\n        if (t.isJSXElement(children[j])) {\r\n          const nextKeyAttr = children[j].openingElement?.attributes?.find(attr =>\r\n            t.isJSXAttribute(attr) && t.isJSXIdentifier(attr.name) && attr.name.name === 'key'\r\n          );\r\n          if (nextKeyAttr && t.isStringLiteral(nextKeyAttr.value)) {\r\n            nextKey = nextKeyAttr.value.value;\r\n            break;\r\n          }\r\n        }\r\n      }\r\n\r\n      // Nested JSX element - pass previous and next keys for validation\r\n      assignPathsToJSX(child, parentPath, pathGen, t, previousKey, nextKey, structuralChanges, isHotReload);\r\n\r\n      // Update previousKey for next sibling\r\n      if (child.__minimactPath) {\r\n        previousKey = child.__minimactPath;\r\n      }\r\n    } else if (t.isJSXText(child)) {\r\n      // Static text node\r\n      const text = child.value.trim();\r\n      if (text) {\r\n        const textHex = pathGen.next(parentPath);\r\n        const textPath = pathGen.buildPath(parentPath, textHex);\r\n        const textSegments = pathGen.parsePath(textPath);\r\n\r\n        // Mutate text node with path\r\n        child.__minimactPath = textPath;\r\n        child.__minimactPathSegments = textSegments;\r\n      }\r\n    } else if (t.isJSXExpressionContainer(child)) {\r\n      // Expression container - assign path and recurse into structural JSX\r\n      const expr = child.expression;\r\n\r\n      // Skip JSX comments (empty expressions like {/* comment */})\r\n      if (t.isJSXEmptyExpression(expr)) {\r\n        // Don't assign path, don't increment counter - comments are ignored\r\n        continue;\r\n      }\r\n\r\n      // Generate path for the expression container\r\n      const exprHex = pathGen.next(parentPath);\r\n      const exprPath = pathGen.buildPath(parentPath, exprHex);\r\n      const exprSegments = pathGen.parsePath(exprPath);\r\n\r\n      // Mutate expression container with path\r\n      child.__minimactPath = exprPath;\r\n      child.__minimactPathSegments = exprSegments;\r\n\r\n      // Recurse into structural expressions (conditionals, loops)\r\n      assignPathsToExpression(expr, exprPath, pathGen, t, structuralChanges);\r\n    } else if (t.isJSXFragment(child)) {\r\n      // Fragment - flatten children\r\n      assignPathsToJSX(child, parentPath, pathGen, t, null, null, structuralChanges);\r\n    }",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d44bd174",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(child)",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d306fb31",
+      "type": "VariableDeclaration",
+      "babel_source": "let nextKey = null;",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cf5e0fcd",
+      "type": "ForStatement",
+      "babel_source": "for (let j = i + 1; j < children.length; j++) {\r\n        if (t.isJSXElement(children[j])) {\r\n          const nextKeyAttr = children[j].openingElement?.attributes?.find(attr =>\r\n            t.isJSXAttribute(attr) && t.isJSXIdentifier(attr.name) && attr.name.name === 'key'\r\n          );\r\n          if (nextKeyAttr && t.isStringLiteral(nextKeyAttr.value)) {\r\n            nextKey = nextKeyAttr.value.value;\r\n            break;\r\n          }\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "20b9334c",
+      "type": "VariableDeclaration",
+      "babel_source": "let j = i + 1",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3cdd668f",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "i + 1",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "26dd43ae",
+      "type": "BinaryExpression",
+      "operator": "<",
+      "babel_source": "j < children.length",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "84588e6a",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "j++",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d84352d4",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(children[j])",
+      "babel_source": "if (t.isJSXElement(children[j])) {\r\n          const nextKeyAttr = children[j].openingElement?.attributes?.find(attr =>\r\n            t.isJSXAttribute(attr) && t.isJSXIdentifier(attr.name) && attr.name.name === 'key'\r\n          );\r\n          if (nextKeyAttr && t.isStringLiteral(nextKeyAttr.value)) {\r\n            nextKey = nextKeyAttr.value.value;\r\n            break;\r\n          }\r\n        }",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ed1112d8",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(children[j])",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0b7229af",
+      "type": "VariableDeclaration",
+      "babel_source": "const nextKeyAttr = children[j].openingElement?.attributes?.find(attr =>\r\n            t.isJSXAttribute(attr) && t.isJSXIdentifier(attr.name) && attr.name.name === 'key'\r\n          );",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8580eaf6",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "attr =>\r\n            t.isJSXAttribute(attr) && t.isJSXIdentifier(attr.name) && attr.name.name === 'key'",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8d213215",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isJSXAttribute(attr) && t.isJSXIdentifier(attr.name) && attr.name.name === 'key'",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bddbb7c9",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isJSXAttribute(attr) && t.isJSXIdentifier(attr.name)",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7468026c",
+      "type": "BabelTypeCheck",
+      "method": "isJSXAttribute",
+      "babel_source": "t.isJSXAttribute(attr)",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "51c2fb7e",
+      "type": "BabelTypeCheck",
+      "method": "isJSXIdentifier",
+      "babel_source": "t.isJSXIdentifier(attr.name)",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ebff5543",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "attr.name.name === 'key'",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7f261d25",
+      "type": "IfStatement",
+      "condition": "nextKeyAttr && t.isStringLiteral(nextKeyAttr.value)",
+      "babel_source": "if (nextKeyAttr && t.isStringLiteral(nextKeyAttr.value)) {\r\n            nextKey = nextKeyAttr.value.value;\r\n            break;\r\n          }",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c698587c",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "nextKeyAttr && t.isStringLiteral(nextKeyAttr.value)",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0f20038c",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(nextKeyAttr.value)",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ea89b76f",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "nextKey = nextKeyAttr.value.value",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42af036c",
+      "type": "BreakStatement",
+      "babel_source": "break;",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ec15508b",
+      "type": "IfStatement",
+      "condition": "child.__minimactPath",
+      "babel_source": "if (child.__minimactPath) {\r\n        previousKey = child.__minimactPath;\r\n      }",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "24cf4080",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "previousKey = child.__minimactPath",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d8fab245",
+      "type": "IfStatement",
+      "condition": "t.isJSXText(child)",
+      "babel_source": "if (t.isJSXText(child)) {\r\n      // Static text node\r\n      const text = child.value.trim();\r\n      if (text) {\r\n        const textHex = pathGen.next(parentPath);\r\n        const textPath = pathGen.buildPath(parentPath, textHex);\r\n        const textSegments = pathGen.parsePath(textPath);\r\n\r\n        // Mutate text node with path\r\n        child.__minimactPath = textPath;\r\n        child.__minimactPathSegments = textSegments;\r\n      }\r\n    } else if (t.isJSXExpressionContainer(child)) {\r\n      // Expression container - assign path and recurse into structural JSX\r\n      const expr = child.expression;\r\n\r\n      // Skip JSX comments (empty expressions like {/* comment */})\r\n      if (t.isJSXEmptyExpression(expr)) {\r\n        // Don't assign path, don't increment counter - comments are ignored\r\n        continue;\r\n      }\r\n\r\n      // Generate path for the expression container\r\n      const exprHex = pathGen.next(parentPath);\r\n      const exprPath = pathGen.buildPath(parentPath, exprHex);\r\n      const exprSegments = pathGen.parsePath(exprPath);\r\n\r\n      // Mutate expression container with path\r\n      child.__minimactPath = exprPath;\r\n      child.__minimactPathSegments = exprSegments;\r\n\r\n      // Recurse into structural expressions (conditionals, loops)\r\n      assignPathsToExpression(expr, exprPath, pathGen, t, structuralChanges);\r\n    } else if (t.isJSXFragment(child)) {\r\n      // Fragment - flatten children\r\n      assignPathsToJSX(child, parentPath, pathGen, t, null, null, structuralChanges);\r\n    }",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8cc41c4e",
+      "type": "BabelTypeCheck",
+      "method": "isJSXText",
+      "babel_source": "t.isJSXText(child)",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9fb13957",
+      "type": "VariableDeclaration",
+      "babel_source": "const text = child.value.trim();",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "499f7335",
+      "type": "IfStatement",
+      "condition": "text",
+      "babel_source": "if (text) {\r\n        const textHex = pathGen.next(parentPath);\r\n        const textPath = pathGen.buildPath(parentPath, textHex);\r\n        const textSegments = pathGen.parsePath(textPath);\r\n\r\n        // Mutate text node with path\r\n        child.__minimactPath = textPath;\r\n        child.__minimactPathSegments = textSegments;\r\n      }",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "aa7a6cfb",
+      "type": "VariableDeclaration",
+      "babel_source": "const textHex = pathGen.next(parentPath);",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "02a47007",
+      "type": "VariableDeclaration",
+      "babel_source": "const textPath = pathGen.buildPath(parentPath, textHex);",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3de5126d",
+      "type": "VariableDeclaration",
+      "babel_source": "const textSegments = pathGen.parsePath(textPath);",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b7a527fd",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "child.__minimactPath = textPath",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d09daf2a",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "child.__minimactPathSegments = textSegments",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6343126a",
+      "type": "IfStatement",
+      "condition": "t.isJSXExpressionContainer(child)",
+      "babel_source": "if (t.isJSXExpressionContainer(child)) {\r\n      // Expression container - assign path and recurse into structural JSX\r\n      const expr = child.expression;\r\n\r\n      // Skip JSX comments (empty expressions like {/* comment */})\r\n      if (t.isJSXEmptyExpression(expr)) {\r\n        // Don't assign path, don't increment counter - comments are ignored\r\n        continue;\r\n      }\r\n\r\n      // Generate path for the expression container\r\n      const exprHex = pathGen.next(parentPath);\r\n      const exprPath = pathGen.buildPath(parentPath, exprHex);\r\n      const exprSegments = pathGen.parsePath(exprPath);\r\n\r\n      // Mutate expression container with path\r\n      child.__minimactPath = exprPath;\r\n      child.__minimactPathSegments = exprSegments;\r\n\r\n      // Recurse into structural expressions (conditionals, loops)\r\n      assignPathsToExpression(expr, exprPath, pathGen, t, structuralChanges);\r\n    } else if (t.isJSXFragment(child)) {\r\n      // Fragment - flatten children\r\n      assignPathsToJSX(child, parentPath, pathGen, t, null, null, structuralChanges);\r\n    }",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c53c8d32",
+      "type": "BabelTypeCheck",
+      "method": "isJSXExpressionContainer",
+      "babel_source": "t.isJSXExpressionContainer(child)",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9e5f0b19",
+      "type": "VariableDeclaration",
+      "babel_source": "const expr = child.expression;",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "af33f652",
+      "type": "IfStatement",
+      "condition": "t.isJSXEmptyExpression(expr)",
+      "babel_source": "if (t.isJSXEmptyExpression(expr)) {\r\n        // Don't assign path, don't increment counter - comments are ignored\r\n        continue;\r\n      }",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8c0d56b6",
+      "type": "BabelTypeCheck",
+      "method": "isJSXEmptyExpression",
+      "babel_source": "t.isJSXEmptyExpression(expr)",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0bf37874",
+      "type": "ContinueStatement",
+      "babel_source": "continue;",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "45610b94",
+      "type": "VariableDeclaration",
+      "babel_source": "const exprHex = pathGen.next(parentPath);",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1f46570b",
+      "type": "VariableDeclaration",
+      "babel_source": "const exprPath = pathGen.buildPath(parentPath, exprHex);",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f7075258",
+      "type": "VariableDeclaration",
+      "babel_source": "const exprSegments = pathGen.parsePath(exprPath);",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e5f6cbf6",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "child.__minimactPath = exprPath",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3fadac67",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "child.__minimactPathSegments = exprSegments",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0aa289fd",
+      "type": "IfStatement",
+      "condition": "t.isJSXFragment(child)",
+      "babel_source": "if (t.isJSXFragment(child)) {\r\n      // Fragment - flatten children\r\n      assignPathsToJSX(child, parentPath, pathGen, t, null, null, structuralChanges);\r\n    }",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dab54e28",
+      "type": "BabelTypeCheck",
+      "method": "isJSXFragment",
+      "babel_source": "t.isJSXFragment(child)",
+      "parentContext": {
+        "functionName": "assignPathsToChildren",
+        "functionParams": [
+          "children",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "utils/pathAssignment.cjs"
+  ]
+}

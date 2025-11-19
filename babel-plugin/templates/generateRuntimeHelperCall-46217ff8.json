@@ -1,0 +1,2444 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateRuntimeHelperCall",
+  "params": [
+    {
+      "name": "tagName",
+      "inferredType": "&str",
+      "defaultValue": null
+    },
+    {
+      "name": "attributes",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "children",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "indent",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateRuntimeHelperCall(tagName, attributes, children, component, indent) {\r\n  // Lazy load to avoid circular dependency\r\n  const { generateCSharpExpression } = require('./expressions.cjs');\r\n  const { generateJSXElement } = require('./jsx.cjs');\r\n\r\n  const indentStr = '    '.repeat(indent);\r\n\r\n  // Build props object\r\n  let propsCode = 'null';\r\n  const regularProps = [];\r\n  const spreadProps = [];\r\n\r\n  for (const attr of attributes) {\r\n    if (t.isJSXSpreadAttribute(attr)) {\r\n      // Spread operator: {...props}\r\n      spreadProps.push(generateCSharpExpression(attr.argument));\r\n    } else if (t.isJSXAttribute(attr)) {\r\n      const name = attr.name.name;\r\n      const value = attr.value;\r\n\r\n      // Skip 'key' attribute - it's only for hot reload detection in .tsx.keys files\r\n      if (name === 'key') {\r\n        continue;\r\n      }\r\n\r\n      // Convert attribute value to C# expression\r\n      let propValue;\r\n      if (t.isStringLiteral(value)) {\r\n        propValue = `\"${escapeCSharpString(value.value)}\"`;\r\n      } else if (t.isJSXExpressionContainer(value)) {\r\n        // Special handling for style attribute with object expression\r\n        if (name === 'style' && t.isObjectExpression(value.expression)) {\r\n          const { convertStyleObjectToCss } = require('../utils/styleConverter.cjs');\r\n          const cssString = convertStyleObjectToCss(value.expression);\r\n          propValue = `\"${cssString}\"`;\r\n        } else {\r\n          propValue = generateCSharpExpression(value.expression);\r\n        }\r\n      } else if (value === null) {\r\n        propValue = '\"true\"'; // Boolean attribute like <input disabled />\r\n      } else {\r\n        propValue = `\"${value}\"`;\r\n      }\r\n\r\n      regularProps.push(`${name} = ${propValue}`);\r\n    }\r\n  }\r\n\r\n  // Build props with potential spread merging\r\n  if (regularProps.length > 0 && spreadProps.length > 0) {\r\n    // Need to merge: ((object)new { prop1 = val1 }).MergeWith((object)spreadObj)\r\n    // Cast both to object to avoid dynamic dispatch issues\r\n    const regularPropsObj = `new { ${regularProps.join(', ')} }`;\r\n    propsCode = `((object)${regularPropsObj})`;\r\n    for (const spreadProp of spreadProps) {\r\n      propsCode = `${propsCode}.MergeWith((object)${spreadProp})`;\r\n    }\r\n  } else if (regularProps.length > 0) {\r\n    // Just regular props\r\n    propsCode = `new { ${regularProps.join(', ')} }`;\r\n  } else if (spreadProps.length > 0) {\r\n    // Just spread props\r\n    propsCode = spreadProps[0];\r\n    for (let i = 1; i < spreadProps.length; i++) {\r\n      propsCode = `((object)${propsCode}).MergeWith((object)${spreadProps[i]})`;\r\n    }\r\n  }\r\n\r\n  // Build children\r\n  const childrenArgs = [];\r\n  for (const child of children) {\r\n    if (t.isJSXText(child)) {\r\n      const text = child.value.trim();\r\n      if (text) {\r\n        childrenArgs.push(`\"${escapeCSharpString(text)}\"`);\r\n      }\r\n    } else if (t.isJSXElement(child)) {\r\n      childrenArgs.push(generateJSXElement(child, component, indent + 1));\r\n    } else if (t.isJSXExpressionContainer(child)) {\r\n      const expr = child.expression;\r\n\r\n      // Skip JSX comments (empty expressions like {/* comment */})\r\n      if (t.isJSXEmptyExpression(expr)) {\r\n        continue; // Don't add to childrenArgs\r\n      }\r\n\r\n      // Handle conditionals with JSX: {condition ? <A/> : <B/>}\r\n      if (t.isConditionalExpression(expr)) {\r\n        const { generateBooleanExpression } = require('./expressions.cjs');\r\n        const condition = generateBooleanExpression(expr.test);\r\n        const consequent = t.isJSXElement(expr.consequent) || t.isJSXFragment(expr.consequent)\r\n          ? generateJSXElement(expr.consequent, component, indent + 1)\r\n          : generateCSharpExpression(expr.consequent);\r\n\r\n        // Handle alternate - if null literal, use VNull with path\r\n        let alternate;\r\n        if (!expr.alternate || t.isNullLiteral(expr.alternate)) {\r\n          const exprPath = child.__minimactPath || '';\r\n          alternate = `new VNull(\"${exprPath}\")`;\r\n        } else if (t.isJSXElement(expr.alternate) || t.isJSXFragment(expr.alternate)) {\r\n          alternate = generateJSXElement(expr.alternate, component, indent + 1);\r\n        } else {\r\n          alternate = generateCSharpExpression(expr.alternate);\r\n        }\r\n\r\n        childrenArgs.push(`(${condition}) ? ${consequent} : ${alternate}`);\r\n      }\r\n      // Handle logical expressions with JSX: {condition && <Element/>}\r\n      else if (t.isLogicalExpression(expr) && expr.operator === '&&') {\r\n        const { generateBooleanExpression } = require('./expressions.cjs');\r\n        const left = generateBooleanExpression(expr.left);\r\n        const right = t.isJSXElement(expr.right) || t.isJSXFragment(expr.right)\r\n          ? generateJSXElement(expr.right, component, indent + 1)\r\n          : generateCSharpExpression(expr.right);\r\n        const exprPath = child.__minimactPath || '';\r\n        childrenArgs.push(`(${left}) ? ${right} : new VNull(\"${exprPath}\")`);\r\n      }\r\n      // Handle .map() with JSX callback\r\n      else if (t.isCallExpression(expr) &&\r\n               t.isMemberExpression(expr.callee) &&\r\n               t.isIdentifier(expr.callee.property, { name: 'map' })) {\r\n        // Lazy load generateMapExpression\r\n        const { generateMapExpression } = require('./expressions.cjs');\r\n        childrenArgs.push(generateMapExpression(expr, component, indent));\r\n      }\r\n      // Dynamic children (e.g., items.Select(...))\r\n      else {\r\n        childrenArgs.push(generateCSharpExpression(child.expression));\r\n      }\r\n    }\r\n  }\r\n\r\n  // Generate the createElement call\r\n  if (childrenArgs.length === 0) {\r\n    return `MinimactHelpers.createElement(\"${tagName}\", ${propsCode})`;\r\n  } else if (childrenArgs.length === 1) {\r\n    return `MinimactHelpers.createElement(\"${tagName}\", ${propsCode}, ${childrenArgs[0]})`;\r\n  } else {\r\n    const childrenStr = childrenArgs.join(', ');\r\n    return `MinimactHelpers.createElement(\"${tagName}\", ${propsCode}, ${childrenStr})`;\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "57c8d9bd",
+      "type": "VariableDeclaration",
+      "babel_source": "const { generateCSharpExpression } = require('./expressions.cjs');",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "460a80b4",
+      "type": "VariableDeclaration",
+      "babel_source": "const { generateJSXElement } = require('./jsx.cjs');",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9929f4d7",
+      "type": "VariableDeclaration",
+      "babel_source": "const indentStr = '    '.repeat(indent);",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4257cfd5",
+      "type": "VariableDeclaration",
+      "babel_source": "let propsCode = 'null';",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "939d0c82",
+      "type": "VariableDeclaration",
+      "babel_source": "const regularProps = [];",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f93b1aec",
+      "type": "VariableDeclaration",
+      "babel_source": "const spreadProps = [];",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5f3ada51",
+      "type": "ForOfStatement",
+      "babel_source": "for (const attr of attributes) {\r\n    if (t.isJSXSpreadAttribute(attr)) {\r\n      // Spread operator: {...props}\r\n      spreadProps.push(generateCSharpExpression(attr.argument));\r\n    } else if (t.isJSXAttribute(attr)) {\r\n      const name = attr.name.name;\r\n      const value = attr.value;\r\n\r\n      // Skip 'key' attribute - it's only for hot reload detection in .tsx.keys files\r\n      if (name === 'key') {\r\n        continue;\r\n      }\r\n\r\n      // Convert attribute value to C# expression\r\n      let propValue;\r\n      if (t.isStringLiteral(value)) {\r\n        propValue = `\"${escapeCSharpString(value.value)}\"`;\r\n      } else if (t.isJSXExpressionContainer(value)) {\r\n        // Special handling for style attribute with object expression\r\n        if (name === 'style' && t.isObjectExpression(value.expression)) {\r\n          const { convertStyleObjectToCss } = require('../utils/styleConverter.cjs');\r\n          const cssString = convertStyleObjectToCss(value.expression);\r\n          propValue = `\"${cssString}\"`;\r\n        } else {\r\n          propValue = generateCSharpExpression(value.expression);\r\n        }\r\n      } else if (value === null) {\r\n        propValue = '\"true\"'; // Boolean attribute like <input disabled />\r\n      } else {\r\n        propValue = `\"${value}\"`;\r\n      }\r\n\r\n      regularProps.push(`${name} = ${propValue}`);\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "02ca2e7f",
+      "type": "VariableDeclaration",
+      "babel_source": "const attr",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "db781356",
+      "type": "IfStatement",
+      "condition": "t.isJSXSpreadAttribute(attr)",
+      "babel_source": "if (t.isJSXSpreadAttribute(attr)) {\r\n      // Spread operator: {...props}\r\n      spreadProps.push(generateCSharpExpression(attr.argument));\r\n    } else if (t.isJSXAttribute(attr)) {\r\n      const name = attr.name.name;\r\n      const value = attr.value;\r\n\r\n      // Skip 'key' attribute - it's only for hot reload detection in .tsx.keys files\r\n      if (name === 'key') {\r\n        continue;\r\n      }\r\n\r\n      // Convert attribute value to C# expression\r\n      let propValue;\r\n      if (t.isStringLiteral(value)) {\r\n        propValue = `\"${escapeCSharpString(value.value)}\"`;\r\n      } else if (t.isJSXExpressionContainer(value)) {\r\n        // Special handling for style attribute with object expression\r\n        if (name === 'style' && t.isObjectExpression(value.expression)) {\r\n          const { convertStyleObjectToCss } = require('../utils/styleConverter.cjs');\r\n          const cssString = convertStyleObjectToCss(value.expression);\r\n          propValue = `\"${cssString}\"`;\r\n        } else {\r\n          propValue = generateCSharpExpression(value.expression);\r\n        }\r\n      } else if (value === null) {\r\n        propValue = '\"true\"'; // Boolean attribute like <input disabled />\r\n      } else {\r\n        propValue = `\"${value}\"`;\r\n      }\r\n\r\n      regularProps.push(`${name} = ${propValue}`);\r\n    }",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b9aac526",
+      "type": "BabelTypeCheck",
+      "method": "isJSXSpreadAttribute",
+      "babel_source": "t.isJSXSpreadAttribute(attr)",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "75b447a5",
+      "type": "IfStatement",
+      "condition": "t.isJSXAttribute(attr)",
+      "babel_source": "if (t.isJSXAttribute(attr)) {\r\n      const name = attr.name.name;\r\n      const value = attr.value;\r\n\r\n      // Skip 'key' attribute - it's only for hot reload detection in .tsx.keys files\r\n      if (name === 'key') {\r\n        continue;\r\n      }\r\n\r\n      // Convert attribute value to C# expression\r\n      let propValue;\r\n      if (t.isStringLiteral(value)) {\r\n        propValue = `\"${escapeCSharpString(value.value)}\"`;\r\n      } else if (t.isJSXExpressionContainer(value)) {\r\n        // Special handling for style attribute with object expression\r\n        if (name === 'style' && t.isObjectExpression(value.expression)) {\r\n          const { convertStyleObjectToCss } = require('../utils/styleConverter.cjs');\r\n          const cssString = convertStyleObjectToCss(value.expression);\r\n          propValue = `\"${cssString}\"`;\r\n        } else {\r\n          propValue = generateCSharpExpression(value.expression);\r\n        }\r\n      } else if (value === null) {\r\n        propValue = '\"true\"'; // Boolean attribute like <input disabled />\r\n      } else {\r\n        propValue = `\"${value}\"`;\r\n      }\r\n\r\n      regularProps.push(`${name} = ${propValue}`);\r\n    }",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7468026c",
+      "type": "BabelTypeCheck",
+      "method": "isJSXAttribute",
+      "babel_source": "t.isJSXAttribute(attr)",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1c2ec3d1",
+      "type": "VariableDeclaration",
+      "babel_source": "const name = attr.name.name;",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a2fae401",
+      "type": "VariableDeclaration",
+      "babel_source": "const value = attr.value;",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2617cd53",
+      "type": "IfStatement",
+      "condition": "name === 'key'",
+      "babel_source": "if (name === 'key') {\r\n        continue;\r\n      }",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ebbf68cb",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "name === 'key'",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0bf37874",
+      "type": "ContinueStatement",
+      "babel_source": "continue;",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c713d79a",
+      "type": "VariableDeclaration",
+      "babel_source": "let propValue;",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ed77fa04",
+      "type": "IfStatement",
+      "condition": "t.isStringLiteral(value)",
+      "babel_source": "if (t.isStringLiteral(value)) {\r\n        propValue = `\"${escapeCSharpString(value.value)}\"`;\r\n      } else if (t.isJSXExpressionContainer(value)) {\r\n        // Special handling for style attribute with object expression\r\n        if (name === 'style' && t.isObjectExpression(value.expression)) {\r\n          const { convertStyleObjectToCss } = require('../utils/styleConverter.cjs');\r\n          const cssString = convertStyleObjectToCss(value.expression);\r\n          propValue = `\"${cssString}\"`;\r\n        } else {\r\n          propValue = generateCSharpExpression(value.expression);\r\n        }\r\n      } else if (value === null) {\r\n        propValue = '\"true\"'; // Boolean attribute like <input disabled />\r\n      } else {\r\n        propValue = `\"${value}\"`;\r\n      }",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a835f893",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(value)",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e04ad468",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "propValue = `\"${escapeCSharpString(value.value)}\"`",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "43b188a4",
+      "type": "TemplateLiteral",
+      "babel_source": "`\"${escapeCSharpString(value.value)}\"`",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3bd22d3c",
+      "type": "IfStatement",
+      "condition": "t.isJSXExpressionContainer(value)",
+      "babel_source": "if (t.isJSXExpressionContainer(value)) {\r\n        // Special handling for style attribute with object expression\r\n        if (name === 'style' && t.isObjectExpression(value.expression)) {\r\n          const { convertStyleObjectToCss } = require('../utils/styleConverter.cjs');\r\n          const cssString = convertStyleObjectToCss(value.expression);\r\n          propValue = `\"${cssString}\"`;\r\n        } else {\r\n          propValue = generateCSharpExpression(value.expression);\r\n        }\r\n      } else if (value === null) {\r\n        propValue = '\"true\"'; // Boolean attribute like <input disabled />\r\n      } else {\r\n        propValue = `\"${value}\"`;\r\n      }",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "846bea62",
+      "type": "BabelTypeCheck",
+      "method": "isJSXExpressionContainer",
+      "babel_source": "t.isJSXExpressionContainer(value)",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "78f78044",
+      "type": "IfStatement",
+      "condition": "name === 'style' && t.isObjectExpression(value.expression)",
+      "babel_source": "if (name === 'style' && t.isObjectExpression(value.expression)) {\r\n          const { convertStyleObjectToCss } = require('../utils/styleConverter.cjs');\r\n          const cssString = convertStyleObjectToCss(value.expression);\r\n          propValue = `\"${cssString}\"`;\r\n        } else {\r\n          propValue = generateCSharpExpression(value.expression);\r\n        }",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b7d186a0",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "name === 'style' && t.isObjectExpression(value.expression)",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a563e553",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "name === 'style'",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6db5f4de",
+      "type": "BabelTypeCheck",
+      "method": "isObjectExpression",
+      "babel_source": "t.isObjectExpression(value.expression)",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6f5ab305",
+      "type": "VariableDeclaration",
+      "babel_source": "const { convertStyleObjectToCss } = require('../utils/styleConverter.cjs');",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "926ed54c",
+      "type": "VariableDeclaration",
+      "babel_source": "const cssString = convertStyleObjectToCss(value.expression);",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "96d66959",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "propValue = `\"${cssString}\"`",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "aa7b65d1",
+      "type": "TemplateLiteral",
+      "babel_source": "`\"${cssString}\"`",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "abda0afd",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "propValue = generateCSharpExpression(value.expression)",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "039fb1a9",
+      "type": "IfStatement",
+      "condition": "value === null",
+      "babel_source": "if (value === null) {\r\n        propValue = '\"true\"'; // Boolean attribute like <input disabled />\r\n      } else {\r\n        propValue = `\"${value}\"`;\r\n      }",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ef0f8fb1",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "value === null",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "60992d0b",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "propValue = '\"true\"'",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "285fc95f",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "propValue = `\"${value}\"`",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab75abc9",
+      "type": "TemplateLiteral",
+      "babel_source": "`\"${value}\"`",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c1d216ea",
+      "type": "TemplateLiteral",
+      "babel_source": "`${name} = ${propValue}`",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "27834448",
+      "type": "IfStatement",
+      "condition": "regularProps.length > 0 && spreadProps.length > 0",
+      "babel_source": "if (regularProps.length > 0 && spreadProps.length > 0) {\r\n    // Need to merge: ((object)new { prop1 = val1 }).MergeWith((object)spreadObj)\r\n    // Cast both to object to avoid dynamic dispatch issues\r\n    const regularPropsObj = `new { ${regularProps.join(', ')} }`;\r\n    propsCode = `((object)${regularPropsObj})`;\r\n    for (const spreadProp of spreadProps) {\r\n      propsCode = `${propsCode}.MergeWith((object)${spreadProp})`;\r\n    }\r\n  } else if (regularProps.length > 0) {\r\n    // Just regular props\r\n    propsCode = `new { ${regularProps.join(', ')} }`;\r\n  } else if (spreadProps.length > 0) {\r\n    // Just spread props\r\n    propsCode = spreadProps[0];\r\n    for (let i = 1; i < spreadProps.length; i++) {\r\n      propsCode = `((object)${propsCode}).MergeWith((object)${spreadProps[i]})`;\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ebc739d",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "regularProps.length > 0 && spreadProps.length > 0",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3c27d6eb",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "regularProps.length > 0",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "464a934f",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "spreadProps.length > 0",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1662d6ec",
+      "type": "VariableDeclaration",
+      "babel_source": "const regularPropsObj = `new { ${regularProps.join(', ')} }`;",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c336dee0",
+      "type": "TemplateLiteral",
+      "babel_source": "`new { ${regularProps.join(', ')} }`",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a1204c56",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "propsCode = `((object)${regularPropsObj})`",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3a59390c",
+      "type": "TemplateLiteral",
+      "babel_source": "`((object)${regularPropsObj})`",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f9703cb8",
+      "type": "ForOfStatement",
+      "babel_source": "for (const spreadProp of spreadProps) {\r\n      propsCode = `${propsCode}.MergeWith((object)${spreadProp})`;\r\n    }",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "08545869",
+      "type": "VariableDeclaration",
+      "babel_source": "const spreadProp",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8f552ff6",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "propsCode = `${propsCode}.MergeWith((object)${spreadProp})`",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c43d57df",
+      "type": "TemplateLiteral",
+      "babel_source": "`${propsCode}.MergeWith((object)${spreadProp})`",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "89498bdf",
+      "type": "IfStatement",
+      "condition": "regularProps.length > 0",
+      "babel_source": "if (regularProps.length > 0) {\r\n    // Just regular props\r\n    propsCode = `new { ${regularProps.join(', ')} }`;\r\n  } else if (spreadProps.length > 0) {\r\n    // Just spread props\r\n    propsCode = spreadProps[0];\r\n    for (let i = 1; i < spreadProps.length; i++) {\r\n      propsCode = `((object)${propsCode}).MergeWith((object)${spreadProps[i]})`;\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3c27d6eb",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "regularProps.length > 0",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "abb73d12",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "propsCode = `new { ${regularProps.join(', ')} }`",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c336dee0",
+      "type": "TemplateLiteral",
+      "babel_source": "`new { ${regularProps.join(', ')} }`",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2cc1a482",
+      "type": "IfStatement",
+      "condition": "spreadProps.length > 0",
+      "babel_source": "if (spreadProps.length > 0) {\r\n    // Just spread props\r\n    propsCode = spreadProps[0];\r\n    for (let i = 1; i < spreadProps.length; i++) {\r\n      propsCode = `((object)${propsCode}).MergeWith((object)${spreadProps[i]})`;\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "464a934f",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "spreadProps.length > 0",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bac82e46",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "propsCode = spreadProps[0]",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4e2d9c27",
+      "type": "ForStatement",
+      "babel_source": "for (let i = 1; i < spreadProps.length; i++) {\r\n      propsCode = `((object)${propsCode}).MergeWith((object)${spreadProps[i]})`;\r\n    }",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "40e42f77",
+      "type": "VariableDeclaration",
+      "babel_source": "let i = 1",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "15de84aa",
+      "type": "BinaryExpression",
+      "operator": "<",
+      "babel_source": "i < spreadProps.length",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e8dee0e1",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "i++",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bad55263",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "propsCode = `((object)${propsCode}).MergeWith((object)${spreadProps[i]})`",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2e96b27e",
+      "type": "TemplateLiteral",
+      "babel_source": "`((object)${propsCode}).MergeWith((object)${spreadProps[i]})`",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6ba4362a",
+      "type": "VariableDeclaration",
+      "babel_source": "const childrenArgs = [];",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "384005b8",
+      "type": "ForOfStatement",
+      "babel_source": "for (const child of children) {\r\n    if (t.isJSXText(child)) {\r\n      const text = child.value.trim();\r\n      if (text) {\r\n        childrenArgs.push(`\"${escapeCSharpString(text)}\"`);\r\n      }\r\n    } else if (t.isJSXElement(child)) {\r\n      childrenArgs.push(generateJSXElement(child, component, indent + 1));\r\n    } else if (t.isJSXExpressionContainer(child)) {\r\n      const expr = child.expression;\r\n\r\n      // Skip JSX comments (empty expressions like {/* comment */})\r\n      if (t.isJSXEmptyExpression(expr)) {\r\n        continue; // Don't add to childrenArgs\r\n      }\r\n\r\n      // Handle conditionals with JSX: {condition ? <A/> : <B/>}\r\n      if (t.isConditionalExpression(expr)) {\r\n        const { generateBooleanExpression } = require('./expressions.cjs');\r\n        const condition = generateBooleanExpression(expr.test);\r\n        const consequent = t.isJSXElement(expr.consequent) || t.isJSXFragment(expr.consequent)\r\n          ? generateJSXElement(expr.consequent, component, indent + 1)\r\n          : generateCSharpExpression(expr.consequent);\r\n\r\n        // Handle alternate - if null literal, use VNull with path\r\n        let alternate;\r\n        if (!expr.alternate || t.isNullLiteral(expr.alternate)) {\r\n          const exprPath = child.__minimactPath || '';\r\n          alternate = `new VNull(\"${exprPath}\")`;\r\n        } else if (t.isJSXElement(expr.alternate) || t.isJSXFragment(expr.alternate)) {\r\n          alternate = generateJSXElement(expr.alternate, component, indent + 1);\r\n        } else {\r\n          alternate = generateCSharpExpression(expr.alternate);\r\n        }\r\n\r\n        childrenArgs.push(`(${condition}) ? ${consequent} : ${alternate}`);\r\n      }\r\n      // Handle logical expressions with JSX: {condition && <Element/>}\r\n      else if (t.isLogicalExpression(expr) && expr.operator === '&&') {\r\n        const { generateBooleanExpression } = require('./expressions.cjs');\r\n        const left = generateBooleanExpression(expr.left);\r\n        const right = t.isJSXElement(expr.right) || t.isJSXFragment(expr.right)\r\n          ? generateJSXElement(expr.right, component, indent + 1)\r\n          : generateCSharpExpression(expr.right);\r\n        const exprPath = child.__minimactPath || '';\r\n        childrenArgs.push(`(${left}) ? ${right} : new VNull(\"${exprPath}\")`);\r\n      }\r\n      // Handle .map() with JSX callback\r\n      else if (t.isCallExpression(expr) &&\r\n               t.isMemberExpression(expr.callee) &&\r\n               t.isIdentifier(expr.callee.property, { name: 'map' })) {\r\n        // Lazy load generateMapExpression\r\n        const { generateMapExpression } = require('./expressions.cjs');\r\n        childrenArgs.push(generateMapExpression(expr, component, indent));\r\n      }\r\n      // Dynamic children (e.g., items.Select(...))\r\n      else {\r\n        childrenArgs.push(generateCSharpExpression(child.expression));\r\n      }\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "efdd3930",
+      "type": "VariableDeclaration",
+      "babel_source": "const child",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0280179e",
+      "type": "IfStatement",
+      "condition": "t.isJSXText(child)",
+      "babel_source": "if (t.isJSXText(child)) {\r\n      const text = child.value.trim();\r\n      if (text) {\r\n        childrenArgs.push(`\"${escapeCSharpString(text)}\"`);\r\n      }\r\n    } else if (t.isJSXElement(child)) {\r\n      childrenArgs.push(generateJSXElement(child, component, indent + 1));\r\n    } else if (t.isJSXExpressionContainer(child)) {\r\n      const expr = child.expression;\r\n\r\n      // Skip JSX comments (empty expressions like {/* comment */})\r\n      if (t.isJSXEmptyExpression(expr)) {\r\n        continue; // Don't add to childrenArgs\r\n      }\r\n\r\n      // Handle conditionals with JSX: {condition ? <A/> : <B/>}\r\n      if (t.isConditionalExpression(expr)) {\r\n        const { generateBooleanExpression } = require('./expressions.cjs');\r\n        const condition = generateBooleanExpression(expr.test);\r\n        const consequent = t.isJSXElement(expr.consequent) || t.isJSXFragment(expr.consequent)\r\n          ? generateJSXElement(expr.consequent, component, indent + 1)\r\n          : generateCSharpExpression(expr.consequent);\r\n\r\n        // Handle alternate - if null literal, use VNull with path\r\n        let alternate;\r\n        if (!expr.alternate || t.isNullLiteral(expr.alternate)) {\r\n          const exprPath = child.__minimactPath || '';\r\n          alternate = `new VNull(\"${exprPath}\")`;\r\n        } else if (t.isJSXElement(expr.alternate) || t.isJSXFragment(expr.alternate)) {\r\n          alternate = generateJSXElement(expr.alternate, component, indent + 1);\r\n        } else {\r\n          alternate = generateCSharpExpression(expr.alternate);\r\n        }\r\n\r\n        childrenArgs.push(`(${condition}) ? ${consequent} : ${alternate}`);\r\n      }\r\n      // Handle logical expressions with JSX: {condition && <Element/>}\r\n      else if (t.isLogicalExpression(expr) && expr.operator === '&&') {\r\n        const { generateBooleanExpression } = require('./expressions.cjs');\r\n        const left = generateBooleanExpression(expr.left);\r\n        const right = t.isJSXElement(expr.right) || t.isJSXFragment(expr.right)\r\n          ? generateJSXElement(expr.right, component, indent + 1)\r\n          : generateCSharpExpression(expr.right);\r\n        const exprPath = child.__minimactPath || '';\r\n        childrenArgs.push(`(${left}) ? ${right} : new VNull(\"${exprPath}\")`);\r\n      }\r\n      // Handle .map() with JSX callback\r\n      else if (t.isCallExpression(expr) &&\r\n               t.isMemberExpression(expr.callee) &&\r\n               t.isIdentifier(expr.callee.property, { name: 'map' })) {\r\n        // Lazy load generateMapExpression\r\n        const { generateMapExpression } = require('./expressions.cjs');\r\n        childrenArgs.push(generateMapExpression(expr, component, indent));\r\n      }\r\n      // Dynamic children (e.g., items.Select(...))\r\n      else {\r\n        childrenArgs.push(generateCSharpExpression(child.expression));\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8cc41c4e",
+      "type": "BabelTypeCheck",
+      "method": "isJSXText",
+      "babel_source": "t.isJSXText(child)",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9fb13957",
+      "type": "VariableDeclaration",
+      "babel_source": "const text = child.value.trim();",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0646a73c",
+      "type": "IfStatement",
+      "condition": "text",
+      "babel_source": "if (text) {\r\n        childrenArgs.push(`\"${escapeCSharpString(text)}\"`);\r\n      }",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "044fae09",
+      "type": "TemplateLiteral",
+      "babel_source": "`\"${escapeCSharpString(text)}\"`",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a88e46df",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(child)",
+      "babel_source": "if (t.isJSXElement(child)) {\r\n      childrenArgs.push(generateJSXElement(child, component, indent + 1));\r\n    } else if (t.isJSXExpressionContainer(child)) {\r\n      const expr = child.expression;\r\n\r\n      // Skip JSX comments (empty expressions like {/* comment */})\r\n      if (t.isJSXEmptyExpression(expr)) {\r\n        continue; // Don't add to childrenArgs\r\n      }\r\n\r\n      // Handle conditionals with JSX: {condition ? <A/> : <B/>}\r\n      if (t.isConditionalExpression(expr)) {\r\n        const { generateBooleanExpression } = require('./expressions.cjs');\r\n        const condition = generateBooleanExpression(expr.test);\r\n        const consequent = t.isJSXElement(expr.consequent) || t.isJSXFragment(expr.consequent)\r\n          ? generateJSXElement(expr.consequent, component, indent + 1)\r\n          : generateCSharpExpression(expr.consequent);\r\n\r\n        // Handle alternate - if null literal, use VNull with path\r\n        let alternate;\r\n        if (!expr.alternate || t.isNullLiteral(expr.alternate)) {\r\n          const exprPath = child.__minimactPath || '';\r\n          alternate = `new VNull(\"${exprPath}\")`;\r\n        } else if (t.isJSXElement(expr.alternate) || t.isJSXFragment(expr.alternate)) {\r\n          alternate = generateJSXElement(expr.alternate, component, indent + 1);\r\n        } else {\r\n          alternate = generateCSharpExpression(expr.alternate);\r\n        }\r\n\r\n        childrenArgs.push(`(${condition}) ? ${consequent} : ${alternate}`);\r\n      }\r\n      // Handle logical expressions with JSX: {condition && <Element/>}\r\n      else if (t.isLogicalExpression(expr) && expr.operator === '&&') {\r\n        const { generateBooleanExpression } = require('./expressions.cjs');\r\n        const left = generateBooleanExpression(expr.left);\r\n        const right = t.isJSXElement(expr.right) || t.isJSXFragment(expr.right)\r\n          ? generateJSXElement(expr.right, component, indent + 1)\r\n          : generateCSharpExpression(expr.right);\r\n        const exprPath = child.__minimactPath || '';\r\n        childrenArgs.push(`(${left}) ? ${right} : new VNull(\"${exprPath}\")`);\r\n      }\r\n      // Handle .map() with JSX callback\r\n      else if (t.isCallExpression(expr) &&\r\n               t.isMemberExpression(expr.callee) &&\r\n               t.isIdentifier(expr.callee.property, { name: 'map' })) {\r\n        // Lazy load generateMapExpression\r\n        const { generateMapExpression } = require('./expressions.cjs');\r\n        childrenArgs.push(generateMapExpression(expr, component, indent));\r\n      }\r\n      // Dynamic children (e.g., items.Select(...))\r\n      else {\r\n        childrenArgs.push(generateCSharpExpression(child.expression));\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d44bd174",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(child)",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "51639547",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "indent + 1",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "70fcfad4",
+      "type": "IfStatement",
+      "condition": "t.isJSXExpressionContainer(child)",
+      "babel_source": "if (t.isJSXExpressionContainer(child)) {\r\n      const expr = child.expression;\r\n\r\n      // Skip JSX comments (empty expressions like {/* comment */})\r\n      if (t.isJSXEmptyExpression(expr)) {\r\n        continue; // Don't add to childrenArgs\r\n      }\r\n\r\n      // Handle conditionals with JSX: {condition ? <A/> : <B/>}\r\n      if (t.isConditionalExpression(expr)) {\r\n        const { generateBooleanExpression } = require('./expressions.cjs');\r\n        const condition = generateBooleanExpression(expr.test);\r\n        const consequent = t.isJSXElement(expr.consequent) || t.isJSXFragment(expr.consequent)\r\n          ? generateJSXElement(expr.consequent, component, indent + 1)\r\n          : generateCSharpExpression(expr.consequent);\r\n\r\n        // Handle alternate - if null literal, use VNull with path\r\n        let alternate;\r\n        if (!expr.alternate || t.isNullLiteral(expr.alternate)) {\r\n          const exprPath = child.__minimactPath || '';\r\n          alternate = `new VNull(\"${exprPath}\")`;\r\n        } else if (t.isJSXElement(expr.alternate) || t.isJSXFragment(expr.alternate)) {\r\n          alternate = generateJSXElement(expr.alternate, component, indent + 1);\r\n        } else {\r\n          alternate = generateCSharpExpression(expr.alternate);\r\n        }\r\n\r\n        childrenArgs.push(`(${condition}) ? ${consequent} : ${alternate}`);\r\n      }\r\n      // Handle logical expressions with JSX: {condition && <Element/>}\r\n      else if (t.isLogicalExpression(expr) && expr.operator === '&&') {\r\n        const { generateBooleanExpression } = require('./expressions.cjs');\r\n        const left = generateBooleanExpression(expr.left);\r\n        const right = t.isJSXElement(expr.right) || t.isJSXFragment(expr.right)\r\n          ? generateJSXElement(expr.right, component, indent + 1)\r\n          : generateCSharpExpression(expr.right);\r\n        const exprPath = child.__minimactPath || '';\r\n        childrenArgs.push(`(${left}) ? ${right} : new VNull(\"${exprPath}\")`);\r\n      }\r\n      // Handle .map() with JSX callback\r\n      else if (t.isCallExpression(expr) &&\r\n               t.isMemberExpression(expr.callee) &&\r\n               t.isIdentifier(expr.callee.property, { name: 'map' })) {\r\n        // Lazy load generateMapExpression\r\n        const { generateMapExpression } = require('./expressions.cjs');\r\n        childrenArgs.push(generateMapExpression(expr, component, indent));\r\n      }\r\n      // Dynamic children (e.g., items.Select(...))\r\n      else {\r\n        childrenArgs.push(generateCSharpExpression(child.expression));\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c53c8d32",
+      "type": "BabelTypeCheck",
+      "method": "isJSXExpressionContainer",
+      "babel_source": "t.isJSXExpressionContainer(child)",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9e5f0b19",
+      "type": "VariableDeclaration",
+      "babel_source": "const expr = child.expression;",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f951bb93",
+      "type": "IfStatement",
+      "condition": "t.isJSXEmptyExpression(expr)",
+      "babel_source": "if (t.isJSXEmptyExpression(expr)) {\r\n        continue; // Don't add to childrenArgs\r\n      }",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8c0d56b6",
+      "type": "BabelTypeCheck",
+      "method": "isJSXEmptyExpression",
+      "babel_source": "t.isJSXEmptyExpression(expr)",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0bf37874",
+      "type": "ContinueStatement",
+      "babel_source": "continue;",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3a997716",
+      "type": "IfStatement",
+      "condition": "t.isConditionalExpression(expr)",
+      "babel_source": "if (t.isConditionalExpression(expr)) {\r\n        const { generateBooleanExpression } = require('./expressions.cjs');\r\n        const condition = generateBooleanExpression(expr.test);\r\n        const consequent = t.isJSXElement(expr.consequent) || t.isJSXFragment(expr.consequent)\r\n          ? generateJSXElement(expr.consequent, component, indent + 1)\r\n          : generateCSharpExpression(expr.consequent);\r\n\r\n        // Handle alternate - if null literal, use VNull with path\r\n        let alternate;\r\n        if (!expr.alternate || t.isNullLiteral(expr.alternate)) {\r\n          const exprPath = child.__minimactPath || '';\r\n          alternate = `new VNull(\"${exprPath}\")`;\r\n        } else if (t.isJSXElement(expr.alternate) || t.isJSXFragment(expr.alternate)) {\r\n          alternate = generateJSXElement(expr.alternate, component, indent + 1);\r\n        } else {\r\n          alternate = generateCSharpExpression(expr.alternate);\r\n        }\r\n\r\n        childrenArgs.push(`(${condition}) ? ${consequent} : ${alternate}`);\r\n      }\r\n      // Handle logical expressions with JSX: {condition && <Element/>}\r\n      else if (t.isLogicalExpression(expr) && expr.operator === '&&') {\r\n        const { generateBooleanExpression } = require('./expressions.cjs');\r\n        const left = generateBooleanExpression(expr.left);\r\n        const right = t.isJSXElement(expr.right) || t.isJSXFragment(expr.right)\r\n          ? generateJSXElement(expr.right, component, indent + 1)\r\n          : generateCSharpExpression(expr.right);\r\n        const exprPath = child.__minimactPath || '';\r\n        childrenArgs.push(`(${left}) ? ${right} : new VNull(\"${exprPath}\")`);\r\n      }\r\n      // Handle .map() with JSX callback\r\n      else if (t.isCallExpression(expr) &&\r\n               t.isMemberExpression(expr.callee) &&\r\n               t.isIdentifier(expr.callee.property, { name: 'map' })) {\r\n        // Lazy load generateMapExpression\r\n        const { generateMapExpression } = require('./expressions.cjs');\r\n        childrenArgs.push(generateMapExpression(expr, component, indent));\r\n      }\r\n      // Dynamic children (e.g., items.Select(...))\r\n      else {\r\n        childrenArgs.push(generateCSharpExpression(child.expression));\r\n      }",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5574ecc1",
+      "type": "BabelTypeCheck",
+      "method": "isConditionalExpression",
+      "babel_source": "t.isConditionalExpression(expr)",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3b98409e",
+      "type": "VariableDeclaration",
+      "babel_source": "const { generateBooleanExpression } = require('./expressions.cjs');",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a1d065bd",
+      "type": "VariableDeclaration",
+      "babel_source": "const condition = generateBooleanExpression(expr.test);",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f1c053e2",
+      "type": "VariableDeclaration",
+      "babel_source": "const consequent = t.isJSXElement(expr.consequent) || t.isJSXFragment(expr.consequent)\r\n          ? generateJSXElement(expr.consequent, component, indent + 1)\r\n          : generateCSharpExpression(expr.consequent);",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1e421161",
+      "type": "ConditionalExpression",
+      "babel_source": "t.isJSXElement(expr.consequent) || t.isJSXFragment(expr.consequent)\r\n          ? generateJSXElement(expr.consequent, component, indent + 1)\r\n          : generateCSharpExpression(expr.consequent)",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4a438690",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isJSXElement(expr.consequent) || t.isJSXFragment(expr.consequent)",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fe57f7c7",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(expr.consequent)",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7367ca38",
+      "type": "BabelTypeCheck",
+      "method": "isJSXFragment",
+      "babel_source": "t.isJSXFragment(expr.consequent)",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "51639547",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "indent + 1",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7343feee",
+      "type": "VariableDeclaration",
+      "babel_source": "let alternate;",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d0082bee",
+      "type": "IfStatement",
+      "condition": "!expr.alternate || t.isNullLiteral(expr.alternate)",
+      "babel_source": "if (!expr.alternate || t.isNullLiteral(expr.alternate)) {\r\n          const exprPath = child.__minimactPath || '';\r\n          alternate = `new VNull(\"${exprPath}\")`;\r\n        } else if (t.isJSXElement(expr.alternate) || t.isJSXFragment(expr.alternate)) {\r\n          alternate = generateJSXElement(expr.alternate, component, indent + 1);\r\n        } else {\r\n          alternate = generateCSharpExpression(expr.alternate);\r\n        }",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "79f2d1b8",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "!expr.alternate || t.isNullLiteral(expr.alternate)",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2781b663",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!expr.alternate",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "66998acf",
+      "type": "BabelTypeCheck",
+      "method": "isNullLiteral",
+      "babel_source": "t.isNullLiteral(expr.alternate)",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "94404f99",
+      "type": "VariableDeclaration",
+      "babel_source": "const exprPath = child.__minimactPath || '';",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cd9d929f",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "child.__minimactPath || ''",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c64e5769",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "alternate = `new VNull(\"${exprPath}\")`",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b4012b95",
+      "type": "TemplateLiteral",
+      "babel_source": "`new VNull(\"${exprPath}\")`",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d6283615",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(expr.alternate) || t.isJSXFragment(expr.alternate)",
+      "babel_source": "if (t.isJSXElement(expr.alternate) || t.isJSXFragment(expr.alternate)) {\r\n          alternate = generateJSXElement(expr.alternate, component, indent + 1);\r\n        } else {\r\n          alternate = generateCSharpExpression(expr.alternate);\r\n        }",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "85c188f0",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isJSXElement(expr.alternate) || t.isJSXFragment(expr.alternate)",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8d091804",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(expr.alternate)",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1bc44162",
+      "type": "BabelTypeCheck",
+      "method": "isJSXFragment",
+      "babel_source": "t.isJSXFragment(expr.alternate)",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bfa10a28",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "alternate = generateJSXElement(expr.alternate, component, indent + 1)",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "51639547",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "indent + 1",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "64c1c0c4",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "alternate = generateCSharpExpression(expr.alternate)",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "44d4a7e8",
+      "type": "TemplateLiteral",
+      "babel_source": "`(${condition}) ? ${consequent} : ${alternate}`",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a0290d66",
+      "type": "IfStatement",
+      "condition": "t.isLogicalExpression(expr) && expr.operator === '&&'",
+      "babel_source": "if (t.isLogicalExpression(expr) && expr.operator === '&&') {\r\n        const { generateBooleanExpression } = require('./expressions.cjs');\r\n        const left = generateBooleanExpression(expr.left);\r\n        const right = t.isJSXElement(expr.right) || t.isJSXFragment(expr.right)\r\n          ? generateJSXElement(expr.right, component, indent + 1)\r\n          : generateCSharpExpression(expr.right);\r\n        const exprPath = child.__minimactPath || '';\r\n        childrenArgs.push(`(${left}) ? ${right} : new VNull(\"${exprPath}\")`);\r\n      }\r\n      // Handle .map() with JSX callback\r\n      else if (t.isCallExpression(expr) &&\r\n               t.isMemberExpression(expr.callee) &&\r\n               t.isIdentifier(expr.callee.property, { name: 'map' })) {\r\n        // Lazy load generateMapExpression\r\n        const { generateMapExpression } = require('./expressions.cjs');\r\n        childrenArgs.push(generateMapExpression(expr, component, indent));\r\n      }\r\n      // Dynamic children (e.g., items.Select(...))\r\n      else {\r\n        childrenArgs.push(generateCSharpExpression(child.expression));\r\n      }",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "295b4c4d",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isLogicalExpression(expr) && expr.operator === '&&'",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c20dd732",
+      "type": "BabelTypeCheck",
+      "method": "isLogicalExpression",
+      "babel_source": "t.isLogicalExpression(expr)",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "312ae3e2",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "expr.operator === '&&'",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3b98409e",
+      "type": "VariableDeclaration",
+      "babel_source": "const { generateBooleanExpression } = require('./expressions.cjs');",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2b492b48",
+      "type": "VariableDeclaration",
+      "babel_source": "const left = generateBooleanExpression(expr.left);",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "acededfe",
+      "type": "VariableDeclaration",
+      "babel_source": "const right = t.isJSXElement(expr.right) || t.isJSXFragment(expr.right)\r\n          ? generateJSXElement(expr.right, component, indent + 1)\r\n          : generateCSharpExpression(expr.right);",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cecbf566",
+      "type": "ConditionalExpression",
+      "babel_source": "t.isJSXElement(expr.right) || t.isJSXFragment(expr.right)\r\n          ? generateJSXElement(expr.right, component, indent + 1)\r\n          : generateCSharpExpression(expr.right)",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e01c732e",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isJSXElement(expr.right) || t.isJSXFragment(expr.right)",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bd996365",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(expr.right)",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e9fbc5da",
+      "type": "BabelTypeCheck",
+      "method": "isJSXFragment",
+      "babel_source": "t.isJSXFragment(expr.right)",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "51639547",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "indent + 1",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "94404f99",
+      "type": "VariableDeclaration",
+      "babel_source": "const exprPath = child.__minimactPath || '';",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cd9d929f",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "child.__minimactPath || ''",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "849c5220",
+      "type": "TemplateLiteral",
+      "babel_source": "`(${left}) ? ${right} : new VNull(\"${exprPath}\")`",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "648e6cdc",
+      "type": "IfStatement",
+      "condition": "t.isCallExpression(expr) &&\r\n               t.isMemberExpression(expr.callee) &&\r\n               t.isIdentifier(expr.callee.property, { name: 'map' })",
+      "babel_source": "if (t.isCallExpression(expr) &&\r\n               t.isMemberExpression(expr.callee) &&\r\n               t.isIdentifier(expr.callee.property, { name: 'map' })) {\r\n        // Lazy load generateMapExpression\r\n        const { generateMapExpression } = require('./expressions.cjs');\r\n        childrenArgs.push(generateMapExpression(expr, component, indent));\r\n      }\r\n      // Dynamic children (e.g., items.Select(...))\r\n      else {\r\n        childrenArgs.push(generateCSharpExpression(child.expression));\r\n      }",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1e0d5ec1",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isCallExpression(expr) &&\r\n               t.isMemberExpression(expr.callee) &&\r\n               t.isIdentifier(expr.callee.property, { name: 'map' })",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bced7198",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isCallExpression(expr) &&\r\n               t.isMemberExpression(expr.callee)",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "46479f62",
+      "type": "BabelTypeCheck",
+      "method": "isCallExpression",
+      "babel_source": "t.isCallExpression(expr)",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d6c41024",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(expr.callee)",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3ae7e467",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(expr.callee.property, { name: 'map' })",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "66886116",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'map' }",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b2eeed7f",
+      "type": "VariableDeclaration",
+      "babel_source": "const { generateMapExpression } = require('./expressions.cjs');",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c546d80d",
+      "type": "IfStatement",
+      "condition": "childrenArgs.length === 0",
+      "babel_source": "if (childrenArgs.length === 0) {\r\n    return `MinimactHelpers.createElement(\"${tagName}\", ${propsCode})`;\r\n  } else if (childrenArgs.length === 1) {\r\n    return `MinimactHelpers.createElement(\"${tagName}\", ${propsCode}, ${childrenArgs[0]})`;\r\n  } else {\r\n    const childrenStr = childrenArgs.join(', ');\r\n    return `MinimactHelpers.createElement(\"${tagName}\", ${propsCode}, ${childrenStr})`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "16a7c3ee",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "childrenArgs.length === 0",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9beb0a18",
+      "type": "ReturnStatement",
+      "babel_source": "return `MinimactHelpers.createElement(\"${tagName}\", ${propsCode})`;",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "56910b32",
+      "type": "TemplateLiteral",
+      "babel_source": "`MinimactHelpers.createElement(\"${tagName}\", ${propsCode})`",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "36f23f64",
+      "type": "IfStatement",
+      "condition": "childrenArgs.length === 1",
+      "babel_source": "if (childrenArgs.length === 1) {\r\n    return `MinimactHelpers.createElement(\"${tagName}\", ${propsCode}, ${childrenArgs[0]})`;\r\n  } else {\r\n    const childrenStr = childrenArgs.join(', ');\r\n    return `MinimactHelpers.createElement(\"${tagName}\", ${propsCode}, ${childrenStr})`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f4dd9359",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "childrenArgs.length === 1",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "33fc5c3d",
+      "type": "ReturnStatement",
+      "babel_source": "return `MinimactHelpers.createElement(\"${tagName}\", ${propsCode}, ${childrenArgs[0]})`;",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "347807b9",
+      "type": "TemplateLiteral",
+      "babel_source": "`MinimactHelpers.createElement(\"${tagName}\", ${propsCode}, ${childrenArgs[0]})`",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "37647b42",
+      "type": "VariableDeclaration",
+      "babel_source": "const childrenStr = childrenArgs.join(', ');",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "72f44e3e",
+      "type": "ReturnStatement",
+      "babel_source": "return `MinimactHelpers.createElement(\"${tagName}\", ${propsCode}, ${childrenStr})`;",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "517311f9",
+      "type": "TemplateLiteral",
+      "babel_source": "`MinimactHelpers.createElement(\"${tagName}\", ${propsCode}, ${childrenStr})`",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperCall",
+        "functionParams": [
+          "tagName",
+          "attributes",
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/runtimeHelpers.cjs"
+  ]
+}

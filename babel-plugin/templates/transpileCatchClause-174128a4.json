@@ -1,0 +1,79 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "transpileCatchClause",
+  "params": [
+    {
+      "name": "handler",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function transpileCatchClause(handler) {\r\n  const param = handler.param ? handler.param.name : 'ex';\r\n  const body = transpileBlockStatement(handler.body);\r\n  return `\\ncatch (Exception ${param})\\n{\\n${indent(body, 4)}\\n}`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "988dae7e",
+      "type": "VariableDeclaration",
+      "babel_source": "const param = handler.param ? handler.param.name : 'ex';",
+      "parentContext": {
+        "functionName": "transpileCatchClause",
+        "functionParams": [
+          "handler"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "36b183ed",
+      "type": "ConditionalExpression",
+      "babel_source": "handler.param ? handler.param.name : 'ex'",
+      "parentContext": {
+        "functionName": "transpileCatchClause",
+        "functionParams": [
+          "handler"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c2f0fc6b",
+      "type": "VariableDeclaration",
+      "babel_source": "const body = transpileBlockStatement(handler.body);",
+      "parentContext": {
+        "functionName": "transpileCatchClause",
+        "functionParams": [
+          "handler"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "665412e4",
+      "type": "ReturnStatement",
+      "babel_source": "return `\\ncatch (Exception ${param})\\n{\\n${indent(body, 4)}\\n}`;",
+      "parentContext": {
+        "functionName": "transpileCatchClause",
+        "functionParams": [
+          "handler"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "749846d7",
+      "type": "TemplateLiteral",
+      "babel_source": "`\\ncatch (Exception ${param})\\n{\\n${indent(body, 4)}\\n}`",
+      "parentContext": {
+        "functionName": "transpileCatchClause",
+        "functionParams": [
+          "handler"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "transpilers/typescriptToCSharp.cjs"
+  ]
+}

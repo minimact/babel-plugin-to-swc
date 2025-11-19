@@ -1,0 +1,174 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "syncPathGeneratorWithKey",
+  "params": [
+    {
+      "name": "existingKey",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "parentPath",
+      "inferredType": "&Path",
+      "defaultValue": null
+    },
+    {
+      "name": "pathGen",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function syncPathGeneratorWithKey(existingKey, parentPath, pathGen) {\r\n  // Extract the child segment from the existing key\r\n  const parentPrefix = parentPath ? parentPath + '.' : '';\r\n  const childHex = existingKey.startsWith(parentPrefix)\r\n    ? existingKey.slice(parentPrefix.length)\r\n    : existingKey;\r\n\r\n  // Convert to decimal to get the numeric value\r\n  const childNum = parseInt(childHex, 16);\r\n\r\n  // Update the counter for this parent path to be at least one past this key\r\n  // This ensures the next call to pathGen.next() won't reuse this key\r\n  if (!pathGen.counters[parentPath]) {\r\n    pathGen.counters[parentPath] = 0;\r\n  }\r\n\r\n  // Set counter to the max of current counter or the existing key's value\r\n  pathGen.counters[parentPath] = Math.max(pathGen.counters[parentPath], childNum);\r\n}",
+  "body_templates": [
+    {
+      "hash": "5dc06ed6",
+      "type": "VariableDeclaration",
+      "babel_source": "const parentPrefix = parentPath ? parentPath + '.' : '';",
+      "parentContext": {
+        "functionName": "syncPathGeneratorWithKey",
+        "functionParams": [
+          "existingKey",
+          "parentPath",
+          "pathGen"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4199634e",
+      "type": "ConditionalExpression",
+      "babel_source": "parentPath ? parentPath + '.' : ''",
+      "parentContext": {
+        "functionName": "syncPathGeneratorWithKey",
+        "functionParams": [
+          "existingKey",
+          "parentPath",
+          "pathGen"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "164e2fe3",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "parentPath + '.'",
+      "parentContext": {
+        "functionName": "syncPathGeneratorWithKey",
+        "functionParams": [
+          "existingKey",
+          "parentPath",
+          "pathGen"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "455c39eb",
+      "type": "VariableDeclaration",
+      "babel_source": "const childHex = existingKey.startsWith(parentPrefix)\r\n    ? existingKey.slice(parentPrefix.length)\r\n    : existingKey;",
+      "parentContext": {
+        "functionName": "syncPathGeneratorWithKey",
+        "functionParams": [
+          "existingKey",
+          "parentPath",
+          "pathGen"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6a344fbd",
+      "type": "ConditionalExpression",
+      "babel_source": "existingKey.startsWith(parentPrefix)\r\n    ? existingKey.slice(parentPrefix.length)\r\n    : existingKey",
+      "parentContext": {
+        "functionName": "syncPathGeneratorWithKey",
+        "functionParams": [
+          "existingKey",
+          "parentPath",
+          "pathGen"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "72653025",
+      "type": "VariableDeclaration",
+      "babel_source": "const childNum = parseInt(childHex, 16);",
+      "parentContext": {
+        "functionName": "syncPathGeneratorWithKey",
+        "functionParams": [
+          "existingKey",
+          "parentPath",
+          "pathGen"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab73f1ee",
+      "type": "IfStatement",
+      "condition": "!pathGen.counters[parentPath]",
+      "babel_source": "if (!pathGen.counters[parentPath]) {\r\n    pathGen.counters[parentPath] = 0;\r\n  }",
+      "parentContext": {
+        "functionName": "syncPathGeneratorWithKey",
+        "functionParams": [
+          "existingKey",
+          "parentPath",
+          "pathGen"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab334398",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!pathGen.counters[parentPath]",
+      "parentContext": {
+        "functionName": "syncPathGeneratorWithKey",
+        "functionParams": [
+          "existingKey",
+          "parentPath",
+          "pathGen"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c154cfab",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "pathGen.counters[parentPath] = 0",
+      "parentContext": {
+        "functionName": "syncPathGeneratorWithKey",
+        "functionParams": [
+          "existingKey",
+          "parentPath",
+          "pathGen"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "be8bc9b8",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "pathGen.counters[parentPath] = Math.max(pathGen.counters[parentPath], childNum)",
+      "parentContext": {
+        "functionName": "syncPathGeneratorWithKey",
+        "functionParams": [
+          "existingKey",
+          "parentPath",
+          "pathGen"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "utils/pathAssignment.cjs"
+  ]
+}

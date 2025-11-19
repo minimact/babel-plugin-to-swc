@@ -1,0 +1,1726 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "assignPathsToJSX",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "parentPath",
+      "inferredType": "&Path",
+      "defaultValue": null
+    },
+    {
+      "name": "pathGen",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "t",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "previousSiblingKey",
+      "inferredType": "unknown",
+      "defaultValue": "null"
+    },
+    {
+      "name": "nextSiblingKey",
+      "inferredType": "unknown",
+      "defaultValue": "null"
+    },
+    {
+      "name": "structuralChanges",
+      "inferredType": "unknown",
+      "defaultValue": "[]"
+    },
+    {
+      "name": "isHotReload",
+      "inferredType": "unknown",
+      "defaultValue": "false"
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function assignPathsToJSX(node, parentPath, pathGen, t, previousSiblingKey = null, nextSiblingKey = null, structuralChanges = [], isHotReload = false) {\r\n  if (t.isJSXElement(node)) {\r\n    let currentPath;\r\n    let pathSegments;\r\n    let useExistingKey = false;\r\n\r\n    // Check if element already has a key attribute\r\n    if (node.openingElement && node.openingElement.attributes) {\r\n      const keyAttr = node.openingElement.attributes.find(attr =>\r\n        t.isJSXAttribute(attr) && t.isJSXIdentifier(attr.name) && attr.name.name === 'key'\r\n      );\r\n\r\n      if (keyAttr && t.isStringLiteral(keyAttr.value)) {\r\n        const existingKey = keyAttr.value.value;\r\n\r\n        // Validate the key: must be valid hex path format AND in correct sort order\r\n        if (isValidHexPath(existingKey) && isInSortOrder(existingKey, previousSiblingKey, nextSiblingKey)) {\r\n          // Use the existing key as the path\r\n          currentPath = existingKey;\r\n          pathSegments = pathGen.parsePath(currentPath);\r\n          useExistingKey = true;\r\n\r\n          // CRITICAL: Synchronize the path generator's counter with this existing key\r\n          // This prevents duplicate keys when auto-generating for the next sibling\r\n          syncPathGeneratorWithKey(currentPath, parentPath, pathGen);\r\n\r\n          console.log(`[Path Assignment] ♻️  Using existing key=\"${currentPath}\" for <${node.openingElement.name.name}>`);\r\n        } else if (!isValidHexPath(existingKey)) {\r\n          console.warn(`[Path Assignment] ⚠️  Invalid key format \"${existingKey}\" - generating new path`);\r\n        } else {\r\n          console.warn(`[Path Assignment] ⚠️  Key \"${existingKey}\" is out of order (prev: ${previousSiblingKey}, next: ${nextSiblingKey}) - generating half-gap`);\r\n        }\r\n      }\r\n    }\r\n\r\n    // If no valid existing key, generate a new one\r\n    if (!useExistingKey) {\r\n      // If we have previous and next siblings, generate a half-gap between them\r\n      if (previousSiblingKey && nextSiblingKey) {\r\n        currentPath = generateHalfGap(previousSiblingKey, nextSiblingKey, parentPath);\r\n        console.log(`[Path Assignment] ⚡ Generated half-gap key=\"${currentPath}\" between \"${previousSiblingKey}\" and \"${nextSiblingKey}\"`);\r\n      } else {\r\n        // Normal sequential generation\r\n        const childHex = pathGen.next(parentPath);\r\n        currentPath = pathGen.buildPath(parentPath, childHex);\r\n      }\r\n\r\n      // Track insertion ONLY during hot reload (when keys file exists)\r\n      if (isHotReload) {\r\n        console.log(`[Hot Reload] 🆕 Insertion detected at path \"${currentPath}\"`);\r\n        const vnode = generateVNodeRepresentation(node, currentPath, t);\r\n        if (vnode) {\r\n          structuralChanges.push({\r\n            type: 'insert',\r\n            path: currentPath,\r\n            vnode: vnode\r\n          });\r\n        }\r\n      }\r\n\r\n      pathSegments = pathGen.parsePath(currentPath);\r\n\r\n      // Add or update key prop to JSX element\r\n      if (node.openingElement && node.openingElement.attributes) {\r\n        // Check if key already exists (but was invalid)\r\n        const existingKeyAttr = node.openingElement.attributes.find(attr =>\r\n          t.isJSXAttribute(attr) && t.isJSXIdentifier(attr.name) && attr.name.name === 'key'\r\n        );\r\n\r\n        if (existingKeyAttr && t.isStringLiteral(existingKeyAttr.value)) {\r\n          // Update existing key\r\n          existingKeyAttr.value = t.stringLiteral(currentPath);\r\n          console.log(`[Path Assignment] ✅ Replaced invalid key with \"${currentPath}\" on <${node.openingElement.name.name}>`);\r\n        } else {\r\n          // Add new key\r\n          const keyAttr = t.jsxAttribute(\r\n            t.jsxIdentifier('key'),\r\n            t.stringLiteral(currentPath)\r\n          );\r\n          node.openingElement.attributes.unshift(keyAttr);\r\n          console.log(`[Path Assignment] ✅ Added key=\"${currentPath}\" to <${node.openingElement.name.name}>`);\r\n        }\r\n      }\r\n    }\r\n\r\n    // Mutate AST node with path data\r\n    node.__minimactPath = currentPath;\r\n    node.__minimactPathSegments = pathSegments;\r\n\r\n    // Process attributes (for @attributeName paths)\r\n    if (node.openingElement && node.openingElement.attributes) {\r\n      for (const attr of node.openingElement.attributes) {\r\n        if (t.isJSXAttribute(attr) && t.isJSXIdentifier(attr.name)) {\r\n          const attrName = attr.name.name;\r\n          const attrPath = `${currentPath}.@${attrName}`;\r\n\r\n          // Mutate attribute node with path\r\n          attr.__minimactPath = attrPath;\r\n          attr.__minimactPathSegments = [...pathSegments, `@${attrName}`];\r\n        }\r\n      }\r\n    }\r\n\r\n    // Recursively assign paths to children\r\n    if (node.children) {\r\n      assignPathsToChildren(node.children, currentPath, pathGen, t, structuralChanges, isHotReload);\r\n    }\r\n  } else if (t.isJSXFragment(node)) {\r\n    // Fragments don't get paths - children become direct siblings\r\n    if (node.children) {\r\n      assignPathsToChildren(node.children, parentPath, pathGen, t, structuralChanges);\r\n    }\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d093ec83",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(node)",
+      "babel_source": "if (t.isJSXElement(node)) {\r\n    let currentPath;\r\n    let pathSegments;\r\n    let useExistingKey = false;\r\n\r\n    // Check if element already has a key attribute\r\n    if (node.openingElement && node.openingElement.attributes) {\r\n      const keyAttr = node.openingElement.attributes.find(attr =>\r\n        t.isJSXAttribute(attr) && t.isJSXIdentifier(attr.name) && attr.name.name === 'key'\r\n      );\r\n\r\n      if (keyAttr && t.isStringLiteral(keyAttr.value)) {\r\n        const existingKey = keyAttr.value.value;\r\n\r\n        // Validate the key: must be valid hex path format AND in correct sort order\r\n        if (isValidHexPath(existingKey) && isInSortOrder(existingKey, previousSiblingKey, nextSiblingKey)) {\r\n          // Use the existing key as the path\r\n          currentPath = existingKey;\r\n          pathSegments = pathGen.parsePath(currentPath);\r\n          useExistingKey = true;\r\n\r\n          // CRITICAL: Synchronize the path generator's counter with this existing key\r\n          // This prevents duplicate keys when auto-generating for the next sibling\r\n          syncPathGeneratorWithKey(currentPath, parentPath, pathGen);\r\n\r\n          console.log(`[Path Assignment] ♻️  Using existing key=\"${currentPath}\" for <${node.openingElement.name.name}>`);\r\n        } else if (!isValidHexPath(existingKey)) {\r\n          console.warn(`[Path Assignment] ⚠️  Invalid key format \"${existingKey}\" - generating new path`);\r\n        } else {\r\n          console.warn(`[Path Assignment] ⚠️  Key \"${existingKey}\" is out of order (prev: ${previousSiblingKey}, next: ${nextSiblingKey}) - generating half-gap`);\r\n        }\r\n      }\r\n    }\r\n\r\n    // If no valid existing key, generate a new one\r\n    if (!useExistingKey) {\r\n      // If we have previous and next siblings, generate a half-gap between them\r\n      if (previousSiblingKey && nextSiblingKey) {\r\n        currentPath = generateHalfGap(previousSiblingKey, nextSiblingKey, parentPath);\r\n        console.log(`[Path Assignment] ⚡ Generated half-gap key=\"${currentPath}\" between \"${previousSiblingKey}\" and \"${nextSiblingKey}\"`);\r\n      } else {\r\n        // Normal sequential generation\r\n        const childHex = pathGen.next(parentPath);\r\n        currentPath = pathGen.buildPath(parentPath, childHex);\r\n      }\r\n\r\n      // Track insertion ONLY during hot reload (when keys file exists)\r\n      if (isHotReload) {\r\n        console.log(`[Hot Reload] 🆕 Insertion detected at path \"${currentPath}\"`);\r\n        const vnode = generateVNodeRepresentation(node, currentPath, t);\r\n        if (vnode) {\r\n          structuralChanges.push({\r\n            type: 'insert',\r\n            path: currentPath,\r\n            vnode: vnode\r\n          });\r\n        }\r\n      }\r\n\r\n      pathSegments = pathGen.parsePath(currentPath);\r\n\r\n      // Add or update key prop to JSX element\r\n      if (node.openingElement && node.openingElement.attributes) {\r\n        // Check if key already exists (but was invalid)\r\n        const existingKeyAttr = node.openingElement.attributes.find(attr =>\r\n          t.isJSXAttribute(attr) && t.isJSXIdentifier(attr.name) && attr.name.name === 'key'\r\n        );\r\n\r\n        if (existingKeyAttr && t.isStringLiteral(existingKeyAttr.value)) {\r\n          // Update existing key\r\n          existingKeyAttr.value = t.stringLiteral(currentPath);\r\n          console.log(`[Path Assignment] ✅ Replaced invalid key with \"${currentPath}\" on <${node.openingElement.name.name}>`);\r\n        } else {\r\n          // Add new key\r\n          const keyAttr = t.jsxAttribute(\r\n            t.jsxIdentifier('key'),\r\n            t.stringLiteral(currentPath)\r\n          );\r\n          node.openingElement.attributes.unshift(keyAttr);\r\n          console.log(`[Path Assignment] ✅ Added key=\"${currentPath}\" to <${node.openingElement.name.name}>`);\r\n        }\r\n      }\r\n    }\r\n\r\n    // Mutate AST node with path data\r\n    node.__minimactPath = currentPath;\r\n    node.__minimactPathSegments = pathSegments;\r\n\r\n    // Process attributes (for @attributeName paths)\r\n    if (node.openingElement && node.openingElement.attributes) {\r\n      for (const attr of node.openingElement.attributes) {\r\n        if (t.isJSXAttribute(attr) && t.isJSXIdentifier(attr.name)) {\r\n          const attrName = attr.name.name;\r\n          const attrPath = `${currentPath}.@${attrName}`;\r\n\r\n          // Mutate attribute node with path\r\n          attr.__minimactPath = attrPath;\r\n          attr.__minimactPathSegments = [...pathSegments, `@${attrName}`];\r\n        }\r\n      }\r\n    }\r\n\r\n    // Recursively assign paths to children\r\n    if (node.children) {\r\n      assignPathsToChildren(node.children, currentPath, pathGen, t, structuralChanges, isHotReload);\r\n    }\r\n  } else if (t.isJSXFragment(node)) {\r\n    // Fragments don't get paths - children become direct siblings\r\n    if (node.children) {\r\n      assignPathsToChildren(node.children, parentPath, pathGen, t, structuralChanges);\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "606ccdc5",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(node)",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "271dc6e2",
+      "type": "VariableDeclaration",
+      "babel_source": "let currentPath;",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "84834a13",
+      "type": "VariableDeclaration",
+      "babel_source": "let pathSegments;",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8af7d540",
+      "type": "VariableDeclaration",
+      "babel_source": "let useExistingKey = false;",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2d1b0c80",
+      "type": "IfStatement",
+      "condition": "node.openingElement && node.openingElement.attributes",
+      "babel_source": "if (node.openingElement && node.openingElement.attributes) {\r\n      const keyAttr = node.openingElement.attributes.find(attr =>\r\n        t.isJSXAttribute(attr) && t.isJSXIdentifier(attr.name) && attr.name.name === 'key'\r\n      );\r\n\r\n      if (keyAttr && t.isStringLiteral(keyAttr.value)) {\r\n        const existingKey = keyAttr.value.value;\r\n\r\n        // Validate the key: must be valid hex path format AND in correct sort order\r\n        if (isValidHexPath(existingKey) && isInSortOrder(existingKey, previousSiblingKey, nextSiblingKey)) {\r\n          // Use the existing key as the path\r\n          currentPath = existingKey;\r\n          pathSegments = pathGen.parsePath(currentPath);\r\n          useExistingKey = true;\r\n\r\n          // CRITICAL: Synchronize the path generator's counter with this existing key\r\n          // This prevents duplicate keys when auto-generating for the next sibling\r\n          syncPathGeneratorWithKey(currentPath, parentPath, pathGen);\r\n\r\n          console.log(`[Path Assignment] ♻️  Using existing key=\"${currentPath}\" for <${node.openingElement.name.name}>`);\r\n        } else if (!isValidHexPath(existingKey)) {\r\n          console.warn(`[Path Assignment] ⚠️  Invalid key format \"${existingKey}\" - generating new path`);\r\n        } else {\r\n          console.warn(`[Path Assignment] ⚠️  Key \"${existingKey}\" is out of order (prev: ${previousSiblingKey}, next: ${nextSiblingKey}) - generating half-gap`);\r\n        }\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c66ab8c0",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "node.openingElement && node.openingElement.attributes",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "839b73f9",
+      "type": "VariableDeclaration",
+      "babel_source": "const keyAttr = node.openingElement.attributes.find(attr =>\r\n        t.isJSXAttribute(attr) && t.isJSXIdentifier(attr.name) && attr.name.name === 'key'\r\n      );",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "012d7066",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "attr =>\r\n        t.isJSXAttribute(attr) && t.isJSXIdentifier(attr.name) && attr.name.name === 'key'",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8d213215",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isJSXAttribute(attr) && t.isJSXIdentifier(attr.name) && attr.name.name === 'key'",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bddbb7c9",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isJSXAttribute(attr) && t.isJSXIdentifier(attr.name)",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7468026c",
+      "type": "BabelTypeCheck",
+      "method": "isJSXAttribute",
+      "babel_source": "t.isJSXAttribute(attr)",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "51c2fb7e",
+      "type": "BabelTypeCheck",
+      "method": "isJSXIdentifier",
+      "babel_source": "t.isJSXIdentifier(attr.name)",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ebff5543",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "attr.name.name === 'key'",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9cf462ac",
+      "type": "IfStatement",
+      "condition": "keyAttr && t.isStringLiteral(keyAttr.value)",
+      "babel_source": "if (keyAttr && t.isStringLiteral(keyAttr.value)) {\r\n        const existingKey = keyAttr.value.value;\r\n\r\n        // Validate the key: must be valid hex path format AND in correct sort order\r\n        if (isValidHexPath(existingKey) && isInSortOrder(existingKey, previousSiblingKey, nextSiblingKey)) {\r\n          // Use the existing key as the path\r\n          currentPath = existingKey;\r\n          pathSegments = pathGen.parsePath(currentPath);\r\n          useExistingKey = true;\r\n\r\n          // CRITICAL: Synchronize the path generator's counter with this existing key\r\n          // This prevents duplicate keys when auto-generating for the next sibling\r\n          syncPathGeneratorWithKey(currentPath, parentPath, pathGen);\r\n\r\n          console.log(`[Path Assignment] ♻️  Using existing key=\"${currentPath}\" for <${node.openingElement.name.name}>`);\r\n        } else if (!isValidHexPath(existingKey)) {\r\n          console.warn(`[Path Assignment] ⚠️  Invalid key format \"${existingKey}\" - generating new path`);\r\n        } else {\r\n          console.warn(`[Path Assignment] ⚠️  Key \"${existingKey}\" is out of order (prev: ${previousSiblingKey}, next: ${nextSiblingKey}) - generating half-gap`);\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1ee31be7",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "keyAttr && t.isStringLiteral(keyAttr.value)",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "04e25ce9",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(keyAttr.value)",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "01f9bbcf",
+      "type": "VariableDeclaration",
+      "babel_source": "const existingKey = keyAttr.value.value;",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1d77f999",
+      "type": "IfStatement",
+      "condition": "isValidHexPath(existingKey) && isInSortOrder(existingKey, previousSiblingKey, nextSiblingKey)",
+      "babel_source": "if (isValidHexPath(existingKey) && isInSortOrder(existingKey, previousSiblingKey, nextSiblingKey)) {\r\n          // Use the existing key as the path\r\n          currentPath = existingKey;\r\n          pathSegments = pathGen.parsePath(currentPath);\r\n          useExistingKey = true;\r\n\r\n          // CRITICAL: Synchronize the path generator's counter with this existing key\r\n          // This prevents duplicate keys when auto-generating for the next sibling\r\n          syncPathGeneratorWithKey(currentPath, parentPath, pathGen);\r\n\r\n          console.log(`[Path Assignment] ♻️  Using existing key=\"${currentPath}\" for <${node.openingElement.name.name}>`);\r\n        } else if (!isValidHexPath(existingKey)) {\r\n          console.warn(`[Path Assignment] ⚠️  Invalid key format \"${existingKey}\" - generating new path`);\r\n        } else {\r\n          console.warn(`[Path Assignment] ⚠️  Key \"${existingKey}\" is out of order (prev: ${previousSiblingKey}, next: ${nextSiblingKey}) - generating half-gap`);\r\n        }",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "46bcfc4c",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "isValidHexPath(existingKey) && isInSortOrder(existingKey, previousSiblingKey, nextSiblingKey)",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b548f46d",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "currentPath = existingKey",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "016ce78f",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "pathSegments = pathGen.parsePath(currentPath)",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "49a2e8a1",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "useExistingKey = true",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b1e110ab",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Path Assignment] ♻️  Using existing key=\"${currentPath}\" for <${node.openingElement.name.name}>`",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0fca73af",
+      "type": "IfStatement",
+      "condition": "!isValidHexPath(existingKey)",
+      "babel_source": "if (!isValidHexPath(existingKey)) {\r\n          console.warn(`[Path Assignment] ⚠️  Invalid key format \"${existingKey}\" - generating new path`);\r\n        } else {\r\n          console.warn(`[Path Assignment] ⚠️  Key \"${existingKey}\" is out of order (prev: ${previousSiblingKey}, next: ${nextSiblingKey}) - generating half-gap`);\r\n        }",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "863b8536",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!isValidHexPath(existingKey)",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "33603b3e",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Path Assignment] ⚠️  Invalid key format \"${existingKey}\" - generating new path`",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "67a91506",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Path Assignment] ⚠️  Key \"${existingKey}\" is out of order (prev: ${previousSiblingKey}, next: ${nextSiblingKey}) - generating half-gap`",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dc7fafe8",
+      "type": "IfStatement",
+      "condition": "!useExistingKey",
+      "babel_source": "if (!useExistingKey) {\r\n      // If we have previous and next siblings, generate a half-gap between them\r\n      if (previousSiblingKey && nextSiblingKey) {\r\n        currentPath = generateHalfGap(previousSiblingKey, nextSiblingKey, parentPath);\r\n        console.log(`[Path Assignment] ⚡ Generated half-gap key=\"${currentPath}\" between \"${previousSiblingKey}\" and \"${nextSiblingKey}\"`);\r\n      } else {\r\n        // Normal sequential generation\r\n        const childHex = pathGen.next(parentPath);\r\n        currentPath = pathGen.buildPath(parentPath, childHex);\r\n      }\r\n\r\n      // Track insertion ONLY during hot reload (when keys file exists)\r\n      if (isHotReload) {\r\n        console.log(`[Hot Reload] 🆕 Insertion detected at path \"${currentPath}\"`);\r\n        const vnode = generateVNodeRepresentation(node, currentPath, t);\r\n        if (vnode) {\r\n          structuralChanges.push({\r\n            type: 'insert',\r\n            path: currentPath,\r\n            vnode: vnode\r\n          });\r\n        }\r\n      }\r\n\r\n      pathSegments = pathGen.parsePath(currentPath);\r\n\r\n      // Add or update key prop to JSX element\r\n      if (node.openingElement && node.openingElement.attributes) {\r\n        // Check if key already exists (but was invalid)\r\n        const existingKeyAttr = node.openingElement.attributes.find(attr =>\r\n          t.isJSXAttribute(attr) && t.isJSXIdentifier(attr.name) && attr.name.name === 'key'\r\n        );\r\n\r\n        if (existingKeyAttr && t.isStringLiteral(existingKeyAttr.value)) {\r\n          // Update existing key\r\n          existingKeyAttr.value = t.stringLiteral(currentPath);\r\n          console.log(`[Path Assignment] ✅ Replaced invalid key with \"${currentPath}\" on <${node.openingElement.name.name}>`);\r\n        } else {\r\n          // Add new key\r\n          const keyAttr = t.jsxAttribute(\r\n            t.jsxIdentifier('key'),\r\n            t.stringLiteral(currentPath)\r\n          );\r\n          node.openingElement.attributes.unshift(keyAttr);\r\n          console.log(`[Path Assignment] ✅ Added key=\"${currentPath}\" to <${node.openingElement.name.name}>`);\r\n        }\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4902e322",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!useExistingKey",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7ba38ff5",
+      "type": "IfStatement",
+      "condition": "previousSiblingKey && nextSiblingKey",
+      "babel_source": "if (previousSiblingKey && nextSiblingKey) {\r\n        currentPath = generateHalfGap(previousSiblingKey, nextSiblingKey, parentPath);\r\n        console.log(`[Path Assignment] ⚡ Generated half-gap key=\"${currentPath}\" between \"${previousSiblingKey}\" and \"${nextSiblingKey}\"`);\r\n      } else {\r\n        // Normal sequential generation\r\n        const childHex = pathGen.next(parentPath);\r\n        currentPath = pathGen.buildPath(parentPath, childHex);\r\n      }",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1f754baf",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "previousSiblingKey && nextSiblingKey",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5450360a",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "currentPath = generateHalfGap(previousSiblingKey, nextSiblingKey, parentPath)",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fa658a6b",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Path Assignment] ⚡ Generated half-gap key=\"${currentPath}\" between \"${previousSiblingKey}\" and \"${nextSiblingKey}\"`",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e3d699fe",
+      "type": "VariableDeclaration",
+      "babel_source": "const childHex = pathGen.next(parentPath);",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4efc0050",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "currentPath = pathGen.buildPath(parentPath, childHex)",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "06516688",
+      "type": "IfStatement",
+      "condition": "isHotReload",
+      "babel_source": "if (isHotReload) {\r\n        console.log(`[Hot Reload] 🆕 Insertion detected at path \"${currentPath}\"`);\r\n        const vnode = generateVNodeRepresentation(node, currentPath, t);\r\n        if (vnode) {\r\n          structuralChanges.push({\r\n            type: 'insert',\r\n            path: currentPath,\r\n            vnode: vnode\r\n          });\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b185435a",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Hot Reload] 🆕 Insertion detected at path \"${currentPath}\"`",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a47fd15f",
+      "type": "VariableDeclaration",
+      "babel_source": "const vnode = generateVNodeRepresentation(node, currentPath, t);",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8b753b31",
+      "type": "IfStatement",
+      "condition": "vnode",
+      "babel_source": "if (vnode) {\r\n          structuralChanges.push({\r\n            type: 'insert',\r\n            path: currentPath,\r\n            vnode: vnode\r\n          });\r\n        }",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ebb0b9ea",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n            type: 'insert',\r\n            path: currentPath,\r\n            vnode: vnode\r\n          }",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "016ce78f",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "pathSegments = pathGen.parsePath(currentPath)",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "aef39c72",
+      "type": "IfStatement",
+      "condition": "node.openingElement && node.openingElement.attributes",
+      "babel_source": "if (node.openingElement && node.openingElement.attributes) {\r\n        // Check if key already exists (but was invalid)\r\n        const existingKeyAttr = node.openingElement.attributes.find(attr =>\r\n          t.isJSXAttribute(attr) && t.isJSXIdentifier(attr.name) && attr.name.name === 'key'\r\n        );\r\n\r\n        if (existingKeyAttr && t.isStringLiteral(existingKeyAttr.value)) {\r\n          // Update existing key\r\n          existingKeyAttr.value = t.stringLiteral(currentPath);\r\n          console.log(`[Path Assignment] ✅ Replaced invalid key with \"${currentPath}\" on <${node.openingElement.name.name}>`);\r\n        } else {\r\n          // Add new key\r\n          const keyAttr = t.jsxAttribute(\r\n            t.jsxIdentifier('key'),\r\n            t.stringLiteral(currentPath)\r\n          );\r\n          node.openingElement.attributes.unshift(keyAttr);\r\n          console.log(`[Path Assignment] ✅ Added key=\"${currentPath}\" to <${node.openingElement.name.name}>`);\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c66ab8c0",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "node.openingElement && node.openingElement.attributes",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2ca941bf",
+      "type": "VariableDeclaration",
+      "babel_source": "const existingKeyAttr = node.openingElement.attributes.find(attr =>\r\n          t.isJSXAttribute(attr) && t.isJSXIdentifier(attr.name) && attr.name.name === 'key'\r\n        );",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7366c295",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "attr =>\r\n          t.isJSXAttribute(attr) && t.isJSXIdentifier(attr.name) && attr.name.name === 'key'",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8d213215",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isJSXAttribute(attr) && t.isJSXIdentifier(attr.name) && attr.name.name === 'key'",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bddbb7c9",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isJSXAttribute(attr) && t.isJSXIdentifier(attr.name)",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7468026c",
+      "type": "BabelTypeCheck",
+      "method": "isJSXAttribute",
+      "babel_source": "t.isJSXAttribute(attr)",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "51c2fb7e",
+      "type": "BabelTypeCheck",
+      "method": "isJSXIdentifier",
+      "babel_source": "t.isJSXIdentifier(attr.name)",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ebff5543",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "attr.name.name === 'key'",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e9b0eb5d",
+      "type": "IfStatement",
+      "condition": "existingKeyAttr && t.isStringLiteral(existingKeyAttr.value)",
+      "babel_source": "if (existingKeyAttr && t.isStringLiteral(existingKeyAttr.value)) {\r\n          // Update existing key\r\n          existingKeyAttr.value = t.stringLiteral(currentPath);\r\n          console.log(`[Path Assignment] ✅ Replaced invalid key with \"${currentPath}\" on <${node.openingElement.name.name}>`);\r\n        } else {\r\n          // Add new key\r\n          const keyAttr = t.jsxAttribute(\r\n            t.jsxIdentifier('key'),\r\n            t.stringLiteral(currentPath)\r\n          );\r\n          node.openingElement.attributes.unshift(keyAttr);\r\n          console.log(`[Path Assignment] ✅ Added key=\"${currentPath}\" to <${node.openingElement.name.name}>`);\r\n        }",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cdadb6f2",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "existingKeyAttr && t.isStringLiteral(existingKeyAttr.value)",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "83d18dd5",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(existingKeyAttr.value)",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "981c3795",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "existingKeyAttr.value = t.stringLiteral(currentPath)",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "79031ca7",
+      "type": "BabelTypeCheck",
+      "method": "stringLiteral",
+      "babel_source": "t.stringLiteral(currentPath)",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a0b21e4d",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Path Assignment] ✅ Replaced invalid key with \"${currentPath}\" on <${node.openingElement.name.name}>`",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d0dee872",
+      "type": "VariableDeclaration",
+      "babel_source": "const keyAttr = t.jsxAttribute(\r\n            t.jsxIdentifier('key'),\r\n            t.stringLiteral(currentPath)\r\n          );",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8ad40dfd",
+      "type": "BabelTypeCheck",
+      "method": "jsxAttribute",
+      "babel_source": "t.jsxAttribute(\r\n            t.jsxIdentifier('key'),\r\n            t.stringLiteral(currentPath)\r\n          )",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2e00bbbf",
+      "type": "BabelTypeCheck",
+      "method": "jsxIdentifier",
+      "babel_source": "t.jsxIdentifier('key')",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "79031ca7",
+      "type": "BabelTypeCheck",
+      "method": "stringLiteral",
+      "babel_source": "t.stringLiteral(currentPath)",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bf0c8d5e",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Path Assignment] ✅ Added key=\"${currentPath}\" to <${node.openingElement.name.name}>`",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "84312acd",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "node.__minimactPath = currentPath",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "35f8533f",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "node.__minimactPathSegments = pathSegments",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "681a20b5",
+      "type": "IfStatement",
+      "condition": "node.openingElement && node.openingElement.attributes",
+      "babel_source": "if (node.openingElement && node.openingElement.attributes) {\r\n      for (const attr of node.openingElement.attributes) {\r\n        if (t.isJSXAttribute(attr) && t.isJSXIdentifier(attr.name)) {\r\n          const attrName = attr.name.name;\r\n          const attrPath = `${currentPath}.@${attrName}`;\r\n\r\n          // Mutate attribute node with path\r\n          attr.__minimactPath = attrPath;\r\n          attr.__minimactPathSegments = [...pathSegments, `@${attrName}`];\r\n        }\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c66ab8c0",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "node.openingElement && node.openingElement.attributes",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e5384ba7",
+      "type": "ForOfStatement",
+      "babel_source": "for (const attr of node.openingElement.attributes) {\r\n        if (t.isJSXAttribute(attr) && t.isJSXIdentifier(attr.name)) {\r\n          const attrName = attr.name.name;\r\n          const attrPath = `${currentPath}.@${attrName}`;\r\n\r\n          // Mutate attribute node with path\r\n          attr.__minimactPath = attrPath;\r\n          attr.__minimactPathSegments = [...pathSegments, `@${attrName}`];\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "02ca2e7f",
+      "type": "VariableDeclaration",
+      "babel_source": "const attr",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "90ec384d",
+      "type": "IfStatement",
+      "condition": "t.isJSXAttribute(attr) && t.isJSXIdentifier(attr.name)",
+      "babel_source": "if (t.isJSXAttribute(attr) && t.isJSXIdentifier(attr.name)) {\r\n          const attrName = attr.name.name;\r\n          const attrPath = `${currentPath}.@${attrName}`;\r\n\r\n          // Mutate attribute node with path\r\n          attr.__minimactPath = attrPath;\r\n          attr.__minimactPathSegments = [...pathSegments, `@${attrName}`];\r\n        }",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bddbb7c9",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isJSXAttribute(attr) && t.isJSXIdentifier(attr.name)",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7468026c",
+      "type": "BabelTypeCheck",
+      "method": "isJSXAttribute",
+      "babel_source": "t.isJSXAttribute(attr)",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "51c2fb7e",
+      "type": "BabelTypeCheck",
+      "method": "isJSXIdentifier",
+      "babel_source": "t.isJSXIdentifier(attr.name)",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e30061cb",
+      "type": "VariableDeclaration",
+      "babel_source": "const attrName = attr.name.name;",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3ebc8e59",
+      "type": "VariableDeclaration",
+      "babel_source": "const attrPath = `${currentPath}.@${attrName}`;",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dfa66856",
+      "type": "TemplateLiteral",
+      "babel_source": "`${currentPath}.@${attrName}`",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "be265d36",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "attr.__minimactPath = attrPath",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "12f95278",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "attr.__minimactPathSegments = [...pathSegments, `@${attrName}`]",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f96e8ab0",
+      "type": "ArrayExpression",
+      "babel_source": "[...pathSegments, `@${attrName}`]",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "94dd3fa0",
+      "type": "SpreadElement",
+      "babel_source": "...pathSegments",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "725c4ae0",
+      "type": "TemplateLiteral",
+      "babel_source": "`@${attrName}`",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "205fdbb8",
+      "type": "IfStatement",
+      "condition": "node.children",
+      "babel_source": "if (node.children) {\r\n      assignPathsToChildren(node.children, currentPath, pathGen, t, structuralChanges, isHotReload);\r\n    }",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e853ebef",
+      "type": "IfStatement",
+      "condition": "t.isJSXFragment(node)",
+      "babel_source": "if (t.isJSXFragment(node)) {\r\n    // Fragments don't get paths - children become direct siblings\r\n    if (node.children) {\r\n      assignPathsToChildren(node.children, parentPath, pathGen, t, structuralChanges);\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "00ed8bb0",
+      "type": "BabelTypeCheck",
+      "method": "isJSXFragment",
+      "babel_source": "t.isJSXFragment(node)",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "63907913",
+      "type": "IfStatement",
+      "condition": "node.children",
+      "babel_source": "if (node.children) {\r\n      assignPathsToChildren(node.children, parentPath, pathGen, t, structuralChanges);\r\n    }",
+      "parentContext": {
+        "functionName": "assignPathsToJSX",
+        "functionParams": [
+          "node",
+          "parentPath",
+          "pathGen",
+          "t",
+          "previousSiblingKey",
+          "nextSiblingKey",
+          "structuralChanges",
+          "isHotReload"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "utils/pathAssignment.cjs"
+  ]
+}

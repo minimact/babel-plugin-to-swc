@@ -1,0 +1,99 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateFragment",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "indent",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateFragment(node, component, indent) {\r\n  const children = generateChildren(node.children, component, indent);\r\n  const childrenArray = children.map(c => c.code).join(', ');\r\n  return `new Fragment(${childrenArray})`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "a8045431",
+      "type": "VariableDeclaration",
+      "babel_source": "const children = generateChildren(node.children, component, indent);",
+      "parentContext": {
+        "functionName": "generateFragment",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f81c16fa",
+      "type": "VariableDeclaration",
+      "babel_source": "const childrenArray = children.map(c => c.code).join(', ');",
+      "parentContext": {
+        "functionName": "generateFragment",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a1d047a8",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "c => c.code",
+      "parentContext": {
+        "functionName": "generateFragment",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "74375384",
+      "type": "ReturnStatement",
+      "babel_source": "return `new Fragment(${childrenArray})`;",
+      "parentContext": {
+        "functionName": "generateFragment",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a583de2f",
+      "type": "TemplateLiteral",
+      "babel_source": "`new Fragment(${childrenArray})`",
+      "parentContext": {
+        "functionName": "generateFragment",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/jsx.cjs"
+  ]
+}

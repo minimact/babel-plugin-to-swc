@@ -1,0 +1,146 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractKeyframesArray",
+  "params": [
+    {
+      "name": "callExpr",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    },
+    {
+      "name": "timeline",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractKeyframesArray(callExpr, timeline) {\r\n  const arg = callExpr.arguments[0];\r\n\r\n  if (t.isArrayExpression(arg)) {\r\n    arg.elements.forEach(elem => {\r\n      if (t.isObjectExpression(elem)) {\r\n        const keyframe = parseKeyframeObject(elem);\r\n        if (keyframe) {\r\n          timeline.keyframes.push(keyframe);\r\n          console.log(`[Timeline] Keyframe at ${keyframe.time}ms with state:`, Object.keys(keyframe.state).join(', '));\r\n        }\r\n      }\r\n    });\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "d7001e02",
+      "type": "VariableDeclaration",
+      "babel_source": "const arg = callExpr.arguments[0];",
+      "parentContext": {
+        "functionName": "extractKeyframesArray",
+        "functionParams": [
+          "callExpr",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "502111ca",
+      "type": "IfStatement",
+      "condition": "t.isArrayExpression(arg)",
+      "babel_source": "if (t.isArrayExpression(arg)) {\r\n    arg.elements.forEach(elem => {\r\n      if (t.isObjectExpression(elem)) {\r\n        const keyframe = parseKeyframeObject(elem);\r\n        if (keyframe) {\r\n          timeline.keyframes.push(keyframe);\r\n          console.log(`[Timeline] Keyframe at ${keyframe.time}ms with state:`, Object.keys(keyframe.state).join(', '));\r\n        }\r\n      }\r\n    });\r\n  }",
+      "parentContext": {
+        "functionName": "extractKeyframesArray",
+        "functionParams": [
+          "callExpr",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ff301919",
+      "type": "BabelTypeCheck",
+      "method": "isArrayExpression",
+      "babel_source": "t.isArrayExpression(arg)",
+      "parentContext": {
+        "functionName": "extractKeyframesArray",
+        "functionParams": [
+          "callExpr",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "57ae35ed",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "elem => {\r\n      if (t.isObjectExpression(elem)) {\r\n        const keyframe = parseKeyframeObject(elem);\r\n        if (keyframe) {\r\n          timeline.keyframes.push(keyframe);\r\n          console.log(`[Timeline] Keyframe at ${keyframe.time}ms with state:`, Object.keys(keyframe.state).join(', '));\r\n        }\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "extractKeyframesArray",
+        "functionParams": [
+          "callExpr",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2ec0df01",
+      "type": "IfStatement",
+      "condition": "t.isObjectExpression(elem)",
+      "babel_source": "if (t.isObjectExpression(elem)) {\r\n        const keyframe = parseKeyframeObject(elem);\r\n        if (keyframe) {\r\n          timeline.keyframes.push(keyframe);\r\n          console.log(`[Timeline] Keyframe at ${keyframe.time}ms with state:`, Object.keys(keyframe.state).join(', '));\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "extractKeyframesArray",
+        "functionParams": [
+          "callExpr",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bd78cc77",
+      "type": "BabelTypeCheck",
+      "method": "isObjectExpression",
+      "babel_source": "t.isObjectExpression(elem)",
+      "parentContext": {
+        "functionName": "extractKeyframesArray",
+        "functionParams": [
+          "callExpr",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "70ac565d",
+      "type": "VariableDeclaration",
+      "babel_source": "const keyframe = parseKeyframeObject(elem);",
+      "parentContext": {
+        "functionName": "extractKeyframesArray",
+        "functionParams": [
+          "callExpr",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "763f32bc",
+      "type": "IfStatement",
+      "condition": "keyframe",
+      "babel_source": "if (keyframe) {\r\n          timeline.keyframes.push(keyframe);\r\n          console.log(`[Timeline] Keyframe at ${keyframe.time}ms with state:`, Object.keys(keyframe.state).join(', '));\r\n        }",
+      "parentContext": {
+        "functionName": "extractKeyframesArray",
+        "functionParams": [
+          "callExpr",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c7be1a6c",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Timeline] Keyframe at ${keyframe.time}ms with state:`",
+      "parentContext": {
+        "functionName": "extractKeyframesArray",
+        "functionParams": [
+          "callExpr",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/timelineAnalyzer.cjs"
+  ]
+}

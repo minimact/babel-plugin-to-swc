@@ -1,0 +1,210 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "convertRazorMarkdownToCSharp",
+  "params": [
+    {
+      "name": "razorMarkdown",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function convertRazorMarkdownToCSharp(razorMarkdown) {\r\n  if (!razorMarkdown || typeof razorMarkdown !== 'string') {\r\n    return '$@\"\"';\r\n  }\r\n\r\n  let markdown = razorMarkdown;\r\n\r\n  // Step 1: Convert @if blocks (must come before variable references)\r\n  markdown = convertIfBlocks(markdown);\r\n\r\n  // Step 2: Convert @foreach blocks\r\n  markdown = convertForeachBlocks(markdown);\r\n\r\n  // Step 3: Convert @for blocks\r\n  markdown = convertForBlocks(markdown);\r\n\r\n  // Step 4: Convert @switch blocks\r\n  markdown = convertSwitchBlocks(markdown);\r\n\r\n  // Step 5: Convert @(expression)\r\n  markdown = convertInlineExpressions(markdown);\r\n\r\n  // Step 6: Convert @variableName (must come last)\r\n  markdown = convertVariableReferences(markdown);\r\n\r\n  // Step 7: Escape any remaining unescaped quotes\r\n  // Already handled by nested verbatim strings (@\"...\")\r\n\r\n  // Step 8: Wrap in $@\"...\"\r\n  return `$@\"${markdown}\"`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "6945170a",
+      "type": "IfStatement",
+      "condition": "!razorMarkdown || typeof razorMarkdown !== 'string'",
+      "babel_source": "if (!razorMarkdown || typeof razorMarkdown !== 'string') {\r\n    return '$@\"\"';\r\n  }",
+      "parentContext": {
+        "functionName": "convertRazorMarkdownToCSharp",
+        "functionParams": [
+          "razorMarkdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8689b9e6",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "!razorMarkdown || typeof razorMarkdown !== 'string'",
+      "parentContext": {
+        "functionName": "convertRazorMarkdownToCSharp",
+        "functionParams": [
+          "razorMarkdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1756a4ff",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!razorMarkdown",
+      "parentContext": {
+        "functionName": "convertRazorMarkdownToCSharp",
+        "functionParams": [
+          "razorMarkdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "75c1fa69",
+      "type": "BinaryExpression",
+      "operator": "!==",
+      "babel_source": "typeof razorMarkdown !== 'string'",
+      "parentContext": {
+        "functionName": "convertRazorMarkdownToCSharp",
+        "functionParams": [
+          "razorMarkdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "057f70e4",
+      "type": "UnaryExpression",
+      "operator": "typeof",
+      "babel_source": "typeof razorMarkdown",
+      "parentContext": {
+        "functionName": "convertRazorMarkdownToCSharp",
+        "functionParams": [
+          "razorMarkdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "aed7e1bd",
+      "type": "ReturnStatement",
+      "babel_source": "return '$@\"\"';",
+      "parentContext": {
+        "functionName": "convertRazorMarkdownToCSharp",
+        "functionParams": [
+          "razorMarkdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c25f44b7",
+      "type": "VariableDeclaration",
+      "babel_source": "let markdown = razorMarkdown;",
+      "parentContext": {
+        "functionName": "convertRazorMarkdownToCSharp",
+        "functionParams": [
+          "razorMarkdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "21ef6625",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "markdown = convertIfBlocks(markdown)",
+      "parentContext": {
+        "functionName": "convertRazorMarkdownToCSharp",
+        "functionParams": [
+          "razorMarkdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "375954fd",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "markdown = convertForeachBlocks(markdown)",
+      "parentContext": {
+        "functionName": "convertRazorMarkdownToCSharp",
+        "functionParams": [
+          "razorMarkdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c119a5ae",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "markdown = convertForBlocks(markdown)",
+      "parentContext": {
+        "functionName": "convertRazorMarkdownToCSharp",
+        "functionParams": [
+          "razorMarkdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8f16f990",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "markdown = convertSwitchBlocks(markdown)",
+      "parentContext": {
+        "functionName": "convertRazorMarkdownToCSharp",
+        "functionParams": [
+          "razorMarkdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "75026e30",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "markdown = convertInlineExpressions(markdown)",
+      "parentContext": {
+        "functionName": "convertRazorMarkdownToCSharp",
+        "functionParams": [
+          "razorMarkdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b79b6af9",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "markdown = convertVariableReferences(markdown)",
+      "parentContext": {
+        "functionName": "convertRazorMarkdownToCSharp",
+        "functionParams": [
+          "razorMarkdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6b81e370",
+      "type": "ReturnStatement",
+      "babel_source": "return `$@\"${markdown}\"`;",
+      "parentContext": {
+        "functionName": "convertRazorMarkdownToCSharp",
+        "functionParams": [
+          "razorMarkdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7b95f295",
+      "type": "TemplateLiteral",
+      "babel_source": "`$@\"${markdown}\"`",
+      "parentContext": {
+        "functionName": "convertRazorMarkdownToCSharp",
+        "functionParams": [
+          "razorMarkdown"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/razorMarkdown.cjs"
+  ]
+}

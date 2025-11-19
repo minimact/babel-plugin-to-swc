@@ -1,0 +1,229 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateCSharpFromTemplate",
+  "params": [
+    {
+      "name": "templateLiteral",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "paramName",
+      "inferredType": "&str",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateCSharpFromTemplate(templateLiteral, paramName) {\r\n  let csharpCode = '$\"';\r\n\r\n  for (let i = 0; i < templateLiteral.quasis.length; i++) {\r\n    const quasi = templateLiteral.quasis[i];\r\n    csharpCode += quasi.value.raw;\r\n\r\n    if (i < templateLiteral.expressions.length) {\r\n      const expr = templateLiteral.expressions[i];\r\n      csharpCode += '{' + generateCSharpFromExpression(expr, paramName) + '}';\r\n    }\r\n  }\r\n\r\n  csharpCode += '\"';\r\n  return csharpCode;\r\n}",
+  "body_templates": [
+    {
+      "hash": "1c8a90d0",
+      "type": "VariableDeclaration",
+      "babel_source": "let csharpCode = '$\"';",
+      "parentContext": {
+        "functionName": "generateCSharpFromTemplate",
+        "functionParams": [
+          "templateLiteral",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "084d0d66",
+      "type": "ForStatement",
+      "babel_source": "for (let i = 0; i < templateLiteral.quasis.length; i++) {\r\n    const quasi = templateLiteral.quasis[i];\r\n    csharpCode += quasi.value.raw;\r\n\r\n    if (i < templateLiteral.expressions.length) {\r\n      const expr = templateLiteral.expressions[i];\r\n      csharpCode += '{' + generateCSharpFromExpression(expr, paramName) + '}';\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generateCSharpFromTemplate",
+        "functionParams": [
+          "templateLiteral",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ecb911a1",
+      "type": "VariableDeclaration",
+      "babel_source": "let i = 0",
+      "parentContext": {
+        "functionName": "generateCSharpFromTemplate",
+        "functionParams": [
+          "templateLiteral",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f1fbb439",
+      "type": "BinaryExpression",
+      "operator": "<",
+      "babel_source": "i < templateLiteral.quasis.length",
+      "parentContext": {
+        "functionName": "generateCSharpFromTemplate",
+        "functionParams": [
+          "templateLiteral",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e8dee0e1",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "i++",
+      "parentContext": {
+        "functionName": "generateCSharpFromTemplate",
+        "functionParams": [
+          "templateLiteral",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ba074b2a",
+      "type": "VariableDeclaration",
+      "babel_source": "const quasi = templateLiteral.quasis[i];",
+      "parentContext": {
+        "functionName": "generateCSharpFromTemplate",
+        "functionParams": [
+          "templateLiteral",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "63c81d60",
+      "type": "AssignmentExpression",
+      "operator": "+=",
+      "babel_source": "csharpCode += quasi.value.raw",
+      "parentContext": {
+        "functionName": "generateCSharpFromTemplate",
+        "functionParams": [
+          "templateLiteral",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "62068e47",
+      "type": "IfStatement",
+      "condition": "i < templateLiteral.expressions.length",
+      "babel_source": "if (i < templateLiteral.expressions.length) {\r\n      const expr = templateLiteral.expressions[i];\r\n      csharpCode += '{' + generateCSharpFromExpression(expr, paramName) + '}';\r\n    }",
+      "parentContext": {
+        "functionName": "generateCSharpFromTemplate",
+        "functionParams": [
+          "templateLiteral",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "07a7eed9",
+      "type": "BinaryExpression",
+      "operator": "<",
+      "babel_source": "i < templateLiteral.expressions.length",
+      "parentContext": {
+        "functionName": "generateCSharpFromTemplate",
+        "functionParams": [
+          "templateLiteral",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "70229da6",
+      "type": "VariableDeclaration",
+      "babel_source": "const expr = templateLiteral.expressions[i];",
+      "parentContext": {
+        "functionName": "generateCSharpFromTemplate",
+        "functionParams": [
+          "templateLiteral",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e513c338",
+      "type": "AssignmentExpression",
+      "operator": "+=",
+      "babel_source": "csharpCode += '{' + generateCSharpFromExpression(expr, paramName) + '}'",
+      "parentContext": {
+        "functionName": "generateCSharpFromTemplate",
+        "functionParams": [
+          "templateLiteral",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "33d29b9f",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "'{' + generateCSharpFromExpression(expr, paramName) + '}'",
+      "parentContext": {
+        "functionName": "generateCSharpFromTemplate",
+        "functionParams": [
+          "templateLiteral",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bab99f32",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "'{' + generateCSharpFromExpression(expr, paramName)",
+      "parentContext": {
+        "functionName": "generateCSharpFromTemplate",
+        "functionParams": [
+          "templateLiteral",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f64d0c99",
+      "type": "AssignmentExpression",
+      "operator": "+=",
+      "babel_source": "csharpCode += '\"'",
+      "parentContext": {
+        "functionName": "generateCSharpFromTemplate",
+        "functionParams": [
+          "templateLiteral",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "aba135f8",
+      "type": "ReturnStatement",
+      "babel_source": "return csharpCode;",
+      "parentContext": {
+        "functionName": "generateCSharpFromTemplate",
+        "functionParams": [
+          "templateLiteral",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/useStateX.cjs"
+  ]
+}

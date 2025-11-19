@@ -1,0 +1,434 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractMethod",
+  "params": [
+    {
+      "name": "declarator",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractMethod(declarator) {\r\n  if (!t.isIdentifier(declarator.id)) return null;\r\n\r\n  const init = declarator.init;\r\n\r\n  // Must be arrow function or function expression\r\n  if (!t.isArrowFunctionExpression(init) && !t.isFunctionExpression(init)) {\r\n    return null;\r\n  }\r\n\r\n  // Skip if this is a JSX element assignment (const ui = <div>...</div>)\r\n  if (t.isJSXElement(init) || t.isJSXFragment(init)) {\r\n    return null;\r\n  }\r\n\r\n  const name = declarator.id.name;\r\n  const params = init.params.map(p => ({\r\n    name: p.name || 'arg',\r\n    type: extractTypeFromParam(p)\r\n  }));\r\n\r\n  const body = init.body;\r\n  let bodyCode = '';\r\n\r\n  if (t.isBlockStatement(body)) {\r\n    // Use existing transpiler\r\n    bodyCode = transpileBlockStatement(body).trim();\r\n  } else {\r\n    // Expression body: const add = (a, b) => a + b\r\n    try {\r\n      bodyCode = `return ${transpileExpression(body)};`;\r\n    } catch (e) {\r\n      bodyCode = `return /* TODO: Transpile expression */;`;\r\n    }\r\n  }\r\n\r\n  return {\r\n    name: name,\r\n    params: params,\r\n    returnType: 'void', // TODO: Infer from return statement\r\n    body: bodyCode,\r\n    astNode: init\r\n  };\r\n}",
+  "body_templates": [
+    {
+      "hash": "fafef14c",
+      "type": "IfStatement",
+      "condition": "!t.isIdentifier(declarator.id)",
+      "babel_source": "if (!t.isIdentifier(declarator.id)) return null;",
+      "parentContext": {
+        "functionName": "extractMethod",
+        "functionParams": [
+          "declarator"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5198eb70",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isIdentifier(declarator.id)",
+      "parentContext": {
+        "functionName": "extractMethod",
+        "functionParams": [
+          "declarator"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d3ad7621",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(declarator.id)",
+      "parentContext": {
+        "functionName": "extractMethod",
+        "functionParams": [
+          "declarator"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractMethod",
+        "functionParams": [
+          "declarator"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c0c81141",
+      "type": "VariableDeclaration",
+      "babel_source": "const init = declarator.init;",
+      "parentContext": {
+        "functionName": "extractMethod",
+        "functionParams": [
+          "declarator"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5fadbe7b",
+      "type": "IfStatement",
+      "condition": "!t.isArrowFunctionExpression(init) && !t.isFunctionExpression(init)",
+      "babel_source": "if (!t.isArrowFunctionExpression(init) && !t.isFunctionExpression(init)) {\r\n    return null;\r\n  }",
+      "parentContext": {
+        "functionName": "extractMethod",
+        "functionParams": [
+          "declarator"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "97ca2706",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "!t.isArrowFunctionExpression(init) && !t.isFunctionExpression(init)",
+      "parentContext": {
+        "functionName": "extractMethod",
+        "functionParams": [
+          "declarator"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "911f016e",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isArrowFunctionExpression(init)",
+      "parentContext": {
+        "functionName": "extractMethod",
+        "functionParams": [
+          "declarator"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "55a4b373",
+      "type": "BabelTypeCheck",
+      "method": "isArrowFunctionExpression",
+      "babel_source": "t.isArrowFunctionExpression(init)",
+      "parentContext": {
+        "functionName": "extractMethod",
+        "functionParams": [
+          "declarator"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6747fdf4",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isFunctionExpression(init)",
+      "parentContext": {
+        "functionName": "extractMethod",
+        "functionParams": [
+          "declarator"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0f3cacc8",
+      "type": "BabelTypeCheck",
+      "method": "isFunctionExpression",
+      "babel_source": "t.isFunctionExpression(init)",
+      "parentContext": {
+        "functionName": "extractMethod",
+        "functionParams": [
+          "declarator"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractMethod",
+        "functionParams": [
+          "declarator"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "783e211a",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(init) || t.isJSXFragment(init)",
+      "babel_source": "if (t.isJSXElement(init) || t.isJSXFragment(init)) {\r\n    return null;\r\n  }",
+      "parentContext": {
+        "functionName": "extractMethod",
+        "functionParams": [
+          "declarator"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "795fdaf6",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isJSXElement(init) || t.isJSXFragment(init)",
+      "parentContext": {
+        "functionName": "extractMethod",
+        "functionParams": [
+          "declarator"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0df997aa",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(init)",
+      "parentContext": {
+        "functionName": "extractMethod",
+        "functionParams": [
+          "declarator"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a28732bb",
+      "type": "BabelTypeCheck",
+      "method": "isJSXFragment",
+      "babel_source": "t.isJSXFragment(init)",
+      "parentContext": {
+        "functionName": "extractMethod",
+        "functionParams": [
+          "declarator"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractMethod",
+        "functionParams": [
+          "declarator"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7b8fe7c0",
+      "type": "VariableDeclaration",
+      "babel_source": "const name = declarator.id.name;",
+      "parentContext": {
+        "functionName": "extractMethod",
+        "functionParams": [
+          "declarator"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a1259a0e",
+      "type": "VariableDeclaration",
+      "babel_source": "const params = init.params.map(p => ({\r\n    name: p.name || 'arg',\r\n    type: extractTypeFromParam(p)\r\n  }));",
+      "parentContext": {
+        "functionName": "extractMethod",
+        "functionParams": [
+          "declarator"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "02f2a2af",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "p => ({\r\n    name: p.name || 'arg',\r\n    type: extractTypeFromParam(p)\r\n  })",
+      "parentContext": {
+        "functionName": "extractMethod",
+        "functionParams": [
+          "declarator"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0918e4f8",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    name: p.name || 'arg',\r\n    type: extractTypeFromParam(p)\r\n  }",
+      "parentContext": {
+        "functionName": "extractMethod",
+        "functionParams": [
+          "declarator"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7afb97fa",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "p.name || 'arg'",
+      "parentContext": {
+        "functionName": "extractMethod",
+        "functionParams": [
+          "declarator"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "55cdfdaa",
+      "type": "VariableDeclaration",
+      "babel_source": "const body = init.body;",
+      "parentContext": {
+        "functionName": "extractMethod",
+        "functionParams": [
+          "declarator"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "30fa95c6",
+      "type": "VariableDeclaration",
+      "babel_source": "let bodyCode = '';",
+      "parentContext": {
+        "functionName": "extractMethod",
+        "functionParams": [
+          "declarator"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6f2798a9",
+      "type": "IfStatement",
+      "condition": "t.isBlockStatement(body)",
+      "babel_source": "if (t.isBlockStatement(body)) {\r\n    // Use existing transpiler\r\n    bodyCode = transpileBlockStatement(body).trim();\r\n  } else {\r\n    // Expression body: const add = (a, b) => a + b\r\n    try {\r\n      bodyCode = `return ${transpileExpression(body)};`;\r\n    } catch (e) {\r\n      bodyCode = `return /* TODO: Transpile expression */;`;\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "extractMethod",
+        "functionParams": [
+          "declarator"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8f74e258",
+      "type": "BabelTypeCheck",
+      "method": "isBlockStatement",
+      "babel_source": "t.isBlockStatement(body)",
+      "parentContext": {
+        "functionName": "extractMethod",
+        "functionParams": [
+          "declarator"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9cef2bcd",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "bodyCode = transpileBlockStatement(body).trim()",
+      "parentContext": {
+        "functionName": "extractMethod",
+        "functionParams": [
+          "declarator"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "93c96ec8",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "bodyCode = `return ${transpileExpression(body)};`",
+      "parentContext": {
+        "functionName": "extractMethod",
+        "functionParams": [
+          "declarator"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0148c3a5",
+      "type": "TemplateLiteral",
+      "babel_source": "`return ${transpileExpression(body)};`",
+      "parentContext": {
+        "functionName": "extractMethod",
+        "functionParams": [
+          "declarator"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5fa84321",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "bodyCode = `return /* TODO: Transpile expression */;`",
+      "parentContext": {
+        "functionName": "extractMethod",
+        "functionParams": [
+          "declarator"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "39f5b0da",
+      "type": "TemplateLiteral",
+      "babel_source": "`return /* TODO: Transpile expression */;`",
+      "parentContext": {
+        "functionName": "extractMethod",
+        "functionParams": [
+          "declarator"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8c343178",
+      "type": "ReturnStatement",
+      "babel_source": "return {\r\n    name: name,\r\n    params: params,\r\n    returnType: 'void', // TODO: Infer from return statement\r\n    body: bodyCode,\r\n    astNode: init\r\n  };",
+      "parentContext": {
+        "functionName": "extractMethod",
+        "functionParams": [
+          "declarator"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "25fe908d",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    name: name,\r\n    params: params,\r\n    returnType: 'void', // TODO: Infer from return statement\r\n    body: bodyCode,\r\n    astNode: init\r\n  }",
+      "parentContext": {
+        "functionName": "extractMethod",
+        "functionParams": [
+          "declarator"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/hookAnalyzer.cjs"
+  ]
+}

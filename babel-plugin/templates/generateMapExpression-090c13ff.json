@@ -1,0 +1,1487 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateMapExpression",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "indent",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateMapExpression(node, component, indent) {\r\n  const indentStr = '    '.repeat(indent);\r\n  const array = node.callee.object;\r\n  const callback = node.arguments[0];\r\n\r\n  const arrayName = array.name || generateCSharpExpression(array);\r\n  const itemParam = callback.params[0].name;\r\n  const indexParam = callback.params[1] ? callback.params[1].name : null;\r\n  const body = callback.body;\r\n\r\n  // Track map context for event handler closure capture (nested maps)\r\n  const previousMapContext = component ? component.currentMapContext : null;\r\n  const previousParams = previousMapContext ? previousMapContext.params : [];\r\n  const currentParams = indexParam ? [itemParam, indexParam] : [itemParam];\r\n  if (component) {\r\n    component.currentMapContext = { params: [...previousParams, ...currentParams] };\r\n  }\r\n\r\n  let itemCode;\r\n  let hasBlockStatements = false;\r\n\r\n  if (t.isJSXElement(body)) {\r\n    // Direct JSX return: item => <div>...</div>\r\n    itemCode = generateJSXElement(body, component, indent + 1);\r\n  } else if (t.isBlockStatement(body)) {\r\n    // Block statement: item => { const x = ...; return <div>...</div>; }\r\n    // Need to generate a statement lambda in C#\r\n    hasBlockStatements = true;\r\n\r\n    const statements = [];\r\n    let returnJSX = null;\r\n\r\n    // Process all statements in the block\r\n    for (const stmt of body.body) {\r\n      if (t.isReturnStatement(stmt) && t.isJSXElement(stmt.argument)) {\r\n        returnJSX = stmt.argument;\r\n        // Don't add return statement to statements array yet\r\n      } else if (t.isVariableDeclaration(stmt)) {\r\n        // Convert variable declarations: const displayValue = item[field];\r\n        for (const decl of stmt.declarations) {\r\n          const varName = decl.id.name;\r\n          const init = decl.init ? generateCSharpExpression(decl.init) : 'null';\r\n          statements.push(`var ${varName} = ${init};`);\r\n        }\r\n      } else {\r\n        // Other statements - convert them\r\n        statements.push(generateCSharpStatement(stmt));\r\n      }\r\n    }\r\n\r\n    if (!returnJSX) {\r\n      console.error('[generateMapExpression] Block statement has no JSX return');\r\n      throw new Error('Map callback with block statement must return JSX element');\r\n    }\r\n\r\n    const jsxCode = generateJSXElement(returnJSX, component, indent + 1);\r\n    statements.push(`return ${jsxCode};`);\r\n\r\n    itemCode = statements.join(' ');\r\n  } else {\r\n    console.error('[generateMapExpression] Unsupported callback body type:', body?.type);\r\n    throw new Error(`Unsupported map callback body type: ${body?.type}`);\r\n  }\r\n\r\n  // Restore previous context\r\n  if (component) {\r\n    component.currentMapContext = previousMapContext;\r\n  }\r\n\r\n  // Check if array is dynamic (likely from outer .map())\r\n  const needsCast = arrayName.includes('.') && !arrayName.match(/^[A-Z]/); // Property access, not static class\r\n  const castedArray = needsCast ? `((IEnumerable<dynamic>)${arrayName})` : arrayName;\r\n\r\n  // C# Select supports (item, index) => ...\r\n  if (hasBlockStatements) {\r\n    // Use statement lambda: item => { statements; return jsx; }\r\n    if (indexParam) {\r\n      const lambdaExpr = `(${itemParam}, ${indexParam}) => { ${itemCode} }`;\r\n      const castedLambda = needsCast ? `(Func<dynamic, int, dynamic>)(${lambdaExpr})` : lambdaExpr;\r\n      return `${castedArray}.Select(${castedLambda}).ToArray()`;\r\n    } else {\r\n      const lambdaExpr = `${itemParam} => { ${itemCode} }`;\r\n      const castedLambda = needsCast ? `(Func<dynamic, dynamic>)(${lambdaExpr})` : lambdaExpr;\r\n      return `${castedArray}.Select(${castedLambda}).ToArray()`;\r\n    }\r\n  } else {\r\n    // Use expression lambda: item => jsx\r\n    if (indexParam) {\r\n      const lambdaExpr = `(${itemParam}, ${indexParam}) => ${itemCode}`;\r\n      const castedLambda = needsCast ? `(Func<dynamic, int, dynamic>)(${lambdaExpr})` : lambdaExpr;\r\n      return `${castedArray}.Select(${castedLambda}).ToArray()`;\r\n    } else {\r\n      const lambdaExpr = `${itemParam} => ${itemCode}`;\r\n      const castedLambda = needsCast ? `(Func<dynamic, dynamic>)(${lambdaExpr})` : lambdaExpr;\r\n      return `${castedArray}.Select(${castedLambda}).ToArray()`;\r\n    }\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "9929f4d7",
+      "type": "VariableDeclaration",
+      "babel_source": "const indentStr = '    '.repeat(indent);",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "638bd8de",
+      "type": "VariableDeclaration",
+      "babel_source": "const array = node.callee.object;",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "88261630",
+      "type": "VariableDeclaration",
+      "babel_source": "const callback = node.arguments[0];",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f3d1d04d",
+      "type": "VariableDeclaration",
+      "babel_source": "const arrayName = array.name || generateCSharpExpression(array);",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d38466e7",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "array.name || generateCSharpExpression(array)",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a80cba4a",
+      "type": "VariableDeclaration",
+      "babel_source": "const itemParam = callback.params[0].name;",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "20b6f507",
+      "type": "VariableDeclaration",
+      "babel_source": "const indexParam = callback.params[1] ? callback.params[1].name : null;",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e84fca54",
+      "type": "ConditionalExpression",
+      "babel_source": "callback.params[1] ? callback.params[1].name : null",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0649097a",
+      "type": "VariableDeclaration",
+      "babel_source": "const body = callback.body;",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6dcdc4ca",
+      "type": "VariableDeclaration",
+      "babel_source": "const previousMapContext = component ? component.currentMapContext : null;",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "14873dab",
+      "type": "ConditionalExpression",
+      "babel_source": "component ? component.currentMapContext : null",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8ab8bc6a",
+      "type": "VariableDeclaration",
+      "babel_source": "const previousParams = previousMapContext ? previousMapContext.params : [];",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f509d3a5",
+      "type": "ConditionalExpression",
+      "babel_source": "previousMapContext ? previousMapContext.params : []",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "59fa7821",
+      "type": "VariableDeclaration",
+      "babel_source": "const currentParams = indexParam ? [itemParam, indexParam] : [itemParam];",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cf17345a",
+      "type": "ConditionalExpression",
+      "babel_source": "indexParam ? [itemParam, indexParam] : [itemParam]",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "14cd7b2c",
+      "type": "ArrayExpression",
+      "babel_source": "[itemParam, indexParam]",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a6cc9b06",
+      "type": "ArrayExpression",
+      "babel_source": "[itemParam]",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8578616e",
+      "type": "IfStatement",
+      "condition": "component",
+      "babel_source": "if (component) {\r\n    component.currentMapContext = { params: [...previousParams, ...currentParams] };\r\n  }",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2c51cb6c",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "component.currentMapContext = { params: [...previousParams, ...currentParams] }",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d9c59a73",
+      "type": "ObjectExpression",
+      "babel_source": "{ params: [...previousParams, ...currentParams] }",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1b5597f4",
+      "type": "ArrayExpression",
+      "babel_source": "[...previousParams, ...currentParams]",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1cd25663",
+      "type": "SpreadElement",
+      "babel_source": "...previousParams",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8c9bd37e",
+      "type": "SpreadElement",
+      "babel_source": "...currentParams",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8bdf1904",
+      "type": "VariableDeclaration",
+      "babel_source": "let itemCode;",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "906d763c",
+      "type": "VariableDeclaration",
+      "babel_source": "let hasBlockStatements = false;",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8929f178",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(body)",
+      "babel_source": "if (t.isJSXElement(body)) {\r\n    // Direct JSX return: item => <div>...</div>\r\n    itemCode = generateJSXElement(body, component, indent + 1);\r\n  } else if (t.isBlockStatement(body)) {\r\n    // Block statement: item => { const x = ...; return <div>...</div>; }\r\n    // Need to generate a statement lambda in C#\r\n    hasBlockStatements = true;\r\n\r\n    const statements = [];\r\n    let returnJSX = null;\r\n\r\n    // Process all statements in the block\r\n    for (const stmt of body.body) {\r\n      if (t.isReturnStatement(stmt) && t.isJSXElement(stmt.argument)) {\r\n        returnJSX = stmt.argument;\r\n        // Don't add return statement to statements array yet\r\n      } else if (t.isVariableDeclaration(stmt)) {\r\n        // Convert variable declarations: const displayValue = item[field];\r\n        for (const decl of stmt.declarations) {\r\n          const varName = decl.id.name;\r\n          const init = decl.init ? generateCSharpExpression(decl.init) : 'null';\r\n          statements.push(`var ${varName} = ${init};`);\r\n        }\r\n      } else {\r\n        // Other statements - convert them\r\n        statements.push(generateCSharpStatement(stmt));\r\n      }\r\n    }\r\n\r\n    if (!returnJSX) {\r\n      console.error('[generateMapExpression] Block statement has no JSX return');\r\n      throw new Error('Map callback with block statement must return JSX element');\r\n    }\r\n\r\n    const jsxCode = generateJSXElement(returnJSX, component, indent + 1);\r\n    statements.push(`return ${jsxCode};`);\r\n\r\n    itemCode = statements.join(' ');\r\n  } else {\r\n    console.error('[generateMapExpression] Unsupported callback body type:', body?.type);\r\n    throw new Error(`Unsupported map callback body type: ${body?.type}`);\r\n  }",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ebec8e7a",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(body)",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2a615f49",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "itemCode = generateJSXElement(body, component, indent + 1)",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "51639547",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "indent + 1",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8d400a37",
+      "type": "IfStatement",
+      "condition": "t.isBlockStatement(body)",
+      "babel_source": "if (t.isBlockStatement(body)) {\r\n    // Block statement: item => { const x = ...; return <div>...</div>; }\r\n    // Need to generate a statement lambda in C#\r\n    hasBlockStatements = true;\r\n\r\n    const statements = [];\r\n    let returnJSX = null;\r\n\r\n    // Process all statements in the block\r\n    for (const stmt of body.body) {\r\n      if (t.isReturnStatement(stmt) && t.isJSXElement(stmt.argument)) {\r\n        returnJSX = stmt.argument;\r\n        // Don't add return statement to statements array yet\r\n      } else if (t.isVariableDeclaration(stmt)) {\r\n        // Convert variable declarations: const displayValue = item[field];\r\n        for (const decl of stmt.declarations) {\r\n          const varName = decl.id.name;\r\n          const init = decl.init ? generateCSharpExpression(decl.init) : 'null';\r\n          statements.push(`var ${varName} = ${init};`);\r\n        }\r\n      } else {\r\n        // Other statements - convert them\r\n        statements.push(generateCSharpStatement(stmt));\r\n      }\r\n    }\r\n\r\n    if (!returnJSX) {\r\n      console.error('[generateMapExpression] Block statement has no JSX return');\r\n      throw new Error('Map callback with block statement must return JSX element');\r\n    }\r\n\r\n    const jsxCode = generateJSXElement(returnJSX, component, indent + 1);\r\n    statements.push(`return ${jsxCode};`);\r\n\r\n    itemCode = statements.join(' ');\r\n  } else {\r\n    console.error('[generateMapExpression] Unsupported callback body type:', body?.type);\r\n    throw new Error(`Unsupported map callback body type: ${body?.type}`);\r\n  }",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8f74e258",
+      "type": "BabelTypeCheck",
+      "method": "isBlockStatement",
+      "babel_source": "t.isBlockStatement(body)",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d3a990a2",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "hasBlockStatements = true",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "df098682",
+      "type": "VariableDeclaration",
+      "babel_source": "const statements = [];",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "127d3423",
+      "type": "VariableDeclaration",
+      "babel_source": "let returnJSX = null;",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "efc27602",
+      "type": "ForOfStatement",
+      "babel_source": "for (const stmt of body.body) {\r\n      if (t.isReturnStatement(stmt) && t.isJSXElement(stmt.argument)) {\r\n        returnJSX = stmt.argument;\r\n        // Don't add return statement to statements array yet\r\n      } else if (t.isVariableDeclaration(stmt)) {\r\n        // Convert variable declarations: const displayValue = item[field];\r\n        for (const decl of stmt.declarations) {\r\n          const varName = decl.id.name;\r\n          const init = decl.init ? generateCSharpExpression(decl.init) : 'null';\r\n          statements.push(`var ${varName} = ${init};`);\r\n        }\r\n      } else {\r\n        // Other statements - convert them\r\n        statements.push(generateCSharpStatement(stmt));\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2b909e3d",
+      "type": "VariableDeclaration",
+      "babel_source": "const stmt",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "85cca420",
+      "type": "IfStatement",
+      "condition": "t.isReturnStatement(stmt) && t.isJSXElement(stmt.argument)",
+      "babel_source": "if (t.isReturnStatement(stmt) && t.isJSXElement(stmt.argument)) {\r\n        returnJSX = stmt.argument;\r\n        // Don't add return statement to statements array yet\r\n      } else if (t.isVariableDeclaration(stmt)) {\r\n        // Convert variable declarations: const displayValue = item[field];\r\n        for (const decl of stmt.declarations) {\r\n          const varName = decl.id.name;\r\n          const init = decl.init ? generateCSharpExpression(decl.init) : 'null';\r\n          statements.push(`var ${varName} = ${init};`);\r\n        }\r\n      } else {\r\n        // Other statements - convert them\r\n        statements.push(generateCSharpStatement(stmt));\r\n      }",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ea727499",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isReturnStatement(stmt) && t.isJSXElement(stmt.argument)",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5841e02a",
+      "type": "BabelTypeCheck",
+      "method": "isReturnStatement",
+      "babel_source": "t.isReturnStatement(stmt)",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a35420ed",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(stmt.argument)",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c0a2ba1d",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "returnJSX = stmt.argument",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "41f30f15",
+      "type": "IfStatement",
+      "condition": "t.isVariableDeclaration(stmt)",
+      "babel_source": "if (t.isVariableDeclaration(stmt)) {\r\n        // Convert variable declarations: const displayValue = item[field];\r\n        for (const decl of stmt.declarations) {\r\n          const varName = decl.id.name;\r\n          const init = decl.init ? generateCSharpExpression(decl.init) : 'null';\r\n          statements.push(`var ${varName} = ${init};`);\r\n        }\r\n      } else {\r\n        // Other statements - convert them\r\n        statements.push(generateCSharpStatement(stmt));\r\n      }",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "04c92ee9",
+      "type": "BabelTypeCheck",
+      "method": "isVariableDeclaration",
+      "babel_source": "t.isVariableDeclaration(stmt)",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c25a32d1",
+      "type": "ForOfStatement",
+      "babel_source": "for (const decl of stmt.declarations) {\r\n          const varName = decl.id.name;\r\n          const init = decl.init ? generateCSharpExpression(decl.init) : 'null';\r\n          statements.push(`var ${varName} = ${init};`);\r\n        }",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "63b720ed",
+      "type": "VariableDeclaration",
+      "babel_source": "const decl",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a79669c8",
+      "type": "VariableDeclaration",
+      "babel_source": "const varName = decl.id.name;",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3f6294bb",
+      "type": "VariableDeclaration",
+      "babel_source": "const init = decl.init ? generateCSharpExpression(decl.init) : 'null';",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "555add1c",
+      "type": "ConditionalExpression",
+      "babel_source": "decl.init ? generateCSharpExpression(decl.init) : 'null'",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c699b2fc",
+      "type": "TemplateLiteral",
+      "babel_source": "`var ${varName} = ${init};`",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7d6f2cac",
+      "type": "IfStatement",
+      "condition": "!returnJSX",
+      "babel_source": "if (!returnJSX) {\r\n      console.error('[generateMapExpression] Block statement has no JSX return');\r\n      throw new Error('Map callback with block statement must return JSX element');\r\n    }",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "561b1ca5",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!returnJSX",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "32b19ba8",
+      "type": "ThrowStatement",
+      "babel_source": "throw new Error('Map callback with block statement must return JSX element');",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "386d2187",
+      "type": "NewExpression",
+      "babel_source": "new Error('Map callback with block statement must return JSX element')",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab0fc1c5",
+      "type": "VariableDeclaration",
+      "babel_source": "const jsxCode = generateJSXElement(returnJSX, component, indent + 1);",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "51639547",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "indent + 1",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d8578498",
+      "type": "TemplateLiteral",
+      "babel_source": "`return ${jsxCode};`",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "35c7a53a",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "itemCode = statements.join(' ')",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dd301125",
+      "type": "ThrowStatement",
+      "babel_source": "throw new Error(`Unsupported map callback body type: ${body?.type}`);",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "82d2ca14",
+      "type": "NewExpression",
+      "babel_source": "new Error(`Unsupported map callback body type: ${body?.type}`)",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7fb6d2d9",
+      "type": "TemplateLiteral",
+      "babel_source": "`Unsupported map callback body type: ${body?.type}`",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3cf78f8e",
+      "type": "IfStatement",
+      "condition": "component",
+      "babel_source": "if (component) {\r\n    component.currentMapContext = previousMapContext;\r\n  }",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "84ec7db5",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "component.currentMapContext = previousMapContext",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fdc3e057",
+      "type": "VariableDeclaration",
+      "babel_source": "const needsCast = arrayName.includes('.') && !arrayName.match(/^[A-Z]/);",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1ba9159f",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "arrayName.includes('.') && !arrayName.match(/^[A-Z]/)",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "155d53d7",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!arrayName.match(/^[A-Z]/)",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5d91c83e",
+      "type": "RegExpLiteral",
+      "pattern": "^[A-Z]",
+      "flags": "",
+      "babel_source": "/^[A-Z]/",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "39cdfd15",
+      "type": "VariableDeclaration",
+      "babel_source": "const castedArray = needsCast ? `((IEnumerable<dynamic>)${arrayName})` : arrayName;",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d5089a7a",
+      "type": "ConditionalExpression",
+      "babel_source": "needsCast ? `((IEnumerable<dynamic>)${arrayName})` : arrayName",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "91193ceb",
+      "type": "TemplateLiteral",
+      "babel_source": "`((IEnumerable<dynamic>)${arrayName})`",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c6ed21f1",
+      "type": "IfStatement",
+      "condition": "hasBlockStatements",
+      "babel_source": "if (hasBlockStatements) {\r\n    // Use statement lambda: item => { statements; return jsx; }\r\n    if (indexParam) {\r\n      const lambdaExpr = `(${itemParam}, ${indexParam}) => { ${itemCode} }`;\r\n      const castedLambda = needsCast ? `(Func<dynamic, int, dynamic>)(${lambdaExpr})` : lambdaExpr;\r\n      return `${castedArray}.Select(${castedLambda}).ToArray()`;\r\n    } else {\r\n      const lambdaExpr = `${itemParam} => { ${itemCode} }`;\r\n      const castedLambda = needsCast ? `(Func<dynamic, dynamic>)(${lambdaExpr})` : lambdaExpr;\r\n      return `${castedArray}.Select(${castedLambda}).ToArray()`;\r\n    }\r\n  } else {\r\n    // Use expression lambda: item => jsx\r\n    if (indexParam) {\r\n      const lambdaExpr = `(${itemParam}, ${indexParam}) => ${itemCode}`;\r\n      const castedLambda = needsCast ? `(Func<dynamic, int, dynamic>)(${lambdaExpr})` : lambdaExpr;\r\n      return `${castedArray}.Select(${castedLambda}).ToArray()`;\r\n    } else {\r\n      const lambdaExpr = `${itemParam} => ${itemCode}`;\r\n      const castedLambda = needsCast ? `(Func<dynamic, dynamic>)(${lambdaExpr})` : lambdaExpr;\r\n      return `${castedArray}.Select(${castedLambda}).ToArray()`;\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fc36002a",
+      "type": "IfStatement",
+      "condition": "indexParam",
+      "babel_source": "if (indexParam) {\r\n      const lambdaExpr = `(${itemParam}, ${indexParam}) => { ${itemCode} }`;\r\n      const castedLambda = needsCast ? `(Func<dynamic, int, dynamic>)(${lambdaExpr})` : lambdaExpr;\r\n      return `${castedArray}.Select(${castedLambda}).ToArray()`;\r\n    } else {\r\n      const lambdaExpr = `${itemParam} => { ${itemCode} }`;\r\n      const castedLambda = needsCast ? `(Func<dynamic, dynamic>)(${lambdaExpr})` : lambdaExpr;\r\n      return `${castedArray}.Select(${castedLambda}).ToArray()`;\r\n    }",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "95f63172",
+      "type": "VariableDeclaration",
+      "babel_source": "const lambdaExpr = `(${itemParam}, ${indexParam}) => { ${itemCode} }`;",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "367e2387",
+      "type": "TemplateLiteral",
+      "babel_source": "`(${itemParam}, ${indexParam}) => { ${itemCode} }`",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a6998b5e",
+      "type": "VariableDeclaration",
+      "babel_source": "const castedLambda = needsCast ? `(Func<dynamic, int, dynamic>)(${lambdaExpr})` : lambdaExpr;",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5a149537",
+      "type": "ConditionalExpression",
+      "babel_source": "needsCast ? `(Func<dynamic, int, dynamic>)(${lambdaExpr})` : lambdaExpr",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3283fdb9",
+      "type": "TemplateLiteral",
+      "babel_source": "`(Func<dynamic, int, dynamic>)(${lambdaExpr})`",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b870e8a5",
+      "type": "ReturnStatement",
+      "babel_source": "return `${castedArray}.Select(${castedLambda}).ToArray()`;",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "75ce2752",
+      "type": "TemplateLiteral",
+      "babel_source": "`${castedArray}.Select(${castedLambda}).ToArray()`",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9e04d206",
+      "type": "VariableDeclaration",
+      "babel_source": "const lambdaExpr = `${itemParam} => { ${itemCode} }`;",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bcc1ef09",
+      "type": "TemplateLiteral",
+      "babel_source": "`${itemParam} => { ${itemCode} }`",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5a9a8c3f",
+      "type": "VariableDeclaration",
+      "babel_source": "const castedLambda = needsCast ? `(Func<dynamic, dynamic>)(${lambdaExpr})` : lambdaExpr;",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "91080577",
+      "type": "ConditionalExpression",
+      "babel_source": "needsCast ? `(Func<dynamic, dynamic>)(${lambdaExpr})` : lambdaExpr",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d63049bb",
+      "type": "TemplateLiteral",
+      "babel_source": "`(Func<dynamic, dynamic>)(${lambdaExpr})`",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b870e8a5",
+      "type": "ReturnStatement",
+      "babel_source": "return `${castedArray}.Select(${castedLambda}).ToArray()`;",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "75ce2752",
+      "type": "TemplateLiteral",
+      "babel_source": "`${castedArray}.Select(${castedLambda}).ToArray()`",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bc3b94b7",
+      "type": "IfStatement",
+      "condition": "indexParam",
+      "babel_source": "if (indexParam) {\r\n      const lambdaExpr = `(${itemParam}, ${indexParam}) => ${itemCode}`;\r\n      const castedLambda = needsCast ? `(Func<dynamic, int, dynamic>)(${lambdaExpr})` : lambdaExpr;\r\n      return `${castedArray}.Select(${castedLambda}).ToArray()`;\r\n    } else {\r\n      const lambdaExpr = `${itemParam} => ${itemCode}`;\r\n      const castedLambda = needsCast ? `(Func<dynamic, dynamic>)(${lambdaExpr})` : lambdaExpr;\r\n      return `${castedArray}.Select(${castedLambda}).ToArray()`;\r\n    }",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "06ee09e2",
+      "type": "VariableDeclaration",
+      "babel_source": "const lambdaExpr = `(${itemParam}, ${indexParam}) => ${itemCode}`;",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "575bc622",
+      "type": "TemplateLiteral",
+      "babel_source": "`(${itemParam}, ${indexParam}) => ${itemCode}`",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a6998b5e",
+      "type": "VariableDeclaration",
+      "babel_source": "const castedLambda = needsCast ? `(Func<dynamic, int, dynamic>)(${lambdaExpr})` : lambdaExpr;",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5a149537",
+      "type": "ConditionalExpression",
+      "babel_source": "needsCast ? `(Func<dynamic, int, dynamic>)(${lambdaExpr})` : lambdaExpr",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3283fdb9",
+      "type": "TemplateLiteral",
+      "babel_source": "`(Func<dynamic, int, dynamic>)(${lambdaExpr})`",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b870e8a5",
+      "type": "ReturnStatement",
+      "babel_source": "return `${castedArray}.Select(${castedLambda}).ToArray()`;",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "75ce2752",
+      "type": "TemplateLiteral",
+      "babel_source": "`${castedArray}.Select(${castedLambda}).ToArray()`",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7a659df1",
+      "type": "VariableDeclaration",
+      "babel_source": "const lambdaExpr = `${itemParam} => ${itemCode}`;",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f06c7db5",
+      "type": "TemplateLiteral",
+      "babel_source": "`${itemParam} => ${itemCode}`",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5a9a8c3f",
+      "type": "VariableDeclaration",
+      "babel_source": "const castedLambda = needsCast ? `(Func<dynamic, dynamic>)(${lambdaExpr})` : lambdaExpr;",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "91080577",
+      "type": "ConditionalExpression",
+      "babel_source": "needsCast ? `(Func<dynamic, dynamic>)(${lambdaExpr})` : lambdaExpr",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d63049bb",
+      "type": "TemplateLiteral",
+      "babel_source": "`(Func<dynamic, dynamic>)(${lambdaExpr})`",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b870e8a5",
+      "type": "ReturnStatement",
+      "babel_source": "return `${castedArray}.Select(${castedLambda}).ToArray()`;",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "75ce2752",
+      "type": "TemplateLiteral",
+      "babel_source": "`${castedArray}.Select(${castedLambda}).ToArray()`",
+      "parentContext": {
+        "functionName": "generateMapExpression",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/expressions.cjs"
+  ]
+}

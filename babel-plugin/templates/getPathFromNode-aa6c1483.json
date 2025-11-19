@@ -1,0 +1,81 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "getPathFromNode",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function getPathFromNode(node) {\r\n  if (!node.__minimactPath) {\r\n    throw new Error('[Minimact] Path not assigned to node! Did you forget to run assignPathsToJSX?');\r\n  }\r\n  return node.__minimactPath;\r\n}",
+  "body_templates": [
+    {
+      "hash": "6b2a94cf",
+      "type": "IfStatement",
+      "condition": "!node.__minimactPath",
+      "babel_source": "if (!node.__minimactPath) {\r\n    throw new Error('[Minimact] Path not assigned to node! Did you forget to run assignPathsToJSX?');\r\n  }",
+      "parentContext": {
+        "functionName": "getPathFromNode",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "72a76b38",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!node.__minimactPath",
+      "parentContext": {
+        "functionName": "getPathFromNode",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "734c3c0c",
+      "type": "ThrowStatement",
+      "babel_source": "throw new Error('[Minimact] Path not assigned to node! Did you forget to run assignPathsToJSX?');",
+      "parentContext": {
+        "functionName": "getPathFromNode",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "752b3b95",
+      "type": "NewExpression",
+      "babel_source": "new Error('[Minimact] Path not assigned to node! Did you forget to run assignPathsToJSX?')",
+      "parentContext": {
+        "functionName": "getPathFromNode",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "67c15466",
+      "type": "ReturnStatement",
+      "babel_source": "return node.__minimactPath;",
+      "parentContext": {
+        "functionName": "getPathFromNode",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "utils/pathAssignment.cjs"
+  ]
+}

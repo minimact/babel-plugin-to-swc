@@ -1,0 +1,399 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "transpileMethodCall",
+  "params": [
+    {
+      "name": "callee",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "args",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "expr",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function transpileMethodCall(callee, args, expr) {\r\n  // Handle .reduce() → .fold() with special argument order\r\n  if (callee.includes('.reduce')) {\r\n    if (expr.arguments.length >= 2) {\r\n      const fn = transpileExpression(expr.arguments[0]);\r\n      const init = transpileExpression(expr.arguments[1]);\r\n      const base = callee.replace('.reduce', '.fold');\r\n      return `${base}(${init}, ${fn})`;\r\n    }\r\n  }\r\n\r\n  // Array methods mappings\r\n  const mappings = {\r\n    'Math.floor': 'f64::floor',\r\n    'Math.ceil': 'f64::ceil',\r\n    'Math.round': 'f64::round',\r\n    'Math.abs': 'f64::abs',\r\n    'Math.max': 'f64::max',\r\n    'Math.min': 'f64::min',\r\n    'Math.sqrt': 'f64::sqrt',\r\n    'Math.pow': 'f64::powf',\r\n    'console.log': 'println!',\r\n    'console.error': 'eprintln!',\r\n    'console.warn': 'println!',\r\n    'JSON.stringify': 'serde_json::to_string',\r\n    'JSON.parse': 'serde_json::from_str'\r\n  };\r\n\r\n  for (const [ts, rust] of Object.entries(mappings)) {\r\n    if (callee.includes(ts)) {\r\n      const transpiledCallee = callee.replace(ts, rust);\r\n      return `${transpiledCallee}(${args})`;\r\n    }\r\n  }\r\n\r\n  // Special handling for .toFixed()\r\n  if (callee.endsWith('.toFixed')) {\r\n    const obj = callee.replace('.toFixed', '');\r\n    return `format!(\"{:.${args}}\", ${obj})`;\r\n  }\r\n\r\n  // Special handling for .split()\r\n  if (callee.endsWith('.split')) {\r\n    const obj = callee.replace('.split', '');\r\n    return `${obj}.split(${args}).collect::<Vec<_>>()`;\r\n  }\r\n\r\n  return `${callee}(${args})`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "9e33a211",
+      "type": "IfStatement",
+      "condition": "callee.includes('.reduce')",
+      "babel_source": "if (callee.includes('.reduce')) {\r\n    if (expr.arguments.length >= 2) {\r\n      const fn = transpileExpression(expr.arguments[0]);\r\n      const init = transpileExpression(expr.arguments[1]);\r\n      const base = callee.replace('.reduce', '.fold');\r\n      return `${base}(${init}, ${fn})`;\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args",
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6067c16d",
+      "type": "IfStatement",
+      "condition": "expr.arguments.length >= 2",
+      "babel_source": "if (expr.arguments.length >= 2) {\r\n      const fn = transpileExpression(expr.arguments[0]);\r\n      const init = transpileExpression(expr.arguments[1]);\r\n      const base = callee.replace('.reduce', '.fold');\r\n      return `${base}(${init}, ${fn})`;\r\n    }",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args",
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e185f69d",
+      "type": "BinaryExpression",
+      "operator": ">=",
+      "babel_source": "expr.arguments.length >= 2",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args",
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f387ad8c",
+      "type": "VariableDeclaration",
+      "babel_source": "const fn = transpileExpression(expr.arguments[0]);",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args",
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6bc95fe7",
+      "type": "VariableDeclaration",
+      "babel_source": "const init = transpileExpression(expr.arguments[1]);",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args",
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b3720aa0",
+      "type": "VariableDeclaration",
+      "babel_source": "const base = callee.replace('.reduce', '.fold');",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args",
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f3211a7c",
+      "type": "ReturnStatement",
+      "babel_source": "return `${base}(${init}, ${fn})`;",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args",
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "aaf925e1",
+      "type": "TemplateLiteral",
+      "babel_source": "`${base}(${init}, ${fn})`",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args",
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9b630253",
+      "type": "VariableDeclaration",
+      "babel_source": "const mappings = {\r\n    'Math.floor': 'f64::floor',\r\n    'Math.ceil': 'f64::ceil',\r\n    'Math.round': 'f64::round',\r\n    'Math.abs': 'f64::abs',\r\n    'Math.max': 'f64::max',\r\n    'Math.min': 'f64::min',\r\n    'Math.sqrt': 'f64::sqrt',\r\n    'Math.pow': 'f64::powf',\r\n    'console.log': 'println!',\r\n    'console.error': 'eprintln!',\r\n    'console.warn': 'println!',\r\n    'JSON.stringify': 'serde_json::to_string',\r\n    'JSON.parse': 'serde_json::from_str'\r\n  };",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args",
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "895b9d2e",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    'Math.floor': 'f64::floor',\r\n    'Math.ceil': 'f64::ceil',\r\n    'Math.round': 'f64::round',\r\n    'Math.abs': 'f64::abs',\r\n    'Math.max': 'f64::max',\r\n    'Math.min': 'f64::min',\r\n    'Math.sqrt': 'f64::sqrt',\r\n    'Math.pow': 'f64::powf',\r\n    'console.log': 'println!',\r\n    'console.error': 'eprintln!',\r\n    'console.warn': 'println!',\r\n    'JSON.stringify': 'serde_json::to_string',\r\n    'JSON.parse': 'serde_json::from_str'\r\n  }",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args",
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "83641221",
+      "type": "ForOfStatement",
+      "babel_source": "for (const [ts, rust] of Object.entries(mappings)) {\r\n    if (callee.includes(ts)) {\r\n      const transpiledCallee = callee.replace(ts, rust);\r\n      return `${transpiledCallee}(${args})`;\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args",
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ee5fc94b",
+      "type": "VariableDeclaration",
+      "babel_source": "const [ts, rust]",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args",
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "35b01a86",
+      "type": "IfStatement",
+      "condition": "callee.includes(ts)",
+      "babel_source": "if (callee.includes(ts)) {\r\n      const transpiledCallee = callee.replace(ts, rust);\r\n      return `${transpiledCallee}(${args})`;\r\n    }",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args",
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4c2aa639",
+      "type": "VariableDeclaration",
+      "babel_source": "const transpiledCallee = callee.replace(ts, rust);",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args",
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f29abc20",
+      "type": "ReturnStatement",
+      "babel_source": "return `${transpiledCallee}(${args})`;",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args",
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c18e8e7f",
+      "type": "TemplateLiteral",
+      "babel_source": "`${transpiledCallee}(${args})`",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args",
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "836f61b2",
+      "type": "IfStatement",
+      "condition": "callee.endsWith('.toFixed')",
+      "babel_source": "if (callee.endsWith('.toFixed')) {\r\n    const obj = callee.replace('.toFixed', '');\r\n    return `format!(\"{:.${args}}\", ${obj})`;\r\n  }",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args",
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7621c03c",
+      "type": "VariableDeclaration",
+      "babel_source": "const obj = callee.replace('.toFixed', '');",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args",
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c39afe4a",
+      "type": "ReturnStatement",
+      "babel_source": "return `format!(\"{:.${args}}\", ${obj})`;",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args",
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dc65cf30",
+      "type": "TemplateLiteral",
+      "babel_source": "`format!(\"{:.${args}}\", ${obj})`",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args",
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0e43bb07",
+      "type": "IfStatement",
+      "condition": "callee.endsWith('.split')",
+      "babel_source": "if (callee.endsWith('.split')) {\r\n    const obj = callee.replace('.split', '');\r\n    return `${obj}.split(${args}).collect::<Vec<_>>()`;\r\n  }",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args",
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6797f349",
+      "type": "VariableDeclaration",
+      "babel_source": "const obj = callee.replace('.split', '');",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args",
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c1c2a3ef",
+      "type": "ReturnStatement",
+      "babel_source": "return `${obj}.split(${args}).collect::<Vec<_>>()`;",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args",
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5aba9123",
+      "type": "TemplateLiteral",
+      "babel_source": "`${obj}.split(${args}).collect::<Vec<_>>()`",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args",
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0b87ae87",
+      "type": "ReturnStatement",
+      "babel_source": "return `${callee}(${args})`;",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args",
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0653ee57",
+      "type": "TemplateLiteral",
+      "babel_source": "`${callee}(${args})`",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args",
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "transpilers/typescriptToRust.cjs"
+  ]
+}

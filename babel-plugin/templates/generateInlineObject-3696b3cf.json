@@ -1,0 +1,224 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateInlineObject",
+  "params": [
+    {
+      "name": "stateBinding",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "componentState",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateInlineObject(stateBinding, componentState) {\r\n  const properties = stateBinding.properties;\r\n\r\n  if (!properties || properties.length === 0) {\r\n    return 'new { }';\r\n  }\r\n\r\n  const propStrings = properties.map(prop => {\r\n    const key = prop.key.name || prop.key.value;\r\n    const value = generateCSharpExpression(prop.value);\r\n    return `${key} = ${value}`;\r\n  });\r\n\r\n  return `new { ${propStrings.join(', ')} }`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "31416da6",
+      "type": "VariableDeclaration",
+      "babel_source": "const properties = stateBinding.properties;",
+      "parentContext": {
+        "functionName": "generateInlineObject",
+        "functionParams": [
+          "stateBinding",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fb8139ee",
+      "type": "IfStatement",
+      "condition": "!properties || properties.length === 0",
+      "babel_source": "if (!properties || properties.length === 0) {\r\n    return 'new { }';\r\n  }",
+      "parentContext": {
+        "functionName": "generateInlineObject",
+        "functionParams": [
+          "stateBinding",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8770160f",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "!properties || properties.length === 0",
+      "parentContext": {
+        "functionName": "generateInlineObject",
+        "functionParams": [
+          "stateBinding",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "018e354c",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!properties",
+      "parentContext": {
+        "functionName": "generateInlineObject",
+        "functionParams": [
+          "stateBinding",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "99d3d71a",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "properties.length === 0",
+      "parentContext": {
+        "functionName": "generateInlineObject",
+        "functionParams": [
+          "stateBinding",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ee50d06f",
+      "type": "ReturnStatement",
+      "babel_source": "return 'new { }';",
+      "parentContext": {
+        "functionName": "generateInlineObject",
+        "functionParams": [
+          "stateBinding",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0da1cfbb",
+      "type": "VariableDeclaration",
+      "babel_source": "const propStrings = properties.map(prop => {\r\n    const key = prop.key.name || prop.key.value;\r\n    const value = generateCSharpExpression(prop.value);\r\n    return `${key} = ${value}`;\r\n  });",
+      "parentContext": {
+        "functionName": "generateInlineObject",
+        "functionParams": [
+          "stateBinding",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "12b16178",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "prop => {\r\n    const key = prop.key.name || prop.key.value;\r\n    const value = generateCSharpExpression(prop.value);\r\n    return `${key} = ${value}`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateInlineObject",
+        "functionParams": [
+          "stateBinding",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b8c1e179",
+      "type": "VariableDeclaration",
+      "babel_source": "const key = prop.key.name || prop.key.value;",
+      "parentContext": {
+        "functionName": "generateInlineObject",
+        "functionParams": [
+          "stateBinding",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "553e0df2",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "prop.key.name || prop.key.value",
+      "parentContext": {
+        "functionName": "generateInlineObject",
+        "functionParams": [
+          "stateBinding",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6a01e930",
+      "type": "VariableDeclaration",
+      "babel_source": "const value = generateCSharpExpression(prop.value);",
+      "parentContext": {
+        "functionName": "generateInlineObject",
+        "functionParams": [
+          "stateBinding",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "23b85818",
+      "type": "ReturnStatement",
+      "babel_source": "return `${key} = ${value}`;",
+      "parentContext": {
+        "functionName": "generateInlineObject",
+        "functionParams": [
+          "stateBinding",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ffc92247",
+      "type": "TemplateLiteral",
+      "babel_source": "`${key} = ${value}`",
+      "parentContext": {
+        "functionName": "generateInlineObject",
+        "functionParams": [
+          "stateBinding",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "05c62a37",
+      "type": "ReturnStatement",
+      "babel_source": "return `new { ${propStrings.join(', ')} }`;",
+      "parentContext": {
+        "functionName": "generateInlineObject",
+        "functionParams": [
+          "stateBinding",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5f9c997a",
+      "type": "TemplateLiteral",
+      "babel_source": "`new { ${propStrings.join(', ')} }`",
+      "parentContext": {
+        "functionName": "generateInlineObject",
+        "functionParams": [
+          "stateBinding",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/plugin.cjs"
+  ]
+}

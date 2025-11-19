@@ -1,0 +1,156 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "convertVariableReferences",
+  "params": [
+    {
+      "name": "markdown",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function convertVariableReferences(markdown) {\r\n  // Convert @variableName → {variableName}\r\n  // Convert @variable.Property → {variable.Property}\r\n  // Convert @variable.Method() → {variable.Method()}\r\n\r\n  // Pattern: @ followed by identifier, with optional property/method chain\r\n  // But skip Razor keywords (already converted)\r\n  const keywords = ['if', 'else', 'foreach', 'for', 'while', 'switch'];\r\n\r\n  return markdown.replace(/@([a-zA-Z_][a-zA-Z0-9_]*(?:\\.[a-zA-Z_][a-zA-Z0-9_]*|\\([^)]*\\))*)/g, (match, varPath) => {\r\n    const rootVar = varPath.split(/[.(]/)[0];\r\n\r\n    // Skip Razor keywords (shouldn't happen - already converted)\r\n    if (keywords.includes(rootVar)) {\r\n      return match;\r\n    }\r\n\r\n    return `{${varPath}}`;\r\n  });\r\n}",
+  "body_templates": [
+    {
+      "hash": "5bae41b0",
+      "type": "VariableDeclaration",
+      "babel_source": "const keywords = ['if', 'else', 'foreach', 'for', 'while', 'switch'];",
+      "parentContext": {
+        "functionName": "convertVariableReferences",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "58177785",
+      "type": "ArrayExpression",
+      "babel_source": "['if', 'else', 'foreach', 'for', 'while', 'switch']",
+      "parentContext": {
+        "functionName": "convertVariableReferences",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fcb5e637",
+      "type": "ReturnStatement",
+      "babel_source": "return markdown.replace(/@([a-zA-Z_][a-zA-Z0-9_]*(?:\\.[a-zA-Z_][a-zA-Z0-9_]*|\\([^)]*\\))*)/g, (match, varPath) => {\r\n    const rootVar = varPath.split(/[.(]/)[0];\r\n\r\n    // Skip Razor keywords (shouldn't happen - already converted)\r\n    if (keywords.includes(rootVar)) {\r\n      return match;\r\n    }\r\n\r\n    return `{${varPath}}`;\r\n  });",
+      "parentContext": {
+        "functionName": "convertVariableReferences",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4a31e9d3",
+      "type": "RegExpLiteral",
+      "pattern": "@([a-zA-Z_][a-zA-Z0-9_]*(?:\\.[a-zA-Z_][a-zA-Z0-9_]*|\\([^)]*\\))*)",
+      "flags": "g",
+      "babel_source": "/@([a-zA-Z_][a-zA-Z0-9_]*(?:\\.[a-zA-Z_][a-zA-Z0-9_]*|\\([^)]*\\))*)/g",
+      "parentContext": {
+        "functionName": "convertVariableReferences",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "78e14fca",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "(match, varPath) => {\r\n    const rootVar = varPath.split(/[.(]/)[0];\r\n\r\n    // Skip Razor keywords (shouldn't happen - already converted)\r\n    if (keywords.includes(rootVar)) {\r\n      return match;\r\n    }\r\n\r\n    return `{${varPath}}`;\r\n  }",
+      "parentContext": {
+        "functionName": "convertVariableReferences",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ecf18e3d",
+      "type": "VariableDeclaration",
+      "babel_source": "const rootVar = varPath.split(/[.(]/)[0];",
+      "parentContext": {
+        "functionName": "convertVariableReferences",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "291059a6",
+      "type": "RegExpLiteral",
+      "pattern": "[.(]",
+      "flags": "",
+      "babel_source": "/[.(]/",
+      "parentContext": {
+        "functionName": "convertVariableReferences",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "83c4b719",
+      "type": "IfStatement",
+      "condition": "keywords.includes(rootVar)",
+      "babel_source": "if (keywords.includes(rootVar)) {\r\n      return match;\r\n    }",
+      "parentContext": {
+        "functionName": "convertVariableReferences",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6fbe4b8d",
+      "type": "ReturnStatement",
+      "babel_source": "return match;",
+      "parentContext": {
+        "functionName": "convertVariableReferences",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "933a571b",
+      "type": "ReturnStatement",
+      "babel_source": "return `{${varPath}}`;",
+      "parentContext": {
+        "functionName": "convertVariableReferences",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "be1e307d",
+      "type": "TemplateLiteral",
+      "babel_source": "`{${varPath}}`",
+      "parentContext": {
+        "functionName": "convertVariableReferences",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/razorMarkdown.cjs"
+  ]
+}

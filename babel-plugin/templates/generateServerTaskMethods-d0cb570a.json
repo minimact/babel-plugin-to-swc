@@ -1,0 +1,473 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateServerTaskMethods",
+  "params": [
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateServerTaskMethods(component) {\r\n  if (!component.useServerTask || component.useServerTask.length === 0) {\r\n    return [];\r\n  }\r\n\r\n  const lines = [];\r\n\r\n  for (let i = 0; i < component.useServerTask.length; i++) {\r\n    const task = component.useServerTask[i];\r\n    const taskId = `serverTask_${i}`;\r\n\r\n    // Generate method\r\n    lines.push('');\r\n    lines.push(`    [ServerTask(\"${taskId}\"${task.isStreaming ? ', Streaming = true' : ''})]`);\r\n\r\n    // Method signature\r\n    const returnType = task.isStreaming\r\n      ? `IAsyncEnumerable<${task.returnType}>`\r\n      : `Task<${task.returnType}>`;\r\n\r\n    const params = [];\r\n\r\n    // Add user parameters\r\n    for (const param of task.parameters) {\r\n      params.push(`${param.type} ${param.name}`);\r\n    }\r\n\r\n    // Add progress parameter (non-streaming only)\r\n    if (!task.isStreaming) {\r\n      params.push('IProgress<double> progress');\r\n    }\r\n\r\n    // Add cancellation token\r\n    if (task.isStreaming) {\r\n      params.push('[EnumeratorCancellation] CancellationToken cancellationToken = default');\r\n    } else {\r\n      params.push('CancellationToken cancellationToken');\r\n    }\r\n\r\n    const methodName = capitalize(taskId);\r\n    const paramsList = params.join(', ');\r\n\r\n    lines.push(`    private async ${returnType} ${methodName}(${paramsList})`);\r\n    lines.push(`    {`);\r\n\r\n    // Transpile function body\r\n    const csharpBody = transpileAsyncFunctionToCSharp(task.asyncFunction);\r\n    const indentedBody = indent(csharpBody, 8);\r\n\r\n    lines.push(indentedBody);\r\n    lines.push(`    }`);\r\n  }\r\n\r\n  return lines;\r\n}",
+  "body_templates": [
+    {
+      "hash": "ea78a580",
+      "type": "IfStatement",
+      "condition": "!component.useServerTask || component.useServerTask.length === 0",
+      "babel_source": "if (!component.useServerTask || component.useServerTask.length === 0) {\r\n    return [];\r\n  }",
+      "parentContext": {
+        "functionName": "generateServerTaskMethods",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6f0a19d9",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "!component.useServerTask || component.useServerTask.length === 0",
+      "parentContext": {
+        "functionName": "generateServerTaskMethods",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6123203e",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!component.useServerTask",
+      "parentContext": {
+        "functionName": "generateServerTaskMethods",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "166f2e7e",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "component.useServerTask.length === 0",
+      "parentContext": {
+        "functionName": "generateServerTaskMethods",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c7221e11",
+      "type": "ReturnStatement",
+      "babel_source": "return [];",
+      "parentContext": {
+        "functionName": "generateServerTaskMethods",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "generateServerTaskMethods",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "87b71d01",
+      "type": "VariableDeclaration",
+      "babel_source": "const lines = [];",
+      "parentContext": {
+        "functionName": "generateServerTaskMethods",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "generateServerTaskMethods",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f1ad3330",
+      "type": "ForStatement",
+      "babel_source": "for (let i = 0; i < component.useServerTask.length; i++) {\r\n    const task = component.useServerTask[i];\r\n    const taskId = `serverTask_${i}`;\r\n\r\n    // Generate method\r\n    lines.push('');\r\n    lines.push(`    [ServerTask(\"${taskId}\"${task.isStreaming ? ', Streaming = true' : ''})]`);\r\n\r\n    // Method signature\r\n    const returnType = task.isStreaming\r\n      ? `IAsyncEnumerable<${task.returnType}>`\r\n      : `Task<${task.returnType}>`;\r\n\r\n    const params = [];\r\n\r\n    // Add user parameters\r\n    for (const param of task.parameters) {\r\n      params.push(`${param.type} ${param.name}`);\r\n    }\r\n\r\n    // Add progress parameter (non-streaming only)\r\n    if (!task.isStreaming) {\r\n      params.push('IProgress<double> progress');\r\n    }\r\n\r\n    // Add cancellation token\r\n    if (task.isStreaming) {\r\n      params.push('[EnumeratorCancellation] CancellationToken cancellationToken = default');\r\n    } else {\r\n      params.push('CancellationToken cancellationToken');\r\n    }\r\n\r\n    const methodName = capitalize(taskId);\r\n    const paramsList = params.join(', ');\r\n\r\n    lines.push(`    private async ${returnType} ${methodName}(${paramsList})`);\r\n    lines.push(`    {`);\r\n\r\n    // Transpile function body\r\n    const csharpBody = transpileAsyncFunctionToCSharp(task.asyncFunction);\r\n    const indentedBody = indent(csharpBody, 8);\r\n\r\n    lines.push(indentedBody);\r\n    lines.push(`    }`);\r\n  }",
+      "parentContext": {
+        "functionName": "generateServerTaskMethods",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ecb911a1",
+      "type": "VariableDeclaration",
+      "babel_source": "let i = 0",
+      "parentContext": {
+        "functionName": "generateServerTaskMethods",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "752d9670",
+      "type": "BinaryExpression",
+      "operator": "<",
+      "babel_source": "i < component.useServerTask.length",
+      "parentContext": {
+        "functionName": "generateServerTaskMethods",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e8dee0e1",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "i++",
+      "parentContext": {
+        "functionName": "generateServerTaskMethods",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f892bc3a",
+      "type": "VariableDeclaration",
+      "babel_source": "const task = component.useServerTask[i];",
+      "parentContext": {
+        "functionName": "generateServerTaskMethods",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "94672adb",
+      "type": "VariableDeclaration",
+      "babel_source": "const taskId = `serverTask_${i}`;",
+      "parentContext": {
+        "functionName": "generateServerTaskMethods",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4101ae0d",
+      "type": "TemplateLiteral",
+      "babel_source": "`serverTask_${i}`",
+      "parentContext": {
+        "functionName": "generateServerTaskMethods",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ac8462a0",
+      "type": "TemplateLiteral",
+      "babel_source": "`    [ServerTask(\"${taskId}\"${task.isStreaming ? ', Streaming = true' : ''})]`",
+      "parentContext": {
+        "functionName": "generateServerTaskMethods",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "48683978",
+      "type": "ConditionalExpression",
+      "babel_source": "task.isStreaming ? ', Streaming = true' : ''",
+      "parentContext": {
+        "functionName": "generateServerTaskMethods",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "336b9615",
+      "type": "VariableDeclaration",
+      "babel_source": "const returnType = task.isStreaming\r\n      ? `IAsyncEnumerable<${task.returnType}>`\r\n      : `Task<${task.returnType}>`;",
+      "parentContext": {
+        "functionName": "generateServerTaskMethods",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5b51ef97",
+      "type": "ConditionalExpression",
+      "babel_source": "task.isStreaming\r\n      ? `IAsyncEnumerable<${task.returnType}>`\r\n      : `Task<${task.returnType}>`",
+      "parentContext": {
+        "functionName": "generateServerTaskMethods",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "95646424",
+      "type": "TemplateLiteral",
+      "babel_source": "`IAsyncEnumerable<${task.returnType}>`",
+      "parentContext": {
+        "functionName": "generateServerTaskMethods",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5b635f40",
+      "type": "TemplateLiteral",
+      "babel_source": "`Task<${task.returnType}>`",
+      "parentContext": {
+        "functionName": "generateServerTaskMethods",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d8689b2a",
+      "type": "VariableDeclaration",
+      "babel_source": "const params = [];",
+      "parentContext": {
+        "functionName": "generateServerTaskMethods",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "generateServerTaskMethods",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f919fe2a",
+      "type": "ForOfStatement",
+      "babel_source": "for (const param of task.parameters) {\r\n      params.push(`${param.type} ${param.name}`);\r\n    }",
+      "parentContext": {
+        "functionName": "generateServerTaskMethods",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "abdf4b64",
+      "type": "VariableDeclaration",
+      "babel_source": "const param",
+      "parentContext": {
+        "functionName": "generateServerTaskMethods",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8713b4cc",
+      "type": "TemplateLiteral",
+      "babel_source": "`${param.type} ${param.name}`",
+      "parentContext": {
+        "functionName": "generateServerTaskMethods",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4bd3a878",
+      "type": "IfStatement",
+      "condition": "!task.isStreaming",
+      "babel_source": "if (!task.isStreaming) {\r\n      params.push('IProgress<double> progress');\r\n    }",
+      "parentContext": {
+        "functionName": "generateServerTaskMethods",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3e5a77d6",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!task.isStreaming",
+      "parentContext": {
+        "functionName": "generateServerTaskMethods",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2001d1a1",
+      "type": "IfStatement",
+      "condition": "task.isStreaming",
+      "babel_source": "if (task.isStreaming) {\r\n      params.push('[EnumeratorCancellation] CancellationToken cancellationToken = default');\r\n    } else {\r\n      params.push('CancellationToken cancellationToken');\r\n    }",
+      "parentContext": {
+        "functionName": "generateServerTaskMethods",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "add4b88e",
+      "type": "VariableDeclaration",
+      "babel_source": "const methodName = capitalize(taskId);",
+      "parentContext": {
+        "functionName": "generateServerTaskMethods",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dbb3d4e0",
+      "type": "VariableDeclaration",
+      "babel_source": "const paramsList = params.join(', ');",
+      "parentContext": {
+        "functionName": "generateServerTaskMethods",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3f24c9b7",
+      "type": "TemplateLiteral",
+      "babel_source": "`    private async ${returnType} ${methodName}(${paramsList})`",
+      "parentContext": {
+        "functionName": "generateServerTaskMethods",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "497895ef",
+      "type": "TemplateLiteral",
+      "babel_source": "`    {`",
+      "parentContext": {
+        "functionName": "generateServerTaskMethods",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b32b8e95",
+      "type": "VariableDeclaration",
+      "babel_source": "const csharpBody = transpileAsyncFunctionToCSharp(task.asyncFunction);",
+      "parentContext": {
+        "functionName": "generateServerTaskMethods",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ec2d4032",
+      "type": "VariableDeclaration",
+      "babel_source": "const indentedBody = indent(csharpBody, 8);",
+      "parentContext": {
+        "functionName": "generateServerTaskMethods",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5bb88761",
+      "type": "TemplateLiteral",
+      "babel_source": "`    }`",
+      "parentContext": {
+        "functionName": "generateServerTaskMethods",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1769fcdf",
+      "type": "ReturnStatement",
+      "babel_source": "return lines;",
+      "parentContext": {
+        "functionName": "generateServerTaskMethods",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/serverTask.cjs"
+  ]
+}

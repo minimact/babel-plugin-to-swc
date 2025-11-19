@@ -1,0 +1,799 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "traverseJSX",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "path",
+      "inferredType": "&Path",
+      "defaultValue": "[]"
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function traverseJSX(node, path = []) {\r\n    if (t.isJSXElement(node)) {\r\n      // Check children for conditional expressions\r\n      for (let i = 0; i < node.children.length; i++) {\r\n        const child = node.children[i];\r\n\r\n        if (t.isJSXExpressionContainer(child)) {\r\n          const expr = child.expression;\r\n\r\n          // Ternary: {condition ? <A /> : <B />}\r\n          if (t.isConditionalExpression(expr)) {\r\n            const template = extractConditionalStructuralTemplate(expr, component, [...path, i]);\r\n            if (template) {\r\n              structuralTemplates.push(template);\r\n            }\r\n          }\r\n\r\n          // Logical AND: {condition && <Component />}\r\n          if (t.isLogicalExpression(expr) && expr.operator === '&&') {\r\n            const template = extractLogicalAndTemplate(expr, component, [...path, i]);\r\n            if (template) {\r\n              structuralTemplates.push(template);\r\n            }\r\n          }\r\n        } else if (t.isJSXElement(child)) {\r\n          traverseJSX(child, [...path, i]);\r\n        }\r\n      }\r\n    } else if (t.isJSXFragment(node)) {\r\n      for (let i = 0; i < node.children.length; i++) {\r\n        const child = node.children[i];\r\n        if (t.isJSXElement(child)) {\r\n          traverseJSX(child, [...path, i]);\r\n        } else if (t.isJSXExpressionContainer(child)) {\r\n          const expr = child.expression;\r\n\r\n          if (t.isConditionalExpression(expr)) {\r\n            const template = extractConditionalStructuralTemplate(expr, component, [...path, i]);\r\n            if (template) {\r\n              structuralTemplates.push(template);\r\n            }\r\n          }\r\n\r\n          if (t.isLogicalExpression(expr) && expr.operator === '&&') {\r\n            const template = extractLogicalAndTemplate(expr, component, [...path, i]);\r\n            if (template) {\r\n              structuralTemplates.push(template);\r\n            }\r\n          }\r\n        }\r\n      }\r\n    }\r\n  }",
+  "body_templates": [
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "83133507",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(node)",
+      "babel_source": "if (t.isJSXElement(node)) {\r\n      // Check children for conditional expressions\r\n      for (let i = 0; i < node.children.length; i++) {\r\n        const child = node.children[i];\r\n\r\n        if (t.isJSXExpressionContainer(child)) {\r\n          const expr = child.expression;\r\n\r\n          // Ternary: {condition ? <A /> : <B />}\r\n          if (t.isConditionalExpression(expr)) {\r\n            const template = extractConditionalStructuralTemplate(expr, component, [...path, i]);\r\n            if (template) {\r\n              structuralTemplates.push(template);\r\n            }\r\n          }\r\n\r\n          // Logical AND: {condition && <Component />}\r\n          if (t.isLogicalExpression(expr) && expr.operator === '&&') {\r\n            const template = extractLogicalAndTemplate(expr, component, [...path, i]);\r\n            if (template) {\r\n              structuralTemplates.push(template);\r\n            }\r\n          }\r\n        } else if (t.isJSXElement(child)) {\r\n          traverseJSX(child, [...path, i]);\r\n        }\r\n      }\r\n    } else if (t.isJSXFragment(node)) {\r\n      for (let i = 0; i < node.children.length; i++) {\r\n        const child = node.children[i];\r\n        if (t.isJSXElement(child)) {\r\n          traverseJSX(child, [...path, i]);\r\n        } else if (t.isJSXExpressionContainer(child)) {\r\n          const expr = child.expression;\r\n\r\n          if (t.isConditionalExpression(expr)) {\r\n            const template = extractConditionalStructuralTemplate(expr, component, [...path, i]);\r\n            if (template) {\r\n              structuralTemplates.push(template);\r\n            }\r\n          }\r\n\r\n          if (t.isLogicalExpression(expr) && expr.operator === '&&') {\r\n            const template = extractLogicalAndTemplate(expr, component, [...path, i]);\r\n            if (template) {\r\n              structuralTemplates.push(template);\r\n            }\r\n          }\r\n        }\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "606ccdc5",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(node)",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5141f1c3",
+      "type": "ForStatement",
+      "babel_source": "for (let i = 0; i < node.children.length; i++) {\r\n        const child = node.children[i];\r\n\r\n        if (t.isJSXExpressionContainer(child)) {\r\n          const expr = child.expression;\r\n\r\n          // Ternary: {condition ? <A /> : <B />}\r\n          if (t.isConditionalExpression(expr)) {\r\n            const template = extractConditionalStructuralTemplate(expr, component, [...path, i]);\r\n            if (template) {\r\n              structuralTemplates.push(template);\r\n            }\r\n          }\r\n\r\n          // Logical AND: {condition && <Component />}\r\n          if (t.isLogicalExpression(expr) && expr.operator === '&&') {\r\n            const template = extractLogicalAndTemplate(expr, component, [...path, i]);\r\n            if (template) {\r\n              structuralTemplates.push(template);\r\n            }\r\n          }\r\n        } else if (t.isJSXElement(child)) {\r\n          traverseJSX(child, [...path, i]);\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ecb911a1",
+      "type": "VariableDeclaration",
+      "babel_source": "let i = 0",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a6e11c46",
+      "type": "BinaryExpression",
+      "operator": "<",
+      "babel_source": "i < node.children.length",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e8dee0e1",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "i++",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "489e538d",
+      "type": "VariableDeclaration",
+      "babel_source": "const child = node.children[i];",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2fdc5a27",
+      "type": "IfStatement",
+      "condition": "t.isJSXExpressionContainer(child)",
+      "babel_source": "if (t.isJSXExpressionContainer(child)) {\r\n          const expr = child.expression;\r\n\r\n          // Ternary: {condition ? <A /> : <B />}\r\n          if (t.isConditionalExpression(expr)) {\r\n            const template = extractConditionalStructuralTemplate(expr, component, [...path, i]);\r\n            if (template) {\r\n              structuralTemplates.push(template);\r\n            }\r\n          }\r\n\r\n          // Logical AND: {condition && <Component />}\r\n          if (t.isLogicalExpression(expr) && expr.operator === '&&') {\r\n            const template = extractLogicalAndTemplate(expr, component, [...path, i]);\r\n            if (template) {\r\n              structuralTemplates.push(template);\r\n            }\r\n          }\r\n        } else if (t.isJSXElement(child)) {\r\n          traverseJSX(child, [...path, i]);\r\n        }",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c53c8d32",
+      "type": "BabelTypeCheck",
+      "method": "isJSXExpressionContainer",
+      "babel_source": "t.isJSXExpressionContainer(child)",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9e5f0b19",
+      "type": "VariableDeclaration",
+      "babel_source": "const expr = child.expression;",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ddd42779",
+      "type": "IfStatement",
+      "condition": "t.isConditionalExpression(expr)",
+      "babel_source": "if (t.isConditionalExpression(expr)) {\r\n            const template = extractConditionalStructuralTemplate(expr, component, [...path, i]);\r\n            if (template) {\r\n              structuralTemplates.push(template);\r\n            }\r\n          }",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5574ecc1",
+      "type": "BabelTypeCheck",
+      "method": "isConditionalExpression",
+      "babel_source": "t.isConditionalExpression(expr)",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fab17cc5",
+      "type": "VariableDeclaration",
+      "babel_source": "const template = extractConditionalStructuralTemplate(expr, component, [...path, i]);",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "31f59839",
+      "type": "ArrayExpression",
+      "babel_source": "[...path, i]",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1d557abe",
+      "type": "SpreadElement",
+      "babel_source": "...path",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b769462b",
+      "type": "IfStatement",
+      "condition": "template",
+      "babel_source": "if (template) {\r\n              structuralTemplates.push(template);\r\n            }",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "95a6fbe6",
+      "type": "IfStatement",
+      "condition": "t.isLogicalExpression(expr) && expr.operator === '&&'",
+      "babel_source": "if (t.isLogicalExpression(expr) && expr.operator === '&&') {\r\n            const template = extractLogicalAndTemplate(expr, component, [...path, i]);\r\n            if (template) {\r\n              structuralTemplates.push(template);\r\n            }\r\n          }",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "295b4c4d",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isLogicalExpression(expr) && expr.operator === '&&'",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c20dd732",
+      "type": "BabelTypeCheck",
+      "method": "isLogicalExpression",
+      "babel_source": "t.isLogicalExpression(expr)",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "312ae3e2",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "expr.operator === '&&'",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dcb3cec3",
+      "type": "VariableDeclaration",
+      "babel_source": "const template = extractLogicalAndTemplate(expr, component, [...path, i]);",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "31f59839",
+      "type": "ArrayExpression",
+      "babel_source": "[...path, i]",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1d557abe",
+      "type": "SpreadElement",
+      "babel_source": "...path",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b769462b",
+      "type": "IfStatement",
+      "condition": "template",
+      "babel_source": "if (template) {\r\n              structuralTemplates.push(template);\r\n            }",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c300e860",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(child)",
+      "babel_source": "if (t.isJSXElement(child)) {\r\n          traverseJSX(child, [...path, i]);\r\n        }",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d44bd174",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(child)",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "31f59839",
+      "type": "ArrayExpression",
+      "babel_source": "[...path, i]",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1d557abe",
+      "type": "SpreadElement",
+      "babel_source": "...path",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f7dce9a2",
+      "type": "IfStatement",
+      "condition": "t.isJSXFragment(node)",
+      "babel_source": "if (t.isJSXFragment(node)) {\r\n      for (let i = 0; i < node.children.length; i++) {\r\n        const child = node.children[i];\r\n        if (t.isJSXElement(child)) {\r\n          traverseJSX(child, [...path, i]);\r\n        } else if (t.isJSXExpressionContainer(child)) {\r\n          const expr = child.expression;\r\n\r\n          if (t.isConditionalExpression(expr)) {\r\n            const template = extractConditionalStructuralTemplate(expr, component, [...path, i]);\r\n            if (template) {\r\n              structuralTemplates.push(template);\r\n            }\r\n          }\r\n\r\n          if (t.isLogicalExpression(expr) && expr.operator === '&&') {\r\n            const template = extractLogicalAndTemplate(expr, component, [...path, i]);\r\n            if (template) {\r\n              structuralTemplates.push(template);\r\n            }\r\n          }\r\n        }\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "00ed8bb0",
+      "type": "BabelTypeCheck",
+      "method": "isJSXFragment",
+      "babel_source": "t.isJSXFragment(node)",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c3e3844c",
+      "type": "ForStatement",
+      "babel_source": "for (let i = 0; i < node.children.length; i++) {\r\n        const child = node.children[i];\r\n        if (t.isJSXElement(child)) {\r\n          traverseJSX(child, [...path, i]);\r\n        } else if (t.isJSXExpressionContainer(child)) {\r\n          const expr = child.expression;\r\n\r\n          if (t.isConditionalExpression(expr)) {\r\n            const template = extractConditionalStructuralTemplate(expr, component, [...path, i]);\r\n            if (template) {\r\n              structuralTemplates.push(template);\r\n            }\r\n          }\r\n\r\n          if (t.isLogicalExpression(expr) && expr.operator === '&&') {\r\n            const template = extractLogicalAndTemplate(expr, component, [...path, i]);\r\n            if (template) {\r\n              structuralTemplates.push(template);\r\n            }\r\n          }\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ecb911a1",
+      "type": "VariableDeclaration",
+      "babel_source": "let i = 0",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a6e11c46",
+      "type": "BinaryExpression",
+      "operator": "<",
+      "babel_source": "i < node.children.length",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e8dee0e1",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "i++",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "489e538d",
+      "type": "VariableDeclaration",
+      "babel_source": "const child = node.children[i];",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "35710485",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(child)",
+      "babel_source": "if (t.isJSXElement(child)) {\r\n          traverseJSX(child, [...path, i]);\r\n        } else if (t.isJSXExpressionContainer(child)) {\r\n          const expr = child.expression;\r\n\r\n          if (t.isConditionalExpression(expr)) {\r\n            const template = extractConditionalStructuralTemplate(expr, component, [...path, i]);\r\n            if (template) {\r\n              structuralTemplates.push(template);\r\n            }\r\n          }\r\n\r\n          if (t.isLogicalExpression(expr) && expr.operator === '&&') {\r\n            const template = extractLogicalAndTemplate(expr, component, [...path, i]);\r\n            if (template) {\r\n              structuralTemplates.push(template);\r\n            }\r\n          }\r\n        }",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d44bd174",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(child)",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "31f59839",
+      "type": "ArrayExpression",
+      "babel_source": "[...path, i]",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1d557abe",
+      "type": "SpreadElement",
+      "babel_source": "...path",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "206094f7",
+      "type": "IfStatement",
+      "condition": "t.isJSXExpressionContainer(child)",
+      "babel_source": "if (t.isJSXExpressionContainer(child)) {\r\n          const expr = child.expression;\r\n\r\n          if (t.isConditionalExpression(expr)) {\r\n            const template = extractConditionalStructuralTemplate(expr, component, [...path, i]);\r\n            if (template) {\r\n              structuralTemplates.push(template);\r\n            }\r\n          }\r\n\r\n          if (t.isLogicalExpression(expr) && expr.operator === '&&') {\r\n            const template = extractLogicalAndTemplate(expr, component, [...path, i]);\r\n            if (template) {\r\n              structuralTemplates.push(template);\r\n            }\r\n          }\r\n        }",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c53c8d32",
+      "type": "BabelTypeCheck",
+      "method": "isJSXExpressionContainer",
+      "babel_source": "t.isJSXExpressionContainer(child)",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9e5f0b19",
+      "type": "VariableDeclaration",
+      "babel_source": "const expr = child.expression;",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ddd42779",
+      "type": "IfStatement",
+      "condition": "t.isConditionalExpression(expr)",
+      "babel_source": "if (t.isConditionalExpression(expr)) {\r\n            const template = extractConditionalStructuralTemplate(expr, component, [...path, i]);\r\n            if (template) {\r\n              structuralTemplates.push(template);\r\n            }\r\n          }",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5574ecc1",
+      "type": "BabelTypeCheck",
+      "method": "isConditionalExpression",
+      "babel_source": "t.isConditionalExpression(expr)",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fab17cc5",
+      "type": "VariableDeclaration",
+      "babel_source": "const template = extractConditionalStructuralTemplate(expr, component, [...path, i]);",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "31f59839",
+      "type": "ArrayExpression",
+      "babel_source": "[...path, i]",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1d557abe",
+      "type": "SpreadElement",
+      "babel_source": "...path",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b769462b",
+      "type": "IfStatement",
+      "condition": "template",
+      "babel_source": "if (template) {\r\n              structuralTemplates.push(template);\r\n            }",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "95a6fbe6",
+      "type": "IfStatement",
+      "condition": "t.isLogicalExpression(expr) && expr.operator === '&&'",
+      "babel_source": "if (t.isLogicalExpression(expr) && expr.operator === '&&') {\r\n            const template = extractLogicalAndTemplate(expr, component, [...path, i]);\r\n            if (template) {\r\n              structuralTemplates.push(template);\r\n            }\r\n          }",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "295b4c4d",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isLogicalExpression(expr) && expr.operator === '&&'",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c20dd732",
+      "type": "BabelTypeCheck",
+      "method": "isLogicalExpression",
+      "babel_source": "t.isLogicalExpression(expr)",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "312ae3e2",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "expr.operator === '&&'",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dcb3cec3",
+      "type": "VariableDeclaration",
+      "babel_source": "const template = extractLogicalAndTemplate(expr, component, [...path, i]);",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "31f59839",
+      "type": "ArrayExpression",
+      "babel_source": "[...path, i]",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1d557abe",
+      "type": "SpreadElement",
+      "babel_source": "...path",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b769462b",
+      "type": "IfStatement",
+      "condition": "template",
+      "babel_source": "if (template) {\r\n              structuralTemplates.push(template);\r\n            }",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/structuralTemplates.cjs"
+  ]
+}

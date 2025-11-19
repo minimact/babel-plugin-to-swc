@@ -1,0 +1,145 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractVersion",
+  "params": [
+    {
+      "name": "versionAttr",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractVersion(versionAttr) {\r\n  const value = versionAttr.value;\r\n\r\n  if (t.isStringLiteral(value)) {\r\n    return value.value;\r\n  }\r\n\r\n  if (t.isJSXExpressionContainer(value) && t.isStringLiteral(value.expression)) {\r\n    return value.expression.value;\r\n  }\r\n\r\n  return null;\r\n}",
+  "body_templates": [
+    {
+      "hash": "542942f5",
+      "type": "VariableDeclaration",
+      "babel_source": "const value = versionAttr.value;",
+      "parentContext": {
+        "functionName": "extractVersion",
+        "functionParams": [
+          "versionAttr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bb7709de",
+      "type": "IfStatement",
+      "condition": "t.isStringLiteral(value)",
+      "babel_source": "if (t.isStringLiteral(value)) {\r\n    return value.value;\r\n  }",
+      "parentContext": {
+        "functionName": "extractVersion",
+        "functionParams": [
+          "versionAttr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a835f893",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(value)",
+      "parentContext": {
+        "functionName": "extractVersion",
+        "functionParams": [
+          "versionAttr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4d93185a",
+      "type": "ReturnStatement",
+      "babel_source": "return value.value;",
+      "parentContext": {
+        "functionName": "extractVersion",
+        "functionParams": [
+          "versionAttr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e1ec32ca",
+      "type": "IfStatement",
+      "condition": "t.isJSXExpressionContainer(value) && t.isStringLiteral(value.expression)",
+      "babel_source": "if (t.isJSXExpressionContainer(value) && t.isStringLiteral(value.expression)) {\r\n    return value.expression.value;\r\n  }",
+      "parentContext": {
+        "functionName": "extractVersion",
+        "functionParams": [
+          "versionAttr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e0096e7a",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isJSXExpressionContainer(value) && t.isStringLiteral(value.expression)",
+      "parentContext": {
+        "functionName": "extractVersion",
+        "functionParams": [
+          "versionAttr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "846bea62",
+      "type": "BabelTypeCheck",
+      "method": "isJSXExpressionContainer",
+      "babel_source": "t.isJSXExpressionContainer(value)",
+      "parentContext": {
+        "functionName": "extractVersion",
+        "functionParams": [
+          "versionAttr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "61b18e4f",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(value.expression)",
+      "parentContext": {
+        "functionName": "extractVersion",
+        "functionParams": [
+          "versionAttr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "52446376",
+      "type": "ReturnStatement",
+      "babel_source": "return value.expression.value;",
+      "parentContext": {
+        "functionName": "extractVersion",
+        "functionParams": [
+          "versionAttr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractVersion",
+        "functionParams": [
+          "versionAttr"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/analyzePluginUsage.cjs"
+  ]
+}

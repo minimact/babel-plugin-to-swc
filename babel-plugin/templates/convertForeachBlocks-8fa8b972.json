@@ -1,0 +1,117 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "convertForeachBlocks",
+  "params": [
+    {
+      "name": "markdown",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function convertForeachBlocks(markdown) {\r\n  // Pattern: @foreach \\s* ( var itemVar in collection ) \\s* { body }\r\n  // Using [\\s\\S] to match any character including newlines\r\n  const foreachPattern = /@foreach\\s*\\(\\s*var\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s+in\\s+([a-zA-Z_][a-zA-Z0-9_.]*)\\)\\s*\\{([\\s\\S]*?)\\}/g;\r\n\r\n  return markdown.replace(foreachPattern, (match, itemVar, collection, body) => {\r\n    const bodyTrimmed = body.trim();\r\n    // Recursively convert nested Razor in body (preserving item variable references)\r\n    const convertedBody = convertNestedRazor(bodyTrimmed, itemVar);\r\n\r\n    return `{string.Join(\"\\\\n\", ${collection}.Select(${itemVar} => $@\"${convertedBody}\"))}`;\r\n  });\r\n}",
+  "body_templates": [
+    {
+      "hash": "d1207559",
+      "type": "VariableDeclaration",
+      "babel_source": "const foreachPattern = /@foreach\\s*\\(\\s*var\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s+in\\s+([a-zA-Z_][a-zA-Z0-9_.]*)\\)\\s*\\{([\\s\\S]*?)\\}/g;",
+      "parentContext": {
+        "functionName": "convertForeachBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "eaaa555b",
+      "type": "RegExpLiteral",
+      "pattern": "@foreach\\s*\\(\\s*var\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s+in\\s+([a-zA-Z_][a-zA-Z0-9_.]*)\\)\\s*\\{([\\s\\S]*?)\\}",
+      "flags": "g",
+      "babel_source": "/@foreach\\s*\\(\\s*var\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s+in\\s+([a-zA-Z_][a-zA-Z0-9_.]*)\\)\\s*\\{([\\s\\S]*?)\\}/g",
+      "parentContext": {
+        "functionName": "convertForeachBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9bccd578",
+      "type": "ReturnStatement",
+      "babel_source": "return markdown.replace(foreachPattern, (match, itemVar, collection, body) => {\r\n    const bodyTrimmed = body.trim();\r\n    // Recursively convert nested Razor in body (preserving item variable references)\r\n    const convertedBody = convertNestedRazor(bodyTrimmed, itemVar);\r\n\r\n    return `{string.Join(\"\\\\n\", ${collection}.Select(${itemVar} => $@\"${convertedBody}\"))}`;\r\n  });",
+      "parentContext": {
+        "functionName": "convertForeachBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8edf1a9e",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "(match, itemVar, collection, body) => {\r\n    const bodyTrimmed = body.trim();\r\n    // Recursively convert nested Razor in body (preserving item variable references)\r\n    const convertedBody = convertNestedRazor(bodyTrimmed, itemVar);\r\n\r\n    return `{string.Join(\"\\\\n\", ${collection}.Select(${itemVar} => $@\"${convertedBody}\"))}`;\r\n  }",
+      "parentContext": {
+        "functionName": "convertForeachBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "21cfe318",
+      "type": "VariableDeclaration",
+      "babel_source": "const bodyTrimmed = body.trim();",
+      "parentContext": {
+        "functionName": "convertForeachBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "927ea757",
+      "type": "VariableDeclaration",
+      "babel_source": "const convertedBody = convertNestedRazor(bodyTrimmed, itemVar);",
+      "parentContext": {
+        "functionName": "convertForeachBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3dbebf42",
+      "type": "ReturnStatement",
+      "babel_source": "return `{string.Join(\"\\\\n\", ${collection}.Select(${itemVar} => $@\"${convertedBody}\"))}`;",
+      "parentContext": {
+        "functionName": "convertForeachBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ed92e063",
+      "type": "TemplateLiteral",
+      "babel_source": "`{string.Join(\"\\\\n\", ${collection}.Select(${itemVar} => $@\"${convertedBody}\"))}`",
+      "parentContext": {
+        "functionName": "convertForeachBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/razorMarkdown.cjs"
+  ]
+}

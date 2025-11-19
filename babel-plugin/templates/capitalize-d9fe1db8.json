@@ -1,0 +1,83 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "capitalize",
+  "params": [
+    {
+      "name": "str",
+      "inferredType": "&str",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function capitalize(str) {\r\n  if (!str) return '';\r\n  return str.charAt(0).toUpperCase() + str.slice(1);\r\n}",
+  "body_templates": [
+    {
+      "hash": "826c0b33",
+      "type": "IfStatement",
+      "condition": "!str",
+      "babel_source": "if (!str) return '';",
+      "parentContext": {
+        "functionName": "capitalize",
+        "functionParams": [
+          "str"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "deb14219",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!str",
+      "parentContext": {
+        "functionName": "capitalize",
+        "functionParams": [
+          "str"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7be478c8",
+      "type": "ReturnStatement",
+      "babel_source": "return '';",
+      "parentContext": {
+        "functionName": "capitalize",
+        "functionParams": [
+          "str"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7c61cea8",
+      "type": "ReturnStatement",
+      "babel_source": "return str.charAt(0).toUpperCase() + str.slice(1);",
+      "parentContext": {
+        "functionName": "capitalize",
+        "functionParams": [
+          "str"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3810e981",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "str.charAt(0).toUpperCase() + str.slice(1)",
+      "parentContext": {
+        "functionName": "capitalize",
+        "functionParams": [
+          "str"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/serverTask.cjs",
+    "transpilers/typescriptToCSharp.cjs"
+  ]
+}

@@ -1,0 +1,374 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateTemplateMapJSON",
+  "params": [
+    {
+      "name": "componentName",
+      "inferredType": "&str",
+      "defaultValue": null
+    },
+    {
+      "name": "templates",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "attributeTemplates",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "conditionalElementTemplates",
+      "inferredType": "unknown",
+      "defaultValue": "{}"
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateTemplateMapJSON(componentName, templates, attributeTemplates, conditionalElementTemplates = {}) {\r\n  const allTemplates = {\r\n    ...templates,\r\n    ...attributeTemplates\r\n  };\r\n\r\n  const result = {\r\n    component: componentName,\r\n    version: '1.0',\r\n    generatedAt: Date.now(),\r\n    templates: Object.entries(allTemplates).reduce((acc, [path, template]) => {\r\n      acc[path] = {\r\n        template: template.template,\r\n        bindings: template.bindings,\r\n        slots: template.slots,\r\n        path: template.path,\r\n        type: template.type\r\n      };\r\n\r\n      // Include conditionalTemplates if present (for ternary expressions)\r\n      if (template.conditionalTemplates) {\r\n        acc[path].conditionalTemplates = template.conditionalTemplates;\r\n      }\r\n\r\n      // Include transform metadata if present (for method calls like toFixed)\r\n      if (template.transform) {\r\n        acc[path].transform = template.transform;\r\n      }\r\n\r\n      // Include nullable flag if present (for optional chaining)\r\n      if (template.nullable) {\r\n        acc[path].nullable = template.nullable;\r\n      }\r\n\r\n      return acc;\r\n    }, {})\r\n  };\r\n\r\n  // Add conditional element templates if present\r\n  if (Object.keys(conditionalElementTemplates).length > 0) {\r\n    result.conditionalElements = conditionalElementTemplates;\r\n  }\r\n\r\n  return result;\r\n}",
+  "body_templates": [
+    {
+      "hash": "44136fa3",
+      "type": "ObjectExpression",
+      "babel_source": "{}",
+      "parentContext": {
+        "functionName": "generateTemplateMapJSON",
+        "functionParams": [
+          "componentName",
+          "templates",
+          "attributeTemplates",
+          "conditionalElementTemplates"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "be048435",
+      "type": "VariableDeclaration",
+      "babel_source": "const allTemplates = {\r\n    ...templates,\r\n    ...attributeTemplates\r\n  };",
+      "parentContext": {
+        "functionName": "generateTemplateMapJSON",
+        "functionParams": [
+          "componentName",
+          "templates",
+          "attributeTemplates",
+          "conditionalElementTemplates"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "35460347",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    ...templates,\r\n    ...attributeTemplates\r\n  }",
+      "parentContext": {
+        "functionName": "generateTemplateMapJSON",
+        "functionParams": [
+          "componentName",
+          "templates",
+          "attributeTemplates",
+          "conditionalElementTemplates"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2c9da6e5",
+      "type": "SpreadElement",
+      "babel_source": "...templates",
+      "parentContext": {
+        "functionName": "generateTemplateMapJSON",
+        "functionParams": [
+          "componentName",
+          "templates",
+          "attributeTemplates",
+          "conditionalElementTemplates"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "51e247de",
+      "type": "SpreadElement",
+      "babel_source": "...attributeTemplates",
+      "parentContext": {
+        "functionName": "generateTemplateMapJSON",
+        "functionParams": [
+          "componentName",
+          "templates",
+          "attributeTemplates",
+          "conditionalElementTemplates"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c5b1c88f",
+      "type": "VariableDeclaration",
+      "babel_source": "const result = {\r\n    component: componentName,\r\n    version: '1.0',\r\n    generatedAt: Date.now(),\r\n    templates: Object.entries(allTemplates).reduce((acc, [path, template]) => {\r\n      acc[path] = {\r\n        template: template.template,\r\n        bindings: template.bindings,\r\n        slots: template.slots,\r\n        path: template.path,\r\n        type: template.type\r\n      };\r\n\r\n      // Include conditionalTemplates if present (for ternary expressions)\r\n      if (template.conditionalTemplates) {\r\n        acc[path].conditionalTemplates = template.conditionalTemplates;\r\n      }\r\n\r\n      // Include transform metadata if present (for method calls like toFixed)\r\n      if (template.transform) {\r\n        acc[path].transform = template.transform;\r\n      }\r\n\r\n      // Include nullable flag if present (for optional chaining)\r\n      if (template.nullable) {\r\n        acc[path].nullable = template.nullable;\r\n      }\r\n\r\n      return acc;\r\n    }, {})\r\n  };",
+      "parentContext": {
+        "functionName": "generateTemplateMapJSON",
+        "functionParams": [
+          "componentName",
+          "templates",
+          "attributeTemplates",
+          "conditionalElementTemplates"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "90ca282c",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    component: componentName,\r\n    version: '1.0',\r\n    generatedAt: Date.now(),\r\n    templates: Object.entries(allTemplates).reduce((acc, [path, template]) => {\r\n      acc[path] = {\r\n        template: template.template,\r\n        bindings: template.bindings,\r\n        slots: template.slots,\r\n        path: template.path,\r\n        type: template.type\r\n      };\r\n\r\n      // Include conditionalTemplates if present (for ternary expressions)\r\n      if (template.conditionalTemplates) {\r\n        acc[path].conditionalTemplates = template.conditionalTemplates;\r\n      }\r\n\r\n      // Include transform metadata if present (for method calls like toFixed)\r\n      if (template.transform) {\r\n        acc[path].transform = template.transform;\r\n      }\r\n\r\n      // Include nullable flag if present (for optional chaining)\r\n      if (template.nullable) {\r\n        acc[path].nullable = template.nullable;\r\n      }\r\n\r\n      return acc;\r\n    }, {})\r\n  }",
+      "parentContext": {
+        "functionName": "generateTemplateMapJSON",
+        "functionParams": [
+          "componentName",
+          "templates",
+          "attributeTemplates",
+          "conditionalElementTemplates"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "192fe913",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "(acc, [path, template]) => {\r\n      acc[path] = {\r\n        template: template.template,\r\n        bindings: template.bindings,\r\n        slots: template.slots,\r\n        path: template.path,\r\n        type: template.type\r\n      };\r\n\r\n      // Include conditionalTemplates if present (for ternary expressions)\r\n      if (template.conditionalTemplates) {\r\n        acc[path].conditionalTemplates = template.conditionalTemplates;\r\n      }\r\n\r\n      // Include transform metadata if present (for method calls like toFixed)\r\n      if (template.transform) {\r\n        acc[path].transform = template.transform;\r\n      }\r\n\r\n      // Include nullable flag if present (for optional chaining)\r\n      if (template.nullable) {\r\n        acc[path].nullable = template.nullable;\r\n      }\r\n\r\n      return acc;\r\n    }",
+      "parentContext": {
+        "functionName": "generateTemplateMapJSON",
+        "functionParams": [
+          "componentName",
+          "templates",
+          "attributeTemplates",
+          "conditionalElementTemplates"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a9040549",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "acc[path] = {\r\n        template: template.template,\r\n        bindings: template.bindings,\r\n        slots: template.slots,\r\n        path: template.path,\r\n        type: template.type\r\n      }",
+      "parentContext": {
+        "functionName": "generateTemplateMapJSON",
+        "functionParams": [
+          "componentName",
+          "templates",
+          "attributeTemplates",
+          "conditionalElementTemplates"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "02028720",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n        template: template.template,\r\n        bindings: template.bindings,\r\n        slots: template.slots,\r\n        path: template.path,\r\n        type: template.type\r\n      }",
+      "parentContext": {
+        "functionName": "generateTemplateMapJSON",
+        "functionParams": [
+          "componentName",
+          "templates",
+          "attributeTemplates",
+          "conditionalElementTemplates"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ccf65120",
+      "type": "IfStatement",
+      "condition": "template.conditionalTemplates",
+      "babel_source": "if (template.conditionalTemplates) {\r\n        acc[path].conditionalTemplates = template.conditionalTemplates;\r\n      }",
+      "parentContext": {
+        "functionName": "generateTemplateMapJSON",
+        "functionParams": [
+          "componentName",
+          "templates",
+          "attributeTemplates",
+          "conditionalElementTemplates"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "36baa44c",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "acc[path].conditionalTemplates = template.conditionalTemplates",
+      "parentContext": {
+        "functionName": "generateTemplateMapJSON",
+        "functionParams": [
+          "componentName",
+          "templates",
+          "attributeTemplates",
+          "conditionalElementTemplates"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "17267a47",
+      "type": "IfStatement",
+      "condition": "template.transform",
+      "babel_source": "if (template.transform) {\r\n        acc[path].transform = template.transform;\r\n      }",
+      "parentContext": {
+        "functionName": "generateTemplateMapJSON",
+        "functionParams": [
+          "componentName",
+          "templates",
+          "attributeTemplates",
+          "conditionalElementTemplates"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "af277a80",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "acc[path].transform = template.transform",
+      "parentContext": {
+        "functionName": "generateTemplateMapJSON",
+        "functionParams": [
+          "componentName",
+          "templates",
+          "attributeTemplates",
+          "conditionalElementTemplates"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3aecd976",
+      "type": "IfStatement",
+      "condition": "template.nullable",
+      "babel_source": "if (template.nullable) {\r\n        acc[path].nullable = template.nullable;\r\n      }",
+      "parentContext": {
+        "functionName": "generateTemplateMapJSON",
+        "functionParams": [
+          "componentName",
+          "templates",
+          "attributeTemplates",
+          "conditionalElementTemplates"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "311e0eb7",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "acc[path].nullable = template.nullable",
+      "parentContext": {
+        "functionName": "generateTemplateMapJSON",
+        "functionParams": [
+          "componentName",
+          "templates",
+          "attributeTemplates",
+          "conditionalElementTemplates"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c2b11ede",
+      "type": "ReturnStatement",
+      "babel_source": "return acc;",
+      "parentContext": {
+        "functionName": "generateTemplateMapJSON",
+        "functionParams": [
+          "componentName",
+          "templates",
+          "attributeTemplates",
+          "conditionalElementTemplates"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "44136fa3",
+      "type": "ObjectExpression",
+      "babel_source": "{}",
+      "parentContext": {
+        "functionName": "generateTemplateMapJSON",
+        "functionParams": [
+          "componentName",
+          "templates",
+          "attributeTemplates",
+          "conditionalElementTemplates"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cb8a4295",
+      "type": "IfStatement",
+      "condition": "Object.keys(conditionalElementTemplates).length > 0",
+      "babel_source": "if (Object.keys(conditionalElementTemplates).length > 0) {\r\n    result.conditionalElements = conditionalElementTemplates;\r\n  }",
+      "parentContext": {
+        "functionName": "generateTemplateMapJSON",
+        "functionParams": [
+          "componentName",
+          "templates",
+          "attributeTemplates",
+          "conditionalElementTemplates"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0fdc8e77",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "Object.keys(conditionalElementTemplates).length > 0",
+      "parentContext": {
+        "functionName": "generateTemplateMapJSON",
+        "functionParams": [
+          "componentName",
+          "templates",
+          "attributeTemplates",
+          "conditionalElementTemplates"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "83d29e2c",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "result.conditionalElements = conditionalElementTemplates",
+      "parentContext": {
+        "functionName": "generateTemplateMapJSON",
+        "functionParams": [
+          "componentName",
+          "templates",
+          "attributeTemplates",
+          "conditionalElementTemplates"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "882101dd",
+      "type": "ReturnStatement",
+      "babel_source": "return result;",
+      "parentContext": {
+        "functionName": "generateTemplateMapJSON",
+        "functionParams": [
+          "componentName",
+          "templates",
+          "attributeTemplates",
+          "conditionalElementTemplates"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/templates.cjs"
+  ]
+}

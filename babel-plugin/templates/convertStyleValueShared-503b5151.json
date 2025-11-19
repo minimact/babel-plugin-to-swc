@@ -1,0 +1,157 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "convertStyleValueShared",
+  "params": [
+    {
+      "name": "value",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function convertStyleValueShared(value) {\r\n    if (t.isStringLiteral(value)) {\r\n      return value.value;\r\n    } else if (t.isNumericLiteral(value)) {\r\n      return `${value.value}px`;\r\n    } else if (t.isIdentifier(value)) {\r\n      return value.name;\r\n    }\r\n    return String(value);\r\n  }",
+  "body_templates": [
+    {
+      "hash": "817e5148",
+      "type": "IfStatement",
+      "condition": "t.isStringLiteral(value)",
+      "babel_source": "if (t.isStringLiteral(value)) {\r\n      return value.value;\r\n    } else if (t.isNumericLiteral(value)) {\r\n      return `${value.value}px`;\r\n    } else if (t.isIdentifier(value)) {\r\n      return value.name;\r\n    }",
+      "parentContext": {
+        "functionName": "convertStyleValueShared",
+        "functionParams": [
+          "value"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a835f893",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(value)",
+      "parentContext": {
+        "functionName": "convertStyleValueShared",
+        "functionParams": [
+          "value"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4d93185a",
+      "type": "ReturnStatement",
+      "babel_source": "return value.value;",
+      "parentContext": {
+        "functionName": "convertStyleValueShared",
+        "functionParams": [
+          "value"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e49bf81f",
+      "type": "IfStatement",
+      "condition": "t.isNumericLiteral(value)",
+      "babel_source": "if (t.isNumericLiteral(value)) {\r\n      return `${value.value}px`;\r\n    } else if (t.isIdentifier(value)) {\r\n      return value.name;\r\n    }",
+      "parentContext": {
+        "functionName": "convertStyleValueShared",
+        "functionParams": [
+          "value"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8f200b14",
+      "type": "BabelTypeCheck",
+      "method": "isNumericLiteral",
+      "babel_source": "t.isNumericLiteral(value)",
+      "parentContext": {
+        "functionName": "convertStyleValueShared",
+        "functionParams": [
+          "value"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "133ab603",
+      "type": "ReturnStatement",
+      "babel_source": "return `${value.value}px`;",
+      "parentContext": {
+        "functionName": "convertStyleValueShared",
+        "functionParams": [
+          "value"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "966be60b",
+      "type": "TemplateLiteral",
+      "babel_source": "`${value.value}px`",
+      "parentContext": {
+        "functionName": "convertStyleValueShared",
+        "functionParams": [
+          "value"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b08a3846",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(value)",
+      "babel_source": "if (t.isIdentifier(value)) {\r\n      return value.name;\r\n    }",
+      "parentContext": {
+        "functionName": "convertStyleValueShared",
+        "functionParams": [
+          "value"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "61d43c65",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(value)",
+      "parentContext": {
+        "functionName": "convertStyleValueShared",
+        "functionParams": [
+          "value"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6b511301",
+      "type": "ReturnStatement",
+      "babel_source": "return value.name;",
+      "parentContext": {
+        "functionName": "convertStyleValueShared",
+        "functionParams": [
+          "value"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dfd0bedc",
+      "type": "ReturnStatement",
+      "babel_source": "return String(value);",
+      "parentContext": {
+        "functionName": "convertStyleValueShared",
+        "functionParams": [
+          "value"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/templates.cjs"
+  ]
+}

@@ -1,0 +1,1025 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "analyzeImportedHooks",
+  "params": [
+    {
+      "name": "filePath",
+      "inferredType": "&Path",
+      "defaultValue": null
+    },
+    {
+      "name": "state",
+      "inferredType": "&mut State",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "AnalysisResult",
+  "babel_source": "function analyzeImportedHooks(filePath, state) {\r\n  const importedHooks = new Map();\r\n  const currentFilePath = state.file.opts.filename;\r\n  const currentDir = path.dirname(currentFilePath);\r\n\r\n  console.log(`[DEBUG hookImports] Current file: ${currentFilePath}`);\r\n  console.log(`[DEBUG hookImports] Current dir: ${currentDir}`);\r\n\r\n  // Find all import declarations\r\n  filePath.traverse({\r\n    ImportDeclaration(importPath) {\r\n      const source = importPath.node.source.value;\r\n      console.log(`[DEBUG hookImports] Found import: ${source}`);\r\n\r\n      // Only process relative imports (potential hook files)\r\n      if (!source.startsWith('./') && !source.startsWith('../')) {\r\n        console.log(`[DEBUG hookImports] Skipping non-relative import: ${source}`);\r\n        return;\r\n      }\r\n\r\n      console.log(`[DEBUG hookImports] Processing relative import: ${source}`);\r\n\r\n      // Resolve the absolute path to the imported file\r\n      const resolvedPath = resolveImportPath(source, currentDir);\r\n      console.log(`[DEBUG hookImports] Resolved path: ${resolvedPath}`);\r\n      if (!resolvedPath || !fs.existsSync(resolvedPath)) {\r\n        console.log(`[DEBUG hookImports] File not found: ${resolvedPath}`);\r\n        return;\r\n      }\r\n      console.log(`[DEBUG hookImports] File exists, reading...`);\r\n\r\n      // Read and parse the imported file\r\n      try {\r\n        const importedCode = fs.readFileSync(resolvedPath, 'utf-8');\r\n        const babel = require('@babel/core');\r\n\r\n        // Parse the imported file\r\n        const ast = babel.parseSync(importedCode, {\r\n          filename: resolvedPath,\r\n          presets: ['@babel/preset-typescript'],\r\n          plugins: []\r\n        });\r\n\r\n        if (!ast) return;\r\n\r\n        // Check each export in the file\r\n        babel.traverse(ast, {\r\n          // Handle: export default function useCounter(namespace, start) { ... }\r\n          ExportDefaultDeclaration(exportPath) {\r\n            const declaration = exportPath.node.declaration;\r\n\r\n            if (t.isFunctionDeclaration(declaration) && isCustomHook(exportPath.get('declaration'))) {\r\n              const hookName = getHookName(exportPath.get('declaration'));\r\n              const hookMetadata = analyzeHook(exportPath.get('declaration'));\r\n\r\n              // Store with the imported name\r\n              const importedAs = getImportedName(importPath.node, true); // default import\r\n              if (importedAs) {\r\n                importedHooks.set(importedAs, {\r\n                  ...hookMetadata,\r\n                  originalName: hookName,\r\n                  filePath: resolvedPath\r\n                });\r\n                console.log(`[Hook Import] Found default export: ${hookName} imported as ${importedAs}`);\r\n              }\r\n            }\r\n          },\r\n\r\n          // Handle: export function useCounter(namespace, start) { ... }\r\n          ExportNamedDeclaration(exportPath) {\r\n            const declaration = exportPath.node.declaration;\r\n\r\n            if (t.isFunctionDeclaration(declaration) && isCustomHook(exportPath.get('declaration'))) {\r\n              const hookName = getHookName(exportPath.get('declaration'));\r\n              const hookMetadata = analyzeHook(exportPath.get('declaration'));\r\n\r\n              // Store with the imported name (might be renamed)\r\n              const importedAs = getImportedName(importPath.node, false, hookName);\r\n              if (importedAs) {\r\n                importedHooks.set(importedAs, {\r\n                  ...hookMetadata,\r\n                  originalName: hookName,\r\n                  filePath: resolvedPath\r\n                });\r\n                console.log(`[Hook Import] Found named export: ${hookName} imported as ${importedAs}`);\r\n              }\r\n            }\r\n          },\r\n\r\n          // Handle: function useCounter(...) { ... }; export default useCounter;\r\n          FunctionDeclaration(funcPath) {\r\n            // Skip if already handled by export\r\n            if (funcPath.parent.type === 'ExportDefaultDeclaration' ||\r\n                funcPath.parent.type === 'ExportNamedDeclaration') {\r\n              return;\r\n            }\r\n\r\n            if (isCustomHook(funcPath)) {\r\n              const hookName = getHookName(funcPath);\r\n\r\n              // Check if this function is exported later\r\n              const isExported = isExportedLater(ast, hookName);\r\n              if (isExported) {\r\n                const hookMetadata = analyzeHook(funcPath);\r\n                const importedAs = getImportedName(importPath.node, isExported === 'default', hookName);\r\n\r\n                if (importedAs) {\r\n                  importedHooks.set(importedAs, {\r\n                    ...hookMetadata,\r\n                    originalName: hookName,\r\n                    filePath: resolvedPath\r\n                  });\r\n                  console.log(`[Hook Import] Found ${isExported} export: ${hookName} imported as ${importedAs}`);\r\n                }\r\n              }\r\n            }\r\n          }\r\n        });\r\n      } catch (err) {\r\n        console.error(`[Hook Import] Error analyzing ${resolvedPath}:`, err.message);\r\n      }\r\n    }\r\n  });\r\n\r\n  return importedHooks;\r\n}",
+  "body_templates": [
+    {
+      "hash": "868de37a",
+      "type": "VariableDeclaration",
+      "babel_source": "const importedHooks = new Map();",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cc227fdc",
+      "type": "NewExpression",
+      "babel_source": "new Map()",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8e457c01",
+      "type": "VariableDeclaration",
+      "babel_source": "const currentFilePath = state.file.opts.filename;",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e562f2f5",
+      "type": "VariableDeclaration",
+      "babel_source": "const currentDir = path.dirname(currentFilePath);",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "96e174be",
+      "type": "TemplateLiteral",
+      "babel_source": "`[DEBUG hookImports] Current file: ${currentFilePath}`",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ee17ffa9",
+      "type": "TemplateLiteral",
+      "babel_source": "`[DEBUG hookImports] Current dir: ${currentDir}`",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b198ec84",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    ImportDeclaration(importPath) {\r\n      const source = importPath.node.source.value;\r\n      console.log(`[DEBUG hookImports] Found import: ${source}`);\r\n\r\n      // Only process relative imports (potential hook files)\r\n      if (!source.startsWith('./') && !source.startsWith('../')) {\r\n        console.log(`[DEBUG hookImports] Skipping non-relative import: ${source}`);\r\n        return;\r\n      }\r\n\r\n      console.log(`[DEBUG hookImports] Processing relative import: ${source}`);\r\n\r\n      // Resolve the absolute path to the imported file\r\n      const resolvedPath = resolveImportPath(source, currentDir);\r\n      console.log(`[DEBUG hookImports] Resolved path: ${resolvedPath}`);\r\n      if (!resolvedPath || !fs.existsSync(resolvedPath)) {\r\n        console.log(`[DEBUG hookImports] File not found: ${resolvedPath}`);\r\n        return;\r\n      }\r\n      console.log(`[DEBUG hookImports] File exists, reading...`);\r\n\r\n      // Read and parse the imported file\r\n      try {\r\n        const importedCode = fs.readFileSync(resolvedPath, 'utf-8');\r\n        const babel = require('@babel/core');\r\n\r\n        // Parse the imported file\r\n        const ast = babel.parseSync(importedCode, {\r\n          filename: resolvedPath,\r\n          presets: ['@babel/preset-typescript'],\r\n          plugins: []\r\n        });\r\n\r\n        if (!ast) return;\r\n\r\n        // Check each export in the file\r\n        babel.traverse(ast, {\r\n          // Handle: export default function useCounter(namespace, start) { ... }\r\n          ExportDefaultDeclaration(exportPath) {\r\n            const declaration = exportPath.node.declaration;\r\n\r\n            if (t.isFunctionDeclaration(declaration) && isCustomHook(exportPath.get('declaration'))) {\r\n              const hookName = getHookName(exportPath.get('declaration'));\r\n              const hookMetadata = analyzeHook(exportPath.get('declaration'));\r\n\r\n              // Store with the imported name\r\n              const importedAs = getImportedName(importPath.node, true); // default import\r\n              if (importedAs) {\r\n                importedHooks.set(importedAs, {\r\n                  ...hookMetadata,\r\n                  originalName: hookName,\r\n                  filePath: resolvedPath\r\n                });\r\n                console.log(`[Hook Import] Found default export: ${hookName} imported as ${importedAs}`);\r\n              }\r\n            }\r\n          },\r\n\r\n          // Handle: export function useCounter(namespace, start) { ... }\r\n          ExportNamedDeclaration(exportPath) {\r\n            const declaration = exportPath.node.declaration;\r\n\r\n            if (t.isFunctionDeclaration(declaration) && isCustomHook(exportPath.get('declaration'))) {\r\n              const hookName = getHookName(exportPath.get('declaration'));\r\n              const hookMetadata = analyzeHook(exportPath.get('declaration'));\r\n\r\n              // Store with the imported name (might be renamed)\r\n              const importedAs = getImportedName(importPath.node, false, hookName);\r\n              if (importedAs) {\r\n                importedHooks.set(importedAs, {\r\n                  ...hookMetadata,\r\n                  originalName: hookName,\r\n                  filePath: resolvedPath\r\n                });\r\n                console.log(`[Hook Import] Found named export: ${hookName} imported as ${importedAs}`);\r\n              }\r\n            }\r\n          },\r\n\r\n          // Handle: function useCounter(...) { ... }; export default useCounter;\r\n          FunctionDeclaration(funcPath) {\r\n            // Skip if already handled by export\r\n            if (funcPath.parent.type === 'ExportDefaultDeclaration' ||\r\n                funcPath.parent.type === 'ExportNamedDeclaration') {\r\n              return;\r\n            }\r\n\r\n            if (isCustomHook(funcPath)) {\r\n              const hookName = getHookName(funcPath);\r\n\r\n              // Check if this function is exported later\r\n              const isExported = isExportedLater(ast, hookName);\r\n              if (isExported) {\r\n                const hookMetadata = analyzeHook(funcPath);\r\n                const importedAs = getImportedName(importPath.node, isExported === 'default', hookName);\r\n\r\n                if (importedAs) {\r\n                  importedHooks.set(importedAs, {\r\n                    ...hookMetadata,\r\n                    originalName: hookName,\r\n                    filePath: resolvedPath\r\n                  });\r\n                  console.log(`[Hook Import] Found ${isExported} export: ${hookName} imported as ${importedAs}`);\r\n                }\r\n              }\r\n            }\r\n          }\r\n        });\r\n      } catch (err) {\r\n        console.error(`[Hook Import] Error analyzing ${resolvedPath}:`, err.message);\r\n      }\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "12f251b2",
+      "type": "VariableDeclaration",
+      "babel_source": "const source = importPath.node.source.value;",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d7ca9b48",
+      "type": "TemplateLiteral",
+      "babel_source": "`[DEBUG hookImports] Found import: ${source}`",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "40ea0730",
+      "type": "IfStatement",
+      "condition": "!source.startsWith('./') && !source.startsWith('../')",
+      "babel_source": "if (!source.startsWith('./') && !source.startsWith('../')) {\r\n        console.log(`[DEBUG hookImports] Skipping non-relative import: ${source}`);\r\n        return;\r\n      }",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "298efc58",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "!source.startsWith('./') && !source.startsWith('../')",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b48e5b5b",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!source.startsWith('./')",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e2cf1baa",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!source.startsWith('../')",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "03f0601e",
+      "type": "TemplateLiteral",
+      "babel_source": "`[DEBUG hookImports] Skipping non-relative import: ${source}`",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8beaabe2",
+      "type": "ReturnStatement",
+      "babel_source": "return;",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8c877a32",
+      "type": "TemplateLiteral",
+      "babel_source": "`[DEBUG hookImports] Processing relative import: ${source}`",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f219a184",
+      "type": "VariableDeclaration",
+      "babel_source": "const resolvedPath = resolveImportPath(source, currentDir);",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "29152dba",
+      "type": "TemplateLiteral",
+      "babel_source": "`[DEBUG hookImports] Resolved path: ${resolvedPath}`",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ba518c22",
+      "type": "IfStatement",
+      "condition": "!resolvedPath || !fs.existsSync(resolvedPath)",
+      "babel_source": "if (!resolvedPath || !fs.existsSync(resolvedPath)) {\r\n        console.log(`[DEBUG hookImports] File not found: ${resolvedPath}`);\r\n        return;\r\n      }",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8829d95d",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "!resolvedPath || !fs.existsSync(resolvedPath)",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "39a15f45",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!resolvedPath",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b8480d91",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!fs.existsSync(resolvedPath)",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d7b38727",
+      "type": "TemplateLiteral",
+      "babel_source": "`[DEBUG hookImports] File not found: ${resolvedPath}`",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8beaabe2",
+      "type": "ReturnStatement",
+      "babel_source": "return;",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "95ce8d64",
+      "type": "TemplateLiteral",
+      "babel_source": "`[DEBUG hookImports] File exists, reading...`",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ab78f69",
+      "type": "VariableDeclaration",
+      "babel_source": "const importedCode = fs.readFileSync(resolvedPath, 'utf-8');",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "55a54c87",
+      "type": "VariableDeclaration",
+      "babel_source": "const babel = require('@babel/core');",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7d47740b",
+      "type": "VariableDeclaration",
+      "babel_source": "const ast = babel.parseSync(importedCode, {\r\n          filename: resolvedPath,\r\n          presets: ['@babel/preset-typescript'],\r\n          plugins: []\r\n        });",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4e2524a2",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n          filename: resolvedPath,\r\n          presets: ['@babel/preset-typescript'],\r\n          plugins: []\r\n        }",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "50458dd5",
+      "type": "ArrayExpression",
+      "babel_source": "['@babel/preset-typescript']",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2ed5bedd",
+      "type": "IfStatement",
+      "condition": "!ast",
+      "babel_source": "if (!ast) return;",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "63e18056",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!ast",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8beaabe2",
+      "type": "ReturnStatement",
+      "babel_source": "return;",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "24c4b882",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n          // Handle: export default function useCounter(namespace, start) { ... }\r\n          ExportDefaultDeclaration(exportPath) {\r\n            const declaration = exportPath.node.declaration;\r\n\r\n            if (t.isFunctionDeclaration(declaration) && isCustomHook(exportPath.get('declaration'))) {\r\n              const hookName = getHookName(exportPath.get('declaration'));\r\n              const hookMetadata = analyzeHook(exportPath.get('declaration'));\r\n\r\n              // Store with the imported name\r\n              const importedAs = getImportedName(importPath.node, true); // default import\r\n              if (importedAs) {\r\n                importedHooks.set(importedAs, {\r\n                  ...hookMetadata,\r\n                  originalName: hookName,\r\n                  filePath: resolvedPath\r\n                });\r\n                console.log(`[Hook Import] Found default export: ${hookName} imported as ${importedAs}`);\r\n              }\r\n            }\r\n          },\r\n\r\n          // Handle: export function useCounter(namespace, start) { ... }\r\n          ExportNamedDeclaration(exportPath) {\r\n            const declaration = exportPath.node.declaration;\r\n\r\n            if (t.isFunctionDeclaration(declaration) && isCustomHook(exportPath.get('declaration'))) {\r\n              const hookName = getHookName(exportPath.get('declaration'));\r\n              const hookMetadata = analyzeHook(exportPath.get('declaration'));\r\n\r\n              // Store with the imported name (might be renamed)\r\n              const importedAs = getImportedName(importPath.node, false, hookName);\r\n              if (importedAs) {\r\n                importedHooks.set(importedAs, {\r\n                  ...hookMetadata,\r\n                  originalName: hookName,\r\n                  filePath: resolvedPath\r\n                });\r\n                console.log(`[Hook Import] Found named export: ${hookName} imported as ${importedAs}`);\r\n              }\r\n            }\r\n          },\r\n\r\n          // Handle: function useCounter(...) { ... }; export default useCounter;\r\n          FunctionDeclaration(funcPath) {\r\n            // Skip if already handled by export\r\n            if (funcPath.parent.type === 'ExportDefaultDeclaration' ||\r\n                funcPath.parent.type === 'ExportNamedDeclaration') {\r\n              return;\r\n            }\r\n\r\n            if (isCustomHook(funcPath)) {\r\n              const hookName = getHookName(funcPath);\r\n\r\n              // Check if this function is exported later\r\n              const isExported = isExportedLater(ast, hookName);\r\n              if (isExported) {\r\n                const hookMetadata = analyzeHook(funcPath);\r\n                const importedAs = getImportedName(importPath.node, isExported === 'default', hookName);\r\n\r\n                if (importedAs) {\r\n                  importedHooks.set(importedAs, {\r\n                    ...hookMetadata,\r\n                    originalName: hookName,\r\n                    filePath: resolvedPath\r\n                  });\r\n                  console.log(`[Hook Import] Found ${isExported} export: ${hookName} imported as ${importedAs}`);\r\n                }\r\n              }\r\n            }\r\n          }\r\n        }",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "984d35ce",
+      "type": "VariableDeclaration",
+      "babel_source": "const declaration = exportPath.node.declaration;",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cbbce023",
+      "type": "IfStatement",
+      "condition": "t.isFunctionDeclaration(declaration) && isCustomHook(exportPath.get('declaration'))",
+      "babel_source": "if (t.isFunctionDeclaration(declaration) && isCustomHook(exportPath.get('declaration'))) {\r\n              const hookName = getHookName(exportPath.get('declaration'));\r\n              const hookMetadata = analyzeHook(exportPath.get('declaration'));\r\n\r\n              // Store with the imported name\r\n              const importedAs = getImportedName(importPath.node, true); // default import\r\n              if (importedAs) {\r\n                importedHooks.set(importedAs, {\r\n                  ...hookMetadata,\r\n                  originalName: hookName,\r\n                  filePath: resolvedPath\r\n                });\r\n                console.log(`[Hook Import] Found default export: ${hookName} imported as ${importedAs}`);\r\n              }\r\n            }",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5fdef22a",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isFunctionDeclaration(declaration) && isCustomHook(exportPath.get('declaration'))",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "595f0fac",
+      "type": "BabelTypeCheck",
+      "method": "isFunctionDeclaration",
+      "babel_source": "t.isFunctionDeclaration(declaration)",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "62eaebd7",
+      "type": "VariableDeclaration",
+      "babel_source": "const hookName = getHookName(exportPath.get('declaration'));",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c6ae5b0a",
+      "type": "VariableDeclaration",
+      "babel_source": "const hookMetadata = analyzeHook(exportPath.get('declaration'));",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4b7e7939",
+      "type": "VariableDeclaration",
+      "babel_source": "const importedAs = getImportedName(importPath.node, true);",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1477d8cf",
+      "type": "IfStatement",
+      "condition": "importedAs",
+      "babel_source": "if (importedAs) {\r\n                importedHooks.set(importedAs, {\r\n                  ...hookMetadata,\r\n                  originalName: hookName,\r\n                  filePath: resolvedPath\r\n                });\r\n                console.log(`[Hook Import] Found default export: ${hookName} imported as ${importedAs}`);\r\n              }",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fa09e143",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n                  ...hookMetadata,\r\n                  originalName: hookName,\r\n                  filePath: resolvedPath\r\n                }",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "67b2c983",
+      "type": "SpreadElement",
+      "babel_source": "...hookMetadata",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7616679c",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Hook Import] Found default export: ${hookName} imported as ${importedAs}`",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "984d35ce",
+      "type": "VariableDeclaration",
+      "babel_source": "const declaration = exportPath.node.declaration;",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "40453e46",
+      "type": "IfStatement",
+      "condition": "t.isFunctionDeclaration(declaration) && isCustomHook(exportPath.get('declaration'))",
+      "babel_source": "if (t.isFunctionDeclaration(declaration) && isCustomHook(exportPath.get('declaration'))) {\r\n              const hookName = getHookName(exportPath.get('declaration'));\r\n              const hookMetadata = analyzeHook(exportPath.get('declaration'));\r\n\r\n              // Store with the imported name (might be renamed)\r\n              const importedAs = getImportedName(importPath.node, false, hookName);\r\n              if (importedAs) {\r\n                importedHooks.set(importedAs, {\r\n                  ...hookMetadata,\r\n                  originalName: hookName,\r\n                  filePath: resolvedPath\r\n                });\r\n                console.log(`[Hook Import] Found named export: ${hookName} imported as ${importedAs}`);\r\n              }\r\n            }",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5fdef22a",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isFunctionDeclaration(declaration) && isCustomHook(exportPath.get('declaration'))",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "595f0fac",
+      "type": "BabelTypeCheck",
+      "method": "isFunctionDeclaration",
+      "babel_source": "t.isFunctionDeclaration(declaration)",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "62eaebd7",
+      "type": "VariableDeclaration",
+      "babel_source": "const hookName = getHookName(exportPath.get('declaration'));",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c6ae5b0a",
+      "type": "VariableDeclaration",
+      "babel_source": "const hookMetadata = analyzeHook(exportPath.get('declaration'));",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "27d74e73",
+      "type": "VariableDeclaration",
+      "babel_source": "const importedAs = getImportedName(importPath.node, false, hookName);",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a1e27bbb",
+      "type": "IfStatement",
+      "condition": "importedAs",
+      "babel_source": "if (importedAs) {\r\n                importedHooks.set(importedAs, {\r\n                  ...hookMetadata,\r\n                  originalName: hookName,\r\n                  filePath: resolvedPath\r\n                });\r\n                console.log(`[Hook Import] Found named export: ${hookName} imported as ${importedAs}`);\r\n              }",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fa09e143",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n                  ...hookMetadata,\r\n                  originalName: hookName,\r\n                  filePath: resolvedPath\r\n                }",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "67b2c983",
+      "type": "SpreadElement",
+      "babel_source": "...hookMetadata",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b5987692",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Hook Import] Found named export: ${hookName} imported as ${importedAs}`",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "59c487a0",
+      "type": "IfStatement",
+      "condition": "funcPath.parent.type === 'ExportDefaultDeclaration' ||\r\n                funcPath.parent.type === 'ExportNamedDeclaration'",
+      "babel_source": "if (funcPath.parent.type === 'ExportDefaultDeclaration' ||\r\n                funcPath.parent.type === 'ExportNamedDeclaration') {\r\n              return;\r\n            }",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dd916fd0",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "funcPath.parent.type === 'ExportDefaultDeclaration' ||\r\n                funcPath.parent.type === 'ExportNamedDeclaration'",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d732d018",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "funcPath.parent.type === 'ExportDefaultDeclaration'",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4d53491d",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "funcPath.parent.type === 'ExportNamedDeclaration'",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8beaabe2",
+      "type": "ReturnStatement",
+      "babel_source": "return;",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab3aa893",
+      "type": "IfStatement",
+      "condition": "isCustomHook(funcPath)",
+      "babel_source": "if (isCustomHook(funcPath)) {\r\n              const hookName = getHookName(funcPath);\r\n\r\n              // Check if this function is exported later\r\n              const isExported = isExportedLater(ast, hookName);\r\n              if (isExported) {\r\n                const hookMetadata = analyzeHook(funcPath);\r\n                const importedAs = getImportedName(importPath.node, isExported === 'default', hookName);\r\n\r\n                if (importedAs) {\r\n                  importedHooks.set(importedAs, {\r\n                    ...hookMetadata,\r\n                    originalName: hookName,\r\n                    filePath: resolvedPath\r\n                  });\r\n                  console.log(`[Hook Import] Found ${isExported} export: ${hookName} imported as ${importedAs}`);\r\n                }\r\n              }\r\n            }",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6ee78a1d",
+      "type": "VariableDeclaration",
+      "babel_source": "const hookName = getHookName(funcPath);",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "210e1d60",
+      "type": "VariableDeclaration",
+      "babel_source": "const isExported = isExportedLater(ast, hookName);",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5b675bd5",
+      "type": "IfStatement",
+      "condition": "isExported",
+      "babel_source": "if (isExported) {\r\n                const hookMetadata = analyzeHook(funcPath);\r\n                const importedAs = getImportedName(importPath.node, isExported === 'default', hookName);\r\n\r\n                if (importedAs) {\r\n                  importedHooks.set(importedAs, {\r\n                    ...hookMetadata,\r\n                    originalName: hookName,\r\n                    filePath: resolvedPath\r\n                  });\r\n                  console.log(`[Hook Import] Found ${isExported} export: ${hookName} imported as ${importedAs}`);\r\n                }\r\n              }",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7b103cc9",
+      "type": "VariableDeclaration",
+      "babel_source": "const hookMetadata = analyzeHook(funcPath);",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "28ef1023",
+      "type": "VariableDeclaration",
+      "babel_source": "const importedAs = getImportedName(importPath.node, isExported === 'default', hookName);",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "89d1d293",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "isExported === 'default'",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9eccfb17",
+      "type": "IfStatement",
+      "condition": "importedAs",
+      "babel_source": "if (importedAs) {\r\n                  importedHooks.set(importedAs, {\r\n                    ...hookMetadata,\r\n                    originalName: hookName,\r\n                    filePath: resolvedPath\r\n                  });\r\n                  console.log(`[Hook Import] Found ${isExported} export: ${hookName} imported as ${importedAs}`);\r\n                }",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2ffda95a",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n                    ...hookMetadata,\r\n                    originalName: hookName,\r\n                    filePath: resolvedPath\r\n                  }",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "67b2c983",
+      "type": "SpreadElement",
+      "babel_source": "...hookMetadata",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b1107dd0",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Hook Import] Found ${isExported} export: ${hookName} imported as ${importedAs}`",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e64dac99",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Hook Import] Error analyzing ${resolvedPath}:`",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "aa65351b",
+      "type": "ReturnStatement",
+      "babel_source": "return importedHooks;",
+      "parentContext": {
+        "functionName": "analyzeImportedHooks",
+        "functionParams": [
+          "filePath",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/hookImports.cjs"
+  ]
+}

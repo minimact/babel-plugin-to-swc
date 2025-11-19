@@ -1,0 +1,397 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractReturnValues",
+  "params": [
+    {
+      "name": "returnArg",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractReturnValues(returnArg) {\r\n  const values = [];\r\n\r\n  // Pattern 1: return [value, setValue, ui];\r\n  if (t.isArrayExpression(returnArg)) {\r\n    returnArg.elements.forEach((element, index) => {\r\n      if (t.isIdentifier(element)) {\r\n        values.push({\r\n          index: index,\r\n          name: element.name,\r\n          type: inferReturnValueType(element.name)\r\n        });\r\n      } else if (t.isJSXElement(element) || t.isJSXFragment(element)) {\r\n        values.push({\r\n          index: index,\r\n          name: `ui_${index}`,\r\n          type: 'jsx'\r\n        });\r\n      } else if (t.isLogicalExpression(element)) {\r\n        values.push({\r\n          index: index,\r\n          name: `ui_${index}`,\r\n          type: 'jsx'\r\n        });\r\n      }\r\n    });\r\n  }\r\n  // Pattern 2: return { value, setValue, ui };\r\n  else if (t.isObjectExpression(returnArg)) {\r\n    returnArg.properties.forEach((prop, index) => {\r\n      if (t.isObjectProperty(prop) && t.isIdentifier(prop.key)) {\r\n        values.push({\r\n          index: index,\r\n          name: prop.key.name,\r\n          type: inferReturnValueType(prop.key.name)\r\n        });\r\n      }\r\n    });\r\n  }\r\n  // Pattern 3: return value; (single value)\r\n  else if (t.isIdentifier(returnArg)) {\r\n    values.push({\r\n      index: 0,\r\n      name: returnArg.name,\r\n      type: 'unknown'\r\n    });\r\n  }\r\n\r\n  return values;\r\n}",
+  "body_templates": [
+    {
+      "hash": "b6830074",
+      "type": "VariableDeclaration",
+      "babel_source": "const values = [];",
+      "parentContext": {
+        "functionName": "extractReturnValues",
+        "functionParams": [
+          "returnArg"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractReturnValues",
+        "functionParams": [
+          "returnArg"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0294a358",
+      "type": "IfStatement",
+      "condition": "t.isArrayExpression(returnArg)",
+      "babel_source": "if (t.isArrayExpression(returnArg)) {\r\n    returnArg.elements.forEach((element, index) => {\r\n      if (t.isIdentifier(element)) {\r\n        values.push({\r\n          index: index,\r\n          name: element.name,\r\n          type: inferReturnValueType(element.name)\r\n        });\r\n      } else if (t.isJSXElement(element) || t.isJSXFragment(element)) {\r\n        values.push({\r\n          index: index,\r\n          name: `ui_${index}`,\r\n          type: 'jsx'\r\n        });\r\n      } else if (t.isLogicalExpression(element)) {\r\n        values.push({\r\n          index: index,\r\n          name: `ui_${index}`,\r\n          type: 'jsx'\r\n        });\r\n      }\r\n    });\r\n  }\r\n  // Pattern 2: return { value, setValue, ui };\r\n  else if (t.isObjectExpression(returnArg)) {\r\n    returnArg.properties.forEach((prop, index) => {\r\n      if (t.isObjectProperty(prop) && t.isIdentifier(prop.key)) {\r\n        values.push({\r\n          index: index,\r\n          name: prop.key.name,\r\n          type: inferReturnValueType(prop.key.name)\r\n        });\r\n      }\r\n    });\r\n  }\r\n  // Pattern 3: return value; (single value)\r\n  else if (t.isIdentifier(returnArg)) {\r\n    values.push({\r\n      index: 0,\r\n      name: returnArg.name,\r\n      type: 'unknown'\r\n    });\r\n  }",
+      "parentContext": {
+        "functionName": "extractReturnValues",
+        "functionParams": [
+          "returnArg"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d24551ca",
+      "type": "BabelTypeCheck",
+      "method": "isArrayExpression",
+      "babel_source": "t.isArrayExpression(returnArg)",
+      "parentContext": {
+        "functionName": "extractReturnValues",
+        "functionParams": [
+          "returnArg"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "80920ec4",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "(element, index) => {\r\n      if (t.isIdentifier(element)) {\r\n        values.push({\r\n          index: index,\r\n          name: element.name,\r\n          type: inferReturnValueType(element.name)\r\n        });\r\n      } else if (t.isJSXElement(element) || t.isJSXFragment(element)) {\r\n        values.push({\r\n          index: index,\r\n          name: `ui_${index}`,\r\n          type: 'jsx'\r\n        });\r\n      } else if (t.isLogicalExpression(element)) {\r\n        values.push({\r\n          index: index,\r\n          name: `ui_${index}`,\r\n          type: 'jsx'\r\n        });\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "extractReturnValues",
+        "functionParams": [
+          "returnArg"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42a0bb09",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(element)",
+      "babel_source": "if (t.isIdentifier(element)) {\r\n        values.push({\r\n          index: index,\r\n          name: element.name,\r\n          type: inferReturnValueType(element.name)\r\n        });\r\n      } else if (t.isJSXElement(element) || t.isJSXFragment(element)) {\r\n        values.push({\r\n          index: index,\r\n          name: `ui_${index}`,\r\n          type: 'jsx'\r\n        });\r\n      } else if (t.isLogicalExpression(element)) {\r\n        values.push({\r\n          index: index,\r\n          name: `ui_${index}`,\r\n          type: 'jsx'\r\n        });\r\n      }",
+      "parentContext": {
+        "functionName": "extractReturnValues",
+        "functionParams": [
+          "returnArg"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "def088ee",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(element)",
+      "parentContext": {
+        "functionName": "extractReturnValues",
+        "functionParams": [
+          "returnArg"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3283b208",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n          index: index,\r\n          name: element.name,\r\n          type: inferReturnValueType(element.name)\r\n        }",
+      "parentContext": {
+        "functionName": "extractReturnValues",
+        "functionParams": [
+          "returnArg"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7399b3d0",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(element) || t.isJSXFragment(element)",
+      "babel_source": "if (t.isJSXElement(element) || t.isJSXFragment(element)) {\r\n        values.push({\r\n          index: index,\r\n          name: `ui_${index}`,\r\n          type: 'jsx'\r\n        });\r\n      } else if (t.isLogicalExpression(element)) {\r\n        values.push({\r\n          index: index,\r\n          name: `ui_${index}`,\r\n          type: 'jsx'\r\n        });\r\n      }",
+      "parentContext": {
+        "functionName": "extractReturnValues",
+        "functionParams": [
+          "returnArg"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4a8d62e3",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isJSXElement(element) || t.isJSXFragment(element)",
+      "parentContext": {
+        "functionName": "extractReturnValues",
+        "functionParams": [
+          "returnArg"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b44453fe",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(element)",
+      "parentContext": {
+        "functionName": "extractReturnValues",
+        "functionParams": [
+          "returnArg"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f9ce509c",
+      "type": "BabelTypeCheck",
+      "method": "isJSXFragment",
+      "babel_source": "t.isJSXFragment(element)",
+      "parentContext": {
+        "functionName": "extractReturnValues",
+        "functionParams": [
+          "returnArg"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5f8a1775",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n          index: index,\r\n          name: `ui_${index}`,\r\n          type: 'jsx'\r\n        }",
+      "parentContext": {
+        "functionName": "extractReturnValues",
+        "functionParams": [
+          "returnArg"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d733db0f",
+      "type": "TemplateLiteral",
+      "babel_source": "`ui_${index}`",
+      "parentContext": {
+        "functionName": "extractReturnValues",
+        "functionParams": [
+          "returnArg"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a2435f22",
+      "type": "IfStatement",
+      "condition": "t.isLogicalExpression(element)",
+      "babel_source": "if (t.isLogicalExpression(element)) {\r\n        values.push({\r\n          index: index,\r\n          name: `ui_${index}`,\r\n          type: 'jsx'\r\n        });\r\n      }",
+      "parentContext": {
+        "functionName": "extractReturnValues",
+        "functionParams": [
+          "returnArg"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "32283969",
+      "type": "BabelTypeCheck",
+      "method": "isLogicalExpression",
+      "babel_source": "t.isLogicalExpression(element)",
+      "parentContext": {
+        "functionName": "extractReturnValues",
+        "functionParams": [
+          "returnArg"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5f8a1775",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n          index: index,\r\n          name: `ui_${index}`,\r\n          type: 'jsx'\r\n        }",
+      "parentContext": {
+        "functionName": "extractReturnValues",
+        "functionParams": [
+          "returnArg"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d733db0f",
+      "type": "TemplateLiteral",
+      "babel_source": "`ui_${index}`",
+      "parentContext": {
+        "functionName": "extractReturnValues",
+        "functionParams": [
+          "returnArg"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bfb9c99d",
+      "type": "IfStatement",
+      "condition": "t.isObjectExpression(returnArg)",
+      "babel_source": "if (t.isObjectExpression(returnArg)) {\r\n    returnArg.properties.forEach((prop, index) => {\r\n      if (t.isObjectProperty(prop) && t.isIdentifier(prop.key)) {\r\n        values.push({\r\n          index: index,\r\n          name: prop.key.name,\r\n          type: inferReturnValueType(prop.key.name)\r\n        });\r\n      }\r\n    });\r\n  }\r\n  // Pattern 3: return value; (single value)\r\n  else if (t.isIdentifier(returnArg)) {\r\n    values.push({\r\n      index: 0,\r\n      name: returnArg.name,\r\n      type: 'unknown'\r\n    });\r\n  }",
+      "parentContext": {
+        "functionName": "extractReturnValues",
+        "functionParams": [
+          "returnArg"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f512d640",
+      "type": "BabelTypeCheck",
+      "method": "isObjectExpression",
+      "babel_source": "t.isObjectExpression(returnArg)",
+      "parentContext": {
+        "functionName": "extractReturnValues",
+        "functionParams": [
+          "returnArg"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "30bcd1a5",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "(prop, index) => {\r\n      if (t.isObjectProperty(prop) && t.isIdentifier(prop.key)) {\r\n        values.push({\r\n          index: index,\r\n          name: prop.key.name,\r\n          type: inferReturnValueType(prop.key.name)\r\n        });\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "extractReturnValues",
+        "functionParams": [
+          "returnArg"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a1764a42",
+      "type": "IfStatement",
+      "condition": "t.isObjectProperty(prop) && t.isIdentifier(prop.key)",
+      "babel_source": "if (t.isObjectProperty(prop) && t.isIdentifier(prop.key)) {\r\n        values.push({\r\n          index: index,\r\n          name: prop.key.name,\r\n          type: inferReturnValueType(prop.key.name)\r\n        });\r\n      }",
+      "parentContext": {
+        "functionName": "extractReturnValues",
+        "functionParams": [
+          "returnArg"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "192fdbdf",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isObjectProperty(prop) && t.isIdentifier(prop.key)",
+      "parentContext": {
+        "functionName": "extractReturnValues",
+        "functionParams": [
+          "returnArg"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d8cb3d9e",
+      "type": "BabelTypeCheck",
+      "method": "isObjectProperty",
+      "babel_source": "t.isObjectProperty(prop)",
+      "parentContext": {
+        "functionName": "extractReturnValues",
+        "functionParams": [
+          "returnArg"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f3845e36",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(prop.key)",
+      "parentContext": {
+        "functionName": "extractReturnValues",
+        "functionParams": [
+          "returnArg"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e8a5c910",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n          index: index,\r\n          name: prop.key.name,\r\n          type: inferReturnValueType(prop.key.name)\r\n        }",
+      "parentContext": {
+        "functionName": "extractReturnValues",
+        "functionParams": [
+          "returnArg"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "31a88dc4",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(returnArg)",
+      "babel_source": "if (t.isIdentifier(returnArg)) {\r\n    values.push({\r\n      index: 0,\r\n      name: returnArg.name,\r\n      type: 'unknown'\r\n    });\r\n  }",
+      "parentContext": {
+        "functionName": "extractReturnValues",
+        "functionParams": [
+          "returnArg"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fa057057",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(returnArg)",
+      "parentContext": {
+        "functionName": "extractReturnValues",
+        "functionParams": [
+          "returnArg"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2ac45d3c",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n      index: 0,\r\n      name: returnArg.name,\r\n      type: 'unknown'\r\n    }",
+      "parentContext": {
+        "functionName": "extractReturnValues",
+        "functionParams": [
+          "returnArg"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ed16d3fc",
+      "type": "ReturnStatement",
+      "babel_source": "return values;",
+      "parentContext": {
+        "functionName": "extractReturnValues",
+        "functionParams": [
+          "returnArg"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/hookAnalyzer.cjs"
+  ]
+}

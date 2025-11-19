@@ -1,0 +1,1112 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractUsePaginatedServerTask",
+  "params": [
+    {
+      "name": "path",
+      "inferredType": "&Path",
+      "defaultValue": null
+    },
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractUsePaginatedServerTask(path, component) {\r\n  const parent = path.parent;\r\n\r\n  if (!t.isVariableDeclarator(parent)) return;\r\n\r\n  const taskName = parent.id.name;\r\n  const fetchFunction = path.node.arguments[0];\r\n  const options = path.node.arguments[1];\r\n\r\n  // Validate fetch function\r\n  if (!fetchFunction || (!t.isArrowFunctionExpression(fetchFunction) && !t.isFunctionExpression(fetchFunction))) {\r\n    console.warn('[usePaginatedServerTask] First argument must be an async function');\r\n    return;\r\n  }\r\n\r\n  if (!fetchFunction.async) {\r\n    console.warn('[usePaginatedServerTask] Function must be async');\r\n    return;\r\n  }\r\n\r\n  // Extract fetch function parameters\r\n  // Expected: ({ page, pageSize, filters }: PaginationParams<TFilter>) => Promise<T[]>\r\n  const parameters = [\r\n    { name: 'page', type: 'int' },\r\n    { name: 'pageSize', type: 'int' },\r\n    { name: 'filters', type: 'object' }\r\n  ];\r\n\r\n  // Extract options\r\n  let runtime = 'csharp'; // Default to C#\r\n  let parallel = false;\r\n  let pageSize = 20;\r\n  let getTotalCountFn = null;\r\n\r\n  if (options && t.isObjectExpression(options)) {\r\n    for (const prop of options.properties) {\r\n      if (t.isObjectProperty(prop) && t.isIdentifier(prop.key)) {\r\n        if (prop.key.name === 'runtime' && t.isStringLiteral(prop.value)) {\r\n          runtime = prop.value.value;\r\n        }\r\n        if (prop.key.name === 'parallel' && t.isBooleanLiteral(prop.value)) {\r\n          parallel = prop.value.value;\r\n        }\r\n        if (prop.key.name === 'pageSize' && t.isNumericLiteral(prop.value)) {\r\n          pageSize = prop.value.value;\r\n        }\r\n        if (prop.key.name === 'getTotalCount') {\r\n          getTotalCountFn = prop.value;\r\n        }\r\n      }\r\n    }\r\n  }\r\n\r\n  // Initialize component.useServerTask if needed\r\n  component.useServerTask = component.useServerTask || [];\r\n  component.paginatedTasks = component.paginatedTasks || [];\r\n\r\n  // 1. Add fetch task\r\n  const fetchTaskName = `${taskName}_fetch`;\r\n  component.useServerTask.push({\r\n    name: fetchTaskName,\r\n    asyncFunction: fetchFunction,\r\n    parameters: parameters,\r\n    isStreaming: false,\r\n    estimatedChunks: null,\r\n    returnType: 'List<object>', // Will be refined by type inference\r\n    runtime: runtime,\r\n    parallel: parallel\r\n  });\r\n\r\n  // 2. Add count task (if getTotalCount provided)\r\n  let countTaskName = null;\r\n  if (getTotalCountFn && (t.isArrowFunctionExpression(getTotalCountFn) || t.isFunctionExpression(getTotalCountFn))) {\r\n    countTaskName = `${taskName}_count`;\r\n\r\n    const countParameters = [\r\n      { name: 'filters', type: 'object' }\r\n    ];\r\n\r\n    component.useServerTask.push({\r\n      name: countTaskName,\r\n      asyncFunction: getTotalCountFn,\r\n      parameters: countParameters,\r\n      isStreaming: false,\r\n      estimatedChunks: null,\r\n      returnType: 'int',\r\n      runtime: runtime,\r\n      parallel: false // Count queries don't need parallelization\r\n    });\r\n  }\r\n\r\n  // Store pagination metadata\r\n  component.paginatedTasks.push({\r\n    name: taskName,\r\n    fetchTaskName: fetchTaskName,\r\n    countTaskName: countTaskName,\r\n    pageSize: pageSize,\r\n    runtime: runtime,\r\n    parallel: parallel\r\n  });\r\n\r\n  console.log(`[usePaginatedServerTask] Extracted pagination tasks for '${taskName}':`, {\r\n    fetch: fetchTaskName,\r\n    count: countTaskName,\r\n    runtime,\r\n    parallel\r\n  });\r\n}",
+  "body_templates": [
+    {
+      "hash": "356fe96c",
+      "type": "VariableDeclaration",
+      "babel_source": "const parent = path.parent;",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1cfe78c4",
+      "type": "IfStatement",
+      "condition": "!t.isVariableDeclarator(parent)",
+      "babel_source": "if (!t.isVariableDeclarator(parent)) return;",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dc772752",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isVariableDeclarator(parent)",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "27a39ea7",
+      "type": "BabelTypeCheck",
+      "method": "isVariableDeclarator",
+      "babel_source": "t.isVariableDeclarator(parent)",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8beaabe2",
+      "type": "ReturnStatement",
+      "babel_source": "return;",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "33c92811",
+      "type": "VariableDeclaration",
+      "babel_source": "const taskName = parent.id.name;",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7b0de5bc",
+      "type": "VariableDeclaration",
+      "babel_source": "const fetchFunction = path.node.arguments[0];",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5dda9e19",
+      "type": "VariableDeclaration",
+      "babel_source": "const options = path.node.arguments[1];",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "224b4921",
+      "type": "IfStatement",
+      "condition": "!fetchFunction || (!t.isArrowFunctionExpression(fetchFunction) && !t.isFunctionExpression(fetchFunction))",
+      "babel_source": "if (!fetchFunction || (!t.isArrowFunctionExpression(fetchFunction) && !t.isFunctionExpression(fetchFunction))) {\r\n    console.warn('[usePaginatedServerTask] First argument must be an async function');\r\n    return;\r\n  }",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f58b5502",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "!fetchFunction || (!t.isArrowFunctionExpression(fetchFunction) && !t.isFunctionExpression(fetchFunction))",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6842289f",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!fetchFunction",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "889b7681",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "!t.isArrowFunctionExpression(fetchFunction) && !t.isFunctionExpression(fetchFunction)",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2cb51158",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isArrowFunctionExpression(fetchFunction)",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d7658fd0",
+      "type": "BabelTypeCheck",
+      "method": "isArrowFunctionExpression",
+      "babel_source": "t.isArrowFunctionExpression(fetchFunction)",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ba18407f",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isFunctionExpression(fetchFunction)",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a3d9d97a",
+      "type": "BabelTypeCheck",
+      "method": "isFunctionExpression",
+      "babel_source": "t.isFunctionExpression(fetchFunction)",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8beaabe2",
+      "type": "ReturnStatement",
+      "babel_source": "return;",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d6df7a2b",
+      "type": "IfStatement",
+      "condition": "!fetchFunction.async",
+      "babel_source": "if (!fetchFunction.async) {\r\n    console.warn('[usePaginatedServerTask] Function must be async');\r\n    return;\r\n  }",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "50b20300",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!fetchFunction.async",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8beaabe2",
+      "type": "ReturnStatement",
+      "babel_source": "return;",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dc5bbded",
+      "type": "VariableDeclaration",
+      "babel_source": "const parameters = [\r\n    { name: 'page', type: 'int' },\r\n    { name: 'pageSize', type: 'int' },\r\n    { name: 'filters', type: 'object' }\r\n  ];",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a10bcae0",
+      "type": "ArrayExpression",
+      "babel_source": "[\r\n    { name: 'page', type: 'int' },\r\n    { name: 'pageSize', type: 'int' },\r\n    { name: 'filters', type: 'object' }\r\n  ]",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5de2708f",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'page', type: 'int' }",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "042d4e4e",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'pageSize', type: 'int' }",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3d631d0d",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'filters', type: 'object' }",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a6aa79a0",
+      "type": "VariableDeclaration",
+      "babel_source": "let runtime = 'csharp';",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e3a182e2",
+      "type": "VariableDeclaration",
+      "babel_source": "let parallel = false;",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5392dff0",
+      "type": "VariableDeclaration",
+      "babel_source": "let pageSize = 20;",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "80628b3e",
+      "type": "VariableDeclaration",
+      "babel_source": "let getTotalCountFn = null;",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dc0f880a",
+      "type": "IfStatement",
+      "condition": "options && t.isObjectExpression(options)",
+      "babel_source": "if (options && t.isObjectExpression(options)) {\r\n    for (const prop of options.properties) {\r\n      if (t.isObjectProperty(prop) && t.isIdentifier(prop.key)) {\r\n        if (prop.key.name === 'runtime' && t.isStringLiteral(prop.value)) {\r\n          runtime = prop.value.value;\r\n        }\r\n        if (prop.key.name === 'parallel' && t.isBooleanLiteral(prop.value)) {\r\n          parallel = prop.value.value;\r\n        }\r\n        if (prop.key.name === 'pageSize' && t.isNumericLiteral(prop.value)) {\r\n          pageSize = prop.value.value;\r\n        }\r\n        if (prop.key.name === 'getTotalCount') {\r\n          getTotalCountFn = prop.value;\r\n        }\r\n      }\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bdff1edf",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "options && t.isObjectExpression(options)",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f5a5b8a5",
+      "type": "BabelTypeCheck",
+      "method": "isObjectExpression",
+      "babel_source": "t.isObjectExpression(options)",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1a5a6169",
+      "type": "ForOfStatement",
+      "babel_source": "for (const prop of options.properties) {\r\n      if (t.isObjectProperty(prop) && t.isIdentifier(prop.key)) {\r\n        if (prop.key.name === 'runtime' && t.isStringLiteral(prop.value)) {\r\n          runtime = prop.value.value;\r\n        }\r\n        if (prop.key.name === 'parallel' && t.isBooleanLiteral(prop.value)) {\r\n          parallel = prop.value.value;\r\n        }\r\n        if (prop.key.name === 'pageSize' && t.isNumericLiteral(prop.value)) {\r\n          pageSize = prop.value.value;\r\n        }\r\n        if (prop.key.name === 'getTotalCount') {\r\n          getTotalCountFn = prop.value;\r\n        }\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "098a3cb5",
+      "type": "VariableDeclaration",
+      "babel_source": "const prop",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c9e518b8",
+      "type": "IfStatement",
+      "condition": "t.isObjectProperty(prop) && t.isIdentifier(prop.key)",
+      "babel_source": "if (t.isObjectProperty(prop) && t.isIdentifier(prop.key)) {\r\n        if (prop.key.name === 'runtime' && t.isStringLiteral(prop.value)) {\r\n          runtime = prop.value.value;\r\n        }\r\n        if (prop.key.name === 'parallel' && t.isBooleanLiteral(prop.value)) {\r\n          parallel = prop.value.value;\r\n        }\r\n        if (prop.key.name === 'pageSize' && t.isNumericLiteral(prop.value)) {\r\n          pageSize = prop.value.value;\r\n        }\r\n        if (prop.key.name === 'getTotalCount') {\r\n          getTotalCountFn = prop.value;\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "192fdbdf",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isObjectProperty(prop) && t.isIdentifier(prop.key)",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d8cb3d9e",
+      "type": "BabelTypeCheck",
+      "method": "isObjectProperty",
+      "babel_source": "t.isObjectProperty(prop)",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f3845e36",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(prop.key)",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "06ab607e",
+      "type": "IfStatement",
+      "condition": "prop.key.name === 'runtime' && t.isStringLiteral(prop.value)",
+      "babel_source": "if (prop.key.name === 'runtime' && t.isStringLiteral(prop.value)) {\r\n          runtime = prop.value.value;\r\n        }",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e43238c0",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "prop.key.name === 'runtime' && t.isStringLiteral(prop.value)",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9da6e29d",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "prop.key.name === 'runtime'",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f158ce2a",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(prop.value)",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f3c162b4",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "runtime = prop.value.value",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "31fa04ed",
+      "type": "IfStatement",
+      "condition": "prop.key.name === 'parallel' && t.isBooleanLiteral(prop.value)",
+      "babel_source": "if (prop.key.name === 'parallel' && t.isBooleanLiteral(prop.value)) {\r\n          parallel = prop.value.value;\r\n        }",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f00599c1",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "prop.key.name === 'parallel' && t.isBooleanLiteral(prop.value)",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5f65314e",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "prop.key.name === 'parallel'",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e824223e",
+      "type": "BabelTypeCheck",
+      "method": "isBooleanLiteral",
+      "babel_source": "t.isBooleanLiteral(prop.value)",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5cbcfd85",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "parallel = prop.value.value",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "979e761a",
+      "type": "IfStatement",
+      "condition": "prop.key.name === 'pageSize' && t.isNumericLiteral(prop.value)",
+      "babel_source": "if (prop.key.name === 'pageSize' && t.isNumericLiteral(prop.value)) {\r\n          pageSize = prop.value.value;\r\n        }",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6bd051da",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "prop.key.name === 'pageSize' && t.isNumericLiteral(prop.value)",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2f3563c0",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "prop.key.name === 'pageSize'",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9f30200d",
+      "type": "BabelTypeCheck",
+      "method": "isNumericLiteral",
+      "babel_source": "t.isNumericLiteral(prop.value)",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2efea06e",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "pageSize = prop.value.value",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7453e629",
+      "type": "IfStatement",
+      "condition": "prop.key.name === 'getTotalCount'",
+      "babel_source": "if (prop.key.name === 'getTotalCount') {\r\n          getTotalCountFn = prop.value;\r\n        }",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8eae5252",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "prop.key.name === 'getTotalCount'",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d6aa3174",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "getTotalCountFn = prop.value",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0d851239",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "component.useServerTask = component.useServerTask || []",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "46a99f17",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "component.useServerTask || []",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "75857e9f",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "component.paginatedTasks = component.paginatedTasks || []",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "45c0f222",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "component.paginatedTasks || []",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "158bcd12",
+      "type": "VariableDeclaration",
+      "babel_source": "const fetchTaskName = `${taskName}_fetch`;",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9a72f070",
+      "type": "TemplateLiteral",
+      "babel_source": "`${taskName}_fetch`",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d44fd5d6",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    name: fetchTaskName,\r\n    asyncFunction: fetchFunction,\r\n    parameters: parameters,\r\n    isStreaming: false,\r\n    estimatedChunks: null,\r\n    returnType: 'List<object>', // Will be refined by type inference\r\n    runtime: runtime,\r\n    parallel: parallel\r\n  }",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ca8fa934",
+      "type": "VariableDeclaration",
+      "babel_source": "let countTaskName = null;",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4d006b27",
+      "type": "IfStatement",
+      "condition": "getTotalCountFn && (t.isArrowFunctionExpression(getTotalCountFn) || t.isFunctionExpression(getTotalCountFn))",
+      "babel_source": "if (getTotalCountFn && (t.isArrowFunctionExpression(getTotalCountFn) || t.isFunctionExpression(getTotalCountFn))) {\r\n    countTaskName = `${taskName}_count`;\r\n\r\n    const countParameters = [\r\n      { name: 'filters', type: 'object' }\r\n    ];\r\n\r\n    component.useServerTask.push({\r\n      name: countTaskName,\r\n      asyncFunction: getTotalCountFn,\r\n      parameters: countParameters,\r\n      isStreaming: false,\r\n      estimatedChunks: null,\r\n      returnType: 'int',\r\n      runtime: runtime,\r\n      parallel: false // Count queries don't need parallelization\r\n    });\r\n  }",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6f357c63",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "getTotalCountFn && (t.isArrowFunctionExpression(getTotalCountFn) || t.isFunctionExpression(getTotalCountFn))",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3d641717",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isArrowFunctionExpression(getTotalCountFn) || t.isFunctionExpression(getTotalCountFn)",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ce697d43",
+      "type": "BabelTypeCheck",
+      "method": "isArrowFunctionExpression",
+      "babel_source": "t.isArrowFunctionExpression(getTotalCountFn)",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0619e22a",
+      "type": "BabelTypeCheck",
+      "method": "isFunctionExpression",
+      "babel_source": "t.isFunctionExpression(getTotalCountFn)",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "71cbc0d0",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "countTaskName = `${taskName}_count`",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9e4e4479",
+      "type": "TemplateLiteral",
+      "babel_source": "`${taskName}_count`",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "52df5388",
+      "type": "VariableDeclaration",
+      "babel_source": "const countParameters = [\r\n      { name: 'filters', type: 'object' }\r\n    ];",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0cc0097d",
+      "type": "ArrayExpression",
+      "babel_source": "[\r\n      { name: 'filters', type: 'object' }\r\n    ]",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3d631d0d",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'filters', type: 'object' }",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c1f45de6",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n      name: countTaskName,\r\n      asyncFunction: getTotalCountFn,\r\n      parameters: countParameters,\r\n      isStreaming: false,\r\n      estimatedChunks: null,\r\n      returnType: 'int',\r\n      runtime: runtime,\r\n      parallel: false // Count queries don't need parallelization\r\n    }",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f901313d",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    name: taskName,\r\n    fetchTaskName: fetchTaskName,\r\n    countTaskName: countTaskName,\r\n    pageSize: pageSize,\r\n    runtime: runtime,\r\n    parallel: parallel\r\n  }",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d8577313",
+      "type": "TemplateLiteral",
+      "babel_source": "`[usePaginatedServerTask] Extracted pagination tasks for '${taskName}':`",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f9aba8eb",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    fetch: fetchTaskName,\r\n    count: countTaskName,\r\n    runtime,\r\n    parallel\r\n  }",
+      "parentContext": {
+        "functionName": "extractUsePaginatedServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/hooks.cjs"
+  ]
+}

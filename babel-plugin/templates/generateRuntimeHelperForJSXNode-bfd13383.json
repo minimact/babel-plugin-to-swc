@@ -1,0 +1,550 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateRuntimeHelperForJSXNode",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "indent",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateRuntimeHelperForJSXNode(node, component, indent) {\r\n  // Lazy load to avoid circular dependency\r\n  const { generateCSharpExpression } = require('./expressions.cjs');\r\n\r\n  if (t.isJSXFragment(node)) {\r\n    // Handle fragments\r\n    const children = node.children;\r\n    const childrenArgs = [];\r\n    for (const child of children) {\r\n      if (t.isJSXText(child)) {\r\n        const text = child.value.trim();\r\n        if (text) {\r\n          childrenArgs.push(`\"${escapeCSharpString(text)}\"`);\r\n        }\r\n      } else if (t.isJSXElement(child)) {\r\n        childrenArgs.push(generateRuntimeHelperForJSXNode(child, component, indent + 1));\r\n      } else if (t.isJSXExpressionContainer(child)) {\r\n        // Skip JSX comments (empty expressions like {/* comment */})\r\n        if (t.isJSXEmptyExpression(child.expression)) {\r\n          continue; // Don't add to childrenArgs\r\n        }\r\n        childrenArgs.push(generateCSharpExpression(child.expression));\r\n      }\r\n    }\r\n    if (childrenArgs.length === 0) {\r\n      return 'MinimactHelpers.Fragment()';\r\n    }\r\n    return `MinimactHelpers.Fragment(${childrenArgs.join(', ')})`;\r\n  }\r\n\r\n  if (t.isJSXElement(node)) {\r\n    const tagName = node.openingElement.name.name;\r\n    const attributes = node.openingElement.attributes;\r\n    const children = node.children;\r\n    return generateRuntimeHelperCall(tagName, attributes, children, component, indent);\r\n  }\r\n\r\n  // Fallback for null/undefined nodes\r\n  const nodePath = node.__minimactPath || '';\r\n  return `new VNull(\"${nodePath}\")`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "57c8d9bd",
+      "type": "VariableDeclaration",
+      "babel_source": "const { generateCSharpExpression } = require('./expressions.cjs');",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperForJSXNode",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1f81f8fe",
+      "type": "IfStatement",
+      "condition": "t.isJSXFragment(node)",
+      "babel_source": "if (t.isJSXFragment(node)) {\r\n    // Handle fragments\r\n    const children = node.children;\r\n    const childrenArgs = [];\r\n    for (const child of children) {\r\n      if (t.isJSXText(child)) {\r\n        const text = child.value.trim();\r\n        if (text) {\r\n          childrenArgs.push(`\"${escapeCSharpString(text)}\"`);\r\n        }\r\n      } else if (t.isJSXElement(child)) {\r\n        childrenArgs.push(generateRuntimeHelperForJSXNode(child, component, indent + 1));\r\n      } else if (t.isJSXExpressionContainer(child)) {\r\n        // Skip JSX comments (empty expressions like {/* comment */})\r\n        if (t.isJSXEmptyExpression(child.expression)) {\r\n          continue; // Don't add to childrenArgs\r\n        }\r\n        childrenArgs.push(generateCSharpExpression(child.expression));\r\n      }\r\n    }\r\n    if (childrenArgs.length === 0) {\r\n      return 'MinimactHelpers.Fragment()';\r\n    }\r\n    return `MinimactHelpers.Fragment(${childrenArgs.join(', ')})`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperForJSXNode",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "00ed8bb0",
+      "type": "BabelTypeCheck",
+      "method": "isJSXFragment",
+      "babel_source": "t.isJSXFragment(node)",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperForJSXNode",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cebd77be",
+      "type": "VariableDeclaration",
+      "babel_source": "const children = node.children;",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperForJSXNode",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6ba4362a",
+      "type": "VariableDeclaration",
+      "babel_source": "const childrenArgs = [];",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperForJSXNode",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperForJSXNode",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "55c86c19",
+      "type": "ForOfStatement",
+      "babel_source": "for (const child of children) {\r\n      if (t.isJSXText(child)) {\r\n        const text = child.value.trim();\r\n        if (text) {\r\n          childrenArgs.push(`\"${escapeCSharpString(text)}\"`);\r\n        }\r\n      } else if (t.isJSXElement(child)) {\r\n        childrenArgs.push(generateRuntimeHelperForJSXNode(child, component, indent + 1));\r\n      } else if (t.isJSXExpressionContainer(child)) {\r\n        // Skip JSX comments (empty expressions like {/* comment */})\r\n        if (t.isJSXEmptyExpression(child.expression)) {\r\n          continue; // Don't add to childrenArgs\r\n        }\r\n        childrenArgs.push(generateCSharpExpression(child.expression));\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperForJSXNode",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "efdd3930",
+      "type": "VariableDeclaration",
+      "babel_source": "const child",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperForJSXNode",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bc40bff2",
+      "type": "IfStatement",
+      "condition": "t.isJSXText(child)",
+      "babel_source": "if (t.isJSXText(child)) {\r\n        const text = child.value.trim();\r\n        if (text) {\r\n          childrenArgs.push(`\"${escapeCSharpString(text)}\"`);\r\n        }\r\n      } else if (t.isJSXElement(child)) {\r\n        childrenArgs.push(generateRuntimeHelperForJSXNode(child, component, indent + 1));\r\n      } else if (t.isJSXExpressionContainer(child)) {\r\n        // Skip JSX comments (empty expressions like {/* comment */})\r\n        if (t.isJSXEmptyExpression(child.expression)) {\r\n          continue; // Don't add to childrenArgs\r\n        }\r\n        childrenArgs.push(generateCSharpExpression(child.expression));\r\n      }",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperForJSXNode",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8cc41c4e",
+      "type": "BabelTypeCheck",
+      "method": "isJSXText",
+      "babel_source": "t.isJSXText(child)",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperForJSXNode",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9fb13957",
+      "type": "VariableDeclaration",
+      "babel_source": "const text = child.value.trim();",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperForJSXNode",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d3359702",
+      "type": "IfStatement",
+      "condition": "text",
+      "babel_source": "if (text) {\r\n          childrenArgs.push(`\"${escapeCSharpString(text)}\"`);\r\n        }",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperForJSXNode",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "044fae09",
+      "type": "TemplateLiteral",
+      "babel_source": "`\"${escapeCSharpString(text)}\"`",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperForJSXNode",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6327b17a",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(child)",
+      "babel_source": "if (t.isJSXElement(child)) {\r\n        childrenArgs.push(generateRuntimeHelperForJSXNode(child, component, indent + 1));\r\n      } else if (t.isJSXExpressionContainer(child)) {\r\n        // Skip JSX comments (empty expressions like {/* comment */})\r\n        if (t.isJSXEmptyExpression(child.expression)) {\r\n          continue; // Don't add to childrenArgs\r\n        }\r\n        childrenArgs.push(generateCSharpExpression(child.expression));\r\n      }",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperForJSXNode",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d44bd174",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(child)",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperForJSXNode",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "51639547",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "indent + 1",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperForJSXNode",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4aca81a2",
+      "type": "IfStatement",
+      "condition": "t.isJSXExpressionContainer(child)",
+      "babel_source": "if (t.isJSXExpressionContainer(child)) {\r\n        // Skip JSX comments (empty expressions like {/* comment */})\r\n        if (t.isJSXEmptyExpression(child.expression)) {\r\n          continue; // Don't add to childrenArgs\r\n        }\r\n        childrenArgs.push(generateCSharpExpression(child.expression));\r\n      }",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperForJSXNode",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c53c8d32",
+      "type": "BabelTypeCheck",
+      "method": "isJSXExpressionContainer",
+      "babel_source": "t.isJSXExpressionContainer(child)",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperForJSXNode",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "52b5f711",
+      "type": "IfStatement",
+      "condition": "t.isJSXEmptyExpression(child.expression)",
+      "babel_source": "if (t.isJSXEmptyExpression(child.expression)) {\r\n          continue; // Don't add to childrenArgs\r\n        }",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperForJSXNode",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e9b78902",
+      "type": "BabelTypeCheck",
+      "method": "isJSXEmptyExpression",
+      "babel_source": "t.isJSXEmptyExpression(child.expression)",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperForJSXNode",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0bf37874",
+      "type": "ContinueStatement",
+      "babel_source": "continue;",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperForJSXNode",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0f369585",
+      "type": "IfStatement",
+      "condition": "childrenArgs.length === 0",
+      "babel_source": "if (childrenArgs.length === 0) {\r\n      return 'MinimactHelpers.Fragment()';\r\n    }",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperForJSXNode",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "16a7c3ee",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "childrenArgs.length === 0",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperForJSXNode",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a66a6611",
+      "type": "ReturnStatement",
+      "babel_source": "return 'MinimactHelpers.Fragment()';",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperForJSXNode",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "34bea3b2",
+      "type": "ReturnStatement",
+      "babel_source": "return `MinimactHelpers.Fragment(${childrenArgs.join(', ')})`;",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperForJSXNode",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f648c742",
+      "type": "TemplateLiteral",
+      "babel_source": "`MinimactHelpers.Fragment(${childrenArgs.join(', ')})`",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperForJSXNode",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a741964a",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(node)",
+      "babel_source": "if (t.isJSXElement(node)) {\r\n    const tagName = node.openingElement.name.name;\r\n    const attributes = node.openingElement.attributes;\r\n    const children = node.children;\r\n    return generateRuntimeHelperCall(tagName, attributes, children, component, indent);\r\n  }",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperForJSXNode",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "606ccdc5",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(node)",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperForJSXNode",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c1132faa",
+      "type": "VariableDeclaration",
+      "babel_source": "const tagName = node.openingElement.name.name;",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperForJSXNode",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b2f3dc2a",
+      "type": "VariableDeclaration",
+      "babel_source": "const attributes = node.openingElement.attributes;",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperForJSXNode",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cebd77be",
+      "type": "VariableDeclaration",
+      "babel_source": "const children = node.children;",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperForJSXNode",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dfb9f654",
+      "type": "ReturnStatement",
+      "babel_source": "return generateRuntimeHelperCall(tagName, attributes, children, component, indent);",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperForJSXNode",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2d76293e",
+      "type": "VariableDeclaration",
+      "babel_source": "const nodePath = node.__minimactPath || '';",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperForJSXNode",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e3e86ef1",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "node.__minimactPath || ''",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperForJSXNode",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cee4de05",
+      "type": "ReturnStatement",
+      "babel_source": "return `new VNull(\"${nodePath}\")`;",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperForJSXNode",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3d30a682",
+      "type": "TemplateLiteral",
+      "babel_source": "`new VNull(\"${nodePath}\")`",
+      "parentContext": {
+        "functionName": "generateRuntimeHelperForJSXNode",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/runtimeHelpers.cjs"
+  ]
+}

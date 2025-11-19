@@ -1,0 +1,542 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateVComponentWrapper",
+  "params": [
+    {
+      "name": "analysis",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "namespace",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "hexPath",
+      "inferredType": "&Path",
+      "defaultValue": null
+    },
+    {
+      "name": "args",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateVComponentWrapper(analysis, namespace, hexPath, args) {\r\n  const lines = [];\r\n\r\n  lines.push(`new VComponentWrapper`);\r\n  lines.push(`{`);\r\n  lines.push(`    ComponentName = \"${namespace}\",`);\r\n  lines.push(`    ComponentType = \"${analysis.className}\",`);\r\n  lines.push(`    HexPath = \"${hexPath}\",`);\r\n  lines.push(`    InitialState = new Dictionary<string, object>`);\r\n  lines.push(`    {`);\r\n\r\n  // Initialize state fields\r\n  if (analysis.states && analysis.states.length > 0) {\r\n    analysis.states.forEach((state, index) => {\r\n      const comma = index < analysis.states.length - 1 || args.length > 0 ? ',' : '';\r\n      lines.push(`        [\"${state.varName}\"] = ${state.initialValue || getDefaultValue(mapTypeToCSharp(state.type))}${comma}`);\r\n    });\r\n  }\r\n\r\n  // Initialize config parameters\r\n  if (args && args.length > 0) {\r\n    args.forEach((arg, index) => {\r\n      const comma = index < args.length - 1 ? ',' : '';\r\n      lines.push(`        [\"_config.${analysis.params[index].name}\"] = ${arg}${comma}`);\r\n    });\r\n  }\r\n\r\n  lines.push(`    }`);\r\n  lines.push(`}`);\r\n\r\n  return lines.join('\\n');\r\n}",
+  "body_templates": [
+    {
+      "hash": "87b71d01",
+      "type": "VariableDeclaration",
+      "babel_source": "const lines = [];",
+      "parentContext": {
+        "functionName": "generateVComponentWrapper",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "hexPath",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "generateVComponentWrapper",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "hexPath",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1703d731",
+      "type": "TemplateLiteral",
+      "babel_source": "`new VComponentWrapper`",
+      "parentContext": {
+        "functionName": "generateVComponentWrapper",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "hexPath",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "95b43a02",
+      "type": "TemplateLiteral",
+      "babel_source": "`{`",
+      "parentContext": {
+        "functionName": "generateVComponentWrapper",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "hexPath",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c5c306ad",
+      "type": "TemplateLiteral",
+      "babel_source": "`    ComponentName = \"${namespace}\",`",
+      "parentContext": {
+        "functionName": "generateVComponentWrapper",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "hexPath",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0a1ca48f",
+      "type": "TemplateLiteral",
+      "babel_source": "`    ComponentType = \"${analysis.className}\",`",
+      "parentContext": {
+        "functionName": "generateVComponentWrapper",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "hexPath",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "28d19e39",
+      "type": "TemplateLiteral",
+      "babel_source": "`    HexPath = \"${hexPath}\",`",
+      "parentContext": {
+        "functionName": "generateVComponentWrapper",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "hexPath",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2293f6db",
+      "type": "TemplateLiteral",
+      "babel_source": "`    InitialState = new Dictionary<string, object>`",
+      "parentContext": {
+        "functionName": "generateVComponentWrapper",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "hexPath",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "497895ef",
+      "type": "TemplateLiteral",
+      "babel_source": "`    {`",
+      "parentContext": {
+        "functionName": "generateVComponentWrapper",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "hexPath",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f672b02a",
+      "type": "IfStatement",
+      "condition": "analysis.states && analysis.states.length > 0",
+      "babel_source": "if (analysis.states && analysis.states.length > 0) {\r\n    analysis.states.forEach((state, index) => {\r\n      const comma = index < analysis.states.length - 1 || args.length > 0 ? ',' : '';\r\n      lines.push(`        [\"${state.varName}\"] = ${state.initialValue || getDefaultValue(mapTypeToCSharp(state.type))}${comma}`);\r\n    });\r\n  }",
+      "parentContext": {
+        "functionName": "generateVComponentWrapper",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "hexPath",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d2977084",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "analysis.states && analysis.states.length > 0",
+      "parentContext": {
+        "functionName": "generateVComponentWrapper",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "hexPath",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "afdaa914",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "analysis.states.length > 0",
+      "parentContext": {
+        "functionName": "generateVComponentWrapper",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "hexPath",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1ca21581",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "(state, index) => {\r\n      const comma = index < analysis.states.length - 1 || args.length > 0 ? ',' : '';\r\n      lines.push(`        [\"${state.varName}\"] = ${state.initialValue || getDefaultValue(mapTypeToCSharp(state.type))}${comma}`);\r\n    }",
+      "parentContext": {
+        "functionName": "generateVComponentWrapper",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "hexPath",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "011b9b3e",
+      "type": "VariableDeclaration",
+      "babel_source": "const comma = index < analysis.states.length - 1 || args.length > 0 ? ',' : '';",
+      "parentContext": {
+        "functionName": "generateVComponentWrapper",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "hexPath",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "673a79a1",
+      "type": "ConditionalExpression",
+      "babel_source": "index < analysis.states.length - 1 || args.length > 0 ? ',' : ''",
+      "parentContext": {
+        "functionName": "generateVComponentWrapper",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "hexPath",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0f188843",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "index < analysis.states.length - 1 || args.length > 0",
+      "parentContext": {
+        "functionName": "generateVComponentWrapper",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "hexPath",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a4811707",
+      "type": "BinaryExpression",
+      "operator": "<",
+      "babel_source": "index < analysis.states.length - 1",
+      "parentContext": {
+        "functionName": "generateVComponentWrapper",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "hexPath",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9f7478c9",
+      "type": "BinaryExpression",
+      "operator": "-",
+      "babel_source": "analysis.states.length - 1",
+      "parentContext": {
+        "functionName": "generateVComponentWrapper",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "hexPath",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "614330ef",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "args.length > 0",
+      "parentContext": {
+        "functionName": "generateVComponentWrapper",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "hexPath",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a77e4d15",
+      "type": "TemplateLiteral",
+      "babel_source": "`        [\"${state.varName}\"] = ${state.initialValue || getDefaultValue(mapTypeToCSharp(state.type))}${comma}`",
+      "parentContext": {
+        "functionName": "generateVComponentWrapper",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "hexPath",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0104cdb9",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "state.initialValue || getDefaultValue(mapTypeToCSharp(state.type))",
+      "parentContext": {
+        "functionName": "generateVComponentWrapper",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "hexPath",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "77047b66",
+      "type": "IfStatement",
+      "condition": "args && args.length > 0",
+      "babel_source": "if (args && args.length > 0) {\r\n    args.forEach((arg, index) => {\r\n      const comma = index < args.length - 1 ? ',' : '';\r\n      lines.push(`        [\"_config.${analysis.params[index].name}\"] = ${arg}${comma}`);\r\n    });\r\n  }",
+      "parentContext": {
+        "functionName": "generateVComponentWrapper",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "hexPath",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "af96fb82",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "args && args.length > 0",
+      "parentContext": {
+        "functionName": "generateVComponentWrapper",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "hexPath",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "614330ef",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "args.length > 0",
+      "parentContext": {
+        "functionName": "generateVComponentWrapper",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "hexPath",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fb8d73e9",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "(arg, index) => {\r\n      const comma = index < args.length - 1 ? ',' : '';\r\n      lines.push(`        [\"_config.${analysis.params[index].name}\"] = ${arg}${comma}`);\r\n    }",
+      "parentContext": {
+        "functionName": "generateVComponentWrapper",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "hexPath",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2b3a4cde",
+      "type": "VariableDeclaration",
+      "babel_source": "const comma = index < args.length - 1 ? ',' : '';",
+      "parentContext": {
+        "functionName": "generateVComponentWrapper",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "hexPath",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "18152c89",
+      "type": "ConditionalExpression",
+      "babel_source": "index < args.length - 1 ? ',' : ''",
+      "parentContext": {
+        "functionName": "generateVComponentWrapper",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "hexPath",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0cf64103",
+      "type": "BinaryExpression",
+      "operator": "<",
+      "babel_source": "index < args.length - 1",
+      "parentContext": {
+        "functionName": "generateVComponentWrapper",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "hexPath",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "59ad4c1c",
+      "type": "BinaryExpression",
+      "operator": "-",
+      "babel_source": "args.length - 1",
+      "parentContext": {
+        "functionName": "generateVComponentWrapper",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "hexPath",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7a86da65",
+      "type": "TemplateLiteral",
+      "babel_source": "`        [\"_config.${analysis.params[index].name}\"] = ${arg}${comma}`",
+      "parentContext": {
+        "functionName": "generateVComponentWrapper",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "hexPath",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5bb88761",
+      "type": "TemplateLiteral",
+      "babel_source": "`    }`",
+      "parentContext": {
+        "functionName": "generateVComponentWrapper",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "hexPath",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8edaa7d1",
+      "type": "TemplateLiteral",
+      "babel_source": "`}`",
+      "parentContext": {
+        "functionName": "generateVComponentWrapper",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "hexPath",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ea8c77e3",
+      "type": "ReturnStatement",
+      "babel_source": "return lines.join('\\n');",
+      "parentContext": {
+        "functionName": "generateVComponentWrapper",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "hexPath",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/hookClassGenerator.cjs"
+  ]
+}

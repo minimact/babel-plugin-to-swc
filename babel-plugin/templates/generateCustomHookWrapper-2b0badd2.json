@@ -1,0 +1,248 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateCustomHookWrapper",
+  "params": [
+    {
+      "name": "hookInstance",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "hexPath",
+      "inferredType": "&Path",
+      "defaultValue": null
+    },
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "indent",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateCustomHookWrapper(hookInstance, hexPath, component, indent) {\r\n  const { namespace, className, params } = hookInstance;\r\n\r\n  // Build InitialState dictionary from hook params\r\n  let stateCode = 'new Dictionary<string, object>()';\r\n\r\n  if (params && params.length > 0) {\r\n    const stateEntries = params.map((paramCode, index) => {\r\n      // Hook params become _config.param0, _config.param1, etc.\r\n      return `[\"_config.param${index}\"] = ${paramCode}`;\r\n    });\r\n    stateCode = `new Dictionary<string, object> { ${stateEntries.join(', ')} }`;\r\n  }\r\n\r\n  const indentStr = '  '.repeat(indent);\r\n\r\n  return `new VComponentWrapper\r\n${indentStr}{\r\n${indentStr}  ComponentName = \"${namespace}\",\r\n${indentStr}  ComponentType = \"${className}\",\r\n${indentStr}  HexPath = \"${hexPath}\",\r\n${indentStr}  InitialState = ${stateCode}\r\n${indentStr}}`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "f9cf7c96",
+      "type": "VariableDeclaration",
+      "babel_source": "const { namespace, className, params } = hookInstance;",
+      "parentContext": {
+        "functionName": "generateCustomHookWrapper",
+        "functionParams": [
+          "hookInstance",
+          "hexPath",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ac9bbbe5",
+      "type": "VariableDeclaration",
+      "babel_source": "let stateCode = 'new Dictionary<string, object>()';",
+      "parentContext": {
+        "functionName": "generateCustomHookWrapper",
+        "functionParams": [
+          "hookInstance",
+          "hexPath",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "02c1b333",
+      "type": "IfStatement",
+      "condition": "params && params.length > 0",
+      "babel_source": "if (params && params.length > 0) {\r\n    const stateEntries = params.map((paramCode, index) => {\r\n      // Hook params become _config.param0, _config.param1, etc.\r\n      return `[\"_config.param${index}\"] = ${paramCode}`;\r\n    });\r\n    stateCode = `new Dictionary<string, object> { ${stateEntries.join(', ')} }`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateCustomHookWrapper",
+        "functionParams": [
+          "hookInstance",
+          "hexPath",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "eae4803c",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "params && params.length > 0",
+      "parentContext": {
+        "functionName": "generateCustomHookWrapper",
+        "functionParams": [
+          "hookInstance",
+          "hexPath",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "89679c4a",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "params.length > 0",
+      "parentContext": {
+        "functionName": "generateCustomHookWrapper",
+        "functionParams": [
+          "hookInstance",
+          "hexPath",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "339e6a9d",
+      "type": "VariableDeclaration",
+      "babel_source": "const stateEntries = params.map((paramCode, index) => {\r\n      // Hook params become _config.param0, _config.param1, etc.\r\n      return `[\"_config.param${index}\"] = ${paramCode}`;\r\n    });",
+      "parentContext": {
+        "functionName": "generateCustomHookWrapper",
+        "functionParams": [
+          "hookInstance",
+          "hexPath",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "698a6247",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "(paramCode, index) => {\r\n      // Hook params become _config.param0, _config.param1, etc.\r\n      return `[\"_config.param${index}\"] = ${paramCode}`;\r\n    }",
+      "parentContext": {
+        "functionName": "generateCustomHookWrapper",
+        "functionParams": [
+          "hookInstance",
+          "hexPath",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1440dd94",
+      "type": "ReturnStatement",
+      "babel_source": "return `[\"_config.param${index}\"] = ${paramCode}`;",
+      "parentContext": {
+        "functionName": "generateCustomHookWrapper",
+        "functionParams": [
+          "hookInstance",
+          "hexPath",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "548c58b7",
+      "type": "TemplateLiteral",
+      "babel_source": "`[\"_config.param${index}\"] = ${paramCode}`",
+      "parentContext": {
+        "functionName": "generateCustomHookWrapper",
+        "functionParams": [
+          "hookInstance",
+          "hexPath",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e0c0a5ac",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "stateCode = `new Dictionary<string, object> { ${stateEntries.join(', ')} }`",
+      "parentContext": {
+        "functionName": "generateCustomHookWrapper",
+        "functionParams": [
+          "hookInstance",
+          "hexPath",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "12dc3ad9",
+      "type": "TemplateLiteral",
+      "babel_source": "`new Dictionary<string, object> { ${stateEntries.join(', ')} }`",
+      "parentContext": {
+        "functionName": "generateCustomHookWrapper",
+        "functionParams": [
+          "hookInstance",
+          "hexPath",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ed01a6b",
+      "type": "VariableDeclaration",
+      "babel_source": "const indentStr = '  '.repeat(indent);",
+      "parentContext": {
+        "functionName": "generateCustomHookWrapper",
+        "functionParams": [
+          "hookInstance",
+          "hexPath",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "653b170c",
+      "type": "ReturnStatement",
+      "babel_source": "return `new VComponentWrapper\r\n${indentStr}{\r\n${indentStr}  ComponentName = \"${namespace}\",\r\n${indentStr}  ComponentType = \"${className}\",\r\n${indentStr}  HexPath = \"${hexPath}\",\r\n${indentStr}  InitialState = ${stateCode}\r\n${indentStr}}`;",
+      "parentContext": {
+        "functionName": "generateCustomHookWrapper",
+        "functionParams": [
+          "hookInstance",
+          "hexPath",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "75e880ed",
+      "type": "TemplateLiteral",
+      "babel_source": "`new VComponentWrapper\r\n${indentStr}{\r\n${indentStr}  ComponentName = \"${namespace}\",\r\n${indentStr}  ComponentType = \"${className}\",\r\n${indentStr}  HexPath = \"${hexPath}\",\r\n${indentStr}  InitialState = ${stateCode}\r\n${indentStr}}`",
+      "parentContext": {
+        "functionName": "generateCustomHookWrapper",
+        "functionParams": [
+          "hookInstance",
+          "hexPath",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/jsx.cjs"
+  ]
+}

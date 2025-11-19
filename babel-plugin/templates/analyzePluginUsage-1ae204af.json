@@ -1,0 +1,182 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "analyzePluginUsage",
+  "params": [
+    {
+      "name": "path",
+      "inferredType": "&Path",
+      "defaultValue": null
+    },
+    {
+      "name": "componentState",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "AnalysisResult",
+  "babel_source": "function analyzePluginUsage(path, componentState) {\r\n  const pluginUsages = [];\r\n\r\n  path.traverse({\r\n    JSXElement(jsxPath) {\r\n      const openingElement = jsxPath.node.openingElement;\r\n\r\n      // Check if this is a <Plugin> element\r\n      if (!isPluginElement(openingElement)) {\r\n        return;\r\n      }\r\n\r\n      try {\r\n        const pluginMetadata = extractPluginMetadata(openingElement, componentState);\r\n        pluginUsages.push(pluginMetadata);\r\n\r\n        // Log for debugging\r\n        console.log(`[analyzePluginUsage] Found plugin usage: ${pluginMetadata.pluginName}`);\r\n      } catch (error) {\r\n        console.error(`[analyzePluginUsage] Error analyzing plugin:`, error.message);\r\n        throw error;\r\n      }\r\n    }\r\n  });\r\n\r\n  return pluginUsages;\r\n}",
+  "body_templates": [
+    {
+      "hash": "515ba539",
+      "type": "VariableDeclaration",
+      "babel_source": "const pluginUsages = [];",
+      "parentContext": {
+        "functionName": "analyzePluginUsage",
+        "functionParams": [
+          "path",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "analyzePluginUsage",
+        "functionParams": [
+          "path",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f8281042",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    JSXElement(jsxPath) {\r\n      const openingElement = jsxPath.node.openingElement;\r\n\r\n      // Check if this is a <Plugin> element\r\n      if (!isPluginElement(openingElement)) {\r\n        return;\r\n      }\r\n\r\n      try {\r\n        const pluginMetadata = extractPluginMetadata(openingElement, componentState);\r\n        pluginUsages.push(pluginMetadata);\r\n\r\n        // Log for debugging\r\n        console.log(`[analyzePluginUsage] Found plugin usage: ${pluginMetadata.pluginName}`);\r\n      } catch (error) {\r\n        console.error(`[analyzePluginUsage] Error analyzing plugin:`, error.message);\r\n        throw error;\r\n      }\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "analyzePluginUsage",
+        "functionParams": [
+          "path",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e46e8e55",
+      "type": "VariableDeclaration",
+      "babel_source": "const openingElement = jsxPath.node.openingElement;",
+      "parentContext": {
+        "functionName": "analyzePluginUsage",
+        "functionParams": [
+          "path",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a85db8fd",
+      "type": "IfStatement",
+      "condition": "!isPluginElement(openingElement)",
+      "babel_source": "if (!isPluginElement(openingElement)) {\r\n        return;\r\n      }",
+      "parentContext": {
+        "functionName": "analyzePluginUsage",
+        "functionParams": [
+          "path",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab24d1e2",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!isPluginElement(openingElement)",
+      "parentContext": {
+        "functionName": "analyzePluginUsage",
+        "functionParams": [
+          "path",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8beaabe2",
+      "type": "ReturnStatement",
+      "babel_source": "return;",
+      "parentContext": {
+        "functionName": "analyzePluginUsage",
+        "functionParams": [
+          "path",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "01d0612b",
+      "type": "VariableDeclaration",
+      "babel_source": "const pluginMetadata = extractPluginMetadata(openingElement, componentState);",
+      "parentContext": {
+        "functionName": "analyzePluginUsage",
+        "functionParams": [
+          "path",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "419bc7c5",
+      "type": "TemplateLiteral",
+      "babel_source": "`[analyzePluginUsage] Found plugin usage: ${pluginMetadata.pluginName}`",
+      "parentContext": {
+        "functionName": "analyzePluginUsage",
+        "functionParams": [
+          "path",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e0d19544",
+      "type": "TemplateLiteral",
+      "babel_source": "`[analyzePluginUsage] Error analyzing plugin:`",
+      "parentContext": {
+        "functionName": "analyzePluginUsage",
+        "functionParams": [
+          "path",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8c468a57",
+      "type": "ThrowStatement",
+      "babel_source": "throw error;",
+      "parentContext": {
+        "functionName": "analyzePluginUsage",
+        "functionParams": [
+          "path",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6681f1d7",
+      "type": "ReturnStatement",
+      "babel_source": "return pluginUsages;",
+      "parentContext": {
+        "functionName": "analyzePluginUsage",
+        "functionParams": [
+          "path",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/analyzePluginUsage.cjs"
+  ]
+}

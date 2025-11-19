@@ -1,0 +1,128 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateStateExpression",
+  "params": [
+    {
+      "name": "stateBinding",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "componentState",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateStateExpression(stateBinding, componentState) {\r\n  switch (stateBinding.type) {\r\n    case 'identifier':\r\n      // Simple identifier: state={currentTime} -> currentTime\r\n      return stateBinding.name;\r\n\r\n    case 'memberExpression':\r\n      // Member expression: state={this.state.time} -> state.time (remove 'this')\r\n      return stateBinding.binding;\r\n\r\n    case 'objectExpression':\r\n      // Inline object: state={{ hours: h, minutes: m }}\r\n      return generateInlineObject(stateBinding, componentState);\r\n\r\n    case 'complexExpression':\r\n      // Complex expression: evaluate using expression generator\r\n      return generateCSharpExpression(stateBinding.expression);\r\n\r\n    default:\r\n      throw new Error(`Unknown state binding type: ${stateBinding.type}`);\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "c48edeb0",
+      "type": "SwitchStatement",
+      "babel_source": "switch (stateBinding.type) {\r\n    case 'identifier':\r\n      // Simple identifier: state={currentTime} -> currentTime\r\n      return stateBinding.name;\r\n\r\n    case 'memberExpression':\r\n      // Member expression: state={this.state.time} -> state.time (remove 'this')\r\n      return stateBinding.binding;\r\n\r\n    case 'objectExpression':\r\n      // Inline object: state={{ hours: h, minutes: m }}\r\n      return generateInlineObject(stateBinding, componentState);\r\n\r\n    case 'complexExpression':\r\n      // Complex expression: evaluate using expression generator\r\n      return generateCSharpExpression(stateBinding.expression);\r\n\r\n    default:\r\n      throw new Error(`Unknown state binding type: ${stateBinding.type}`);\r\n  }",
+      "parentContext": {
+        "functionName": "generateStateExpression",
+        "functionParams": [
+          "stateBinding",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "77c7e2ab",
+      "type": "ReturnStatement",
+      "babel_source": "return stateBinding.name;",
+      "parentContext": {
+        "functionName": "generateStateExpression",
+        "functionParams": [
+          "stateBinding",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "61e15cc4",
+      "type": "ReturnStatement",
+      "babel_source": "return stateBinding.binding;",
+      "parentContext": {
+        "functionName": "generateStateExpression",
+        "functionParams": [
+          "stateBinding",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "48c5c681",
+      "type": "ReturnStatement",
+      "babel_source": "return generateInlineObject(stateBinding, componentState);",
+      "parentContext": {
+        "functionName": "generateStateExpression",
+        "functionParams": [
+          "stateBinding",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "716ad6c4",
+      "type": "ReturnStatement",
+      "babel_source": "return generateCSharpExpression(stateBinding.expression);",
+      "parentContext": {
+        "functionName": "generateStateExpression",
+        "functionParams": [
+          "stateBinding",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0157e484",
+      "type": "ThrowStatement",
+      "babel_source": "throw new Error(`Unknown state binding type: ${stateBinding.type}`);",
+      "parentContext": {
+        "functionName": "generateStateExpression",
+        "functionParams": [
+          "stateBinding",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b05e3992",
+      "type": "NewExpression",
+      "babel_source": "new Error(`Unknown state binding type: ${stateBinding.type}`)",
+      "parentContext": {
+        "functionName": "generateStateExpression",
+        "functionParams": [
+          "stateBinding",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f85b85a0",
+      "type": "TemplateLiteral",
+      "babel_source": "`Unknown state binding type: ${stateBinding.type}`",
+      "parentContext": {
+        "functionName": "generateStateExpression",
+        "functionParams": [
+          "stateBinding",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/plugin.cjs"
+  ]
+}

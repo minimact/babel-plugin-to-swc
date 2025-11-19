@@ -1,0 +1,31 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generatePluginValidation",
+  "params": [
+    {
+      "name": "pluginMetadata",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generatePluginValidation(pluginMetadata) {\r\n  // Future enhancement: Generate runtime validation\r\n  // For now, validation happens in PluginManager\r\n  return null;\r\n}",
+  "body_templates": [
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "generatePluginValidation",
+        "functionParams": [
+          "pluginMetadata"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/plugin.cjs"
+  ]
+}

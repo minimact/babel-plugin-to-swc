@@ -1,0 +1,992 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "compareHookSignatures",
+  "params": [
+    {
+      "name": "previousHooks",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "currentHooks",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function compareHookSignatures(previousHooks, currentHooks) {\r\n  const changes = [];\r\n\r\n  // Check if hook count changed\r\n  if (previousHooks.length !== currentHooks.length) {\r\n    console.log(`[Hook Changes] Hook count changed: ${previousHooks.length} → ${currentHooks.length}`);\r\n  }\r\n\r\n  // Compare each hook by index\r\n  const maxLength = Math.max(previousHooks.length, currentHooks.length);\r\n\r\n  for (let i = 0; i < maxLength; i++) {\r\n    const prevHook = previousHooks[i];\r\n    const currHook = currentHooks[i];\r\n\r\n    if (!prevHook && currHook) {\r\n      // Hook added\r\n      const hookDesc = getHookDescription(currHook);\r\n      console.log(`[Hook Changes] 🆕 Hook added at index ${i}: ${hookDesc}`);\r\n      changes.push({\r\n        type: 'hook-added',\r\n        hookType: currHook.type,\r\n        varName: currHook.varName,\r\n        index: i\r\n      });\r\n    } else if (prevHook && !currHook) {\r\n      // Hook removed\r\n      const hookDesc = getHookDescription(prevHook);\r\n      console.log(`[Hook Changes] 🗑️  Hook removed at index ${i}: ${hookDesc}`);\r\n      changes.push({\r\n        type: 'hook-removed',\r\n        hookType: prevHook.type,\r\n        varName: prevHook.varName,\r\n        index: i\r\n      });\r\n    } else if (prevHook && currHook) {\r\n      // Check if hook type changed\r\n      if (prevHook.type !== currHook.type) {\r\n        console.log(`[Hook Changes] 🔄 Hook type changed at index ${i}: ${prevHook.type} → ${currHook.type}`);\r\n        changes.push({\r\n          type: 'hook-type-changed',\r\n          oldHookType: prevHook.type,\r\n          newHookType: currHook.type,\r\n          index: i\r\n        });\r\n      }\r\n\r\n      // Check if variable name changed (for hooks with variables)\r\n      if (prevHook.varName && currHook.varName && prevHook.varName !== currHook.varName) {\r\n        console.log(`[Hook Changes] 🔄 Hook variable changed at index ${i}: ${prevHook.varName} → ${currHook.varName}`);\r\n        changes.push({\r\n          type: 'hook-variable-changed',\r\n          hookType: currHook.type,\r\n          oldVarName: prevHook.varName,\r\n          newVarName: currHook.varName,\r\n          index: i\r\n        });\r\n      }\r\n\r\n      // Check if property name changed (for useMvcState)\r\n      if (prevHook.propertyName && currHook.propertyName && prevHook.propertyName !== currHook.propertyName) {\r\n        console.log(`[Hook Changes] 🔄 useMvcState property changed at index ${i}: ${prevHook.propertyName} → ${currHook.propertyName}`);\r\n        changes.push({\r\n          type: 'hook-property-changed',\r\n          hookType: 'useMvcState',\r\n          oldPropertyName: prevHook.propertyName,\r\n          newPropertyName: currHook.propertyName,\r\n          index: i\r\n        });\r\n      }\r\n\r\n      // Check if channel changed (for usePub/useSub)\r\n      if (prevHook.channel !== undefined && currHook.channel !== undefined && prevHook.channel !== currHook.channel) {\r\n        console.log(`[Hook Changes] 🔄 ${currHook.type} channel changed at index ${i}: ${prevHook.channel} → ${currHook.channel}`);\r\n        // Note: Channel change is NOT structural (doesn't affect C# fields), so we don't add it to changes\r\n        // But we log it for visibility\r\n      }\r\n\r\n      // Check if runtime changed (for useServerTask/usePaginatedServerTask)\r\n      if (prevHook.runtime && currHook.runtime && prevHook.runtime !== currHook.runtime) {\r\n        console.log(`[Hook Changes] 🔄 ${currHook.type} runtime changed at index ${i}: ${prevHook.runtime} → ${currHook.runtime}`);\r\n        changes.push({\r\n          type: 'hook-runtime-changed',\r\n          hookType: currHook.type,\r\n          oldRuntime: prevHook.runtime,\r\n          newRuntime: currHook.runtime,\r\n          index: i\r\n        });\r\n      }\r\n\r\n      // Check if deps count changed (for useEffect)\r\n      // NOTE: Deps count change is NOT a structural change (doesn't affect C# fields)\r\n      // The effect body and registration stay the same, only execution timing changes\r\n      // So we log it but don't add to structural changes\r\n      if (prevHook.depsCount !== undefined &&\r\n          currHook.depsCount !== undefined &&\r\n          prevHook.depsCount !== currHook.depsCount) {\r\n        console.log(`[Hook Changes] ℹ️  useEffect deps count changed at index ${i}: ${prevHook.depsCount} → ${currHook.depsCount} deps (NOT structural)`);\r\n      }\r\n\r\n      // Check if streaming changed (for useServerTask)\r\n      if (prevHook.isStreaming !== undefined && currHook.isStreaming !== undefined && prevHook.isStreaming !== currHook.isStreaming) {\r\n        console.log(`[Hook Changes] 🔄 useServerTask streaming changed at index ${i}: ${prevHook.isStreaming} → ${currHook.isStreaming}`);\r\n        changes.push({\r\n          type: 'hook-streaming-changed',\r\n          hookType: 'useServerTask',\r\n          oldStreaming: prevHook.isStreaming,\r\n          newStreaming: currHook.isStreaming,\r\n          index: i\r\n        });\r\n      }\r\n    }\r\n  }\r\n\r\n  return changes;\r\n}",
+  "body_templates": [
+    {
+      "hash": "b82fdd05",
+      "type": "VariableDeclaration",
+      "babel_source": "const changes = [];",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dab82d5b",
+      "type": "IfStatement",
+      "condition": "previousHooks.length !== currentHooks.length",
+      "babel_source": "if (previousHooks.length !== currentHooks.length) {\r\n    console.log(`[Hook Changes] Hook count changed: ${previousHooks.length} → ${currentHooks.length}`);\r\n  }",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ea817aad",
+      "type": "BinaryExpression",
+      "operator": "!==",
+      "babel_source": "previousHooks.length !== currentHooks.length",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4bc15bac",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Hook Changes] Hook count changed: ${previousHooks.length} → ${currentHooks.length}`",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d104a34c",
+      "type": "VariableDeclaration",
+      "babel_source": "const maxLength = Math.max(previousHooks.length, currentHooks.length);",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b852feac",
+      "type": "ForStatement",
+      "babel_source": "for (let i = 0; i < maxLength; i++) {\r\n    const prevHook = previousHooks[i];\r\n    const currHook = currentHooks[i];\r\n\r\n    if (!prevHook && currHook) {\r\n      // Hook added\r\n      const hookDesc = getHookDescription(currHook);\r\n      console.log(`[Hook Changes] 🆕 Hook added at index ${i}: ${hookDesc}`);\r\n      changes.push({\r\n        type: 'hook-added',\r\n        hookType: currHook.type,\r\n        varName: currHook.varName,\r\n        index: i\r\n      });\r\n    } else if (prevHook && !currHook) {\r\n      // Hook removed\r\n      const hookDesc = getHookDescription(prevHook);\r\n      console.log(`[Hook Changes] 🗑️  Hook removed at index ${i}: ${hookDesc}`);\r\n      changes.push({\r\n        type: 'hook-removed',\r\n        hookType: prevHook.type,\r\n        varName: prevHook.varName,\r\n        index: i\r\n      });\r\n    } else if (prevHook && currHook) {\r\n      // Check if hook type changed\r\n      if (prevHook.type !== currHook.type) {\r\n        console.log(`[Hook Changes] 🔄 Hook type changed at index ${i}: ${prevHook.type} → ${currHook.type}`);\r\n        changes.push({\r\n          type: 'hook-type-changed',\r\n          oldHookType: prevHook.type,\r\n          newHookType: currHook.type,\r\n          index: i\r\n        });\r\n      }\r\n\r\n      // Check if variable name changed (for hooks with variables)\r\n      if (prevHook.varName && currHook.varName && prevHook.varName !== currHook.varName) {\r\n        console.log(`[Hook Changes] 🔄 Hook variable changed at index ${i}: ${prevHook.varName} → ${currHook.varName}`);\r\n        changes.push({\r\n          type: 'hook-variable-changed',\r\n          hookType: currHook.type,\r\n          oldVarName: prevHook.varName,\r\n          newVarName: currHook.varName,\r\n          index: i\r\n        });\r\n      }\r\n\r\n      // Check if property name changed (for useMvcState)\r\n      if (prevHook.propertyName && currHook.propertyName && prevHook.propertyName !== currHook.propertyName) {\r\n        console.log(`[Hook Changes] 🔄 useMvcState property changed at index ${i}: ${prevHook.propertyName} → ${currHook.propertyName}`);\r\n        changes.push({\r\n          type: 'hook-property-changed',\r\n          hookType: 'useMvcState',\r\n          oldPropertyName: prevHook.propertyName,\r\n          newPropertyName: currHook.propertyName,\r\n          index: i\r\n        });\r\n      }\r\n\r\n      // Check if channel changed (for usePub/useSub)\r\n      if (prevHook.channel !== undefined && currHook.channel !== undefined && prevHook.channel !== currHook.channel) {\r\n        console.log(`[Hook Changes] 🔄 ${currHook.type} channel changed at index ${i}: ${prevHook.channel} → ${currHook.channel}`);\r\n        // Note: Channel change is NOT structural (doesn't affect C# fields), so we don't add it to changes\r\n        // But we log it for visibility\r\n      }\r\n\r\n      // Check if runtime changed (for useServerTask/usePaginatedServerTask)\r\n      if (prevHook.runtime && currHook.runtime && prevHook.runtime !== currHook.runtime) {\r\n        console.log(`[Hook Changes] 🔄 ${currHook.type} runtime changed at index ${i}: ${prevHook.runtime} → ${currHook.runtime}`);\r\n        changes.push({\r\n          type: 'hook-runtime-changed',\r\n          hookType: currHook.type,\r\n          oldRuntime: prevHook.runtime,\r\n          newRuntime: currHook.runtime,\r\n          index: i\r\n        });\r\n      }\r\n\r\n      // Check if deps count changed (for useEffect)\r\n      // NOTE: Deps count change is NOT a structural change (doesn't affect C# fields)\r\n      // The effect body and registration stay the same, only execution timing changes\r\n      // So we log it but don't add to structural changes\r\n      if (prevHook.depsCount !== undefined &&\r\n          currHook.depsCount !== undefined &&\r\n          prevHook.depsCount !== currHook.depsCount) {\r\n        console.log(`[Hook Changes] ℹ️  useEffect deps count changed at index ${i}: ${prevHook.depsCount} → ${currHook.depsCount} deps (NOT structural)`);\r\n      }\r\n\r\n      // Check if streaming changed (for useServerTask)\r\n      if (prevHook.isStreaming !== undefined && currHook.isStreaming !== undefined && prevHook.isStreaming !== currHook.isStreaming) {\r\n        console.log(`[Hook Changes] 🔄 useServerTask streaming changed at index ${i}: ${prevHook.isStreaming} → ${currHook.isStreaming}`);\r\n        changes.push({\r\n          type: 'hook-streaming-changed',\r\n          hookType: 'useServerTask',\r\n          oldStreaming: prevHook.isStreaming,\r\n          newStreaming: currHook.isStreaming,\r\n          index: i\r\n        });\r\n      }\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ecb911a1",
+      "type": "VariableDeclaration",
+      "babel_source": "let i = 0",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6f51d265",
+      "type": "BinaryExpression",
+      "operator": "<",
+      "babel_source": "i < maxLength",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e8dee0e1",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "i++",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1e402600",
+      "type": "VariableDeclaration",
+      "babel_source": "const prevHook = previousHooks[i];",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "79d5cd27",
+      "type": "VariableDeclaration",
+      "babel_source": "const currHook = currentHooks[i];",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "94ba5f9a",
+      "type": "IfStatement",
+      "condition": "!prevHook && currHook",
+      "babel_source": "if (!prevHook && currHook) {\r\n      // Hook added\r\n      const hookDesc = getHookDescription(currHook);\r\n      console.log(`[Hook Changes] 🆕 Hook added at index ${i}: ${hookDesc}`);\r\n      changes.push({\r\n        type: 'hook-added',\r\n        hookType: currHook.type,\r\n        varName: currHook.varName,\r\n        index: i\r\n      });\r\n    } else if (prevHook && !currHook) {\r\n      // Hook removed\r\n      const hookDesc = getHookDescription(prevHook);\r\n      console.log(`[Hook Changes] 🗑️  Hook removed at index ${i}: ${hookDesc}`);\r\n      changes.push({\r\n        type: 'hook-removed',\r\n        hookType: prevHook.type,\r\n        varName: prevHook.varName,\r\n        index: i\r\n      });\r\n    } else if (prevHook && currHook) {\r\n      // Check if hook type changed\r\n      if (prevHook.type !== currHook.type) {\r\n        console.log(`[Hook Changes] 🔄 Hook type changed at index ${i}: ${prevHook.type} → ${currHook.type}`);\r\n        changes.push({\r\n          type: 'hook-type-changed',\r\n          oldHookType: prevHook.type,\r\n          newHookType: currHook.type,\r\n          index: i\r\n        });\r\n      }\r\n\r\n      // Check if variable name changed (for hooks with variables)\r\n      if (prevHook.varName && currHook.varName && prevHook.varName !== currHook.varName) {\r\n        console.log(`[Hook Changes] 🔄 Hook variable changed at index ${i}: ${prevHook.varName} → ${currHook.varName}`);\r\n        changes.push({\r\n          type: 'hook-variable-changed',\r\n          hookType: currHook.type,\r\n          oldVarName: prevHook.varName,\r\n          newVarName: currHook.varName,\r\n          index: i\r\n        });\r\n      }\r\n\r\n      // Check if property name changed (for useMvcState)\r\n      if (prevHook.propertyName && currHook.propertyName && prevHook.propertyName !== currHook.propertyName) {\r\n        console.log(`[Hook Changes] 🔄 useMvcState property changed at index ${i}: ${prevHook.propertyName} → ${currHook.propertyName}`);\r\n        changes.push({\r\n          type: 'hook-property-changed',\r\n          hookType: 'useMvcState',\r\n          oldPropertyName: prevHook.propertyName,\r\n          newPropertyName: currHook.propertyName,\r\n          index: i\r\n        });\r\n      }\r\n\r\n      // Check if channel changed (for usePub/useSub)\r\n      if (prevHook.channel !== undefined && currHook.channel !== undefined && prevHook.channel !== currHook.channel) {\r\n        console.log(`[Hook Changes] 🔄 ${currHook.type} channel changed at index ${i}: ${prevHook.channel} → ${currHook.channel}`);\r\n        // Note: Channel change is NOT structural (doesn't affect C# fields), so we don't add it to changes\r\n        // But we log it for visibility\r\n      }\r\n\r\n      // Check if runtime changed (for useServerTask/usePaginatedServerTask)\r\n      if (prevHook.runtime && currHook.runtime && prevHook.runtime !== currHook.runtime) {\r\n        console.log(`[Hook Changes] 🔄 ${currHook.type} runtime changed at index ${i}: ${prevHook.runtime} → ${currHook.runtime}`);\r\n        changes.push({\r\n          type: 'hook-runtime-changed',\r\n          hookType: currHook.type,\r\n          oldRuntime: prevHook.runtime,\r\n          newRuntime: currHook.runtime,\r\n          index: i\r\n        });\r\n      }\r\n\r\n      // Check if deps count changed (for useEffect)\r\n      // NOTE: Deps count change is NOT a structural change (doesn't affect C# fields)\r\n      // The effect body and registration stay the same, only execution timing changes\r\n      // So we log it but don't add to structural changes\r\n      if (prevHook.depsCount !== undefined &&\r\n          currHook.depsCount !== undefined &&\r\n          prevHook.depsCount !== currHook.depsCount) {\r\n        console.log(`[Hook Changes] ℹ️  useEffect deps count changed at index ${i}: ${prevHook.depsCount} → ${currHook.depsCount} deps (NOT structural)`);\r\n      }\r\n\r\n      // Check if streaming changed (for useServerTask)\r\n      if (prevHook.isStreaming !== undefined && currHook.isStreaming !== undefined && prevHook.isStreaming !== currHook.isStreaming) {\r\n        console.log(`[Hook Changes] 🔄 useServerTask streaming changed at index ${i}: ${prevHook.isStreaming} → ${currHook.isStreaming}`);\r\n        changes.push({\r\n          type: 'hook-streaming-changed',\r\n          hookType: 'useServerTask',\r\n          oldStreaming: prevHook.isStreaming,\r\n          newStreaming: currHook.isStreaming,\r\n          index: i\r\n        });\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5050e38c",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "!prevHook && currHook",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ec98d5cc",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!prevHook",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dca8354d",
+      "type": "VariableDeclaration",
+      "babel_source": "const hookDesc = getHookDescription(currHook);",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1cde8fbf",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Hook Changes] 🆕 Hook added at index ${i}: ${hookDesc}`",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "36bbf813",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n        type: 'hook-added',\r\n        hookType: currHook.type,\r\n        varName: currHook.varName,\r\n        index: i\r\n      }",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f131f9c2",
+      "type": "IfStatement",
+      "condition": "prevHook && !currHook",
+      "babel_source": "if (prevHook && !currHook) {\r\n      // Hook removed\r\n      const hookDesc = getHookDescription(prevHook);\r\n      console.log(`[Hook Changes] 🗑️  Hook removed at index ${i}: ${hookDesc}`);\r\n      changes.push({\r\n        type: 'hook-removed',\r\n        hookType: prevHook.type,\r\n        varName: prevHook.varName,\r\n        index: i\r\n      });\r\n    } else if (prevHook && currHook) {\r\n      // Check if hook type changed\r\n      if (prevHook.type !== currHook.type) {\r\n        console.log(`[Hook Changes] 🔄 Hook type changed at index ${i}: ${prevHook.type} → ${currHook.type}`);\r\n        changes.push({\r\n          type: 'hook-type-changed',\r\n          oldHookType: prevHook.type,\r\n          newHookType: currHook.type,\r\n          index: i\r\n        });\r\n      }\r\n\r\n      // Check if variable name changed (for hooks with variables)\r\n      if (prevHook.varName && currHook.varName && prevHook.varName !== currHook.varName) {\r\n        console.log(`[Hook Changes] 🔄 Hook variable changed at index ${i}: ${prevHook.varName} → ${currHook.varName}`);\r\n        changes.push({\r\n          type: 'hook-variable-changed',\r\n          hookType: currHook.type,\r\n          oldVarName: prevHook.varName,\r\n          newVarName: currHook.varName,\r\n          index: i\r\n        });\r\n      }\r\n\r\n      // Check if property name changed (for useMvcState)\r\n      if (prevHook.propertyName && currHook.propertyName && prevHook.propertyName !== currHook.propertyName) {\r\n        console.log(`[Hook Changes] 🔄 useMvcState property changed at index ${i}: ${prevHook.propertyName} → ${currHook.propertyName}`);\r\n        changes.push({\r\n          type: 'hook-property-changed',\r\n          hookType: 'useMvcState',\r\n          oldPropertyName: prevHook.propertyName,\r\n          newPropertyName: currHook.propertyName,\r\n          index: i\r\n        });\r\n      }\r\n\r\n      // Check if channel changed (for usePub/useSub)\r\n      if (prevHook.channel !== undefined && currHook.channel !== undefined && prevHook.channel !== currHook.channel) {\r\n        console.log(`[Hook Changes] 🔄 ${currHook.type} channel changed at index ${i}: ${prevHook.channel} → ${currHook.channel}`);\r\n        // Note: Channel change is NOT structural (doesn't affect C# fields), so we don't add it to changes\r\n        // But we log it for visibility\r\n      }\r\n\r\n      // Check if runtime changed (for useServerTask/usePaginatedServerTask)\r\n      if (prevHook.runtime && currHook.runtime && prevHook.runtime !== currHook.runtime) {\r\n        console.log(`[Hook Changes] 🔄 ${currHook.type} runtime changed at index ${i}: ${prevHook.runtime} → ${currHook.runtime}`);\r\n        changes.push({\r\n          type: 'hook-runtime-changed',\r\n          hookType: currHook.type,\r\n          oldRuntime: prevHook.runtime,\r\n          newRuntime: currHook.runtime,\r\n          index: i\r\n        });\r\n      }\r\n\r\n      // Check if deps count changed (for useEffect)\r\n      // NOTE: Deps count change is NOT a structural change (doesn't affect C# fields)\r\n      // The effect body and registration stay the same, only execution timing changes\r\n      // So we log it but don't add to structural changes\r\n      if (prevHook.depsCount !== undefined &&\r\n          currHook.depsCount !== undefined &&\r\n          prevHook.depsCount !== currHook.depsCount) {\r\n        console.log(`[Hook Changes] ℹ️  useEffect deps count changed at index ${i}: ${prevHook.depsCount} → ${currHook.depsCount} deps (NOT structural)`);\r\n      }\r\n\r\n      // Check if streaming changed (for useServerTask)\r\n      if (prevHook.isStreaming !== undefined && currHook.isStreaming !== undefined && prevHook.isStreaming !== currHook.isStreaming) {\r\n        console.log(`[Hook Changes] 🔄 useServerTask streaming changed at index ${i}: ${prevHook.isStreaming} → ${currHook.isStreaming}`);\r\n        changes.push({\r\n          type: 'hook-streaming-changed',\r\n          hookType: 'useServerTask',\r\n          oldStreaming: prevHook.isStreaming,\r\n          newStreaming: currHook.isStreaming,\r\n          index: i\r\n        });\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "568f34dc",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "prevHook && !currHook",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8095eff9",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!currHook",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "95d43820",
+      "type": "VariableDeclaration",
+      "babel_source": "const hookDesc = getHookDescription(prevHook);",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cd68455c",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Hook Changes] 🗑️  Hook removed at index ${i}: ${hookDesc}`",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f5e9ced9",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n        type: 'hook-removed',\r\n        hookType: prevHook.type,\r\n        varName: prevHook.varName,\r\n        index: i\r\n      }",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b0fa1204",
+      "type": "IfStatement",
+      "condition": "prevHook && currHook",
+      "babel_source": "if (prevHook && currHook) {\r\n      // Check if hook type changed\r\n      if (prevHook.type !== currHook.type) {\r\n        console.log(`[Hook Changes] 🔄 Hook type changed at index ${i}: ${prevHook.type} → ${currHook.type}`);\r\n        changes.push({\r\n          type: 'hook-type-changed',\r\n          oldHookType: prevHook.type,\r\n          newHookType: currHook.type,\r\n          index: i\r\n        });\r\n      }\r\n\r\n      // Check if variable name changed (for hooks with variables)\r\n      if (prevHook.varName && currHook.varName && prevHook.varName !== currHook.varName) {\r\n        console.log(`[Hook Changes] 🔄 Hook variable changed at index ${i}: ${prevHook.varName} → ${currHook.varName}`);\r\n        changes.push({\r\n          type: 'hook-variable-changed',\r\n          hookType: currHook.type,\r\n          oldVarName: prevHook.varName,\r\n          newVarName: currHook.varName,\r\n          index: i\r\n        });\r\n      }\r\n\r\n      // Check if property name changed (for useMvcState)\r\n      if (prevHook.propertyName && currHook.propertyName && prevHook.propertyName !== currHook.propertyName) {\r\n        console.log(`[Hook Changes] 🔄 useMvcState property changed at index ${i}: ${prevHook.propertyName} → ${currHook.propertyName}`);\r\n        changes.push({\r\n          type: 'hook-property-changed',\r\n          hookType: 'useMvcState',\r\n          oldPropertyName: prevHook.propertyName,\r\n          newPropertyName: currHook.propertyName,\r\n          index: i\r\n        });\r\n      }\r\n\r\n      // Check if channel changed (for usePub/useSub)\r\n      if (prevHook.channel !== undefined && currHook.channel !== undefined && prevHook.channel !== currHook.channel) {\r\n        console.log(`[Hook Changes] 🔄 ${currHook.type} channel changed at index ${i}: ${prevHook.channel} → ${currHook.channel}`);\r\n        // Note: Channel change is NOT structural (doesn't affect C# fields), so we don't add it to changes\r\n        // But we log it for visibility\r\n      }\r\n\r\n      // Check if runtime changed (for useServerTask/usePaginatedServerTask)\r\n      if (prevHook.runtime && currHook.runtime && prevHook.runtime !== currHook.runtime) {\r\n        console.log(`[Hook Changes] 🔄 ${currHook.type} runtime changed at index ${i}: ${prevHook.runtime} → ${currHook.runtime}`);\r\n        changes.push({\r\n          type: 'hook-runtime-changed',\r\n          hookType: currHook.type,\r\n          oldRuntime: prevHook.runtime,\r\n          newRuntime: currHook.runtime,\r\n          index: i\r\n        });\r\n      }\r\n\r\n      // Check if deps count changed (for useEffect)\r\n      // NOTE: Deps count change is NOT a structural change (doesn't affect C# fields)\r\n      // The effect body and registration stay the same, only execution timing changes\r\n      // So we log it but don't add to structural changes\r\n      if (prevHook.depsCount !== undefined &&\r\n          currHook.depsCount !== undefined &&\r\n          prevHook.depsCount !== currHook.depsCount) {\r\n        console.log(`[Hook Changes] ℹ️  useEffect deps count changed at index ${i}: ${prevHook.depsCount} → ${currHook.depsCount} deps (NOT structural)`);\r\n      }\r\n\r\n      // Check if streaming changed (for useServerTask)\r\n      if (prevHook.isStreaming !== undefined && currHook.isStreaming !== undefined && prevHook.isStreaming !== currHook.isStreaming) {\r\n        console.log(`[Hook Changes] 🔄 useServerTask streaming changed at index ${i}: ${prevHook.isStreaming} → ${currHook.isStreaming}`);\r\n        changes.push({\r\n          type: 'hook-streaming-changed',\r\n          hookType: 'useServerTask',\r\n          oldStreaming: prevHook.isStreaming,\r\n          newStreaming: currHook.isStreaming,\r\n          index: i\r\n        });\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c3d33463",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "prevHook && currHook",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8dbebbeb",
+      "type": "IfStatement",
+      "condition": "prevHook.type !== currHook.type",
+      "babel_source": "if (prevHook.type !== currHook.type) {\r\n        console.log(`[Hook Changes] 🔄 Hook type changed at index ${i}: ${prevHook.type} → ${currHook.type}`);\r\n        changes.push({\r\n          type: 'hook-type-changed',\r\n          oldHookType: prevHook.type,\r\n          newHookType: currHook.type,\r\n          index: i\r\n        });\r\n      }",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f58e9b13",
+      "type": "BinaryExpression",
+      "operator": "!==",
+      "babel_source": "prevHook.type !== currHook.type",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ea80b6a2",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Hook Changes] 🔄 Hook type changed at index ${i}: ${prevHook.type} → ${currHook.type}`",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "32a4e866",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n          type: 'hook-type-changed',\r\n          oldHookType: prevHook.type,\r\n          newHookType: currHook.type,\r\n          index: i\r\n        }",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ea9e6252",
+      "type": "IfStatement",
+      "condition": "prevHook.varName && currHook.varName && prevHook.varName !== currHook.varName",
+      "babel_source": "if (prevHook.varName && currHook.varName && prevHook.varName !== currHook.varName) {\r\n        console.log(`[Hook Changes] 🔄 Hook variable changed at index ${i}: ${prevHook.varName} → ${currHook.varName}`);\r\n        changes.push({\r\n          type: 'hook-variable-changed',\r\n          hookType: currHook.type,\r\n          oldVarName: prevHook.varName,\r\n          newVarName: currHook.varName,\r\n          index: i\r\n        });\r\n      }",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8acab3bf",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "prevHook.varName && currHook.varName && prevHook.varName !== currHook.varName",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "72819dd8",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "prevHook.varName && currHook.varName",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8bf14b15",
+      "type": "BinaryExpression",
+      "operator": "!==",
+      "babel_source": "prevHook.varName !== currHook.varName",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "627018d6",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Hook Changes] 🔄 Hook variable changed at index ${i}: ${prevHook.varName} → ${currHook.varName}`",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cc9faf65",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n          type: 'hook-variable-changed',\r\n          hookType: currHook.type,\r\n          oldVarName: prevHook.varName,\r\n          newVarName: currHook.varName,\r\n          index: i\r\n        }",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "819b1859",
+      "type": "IfStatement",
+      "condition": "prevHook.propertyName && currHook.propertyName && prevHook.propertyName !== currHook.propertyName",
+      "babel_source": "if (prevHook.propertyName && currHook.propertyName && prevHook.propertyName !== currHook.propertyName) {\r\n        console.log(`[Hook Changes] 🔄 useMvcState property changed at index ${i}: ${prevHook.propertyName} → ${currHook.propertyName}`);\r\n        changes.push({\r\n          type: 'hook-property-changed',\r\n          hookType: 'useMvcState',\r\n          oldPropertyName: prevHook.propertyName,\r\n          newPropertyName: currHook.propertyName,\r\n          index: i\r\n        });\r\n      }",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "912eb56a",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "prevHook.propertyName && currHook.propertyName && prevHook.propertyName !== currHook.propertyName",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "360131cf",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "prevHook.propertyName && currHook.propertyName",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a228940c",
+      "type": "BinaryExpression",
+      "operator": "!==",
+      "babel_source": "prevHook.propertyName !== currHook.propertyName",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3b027da3",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Hook Changes] 🔄 useMvcState property changed at index ${i}: ${prevHook.propertyName} → ${currHook.propertyName}`",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "864daa30",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n          type: 'hook-property-changed',\r\n          hookType: 'useMvcState',\r\n          oldPropertyName: prevHook.propertyName,\r\n          newPropertyName: currHook.propertyName,\r\n          index: i\r\n        }",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3f450e36",
+      "type": "IfStatement",
+      "condition": "prevHook.channel !== undefined && currHook.channel !== undefined && prevHook.channel !== currHook.channel",
+      "babel_source": "if (prevHook.channel !== undefined && currHook.channel !== undefined && prevHook.channel !== currHook.channel) {\r\n        console.log(`[Hook Changes] 🔄 ${currHook.type} channel changed at index ${i}: ${prevHook.channel} → ${currHook.channel}`);\r\n        // Note: Channel change is NOT structural (doesn't affect C# fields), so we don't add it to changes\r\n        // But we log it for visibility\r\n      }",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f82f0bd4",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "prevHook.channel !== undefined && currHook.channel !== undefined && prevHook.channel !== currHook.channel",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "230d917b",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "prevHook.channel !== undefined && currHook.channel !== undefined",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1b456e9d",
+      "type": "BinaryExpression",
+      "operator": "!==",
+      "babel_source": "prevHook.channel !== undefined",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "31ea16bb",
+      "type": "BinaryExpression",
+      "operator": "!==",
+      "babel_source": "currHook.channel !== undefined",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d1d3d870",
+      "type": "BinaryExpression",
+      "operator": "!==",
+      "babel_source": "prevHook.channel !== currHook.channel",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "537943af",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Hook Changes] 🔄 ${currHook.type} channel changed at index ${i}: ${prevHook.channel} → ${currHook.channel}`",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "96db42b3",
+      "type": "IfStatement",
+      "condition": "prevHook.runtime && currHook.runtime && prevHook.runtime !== currHook.runtime",
+      "babel_source": "if (prevHook.runtime && currHook.runtime && prevHook.runtime !== currHook.runtime) {\r\n        console.log(`[Hook Changes] 🔄 ${currHook.type} runtime changed at index ${i}: ${prevHook.runtime} → ${currHook.runtime}`);\r\n        changes.push({\r\n          type: 'hook-runtime-changed',\r\n          hookType: currHook.type,\r\n          oldRuntime: prevHook.runtime,\r\n          newRuntime: currHook.runtime,\r\n          index: i\r\n        });\r\n      }",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "628ad7e2",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "prevHook.runtime && currHook.runtime && prevHook.runtime !== currHook.runtime",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "da1b9ecf",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "prevHook.runtime && currHook.runtime",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d34c8486",
+      "type": "BinaryExpression",
+      "operator": "!==",
+      "babel_source": "prevHook.runtime !== currHook.runtime",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "48e06ebd",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Hook Changes] 🔄 ${currHook.type} runtime changed at index ${i}: ${prevHook.runtime} → ${currHook.runtime}`",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "32246d9e",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n          type: 'hook-runtime-changed',\r\n          hookType: currHook.type,\r\n          oldRuntime: prevHook.runtime,\r\n          newRuntime: currHook.runtime,\r\n          index: i\r\n        }",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "785eb067",
+      "type": "IfStatement",
+      "condition": "prevHook.depsCount !== undefined &&\r\n          currHook.depsCount !== undefined &&\r\n          prevHook.depsCount !== currHook.depsCount",
+      "babel_source": "if (prevHook.depsCount !== undefined &&\r\n          currHook.depsCount !== undefined &&\r\n          prevHook.depsCount !== currHook.depsCount) {\r\n        console.log(`[Hook Changes] ℹ️  useEffect deps count changed at index ${i}: ${prevHook.depsCount} → ${currHook.depsCount} deps (NOT structural)`);\r\n      }",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "553d88f7",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "prevHook.depsCount !== undefined &&\r\n          currHook.depsCount !== undefined &&\r\n          prevHook.depsCount !== currHook.depsCount",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f0d6d6a",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "prevHook.depsCount !== undefined &&\r\n          currHook.depsCount !== undefined",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cd419b7f",
+      "type": "BinaryExpression",
+      "operator": "!==",
+      "babel_source": "prevHook.depsCount !== undefined",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "be7c91fd",
+      "type": "BinaryExpression",
+      "operator": "!==",
+      "babel_source": "currHook.depsCount !== undefined",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7a2cbb4d",
+      "type": "BinaryExpression",
+      "operator": "!==",
+      "babel_source": "prevHook.depsCount !== currHook.depsCount",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8ae04026",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Hook Changes] ℹ️  useEffect deps count changed at index ${i}: ${prevHook.depsCount} → ${currHook.depsCount} deps (NOT structural)`",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "567fc9d8",
+      "type": "IfStatement",
+      "condition": "prevHook.isStreaming !== undefined && currHook.isStreaming !== undefined && prevHook.isStreaming !== currHook.isStreaming",
+      "babel_source": "if (prevHook.isStreaming !== undefined && currHook.isStreaming !== undefined && prevHook.isStreaming !== currHook.isStreaming) {\r\n        console.log(`[Hook Changes] 🔄 useServerTask streaming changed at index ${i}: ${prevHook.isStreaming} → ${currHook.isStreaming}`);\r\n        changes.push({\r\n          type: 'hook-streaming-changed',\r\n          hookType: 'useServerTask',\r\n          oldStreaming: prevHook.isStreaming,\r\n          newStreaming: currHook.isStreaming,\r\n          index: i\r\n        });\r\n      }",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3d978c70",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "prevHook.isStreaming !== undefined && currHook.isStreaming !== undefined && prevHook.isStreaming !== currHook.isStreaming",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "042700d0",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "prevHook.isStreaming !== undefined && currHook.isStreaming !== undefined",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7d5d8cdb",
+      "type": "BinaryExpression",
+      "operator": "!==",
+      "babel_source": "prevHook.isStreaming !== undefined",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6e305df3",
+      "type": "BinaryExpression",
+      "operator": "!==",
+      "babel_source": "currHook.isStreaming !== undefined",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3a61841b",
+      "type": "BinaryExpression",
+      "operator": "!==",
+      "babel_source": "prevHook.isStreaming !== currHook.isStreaming",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c29b7603",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Hook Changes] 🔄 useServerTask streaming changed at index ${i}: ${prevHook.isStreaming} → ${currHook.isStreaming}`",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b22021a0",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n          type: 'hook-streaming-changed',\r\n          hookType: 'useServerTask',\r\n          oldStreaming: prevHook.isStreaming,\r\n          newStreaming: currHook.isStreaming,\r\n          index: i\r\n        }",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3570aa95",
+      "type": "ReturnStatement",
+      "babel_source": "return changes;",
+      "parentContext": {
+        "functionName": "compareHookSignatures",
+        "functionParams": [
+          "previousHooks",
+          "currentHooks"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/hookSignature.cjs"
+  ]
+}

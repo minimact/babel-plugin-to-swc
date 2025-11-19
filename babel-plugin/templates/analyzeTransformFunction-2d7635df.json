@@ -1,0 +1,291 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "analyzeTransformFunction",
+  "params": [
+    {
+      "name": "arrowFn",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "AnalysisResult",
+  "babel_source": "function analyzeTransformFunction(arrowFn) {\r\n  const param = arrowFn.params[0]; // 'v'\r\n  const paramName = param ? param.name : 'v';\r\n  const body = arrowFn.body;\r\n\r\n  // Template literal: `$${v.toFixed(2)}`\r\n  if (t.isTemplateLiteral(body)) {\r\n    return {\r\n      type: 'template',\r\n      csharpCode: generateCSharpFromTemplate(body, paramName)\r\n    };\r\n  }\r\n\r\n  // Ternary: v > 10 ? 'High' : 'Low'\r\n  if (t.isConditionalExpression(body)) {\r\n    return {\r\n      type: 'ternary',\r\n      csharpCode: generateCSharpFromTernary(body, paramName)\r\n    };\r\n  }\r\n\r\n  // Method call: v.toUpperCase()\r\n  if (t.isCallExpression(body)) {\r\n    return {\r\n      type: 'method-call',\r\n      csharpCode: generateCSharpFromMethodCall(body, paramName)\r\n    };\r\n  }\r\n\r\n  // Member expression: v.firstName\r\n  if (t.isMemberExpression(body)) {\r\n    return {\r\n      type: 'property-access',\r\n      csharpCode: generateCSharpFromMemberExpression(body, paramName)\r\n    };\r\n  }\r\n\r\n  // Fallback: complex\r\n  return {\r\n    type: 'complex',\r\n    csharpCode: null\r\n  };\r\n}",
+  "body_templates": [
+    {
+      "hash": "d8450e56",
+      "type": "VariableDeclaration",
+      "babel_source": "const param = arrowFn.params[0];",
+      "parentContext": {
+        "functionName": "analyzeTransformFunction",
+        "functionParams": [
+          "arrowFn"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b58a4444",
+      "type": "VariableDeclaration",
+      "babel_source": "const paramName = param ? param.name : 'v';",
+      "parentContext": {
+        "functionName": "analyzeTransformFunction",
+        "functionParams": [
+          "arrowFn"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "645daf6a",
+      "type": "ConditionalExpression",
+      "babel_source": "param ? param.name : 'v'",
+      "parentContext": {
+        "functionName": "analyzeTransformFunction",
+        "functionParams": [
+          "arrowFn"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "eb16d2c0",
+      "type": "VariableDeclaration",
+      "babel_source": "const body = arrowFn.body;",
+      "parentContext": {
+        "functionName": "analyzeTransformFunction",
+        "functionParams": [
+          "arrowFn"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ee0a8c71",
+      "type": "IfStatement",
+      "condition": "t.isTemplateLiteral(body)",
+      "babel_source": "if (t.isTemplateLiteral(body)) {\r\n    return {\r\n      type: 'template',\r\n      csharpCode: generateCSharpFromTemplate(body, paramName)\r\n    };\r\n  }",
+      "parentContext": {
+        "functionName": "analyzeTransformFunction",
+        "functionParams": [
+          "arrowFn"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4e6630a5",
+      "type": "BabelTypeCheck",
+      "method": "isTemplateLiteral",
+      "babel_source": "t.isTemplateLiteral(body)",
+      "parentContext": {
+        "functionName": "analyzeTransformFunction",
+        "functionParams": [
+          "arrowFn"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f4f025c5",
+      "type": "ReturnStatement",
+      "babel_source": "return {\r\n      type: 'template',\r\n      csharpCode: generateCSharpFromTemplate(body, paramName)\r\n    };",
+      "parentContext": {
+        "functionName": "analyzeTransformFunction",
+        "functionParams": [
+          "arrowFn"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a4cdf82e",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n      type: 'template',\r\n      csharpCode: generateCSharpFromTemplate(body, paramName)\r\n    }",
+      "parentContext": {
+        "functionName": "analyzeTransformFunction",
+        "functionParams": [
+          "arrowFn"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "da6ebdb1",
+      "type": "IfStatement",
+      "condition": "t.isConditionalExpression(body)",
+      "babel_source": "if (t.isConditionalExpression(body)) {\r\n    return {\r\n      type: 'ternary',\r\n      csharpCode: generateCSharpFromTernary(body, paramName)\r\n    };\r\n  }",
+      "parentContext": {
+        "functionName": "analyzeTransformFunction",
+        "functionParams": [
+          "arrowFn"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "73c16a5b",
+      "type": "BabelTypeCheck",
+      "method": "isConditionalExpression",
+      "babel_source": "t.isConditionalExpression(body)",
+      "parentContext": {
+        "functionName": "analyzeTransformFunction",
+        "functionParams": [
+          "arrowFn"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "346918de",
+      "type": "ReturnStatement",
+      "babel_source": "return {\r\n      type: 'ternary',\r\n      csharpCode: generateCSharpFromTernary(body, paramName)\r\n    };",
+      "parentContext": {
+        "functionName": "analyzeTransformFunction",
+        "functionParams": [
+          "arrowFn"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "320fa766",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n      type: 'ternary',\r\n      csharpCode: generateCSharpFromTernary(body, paramName)\r\n    }",
+      "parentContext": {
+        "functionName": "analyzeTransformFunction",
+        "functionParams": [
+          "arrowFn"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b384e7d8",
+      "type": "IfStatement",
+      "condition": "t.isCallExpression(body)",
+      "babel_source": "if (t.isCallExpression(body)) {\r\n    return {\r\n      type: 'method-call',\r\n      csharpCode: generateCSharpFromMethodCall(body, paramName)\r\n    };\r\n  }",
+      "parentContext": {
+        "functionName": "analyzeTransformFunction",
+        "functionParams": [
+          "arrowFn"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f64a52a9",
+      "type": "BabelTypeCheck",
+      "method": "isCallExpression",
+      "babel_source": "t.isCallExpression(body)",
+      "parentContext": {
+        "functionName": "analyzeTransformFunction",
+        "functionParams": [
+          "arrowFn"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0eddff3f",
+      "type": "ReturnStatement",
+      "babel_source": "return {\r\n      type: 'method-call',\r\n      csharpCode: generateCSharpFromMethodCall(body, paramName)\r\n    };",
+      "parentContext": {
+        "functionName": "analyzeTransformFunction",
+        "functionParams": [
+          "arrowFn"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "106c1a2d",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n      type: 'method-call',\r\n      csharpCode: generateCSharpFromMethodCall(body, paramName)\r\n    }",
+      "parentContext": {
+        "functionName": "analyzeTransformFunction",
+        "functionParams": [
+          "arrowFn"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "52380e1c",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(body)",
+      "babel_source": "if (t.isMemberExpression(body)) {\r\n    return {\r\n      type: 'property-access',\r\n      csharpCode: generateCSharpFromMemberExpression(body, paramName)\r\n    };\r\n  }",
+      "parentContext": {
+        "functionName": "analyzeTransformFunction",
+        "functionParams": [
+          "arrowFn"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "507a0dab",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(body)",
+      "parentContext": {
+        "functionName": "analyzeTransformFunction",
+        "functionParams": [
+          "arrowFn"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a8bfb726",
+      "type": "ReturnStatement",
+      "babel_source": "return {\r\n      type: 'property-access',\r\n      csharpCode: generateCSharpFromMemberExpression(body, paramName)\r\n    };",
+      "parentContext": {
+        "functionName": "analyzeTransformFunction",
+        "functionParams": [
+          "arrowFn"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d369761c",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n      type: 'property-access',\r\n      csharpCode: generateCSharpFromMemberExpression(body, paramName)\r\n    }",
+      "parentContext": {
+        "functionName": "analyzeTransformFunction",
+        "functionParams": [
+          "arrowFn"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "43791444",
+      "type": "ReturnStatement",
+      "babel_source": "return {\r\n    type: 'complex',\r\n    csharpCode: null\r\n  };",
+      "parentContext": {
+        "functionName": "analyzeTransformFunction",
+        "functionParams": [
+          "arrowFn"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6508fa73",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    type: 'complex',\r\n    csharpCode: null\r\n  }",
+      "parentContext": {
+        "functionName": "analyzeTransformFunction",
+        "functionParams": [
+          "arrowFn"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/useStateX.cjs"
+  ]
+}

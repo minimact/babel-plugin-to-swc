@@ -1,0 +1,107 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractPropName",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractPropName(node) {\r\n  if (t.isIdentifier(node)) {\r\n    return node.name;\r\n  }\r\n  if (t.isMemberExpression(node)) {\r\n    return extractPropName(node.object);\r\n  }\r\n  return null;\r\n}",
+  "body_templates": [
+    {
+      "hash": "8d9dc486",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(node)",
+      "babel_source": "if (t.isIdentifier(node)) {\r\n    return node.name;\r\n  }",
+      "parentContext": {
+        "functionName": "extractPropName",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "458e4c81",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node)",
+      "parentContext": {
+        "functionName": "extractPropName",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1d251b6e",
+      "type": "ReturnStatement",
+      "babel_source": "return node.name;",
+      "parentContext": {
+        "functionName": "extractPropName",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1dc2e377",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(node)",
+      "babel_source": "if (t.isMemberExpression(node)) {\r\n    return extractPropName(node.object);\r\n  }",
+      "parentContext": {
+        "functionName": "extractPropName",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e4025d71",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(node)",
+      "parentContext": {
+        "functionName": "extractPropName",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fa989cc5",
+      "type": "ReturnStatement",
+      "babel_source": "return extractPropName(node.object);",
+      "parentContext": {
+        "functionName": "extractPropName",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractPropName",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/propTypeInference.cjs"
+  ]
+}

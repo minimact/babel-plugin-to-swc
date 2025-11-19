@@ -1,0 +1,199 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractUseToggle",
+  "params": [
+    {
+      "name": "path",
+      "inferredType": "&Path",
+      "defaultValue": null
+    },
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractUseToggle(path, component) {\r\n  const parent = path.parent;\r\n\r\n  if (!t.isVariableDeclarator(parent)) return;\r\n  if (!t.isArrayPattern(parent.id)) return;\r\n\r\n  const [stateVar, toggleFunc] = parent.id.elements;\r\n  const initialValue = path.node.arguments[0];\r\n\r\n  const toggleInfo = {\r\n    name: stateVar.name,\r\n    toggleFunc: toggleFunc.name,\r\n    initialValue: generateCSharpExpression(initialValue)\r\n  };\r\n\r\n  component.useToggle.push(toggleInfo);\r\n}",
+  "body_templates": [
+    {
+      "hash": "356fe96c",
+      "type": "VariableDeclaration",
+      "babel_source": "const parent = path.parent;",
+      "parentContext": {
+        "functionName": "extractUseToggle",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1cfe78c4",
+      "type": "IfStatement",
+      "condition": "!t.isVariableDeclarator(parent)",
+      "babel_source": "if (!t.isVariableDeclarator(parent)) return;",
+      "parentContext": {
+        "functionName": "extractUseToggle",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dc772752",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isVariableDeclarator(parent)",
+      "parentContext": {
+        "functionName": "extractUseToggle",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "27a39ea7",
+      "type": "BabelTypeCheck",
+      "method": "isVariableDeclarator",
+      "babel_source": "t.isVariableDeclarator(parent)",
+      "parentContext": {
+        "functionName": "extractUseToggle",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8beaabe2",
+      "type": "ReturnStatement",
+      "babel_source": "return;",
+      "parentContext": {
+        "functionName": "extractUseToggle",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a5d71bd4",
+      "type": "IfStatement",
+      "condition": "!t.isArrayPattern(parent.id)",
+      "babel_source": "if (!t.isArrayPattern(parent.id)) return;",
+      "parentContext": {
+        "functionName": "extractUseToggle",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8b6a1332",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isArrayPattern(parent.id)",
+      "parentContext": {
+        "functionName": "extractUseToggle",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ac18b505",
+      "type": "BabelTypeCheck",
+      "method": "isArrayPattern",
+      "babel_source": "t.isArrayPattern(parent.id)",
+      "parentContext": {
+        "functionName": "extractUseToggle",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8beaabe2",
+      "type": "ReturnStatement",
+      "babel_source": "return;",
+      "parentContext": {
+        "functionName": "extractUseToggle",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "727050e7",
+      "type": "VariableDeclaration",
+      "babel_source": "const [stateVar, toggleFunc] = parent.id.elements;",
+      "parentContext": {
+        "functionName": "extractUseToggle",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "32d467fb",
+      "type": "VariableDeclaration",
+      "babel_source": "const initialValue = path.node.arguments[0];",
+      "parentContext": {
+        "functionName": "extractUseToggle",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cb945c62",
+      "type": "VariableDeclaration",
+      "babel_source": "const toggleInfo = {\r\n    name: stateVar.name,\r\n    toggleFunc: toggleFunc.name,\r\n    initialValue: generateCSharpExpression(initialValue)\r\n  };",
+      "parentContext": {
+        "functionName": "extractUseToggle",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6c4882d4",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    name: stateVar.name,\r\n    toggleFunc: toggleFunc.name,\r\n    initialValue: generateCSharpExpression(initialValue)\r\n  }",
+      "parentContext": {
+        "functionName": "extractUseToggle",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/hooks.cjs"
+  ]
+}

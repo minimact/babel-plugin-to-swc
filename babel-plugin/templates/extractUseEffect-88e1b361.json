@@ -1,0 +1,209 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractUseEffect",
+  "params": [
+    {
+      "name": "path",
+      "inferredType": "&Path",
+      "defaultValue": null
+    },
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractUseEffect(path, component) {\r\n  const callback = path.node.arguments[0];\r\n  const dependencies = path.node.arguments[1];\r\n\r\n  // 1. Server-side C# (existing)\r\n  component.useEffect.push({\r\n    body: callback,\r\n    dependencies: dependencies\r\n  });\r\n\r\n  // 2. 🔥 NEW: Client-side JavaScript\r\n  if (!component.clientEffects) {\r\n    component.clientEffects = [];\r\n  }\r\n\r\n  const effectIndex = component.clientEffects.length;\r\n\r\n  // Analyze what hooks are used in the effect\r\n  const hookCalls = analyzeHookUsage(callback);\r\n\r\n  // Transform arrow function to regular function with hook mapping\r\n  const transformedCallback = transformEffectCallback(callback, hookCalls);\r\n\r\n  // Generate JavaScript code\r\n  const jsCode = generate(transformedCallback, {\r\n    compact: false,\r\n    retainLines: false\r\n  }).code;\r\n\r\n  component.clientEffects.push({\r\n    name: `Effect_${effectIndex}`,\r\n    jsCode: jsCode,\r\n    dependencies: dependencies,\r\n    hookCalls: hookCalls\r\n  });\r\n}",
+  "body_templates": [
+    {
+      "hash": "0f136048",
+      "type": "VariableDeclaration",
+      "babel_source": "const callback = path.node.arguments[0];",
+      "parentContext": {
+        "functionName": "extractUseEffect",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "562f1f2e",
+      "type": "VariableDeclaration",
+      "babel_source": "const dependencies = path.node.arguments[1];",
+      "parentContext": {
+        "functionName": "extractUseEffect",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d3e777a3",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    body: callback,\r\n    dependencies: dependencies\r\n  }",
+      "parentContext": {
+        "functionName": "extractUseEffect",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d671e8df",
+      "type": "IfStatement",
+      "condition": "!component.clientEffects",
+      "babel_source": "if (!component.clientEffects) {\r\n    component.clientEffects = [];\r\n  }",
+      "parentContext": {
+        "functionName": "extractUseEffect",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6475e181",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!component.clientEffects",
+      "parentContext": {
+        "functionName": "extractUseEffect",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bd708dd8",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "component.clientEffects = []",
+      "parentContext": {
+        "functionName": "extractUseEffect",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractUseEffect",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "94904e37",
+      "type": "VariableDeclaration",
+      "babel_source": "const effectIndex = component.clientEffects.length;",
+      "parentContext": {
+        "functionName": "extractUseEffect",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "41be68c8",
+      "type": "VariableDeclaration",
+      "babel_source": "const hookCalls = analyzeHookUsage(callback);",
+      "parentContext": {
+        "functionName": "extractUseEffect",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ac0003b5",
+      "type": "VariableDeclaration",
+      "babel_source": "const transformedCallback = transformEffectCallback(callback, hookCalls);",
+      "parentContext": {
+        "functionName": "extractUseEffect",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9fabfe53",
+      "type": "VariableDeclaration",
+      "babel_source": "const jsCode = generate(transformedCallback, {\r\n    compact: false,\r\n    retainLines: false\r\n  }).code;",
+      "parentContext": {
+        "functionName": "extractUseEffect",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6cff7530",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    compact: false,\r\n    retainLines: false\r\n  }",
+      "parentContext": {
+        "functionName": "extractUseEffect",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "30bf608f",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    name: `Effect_${effectIndex}`,\r\n    jsCode: jsCode,\r\n    dependencies: dependencies,\r\n    hookCalls: hookCalls\r\n  }",
+      "parentContext": {
+        "functionName": "extractUseEffect",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6cffd350",
+      "type": "TemplateLiteral",
+      "babel_source": "`Effect_${effectIndex}`",
+      "parentContext": {
+        "functionName": "extractUseEffect",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/hooks.cjs"
+  ]
+}

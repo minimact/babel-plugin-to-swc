@@ -1,0 +1,33 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generatePluginUsings",
+  "params": [],
+  "inferredReturnType": "String",
+  "babel_source": "function generatePluginUsings() {\r\n  return [\r\n    'using Minimact.AspNetCore.Core;',\r\n    'using Minimact.AspNetCore.Plugins;'\r\n  ];\r\n}",
+  "body_templates": [
+    {
+      "hash": "dcbb565e",
+      "type": "ReturnStatement",
+      "babel_source": "return [\r\n    'using Minimact.AspNetCore.Core;',\r\n    'using Minimact.AspNetCore.Plugins;'\r\n  ];",
+      "parentContext": {
+        "functionName": "generatePluginUsings",
+        "functionParams": []
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f6c80510",
+      "type": "ArrayExpression",
+      "babel_source": "[\r\n    'using Minimact.AspNetCore.Core;',\r\n    'using Minimact.AspNetCore.Plugins;'\r\n  ]",
+      "parentContext": {
+        "functionName": "generatePluginUsings",
+        "functionParams": []
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/plugin.cjs"
+  ]
+}

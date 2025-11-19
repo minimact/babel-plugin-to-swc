@@ -1,0 +1,260 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "isValidHexPath",
+  "params": [
+    {
+      "name": "key",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "bool",
+  "babel_source": "function isValidHexPath(key) {\r\n  if (!key || typeof key !== 'string') {\r\n    return false;\r\n  }\r\n\r\n  // Must not start or end with dot\r\n  if (key.startsWith('.') || key.endsWith('.')) {\r\n    return false;\r\n  }\r\n\r\n  // Split by dots and validate each segment\r\n  const segments = key.split('.');\r\n\r\n  for (const segment of segments) {\r\n    // Each segment must be non-empty and valid hex (0-9, a-f)\r\n    if (!segment || !/^[0-9a-f]+$/i.test(segment)) {\r\n      return false;\r\n    }\r\n  }\r\n\r\n  return true;\r\n}",
+  "body_templates": [
+    {
+      "hash": "5f1c2ed6",
+      "type": "IfStatement",
+      "condition": "!key || typeof key !== 'string'",
+      "babel_source": "if (!key || typeof key !== 'string') {\r\n    return false;\r\n  }",
+      "parentContext": {
+        "functionName": "isValidHexPath",
+        "functionParams": [
+          "key"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a27f0d06",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "!key || typeof key !== 'string'",
+      "parentContext": {
+        "functionName": "isValidHexPath",
+        "functionParams": [
+          "key"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2b5e9a53",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!key",
+      "parentContext": {
+        "functionName": "isValidHexPath",
+        "functionParams": [
+          "key"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b5c12155",
+      "type": "BinaryExpression",
+      "operator": "!==",
+      "babel_source": "typeof key !== 'string'",
+      "parentContext": {
+        "functionName": "isValidHexPath",
+        "functionParams": [
+          "key"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3afe7d16",
+      "type": "UnaryExpression",
+      "operator": "typeof",
+      "babel_source": "typeof key",
+      "parentContext": {
+        "functionName": "isValidHexPath",
+        "functionParams": [
+          "key"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dabbdf16",
+      "type": "ReturnStatement",
+      "babel_source": "return false;",
+      "parentContext": {
+        "functionName": "isValidHexPath",
+        "functionParams": [
+          "key"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "aabf057d",
+      "type": "IfStatement",
+      "condition": "key.startsWith('.') || key.endsWith('.')",
+      "babel_source": "if (key.startsWith('.') || key.endsWith('.')) {\r\n    return false;\r\n  }",
+      "parentContext": {
+        "functionName": "isValidHexPath",
+        "functionParams": [
+          "key"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2b09f757",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "key.startsWith('.') || key.endsWith('.')",
+      "parentContext": {
+        "functionName": "isValidHexPath",
+        "functionParams": [
+          "key"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dabbdf16",
+      "type": "ReturnStatement",
+      "babel_source": "return false;",
+      "parentContext": {
+        "functionName": "isValidHexPath",
+        "functionParams": [
+          "key"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "25ea0ad2",
+      "type": "VariableDeclaration",
+      "babel_source": "const segments = key.split('.');",
+      "parentContext": {
+        "functionName": "isValidHexPath",
+        "functionParams": [
+          "key"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6add2060",
+      "type": "ForOfStatement",
+      "babel_source": "for (const segment of segments) {\r\n    // Each segment must be non-empty and valid hex (0-9, a-f)\r\n    if (!segment || !/^[0-9a-f]+$/i.test(segment)) {\r\n      return false;\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "isValidHexPath",
+        "functionParams": [
+          "key"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4362ab6a",
+      "type": "VariableDeclaration",
+      "babel_source": "const segment",
+      "parentContext": {
+        "functionName": "isValidHexPath",
+        "functionParams": [
+          "key"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dcf84215",
+      "type": "IfStatement",
+      "condition": "!segment || !/^[0-9a-f]+$/i.test(segment)",
+      "babel_source": "if (!segment || !/^[0-9a-f]+$/i.test(segment)) {\r\n      return false;\r\n    }",
+      "parentContext": {
+        "functionName": "isValidHexPath",
+        "functionParams": [
+          "key"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b3e19088",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "!segment || !/^[0-9a-f]+$/i.test(segment)",
+      "parentContext": {
+        "functionName": "isValidHexPath",
+        "functionParams": [
+          "key"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ff099107",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!segment",
+      "parentContext": {
+        "functionName": "isValidHexPath",
+        "functionParams": [
+          "key"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e616a5dc",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!/^[0-9a-f]+$/i.test(segment)",
+      "parentContext": {
+        "functionName": "isValidHexPath",
+        "functionParams": [
+          "key"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2fdbdcf1",
+      "type": "RegExpLiteral",
+      "pattern": "^[0-9a-f]+$",
+      "flags": "i",
+      "babel_source": "/^[0-9a-f]+$/i",
+      "parentContext": {
+        "functionName": "isValidHexPath",
+        "functionParams": [
+          "key"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dabbdf16",
+      "type": "ReturnStatement",
+      "babel_source": "return false;",
+      "parentContext": {
+        "functionName": "isValidHexPath",
+        "functionParams": [
+          "key"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "10e0fa08",
+      "type": "ReturnStatement",
+      "babel_source": "return true;",
+      "parentContext": {
+        "functionName": "isValidHexPath",
+        "functionParams": [
+          "key"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "utils/pathAssignment.cjs"
+  ]
+}

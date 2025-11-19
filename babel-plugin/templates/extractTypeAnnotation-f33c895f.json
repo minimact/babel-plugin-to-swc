@@ -1,0 +1,296 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractTypeAnnotation",
+  "params": [
+    {
+      "name": "typeAnnotation",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractTypeAnnotation(typeAnnotation) {\r\n  // Strip TSTypeAnnotation wrapper\r\n  const actualType = typeAnnotation.typeAnnotation || typeAnnotation;\r\n\r\n  if (t.isTSStringKeyword(actualType)) {\r\n    return 'string';\r\n  }\r\n  if (t.isTSNumberKeyword(actualType)) {\r\n    return 'double';\r\n  }\r\n  if (t.isTSBooleanKeyword(actualType)) {\r\n    return 'bool';\r\n  }\r\n  if (t.isTSArrayType(actualType)) {\r\n    const elementType = extractTypeAnnotation(actualType.elementType);\r\n    return `List<${elementType}>`;\r\n  }\r\n  if (t.isTSTypeReference(actualType) && t.isIdentifier(actualType.typeName)) {\r\n    return actualType.typeName.name; // Use custom type as-is\r\n  }\r\n\r\n  return 'object';\r\n}",
+  "body_templates": [
+    {
+      "hash": "ea5445e4",
+      "type": "VariableDeclaration",
+      "babel_source": "const actualType = typeAnnotation.typeAnnotation || typeAnnotation;",
+      "parentContext": {
+        "functionName": "extractTypeAnnotation",
+        "functionParams": [
+          "typeAnnotation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "74b4ca8d",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "typeAnnotation.typeAnnotation || typeAnnotation",
+      "parentContext": {
+        "functionName": "extractTypeAnnotation",
+        "functionParams": [
+          "typeAnnotation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "eea82c14",
+      "type": "IfStatement",
+      "condition": "t.isTSStringKeyword(actualType)",
+      "babel_source": "if (t.isTSStringKeyword(actualType)) {\r\n    return 'string';\r\n  }",
+      "parentContext": {
+        "functionName": "extractTypeAnnotation",
+        "functionParams": [
+          "typeAnnotation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b8985738",
+      "type": "BabelTypeCheck",
+      "method": "isTSStringKeyword",
+      "babel_source": "t.isTSStringKeyword(actualType)",
+      "parentContext": {
+        "functionName": "extractTypeAnnotation",
+        "functionParams": [
+          "typeAnnotation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f83ace9b",
+      "type": "ReturnStatement",
+      "babel_source": "return 'string';",
+      "parentContext": {
+        "functionName": "extractTypeAnnotation",
+        "functionParams": [
+          "typeAnnotation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "40cb3952",
+      "type": "IfStatement",
+      "condition": "t.isTSNumberKeyword(actualType)",
+      "babel_source": "if (t.isTSNumberKeyword(actualType)) {\r\n    return 'double';\r\n  }",
+      "parentContext": {
+        "functionName": "extractTypeAnnotation",
+        "functionParams": [
+          "typeAnnotation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9f00d261",
+      "type": "BabelTypeCheck",
+      "method": "isTSNumberKeyword",
+      "babel_source": "t.isTSNumberKeyword(actualType)",
+      "parentContext": {
+        "functionName": "extractTypeAnnotation",
+        "functionParams": [
+          "typeAnnotation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f086ee1a",
+      "type": "ReturnStatement",
+      "babel_source": "return 'double';",
+      "parentContext": {
+        "functionName": "extractTypeAnnotation",
+        "functionParams": [
+          "typeAnnotation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1d4254ca",
+      "type": "IfStatement",
+      "condition": "t.isTSBooleanKeyword(actualType)",
+      "babel_source": "if (t.isTSBooleanKeyword(actualType)) {\r\n    return 'bool';\r\n  }",
+      "parentContext": {
+        "functionName": "extractTypeAnnotation",
+        "functionParams": [
+          "typeAnnotation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8fcb04c7",
+      "type": "BabelTypeCheck",
+      "method": "isTSBooleanKeyword",
+      "babel_source": "t.isTSBooleanKeyword(actualType)",
+      "parentContext": {
+        "functionName": "extractTypeAnnotation",
+        "functionParams": [
+          "typeAnnotation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6655b479",
+      "type": "ReturnStatement",
+      "babel_source": "return 'bool';",
+      "parentContext": {
+        "functionName": "extractTypeAnnotation",
+        "functionParams": [
+          "typeAnnotation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a710e8ac",
+      "type": "IfStatement",
+      "condition": "t.isTSArrayType(actualType)",
+      "babel_source": "if (t.isTSArrayType(actualType)) {\r\n    const elementType = extractTypeAnnotation(actualType.elementType);\r\n    return `List<${elementType}>`;\r\n  }",
+      "parentContext": {
+        "functionName": "extractTypeAnnotation",
+        "functionParams": [
+          "typeAnnotation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e92efa15",
+      "type": "BabelTypeCheck",
+      "method": "isTSArrayType",
+      "babel_source": "t.isTSArrayType(actualType)",
+      "parentContext": {
+        "functionName": "extractTypeAnnotation",
+        "functionParams": [
+          "typeAnnotation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "26b67b58",
+      "type": "VariableDeclaration",
+      "babel_source": "const elementType = extractTypeAnnotation(actualType.elementType);",
+      "parentContext": {
+        "functionName": "extractTypeAnnotation",
+        "functionParams": [
+          "typeAnnotation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3151d6a0",
+      "type": "ReturnStatement",
+      "babel_source": "return `List<${elementType}>`;",
+      "parentContext": {
+        "functionName": "extractTypeAnnotation",
+        "functionParams": [
+          "typeAnnotation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d1994432",
+      "type": "TemplateLiteral",
+      "babel_source": "`List<${elementType}>`",
+      "parentContext": {
+        "functionName": "extractTypeAnnotation",
+        "functionParams": [
+          "typeAnnotation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b428b27e",
+      "type": "IfStatement",
+      "condition": "t.isTSTypeReference(actualType) && t.isIdentifier(actualType.typeName)",
+      "babel_source": "if (t.isTSTypeReference(actualType) && t.isIdentifier(actualType.typeName)) {\r\n    return actualType.typeName.name; // Use custom type as-is\r\n  }",
+      "parentContext": {
+        "functionName": "extractTypeAnnotation",
+        "functionParams": [
+          "typeAnnotation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "94de6cdd",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isTSTypeReference(actualType) && t.isIdentifier(actualType.typeName)",
+      "parentContext": {
+        "functionName": "extractTypeAnnotation",
+        "functionParams": [
+          "typeAnnotation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "090a4e62",
+      "type": "BabelTypeCheck",
+      "method": "isTSTypeReference",
+      "babel_source": "t.isTSTypeReference(actualType)",
+      "parentContext": {
+        "functionName": "extractTypeAnnotation",
+        "functionParams": [
+          "typeAnnotation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "da275dca",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(actualType.typeName)",
+      "parentContext": {
+        "functionName": "extractTypeAnnotation",
+        "functionParams": [
+          "typeAnnotation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4463554c",
+      "type": "ReturnStatement",
+      "babel_source": "return actualType.typeName.name;",
+      "parentContext": {
+        "functionName": "extractTypeAnnotation",
+        "functionParams": [
+          "typeAnnotation"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1827bbd0",
+      "type": "ReturnStatement",
+      "babel_source": "return 'object';",
+      "parentContext": {
+        "functionName": "extractTypeAnnotation",
+        "functionParams": [
+          "typeAnnotation"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/hooks.cjs"
+  ]
+}

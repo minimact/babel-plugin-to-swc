@@ -1,0 +1,240 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractUseSignalR",
+  "params": [
+    {
+      "name": "path",
+      "inferredType": "&Path",
+      "defaultValue": null
+    },
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractUseSignalR(path, component) {\r\n  const parent = path.parent;\r\n  if (!t.isVariableDeclarator(parent)) return;\r\n\r\n  const signalRName = parent.id.name;\r\n  const hubUrl = path.node.arguments[0];\r\n  const onMessage = path.node.arguments[1];\r\n\r\n  component.useSignalR = component.useSignalR || [];\r\n  component.useSignalR.push({\r\n    name: signalRName,\r\n    hubUrl: t.isStringLiteral(hubUrl) ? hubUrl.value : null,\r\n    hasOnMessage: !!onMessage\r\n  });\r\n}",
+  "body_templates": [
+    {
+      "hash": "356fe96c",
+      "type": "VariableDeclaration",
+      "babel_source": "const parent = path.parent;",
+      "parentContext": {
+        "functionName": "extractUseSignalR",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1cfe78c4",
+      "type": "IfStatement",
+      "condition": "!t.isVariableDeclarator(parent)",
+      "babel_source": "if (!t.isVariableDeclarator(parent)) return;",
+      "parentContext": {
+        "functionName": "extractUseSignalR",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dc772752",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isVariableDeclarator(parent)",
+      "parentContext": {
+        "functionName": "extractUseSignalR",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "27a39ea7",
+      "type": "BabelTypeCheck",
+      "method": "isVariableDeclarator",
+      "babel_source": "t.isVariableDeclarator(parent)",
+      "parentContext": {
+        "functionName": "extractUseSignalR",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8beaabe2",
+      "type": "ReturnStatement",
+      "babel_source": "return;",
+      "parentContext": {
+        "functionName": "extractUseSignalR",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fe44b8f1",
+      "type": "VariableDeclaration",
+      "babel_source": "const signalRName = parent.id.name;",
+      "parentContext": {
+        "functionName": "extractUseSignalR",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "997479e2",
+      "type": "VariableDeclaration",
+      "babel_source": "const hubUrl = path.node.arguments[0];",
+      "parentContext": {
+        "functionName": "extractUseSignalR",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9b64d589",
+      "type": "VariableDeclaration",
+      "babel_source": "const onMessage = path.node.arguments[1];",
+      "parentContext": {
+        "functionName": "extractUseSignalR",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "aaeba4b9",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "component.useSignalR = component.useSignalR || []",
+      "parentContext": {
+        "functionName": "extractUseSignalR",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5a9b37ad",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "component.useSignalR || []",
+      "parentContext": {
+        "functionName": "extractUseSignalR",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractUseSignalR",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "55616540",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    name: signalRName,\r\n    hubUrl: t.isStringLiteral(hubUrl) ? hubUrl.value : null,\r\n    hasOnMessage: !!onMessage\r\n  }",
+      "parentContext": {
+        "functionName": "extractUseSignalR",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d2149ea1",
+      "type": "ConditionalExpression",
+      "babel_source": "t.isStringLiteral(hubUrl) ? hubUrl.value : null",
+      "parentContext": {
+        "functionName": "extractUseSignalR",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2f97a0bb",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(hubUrl)",
+      "parentContext": {
+        "functionName": "extractUseSignalR",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "aa839d57",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!!onMessage",
+      "parentContext": {
+        "functionName": "extractUseSignalR",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8880ced9",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!onMessage",
+      "parentContext": {
+        "functionName": "extractUseSignalR",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/hooks.cjs"
+  ]
+}

@@ -1,0 +1,182 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "readPreviousHookSignature",
+  "params": [
+    {
+      "name": "componentName",
+      "inferredType": "&str",
+      "defaultValue": null
+    },
+    {
+      "name": "inputFilePath",
+      "inferredType": "&Path",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function readPreviousHookSignature(componentName, inputFilePath) {\r\n  const outputDir = path.dirname(inputFilePath);\r\n  const signatureFilePath = path.join(outputDir, `${componentName}.hooks.json`);\r\n\r\n  if (!fs.existsSync(signatureFilePath)) {\r\n    return null; // First transpilation\r\n  }\r\n\r\n  try {\r\n    const json = fs.readFileSync(signatureFilePath, 'utf-8');\r\n    const signature = JSON.parse(json);\r\n    console.log(`[Hook Signature] 📖 Read ${path.basename(signatureFilePath)} with ${signature.hooks.length} hooks`);\r\n    return signature.hooks;\r\n  } catch (error) {\r\n    console.error(`[Hook Signature] Failed to read ${signatureFilePath}:`, error);\r\n    return null;\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "f394b2f1",
+      "type": "VariableDeclaration",
+      "babel_source": "const outputDir = path.dirname(inputFilePath);",
+      "parentContext": {
+        "functionName": "readPreviousHookSignature",
+        "functionParams": [
+          "componentName",
+          "inputFilePath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a1f5265d",
+      "type": "VariableDeclaration",
+      "babel_source": "const signatureFilePath = path.join(outputDir, `${componentName}.hooks.json`);",
+      "parentContext": {
+        "functionName": "readPreviousHookSignature",
+        "functionParams": [
+          "componentName",
+          "inputFilePath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "60df46e8",
+      "type": "TemplateLiteral",
+      "babel_source": "`${componentName}.hooks.json`",
+      "parentContext": {
+        "functionName": "readPreviousHookSignature",
+        "functionParams": [
+          "componentName",
+          "inputFilePath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "35839312",
+      "type": "IfStatement",
+      "condition": "!fs.existsSync(signatureFilePath)",
+      "babel_source": "if (!fs.existsSync(signatureFilePath)) {\r\n    return null; // First transpilation\r\n  }",
+      "parentContext": {
+        "functionName": "readPreviousHookSignature",
+        "functionParams": [
+          "componentName",
+          "inputFilePath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6f8d2372",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!fs.existsSync(signatureFilePath)",
+      "parentContext": {
+        "functionName": "readPreviousHookSignature",
+        "functionParams": [
+          "componentName",
+          "inputFilePath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "readPreviousHookSignature",
+        "functionParams": [
+          "componentName",
+          "inputFilePath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b8e800c4",
+      "type": "VariableDeclaration",
+      "babel_source": "const json = fs.readFileSync(signatureFilePath, 'utf-8');",
+      "parentContext": {
+        "functionName": "readPreviousHookSignature",
+        "functionParams": [
+          "componentName",
+          "inputFilePath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e189e996",
+      "type": "VariableDeclaration",
+      "babel_source": "const signature = JSON.parse(json);",
+      "parentContext": {
+        "functionName": "readPreviousHookSignature",
+        "functionParams": [
+          "componentName",
+          "inputFilePath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "94bc20f2",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Hook Signature] 📖 Read ${path.basename(signatureFilePath)} with ${signature.hooks.length} hooks`",
+      "parentContext": {
+        "functionName": "readPreviousHookSignature",
+        "functionParams": [
+          "componentName",
+          "inputFilePath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3d4a70b9",
+      "type": "ReturnStatement",
+      "babel_source": "return signature.hooks;",
+      "parentContext": {
+        "functionName": "readPreviousHookSignature",
+        "functionParams": [
+          "componentName",
+          "inputFilePath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1dee449c",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Hook Signature] Failed to read ${signatureFilePath}:`",
+      "parentContext": {
+        "functionName": "readPreviousHookSignature",
+        "functionParams": [
+          "componentName",
+          "inputFilePath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "readPreviousHookSignature",
+        "functionParams": [
+          "componentName",
+          "inputFilePath"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/hookSignature.cjs"
+  ]
+}

@@ -1,0 +1,556 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractUseValidation",
+  "params": [
+    {
+      "name": "path",
+      "inferredType": "&Path",
+      "defaultValue": null
+    },
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractUseValidation(path, component) {\r\n  const parent = path.parent;\r\n\r\n  if (!t.isVariableDeclarator(parent)) return;\r\n\r\n  const fieldName = parent.id.name;\r\n  const fieldKey = path.node.arguments[0];\r\n  const validationRules = path.node.arguments[1];\r\n\r\n  const validationInfo = {\r\n    name: fieldName,\r\n    fieldKey: t.isStringLiteral(fieldKey) ? fieldKey.value : fieldName,\r\n    rules: {}\r\n  };\r\n\r\n  // Extract validation rules from the object\r\n  if (validationRules && t.isObjectExpression(validationRules)) {\r\n    for (const prop of validationRules.properties) {\r\n      if (t.isObjectProperty(prop) && t.isIdentifier(prop.key)) {\r\n        const ruleName = prop.key.name;\r\n        let ruleValue = null;\r\n\r\n        if (t.isStringLiteral(prop.value)) {\r\n          ruleValue = prop.value.value;\r\n        } else if (t.isNumericLiteral(prop.value)) {\r\n          ruleValue = prop.value.value;\r\n        } else if (t.isBooleanLiteral(prop.value)) {\r\n          ruleValue = prop.value.value;\r\n        } else if (t.isRegExpLiteral(prop.value)) {\r\n          ruleValue = `/${prop.value.pattern}/${prop.value.flags || ''}`;\r\n        }\r\n\r\n        validationInfo.rules[ruleName] = ruleValue;\r\n      }\r\n    }\r\n  }\r\n\r\n  component.useValidation.push(validationInfo);\r\n}",
+  "body_templates": [
+    {
+      "hash": "356fe96c",
+      "type": "VariableDeclaration",
+      "babel_source": "const parent = path.parent;",
+      "parentContext": {
+        "functionName": "extractUseValidation",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1cfe78c4",
+      "type": "IfStatement",
+      "condition": "!t.isVariableDeclarator(parent)",
+      "babel_source": "if (!t.isVariableDeclarator(parent)) return;",
+      "parentContext": {
+        "functionName": "extractUseValidation",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dc772752",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isVariableDeclarator(parent)",
+      "parentContext": {
+        "functionName": "extractUseValidation",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "27a39ea7",
+      "type": "BabelTypeCheck",
+      "method": "isVariableDeclarator",
+      "babel_source": "t.isVariableDeclarator(parent)",
+      "parentContext": {
+        "functionName": "extractUseValidation",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8beaabe2",
+      "type": "ReturnStatement",
+      "babel_source": "return;",
+      "parentContext": {
+        "functionName": "extractUseValidation",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "eec6962b",
+      "type": "VariableDeclaration",
+      "babel_source": "const fieldName = parent.id.name;",
+      "parentContext": {
+        "functionName": "extractUseValidation",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6378ec7b",
+      "type": "VariableDeclaration",
+      "babel_source": "const fieldKey = path.node.arguments[0];",
+      "parentContext": {
+        "functionName": "extractUseValidation",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3947cbb7",
+      "type": "VariableDeclaration",
+      "babel_source": "const validationRules = path.node.arguments[1];",
+      "parentContext": {
+        "functionName": "extractUseValidation",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0d8b2275",
+      "type": "VariableDeclaration",
+      "babel_source": "const validationInfo = {\r\n    name: fieldName,\r\n    fieldKey: t.isStringLiteral(fieldKey) ? fieldKey.value : fieldName,\r\n    rules: {}\r\n  };",
+      "parentContext": {
+        "functionName": "extractUseValidation",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bc514b0d",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    name: fieldName,\r\n    fieldKey: t.isStringLiteral(fieldKey) ? fieldKey.value : fieldName,\r\n    rules: {}\r\n  }",
+      "parentContext": {
+        "functionName": "extractUseValidation",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5f2376a6",
+      "type": "ConditionalExpression",
+      "babel_source": "t.isStringLiteral(fieldKey) ? fieldKey.value : fieldName",
+      "parentContext": {
+        "functionName": "extractUseValidation",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "efb22563",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(fieldKey)",
+      "parentContext": {
+        "functionName": "extractUseValidation",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "44136fa3",
+      "type": "ObjectExpression",
+      "babel_source": "{}",
+      "parentContext": {
+        "functionName": "extractUseValidation",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0a70db3b",
+      "type": "IfStatement",
+      "condition": "validationRules && t.isObjectExpression(validationRules)",
+      "babel_source": "if (validationRules && t.isObjectExpression(validationRules)) {\r\n    for (const prop of validationRules.properties) {\r\n      if (t.isObjectProperty(prop) && t.isIdentifier(prop.key)) {\r\n        const ruleName = prop.key.name;\r\n        let ruleValue = null;\r\n\r\n        if (t.isStringLiteral(prop.value)) {\r\n          ruleValue = prop.value.value;\r\n        } else if (t.isNumericLiteral(prop.value)) {\r\n          ruleValue = prop.value.value;\r\n        } else if (t.isBooleanLiteral(prop.value)) {\r\n          ruleValue = prop.value.value;\r\n        } else if (t.isRegExpLiteral(prop.value)) {\r\n          ruleValue = `/${prop.value.pattern}/${prop.value.flags || ''}`;\r\n        }\r\n\r\n        validationInfo.rules[ruleName] = ruleValue;\r\n      }\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "extractUseValidation",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "341526b0",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "validationRules && t.isObjectExpression(validationRules)",
+      "parentContext": {
+        "functionName": "extractUseValidation",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f0debf3",
+      "type": "BabelTypeCheck",
+      "method": "isObjectExpression",
+      "babel_source": "t.isObjectExpression(validationRules)",
+      "parentContext": {
+        "functionName": "extractUseValidation",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b915b111",
+      "type": "ForOfStatement",
+      "babel_source": "for (const prop of validationRules.properties) {\r\n      if (t.isObjectProperty(prop) && t.isIdentifier(prop.key)) {\r\n        const ruleName = prop.key.name;\r\n        let ruleValue = null;\r\n\r\n        if (t.isStringLiteral(prop.value)) {\r\n          ruleValue = prop.value.value;\r\n        } else if (t.isNumericLiteral(prop.value)) {\r\n          ruleValue = prop.value.value;\r\n        } else if (t.isBooleanLiteral(prop.value)) {\r\n          ruleValue = prop.value.value;\r\n        } else if (t.isRegExpLiteral(prop.value)) {\r\n          ruleValue = `/${prop.value.pattern}/${prop.value.flags || ''}`;\r\n        }\r\n\r\n        validationInfo.rules[ruleName] = ruleValue;\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "extractUseValidation",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "098a3cb5",
+      "type": "VariableDeclaration",
+      "babel_source": "const prop",
+      "parentContext": {
+        "functionName": "extractUseValidation",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f19f05cc",
+      "type": "IfStatement",
+      "condition": "t.isObjectProperty(prop) && t.isIdentifier(prop.key)",
+      "babel_source": "if (t.isObjectProperty(prop) && t.isIdentifier(prop.key)) {\r\n        const ruleName = prop.key.name;\r\n        let ruleValue = null;\r\n\r\n        if (t.isStringLiteral(prop.value)) {\r\n          ruleValue = prop.value.value;\r\n        } else if (t.isNumericLiteral(prop.value)) {\r\n          ruleValue = prop.value.value;\r\n        } else if (t.isBooleanLiteral(prop.value)) {\r\n          ruleValue = prop.value.value;\r\n        } else if (t.isRegExpLiteral(prop.value)) {\r\n          ruleValue = `/${prop.value.pattern}/${prop.value.flags || ''}`;\r\n        }\r\n\r\n        validationInfo.rules[ruleName] = ruleValue;\r\n      }",
+      "parentContext": {
+        "functionName": "extractUseValidation",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "192fdbdf",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isObjectProperty(prop) && t.isIdentifier(prop.key)",
+      "parentContext": {
+        "functionName": "extractUseValidation",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d8cb3d9e",
+      "type": "BabelTypeCheck",
+      "method": "isObjectProperty",
+      "babel_source": "t.isObjectProperty(prop)",
+      "parentContext": {
+        "functionName": "extractUseValidation",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f3845e36",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(prop.key)",
+      "parentContext": {
+        "functionName": "extractUseValidation",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "82f0f7e3",
+      "type": "VariableDeclaration",
+      "babel_source": "const ruleName = prop.key.name;",
+      "parentContext": {
+        "functionName": "extractUseValidation",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fbce1bac",
+      "type": "VariableDeclaration",
+      "babel_source": "let ruleValue = null;",
+      "parentContext": {
+        "functionName": "extractUseValidation",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cdc4f7e9",
+      "type": "IfStatement",
+      "condition": "t.isStringLiteral(prop.value)",
+      "babel_source": "if (t.isStringLiteral(prop.value)) {\r\n          ruleValue = prop.value.value;\r\n        } else if (t.isNumericLiteral(prop.value)) {\r\n          ruleValue = prop.value.value;\r\n        } else if (t.isBooleanLiteral(prop.value)) {\r\n          ruleValue = prop.value.value;\r\n        } else if (t.isRegExpLiteral(prop.value)) {\r\n          ruleValue = `/${prop.value.pattern}/${prop.value.flags || ''}`;\r\n        }",
+      "parentContext": {
+        "functionName": "extractUseValidation",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f158ce2a",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(prop.value)",
+      "parentContext": {
+        "functionName": "extractUseValidation",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8c4a5fd8",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "ruleValue = prop.value.value",
+      "parentContext": {
+        "functionName": "extractUseValidation",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "090c48b2",
+      "type": "IfStatement",
+      "condition": "t.isNumericLiteral(prop.value)",
+      "babel_source": "if (t.isNumericLiteral(prop.value)) {\r\n          ruleValue = prop.value.value;\r\n        } else if (t.isBooleanLiteral(prop.value)) {\r\n          ruleValue = prop.value.value;\r\n        } else if (t.isRegExpLiteral(prop.value)) {\r\n          ruleValue = `/${prop.value.pattern}/${prop.value.flags || ''}`;\r\n        }",
+      "parentContext": {
+        "functionName": "extractUseValidation",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9f30200d",
+      "type": "BabelTypeCheck",
+      "method": "isNumericLiteral",
+      "babel_source": "t.isNumericLiteral(prop.value)",
+      "parentContext": {
+        "functionName": "extractUseValidation",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8c4a5fd8",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "ruleValue = prop.value.value",
+      "parentContext": {
+        "functionName": "extractUseValidation",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d414134f",
+      "type": "IfStatement",
+      "condition": "t.isBooleanLiteral(prop.value)",
+      "babel_source": "if (t.isBooleanLiteral(prop.value)) {\r\n          ruleValue = prop.value.value;\r\n        } else if (t.isRegExpLiteral(prop.value)) {\r\n          ruleValue = `/${prop.value.pattern}/${prop.value.flags || ''}`;\r\n        }",
+      "parentContext": {
+        "functionName": "extractUseValidation",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e824223e",
+      "type": "BabelTypeCheck",
+      "method": "isBooleanLiteral",
+      "babel_source": "t.isBooleanLiteral(prop.value)",
+      "parentContext": {
+        "functionName": "extractUseValidation",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8c4a5fd8",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "ruleValue = prop.value.value",
+      "parentContext": {
+        "functionName": "extractUseValidation",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f5dd689a",
+      "type": "IfStatement",
+      "condition": "t.isRegExpLiteral(prop.value)",
+      "babel_source": "if (t.isRegExpLiteral(prop.value)) {\r\n          ruleValue = `/${prop.value.pattern}/${prop.value.flags || ''}`;\r\n        }",
+      "parentContext": {
+        "functionName": "extractUseValidation",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4e2311ab",
+      "type": "BabelTypeCheck",
+      "method": "isRegExpLiteral",
+      "babel_source": "t.isRegExpLiteral(prop.value)",
+      "parentContext": {
+        "functionName": "extractUseValidation",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a3556a6b",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "ruleValue = `/${prop.value.pattern}/${prop.value.flags || ''}`",
+      "parentContext": {
+        "functionName": "extractUseValidation",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "169d7a7c",
+      "type": "TemplateLiteral",
+      "babel_source": "`/${prop.value.pattern}/${prop.value.flags || ''}`",
+      "parentContext": {
+        "functionName": "extractUseValidation",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0caf585a",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "prop.value.flags || ''",
+      "parentContext": {
+        "functionName": "extractUseValidation",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "62bc1b70",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "validationInfo.rules[ruleName] = ruleValue",
+      "parentContext": {
+        "functionName": "extractUseValidation",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/hooks.cjs"
+  ]
+}

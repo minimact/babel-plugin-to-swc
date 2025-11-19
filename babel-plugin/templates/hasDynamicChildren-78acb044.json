@@ -1,0 +1,592 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "hasDynamicChildren",
+  "params": [
+    {
+      "name": "children",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "bool",
+  "babel_source": "function hasDynamicChildren(children) {\r\n  return children.some(child => {\r\n    if (!t.isJSXExpressionContainer(child)) return false;\r\n    const expr = child.expression;\r\n\r\n    // Check for .map() calls\r\n    if (t.isCallExpression(expr) &&\r\n        t.isMemberExpression(expr.callee) &&\r\n        t.isIdentifier(expr.callee.property, { name: 'map' })) {\r\n      return true;\r\n    }\r\n\r\n    // Check for array expressions from LINQ/Select\r\n    if (t.isCallExpression(expr) &&\r\n        t.isMemberExpression(expr.callee) &&\r\n        (t.isIdentifier(expr.callee.property, { name: 'Select' }) ||\r\n         t.isIdentifier(expr.callee.property, { name: 'ToArray' }))) {\r\n      return true;\r\n    }\r\n\r\n    // Check for conditionals with JSX: {condition ? <A/> : <B/>}\r\n    if (t.isConditionalExpression(expr)) {\r\n      if (t.isJSXElement(expr.consequent) || t.isJSXFragment(expr.consequent) ||\r\n          t.isJSXElement(expr.alternate) || t.isJSXFragment(expr.alternate)) {\r\n        return true;\r\n      }\r\n    }\r\n\r\n    // Check for logical expressions with JSX: {condition && <Element/>}\r\n    if (t.isLogicalExpression(expr)) {\r\n      if (t.isJSXElement(expr.right) || t.isJSXFragment(expr.right)) {\r\n        return true;\r\n      }\r\n    }\r\n\r\n    return false;\r\n  });\r\n}",
+  "body_templates": [
+    {
+      "hash": "16055b44",
+      "type": "ReturnStatement",
+      "babel_source": "return children.some(child => {\r\n    if (!t.isJSXExpressionContainer(child)) return false;\r\n    const expr = child.expression;\r\n\r\n    // Check for .map() calls\r\n    if (t.isCallExpression(expr) &&\r\n        t.isMemberExpression(expr.callee) &&\r\n        t.isIdentifier(expr.callee.property, { name: 'map' })) {\r\n      return true;\r\n    }\r\n\r\n    // Check for array expressions from LINQ/Select\r\n    if (t.isCallExpression(expr) &&\r\n        t.isMemberExpression(expr.callee) &&\r\n        (t.isIdentifier(expr.callee.property, { name: 'Select' }) ||\r\n         t.isIdentifier(expr.callee.property, { name: 'ToArray' }))) {\r\n      return true;\r\n    }\r\n\r\n    // Check for conditionals with JSX: {condition ? <A/> : <B/>}\r\n    if (t.isConditionalExpression(expr)) {\r\n      if (t.isJSXElement(expr.consequent) || t.isJSXFragment(expr.consequent) ||\r\n          t.isJSXElement(expr.alternate) || t.isJSXFragment(expr.alternate)) {\r\n        return true;\r\n      }\r\n    }\r\n\r\n    // Check for logical expressions with JSX: {condition && <Element/>}\r\n    if (t.isLogicalExpression(expr)) {\r\n      if (t.isJSXElement(expr.right) || t.isJSXFragment(expr.right)) {\r\n        return true;\r\n      }\r\n    }\r\n\r\n    return false;\r\n  });",
+      "parentContext": {
+        "functionName": "hasDynamicChildren",
+        "functionParams": [
+          "children"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6a4f93d5",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "child => {\r\n    if (!t.isJSXExpressionContainer(child)) return false;\r\n    const expr = child.expression;\r\n\r\n    // Check for .map() calls\r\n    if (t.isCallExpression(expr) &&\r\n        t.isMemberExpression(expr.callee) &&\r\n        t.isIdentifier(expr.callee.property, { name: 'map' })) {\r\n      return true;\r\n    }\r\n\r\n    // Check for array expressions from LINQ/Select\r\n    if (t.isCallExpression(expr) &&\r\n        t.isMemberExpression(expr.callee) &&\r\n        (t.isIdentifier(expr.callee.property, { name: 'Select' }) ||\r\n         t.isIdentifier(expr.callee.property, { name: 'ToArray' }))) {\r\n      return true;\r\n    }\r\n\r\n    // Check for conditionals with JSX: {condition ? <A/> : <B/>}\r\n    if (t.isConditionalExpression(expr)) {\r\n      if (t.isJSXElement(expr.consequent) || t.isJSXFragment(expr.consequent) ||\r\n          t.isJSXElement(expr.alternate) || t.isJSXFragment(expr.alternate)) {\r\n        return true;\r\n      }\r\n    }\r\n\r\n    // Check for logical expressions with JSX: {condition && <Element/>}\r\n    if (t.isLogicalExpression(expr)) {\r\n      if (t.isJSXElement(expr.right) || t.isJSXFragment(expr.right)) {\r\n        return true;\r\n      }\r\n    }\r\n\r\n    return false;\r\n  }",
+      "parentContext": {
+        "functionName": "hasDynamicChildren",
+        "functionParams": [
+          "children"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1576997a",
+      "type": "IfStatement",
+      "condition": "!t.isJSXExpressionContainer(child)",
+      "babel_source": "if (!t.isJSXExpressionContainer(child)) return false;",
+      "parentContext": {
+        "functionName": "hasDynamicChildren",
+        "functionParams": [
+          "children"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "645e3e2e",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isJSXExpressionContainer(child)",
+      "parentContext": {
+        "functionName": "hasDynamicChildren",
+        "functionParams": [
+          "children"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c53c8d32",
+      "type": "BabelTypeCheck",
+      "method": "isJSXExpressionContainer",
+      "babel_source": "t.isJSXExpressionContainer(child)",
+      "parentContext": {
+        "functionName": "hasDynamicChildren",
+        "functionParams": [
+          "children"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dabbdf16",
+      "type": "ReturnStatement",
+      "babel_source": "return false;",
+      "parentContext": {
+        "functionName": "hasDynamicChildren",
+        "functionParams": [
+          "children"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9e5f0b19",
+      "type": "VariableDeclaration",
+      "babel_source": "const expr = child.expression;",
+      "parentContext": {
+        "functionName": "hasDynamicChildren",
+        "functionParams": [
+          "children"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "804cb26c",
+      "type": "IfStatement",
+      "condition": "t.isCallExpression(expr) &&\r\n        t.isMemberExpression(expr.callee) &&\r\n        t.isIdentifier(expr.callee.property, { name: 'map' })",
+      "babel_source": "if (t.isCallExpression(expr) &&\r\n        t.isMemberExpression(expr.callee) &&\r\n        t.isIdentifier(expr.callee.property, { name: 'map' })) {\r\n      return true;\r\n    }",
+      "parentContext": {
+        "functionName": "hasDynamicChildren",
+        "functionParams": [
+          "children"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "27d592d9",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isCallExpression(expr) &&\r\n        t.isMemberExpression(expr.callee) &&\r\n        t.isIdentifier(expr.callee.property, { name: 'map' })",
+      "parentContext": {
+        "functionName": "hasDynamicChildren",
+        "functionParams": [
+          "children"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cefcb6c3",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isCallExpression(expr) &&\r\n        t.isMemberExpression(expr.callee)",
+      "parentContext": {
+        "functionName": "hasDynamicChildren",
+        "functionParams": [
+          "children"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "46479f62",
+      "type": "BabelTypeCheck",
+      "method": "isCallExpression",
+      "babel_source": "t.isCallExpression(expr)",
+      "parentContext": {
+        "functionName": "hasDynamicChildren",
+        "functionParams": [
+          "children"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d6c41024",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(expr.callee)",
+      "parentContext": {
+        "functionName": "hasDynamicChildren",
+        "functionParams": [
+          "children"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3ae7e467",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(expr.callee.property, { name: 'map' })",
+      "parentContext": {
+        "functionName": "hasDynamicChildren",
+        "functionParams": [
+          "children"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "66886116",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'map' }",
+      "parentContext": {
+        "functionName": "hasDynamicChildren",
+        "functionParams": [
+          "children"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "10e0fa08",
+      "type": "ReturnStatement",
+      "babel_source": "return true;",
+      "parentContext": {
+        "functionName": "hasDynamicChildren",
+        "functionParams": [
+          "children"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6e0f19a2",
+      "type": "IfStatement",
+      "condition": "t.isCallExpression(expr) &&\r\n        t.isMemberExpression(expr.callee) &&\r\n        (t.isIdentifier(expr.callee.property, { name: 'Select' }) ||\r\n         t.isIdentifier(expr.callee.property, { name: 'ToArray' }))",
+      "babel_source": "if (t.isCallExpression(expr) &&\r\n        t.isMemberExpression(expr.callee) &&\r\n        (t.isIdentifier(expr.callee.property, { name: 'Select' }) ||\r\n         t.isIdentifier(expr.callee.property, { name: 'ToArray' }))) {\r\n      return true;\r\n    }",
+      "parentContext": {
+        "functionName": "hasDynamicChildren",
+        "functionParams": [
+          "children"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "64167c1d",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isCallExpression(expr) &&\r\n        t.isMemberExpression(expr.callee) &&\r\n        (t.isIdentifier(expr.callee.property, { name: 'Select' }) ||\r\n         t.isIdentifier(expr.callee.property, { name: 'ToArray' }))",
+      "parentContext": {
+        "functionName": "hasDynamicChildren",
+        "functionParams": [
+          "children"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cefcb6c3",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isCallExpression(expr) &&\r\n        t.isMemberExpression(expr.callee)",
+      "parentContext": {
+        "functionName": "hasDynamicChildren",
+        "functionParams": [
+          "children"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "46479f62",
+      "type": "BabelTypeCheck",
+      "method": "isCallExpression",
+      "babel_source": "t.isCallExpression(expr)",
+      "parentContext": {
+        "functionName": "hasDynamicChildren",
+        "functionParams": [
+          "children"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d6c41024",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(expr.callee)",
+      "parentContext": {
+        "functionName": "hasDynamicChildren",
+        "functionParams": [
+          "children"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f8c0fc20",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isIdentifier(expr.callee.property, { name: 'Select' }) ||\r\n         t.isIdentifier(expr.callee.property, { name: 'ToArray' })",
+      "parentContext": {
+        "functionName": "hasDynamicChildren",
+        "functionParams": [
+          "children"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b083eeea",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(expr.callee.property, { name: 'Select' })",
+      "parentContext": {
+        "functionName": "hasDynamicChildren",
+        "functionParams": [
+          "children"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4701d5f9",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'Select' }",
+      "parentContext": {
+        "functionName": "hasDynamicChildren",
+        "functionParams": [
+          "children"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f4e6510b",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(expr.callee.property, { name: 'ToArray' })",
+      "parentContext": {
+        "functionName": "hasDynamicChildren",
+        "functionParams": [
+          "children"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "449a1741",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'ToArray' }",
+      "parentContext": {
+        "functionName": "hasDynamicChildren",
+        "functionParams": [
+          "children"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "10e0fa08",
+      "type": "ReturnStatement",
+      "babel_source": "return true;",
+      "parentContext": {
+        "functionName": "hasDynamicChildren",
+        "functionParams": [
+          "children"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "815aec3a",
+      "type": "IfStatement",
+      "condition": "t.isConditionalExpression(expr)",
+      "babel_source": "if (t.isConditionalExpression(expr)) {\r\n      if (t.isJSXElement(expr.consequent) || t.isJSXFragment(expr.consequent) ||\r\n          t.isJSXElement(expr.alternate) || t.isJSXFragment(expr.alternate)) {\r\n        return true;\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "hasDynamicChildren",
+        "functionParams": [
+          "children"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5574ecc1",
+      "type": "BabelTypeCheck",
+      "method": "isConditionalExpression",
+      "babel_source": "t.isConditionalExpression(expr)",
+      "parentContext": {
+        "functionName": "hasDynamicChildren",
+        "functionParams": [
+          "children"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fd7228a2",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(expr.consequent) || t.isJSXFragment(expr.consequent) ||\r\n          t.isJSXElement(expr.alternate) || t.isJSXFragment(expr.alternate)",
+      "babel_source": "if (t.isJSXElement(expr.consequent) || t.isJSXFragment(expr.consequent) ||\r\n          t.isJSXElement(expr.alternate) || t.isJSXFragment(expr.alternate)) {\r\n        return true;\r\n      }",
+      "parentContext": {
+        "functionName": "hasDynamicChildren",
+        "functionParams": [
+          "children"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d8876ad2",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isJSXElement(expr.consequent) || t.isJSXFragment(expr.consequent) ||\r\n          t.isJSXElement(expr.alternate) || t.isJSXFragment(expr.alternate)",
+      "parentContext": {
+        "functionName": "hasDynamicChildren",
+        "functionParams": [
+          "children"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "00845ff6",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isJSXElement(expr.consequent) || t.isJSXFragment(expr.consequent) ||\r\n          t.isJSXElement(expr.alternate)",
+      "parentContext": {
+        "functionName": "hasDynamicChildren",
+        "functionParams": [
+          "children"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4a438690",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isJSXElement(expr.consequent) || t.isJSXFragment(expr.consequent)",
+      "parentContext": {
+        "functionName": "hasDynamicChildren",
+        "functionParams": [
+          "children"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fe57f7c7",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(expr.consequent)",
+      "parentContext": {
+        "functionName": "hasDynamicChildren",
+        "functionParams": [
+          "children"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7367ca38",
+      "type": "BabelTypeCheck",
+      "method": "isJSXFragment",
+      "babel_source": "t.isJSXFragment(expr.consequent)",
+      "parentContext": {
+        "functionName": "hasDynamicChildren",
+        "functionParams": [
+          "children"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8d091804",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(expr.alternate)",
+      "parentContext": {
+        "functionName": "hasDynamicChildren",
+        "functionParams": [
+          "children"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1bc44162",
+      "type": "BabelTypeCheck",
+      "method": "isJSXFragment",
+      "babel_source": "t.isJSXFragment(expr.alternate)",
+      "parentContext": {
+        "functionName": "hasDynamicChildren",
+        "functionParams": [
+          "children"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "10e0fa08",
+      "type": "ReturnStatement",
+      "babel_source": "return true;",
+      "parentContext": {
+        "functionName": "hasDynamicChildren",
+        "functionParams": [
+          "children"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "98edd810",
+      "type": "IfStatement",
+      "condition": "t.isLogicalExpression(expr)",
+      "babel_source": "if (t.isLogicalExpression(expr)) {\r\n      if (t.isJSXElement(expr.right) || t.isJSXFragment(expr.right)) {\r\n        return true;\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "hasDynamicChildren",
+        "functionParams": [
+          "children"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c20dd732",
+      "type": "BabelTypeCheck",
+      "method": "isLogicalExpression",
+      "babel_source": "t.isLogicalExpression(expr)",
+      "parentContext": {
+        "functionName": "hasDynamicChildren",
+        "functionParams": [
+          "children"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "22ef0255",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(expr.right) || t.isJSXFragment(expr.right)",
+      "babel_source": "if (t.isJSXElement(expr.right) || t.isJSXFragment(expr.right)) {\r\n        return true;\r\n      }",
+      "parentContext": {
+        "functionName": "hasDynamicChildren",
+        "functionParams": [
+          "children"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e01c732e",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isJSXElement(expr.right) || t.isJSXFragment(expr.right)",
+      "parentContext": {
+        "functionName": "hasDynamicChildren",
+        "functionParams": [
+          "children"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bd996365",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(expr.right)",
+      "parentContext": {
+        "functionName": "hasDynamicChildren",
+        "functionParams": [
+          "children"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e9fbc5da",
+      "type": "BabelTypeCheck",
+      "method": "isJSXFragment",
+      "babel_source": "t.isJSXFragment(expr.right)",
+      "parentContext": {
+        "functionName": "hasDynamicChildren",
+        "functionParams": [
+          "children"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "10e0fa08",
+      "type": "ReturnStatement",
+      "babel_source": "return true;",
+      "parentContext": {
+        "functionName": "hasDynamicChildren",
+        "functionParams": [
+          "children"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dabbdf16",
+      "type": "ReturnStatement",
+      "babel_source": "return false;",
+      "parentContext": {
+        "functionName": "hasDynamicChildren",
+        "functionParams": [
+          "children"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/detection.cjs"
+  ]
+}

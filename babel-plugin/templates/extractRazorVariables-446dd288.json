@@ -1,0 +1,1298 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractRazorVariables",
+  "params": [
+    {
+      "name": "markdown",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractRazorVariables(markdown) {\r\n  if (!markdown || typeof markdown !== 'string') {\r\n    return new Set();\r\n  }\r\n\r\n  const variables = new Set();\r\n  const razorKeywords = ['if', 'else', 'foreach', 'for', 'while', 'switch', 'case', 'default', 'break', 'var'];\r\n\r\n  // Pattern 1: @variableName or @variable.Property\r\n  const variablePattern = /@([a-zA-Z_][a-zA-Z0-9_]*(?:\\.[a-zA-Z_][a-zA-Z0-9_]*)*)/g;\r\n  let match;\r\n\r\n  while ((match = variablePattern.exec(markdown)) !== null) {\r\n    const fullPath = match[1]; // e.g., \"product.Name\" or \"price\"\r\n    const rootVar = fullPath.split('.')[0]; // Get root variable\r\n\r\n    // Skip Razor keywords\r\n    if (!razorKeywords.includes(rootVar)) {\r\n      variables.add(rootVar);\r\n    }\r\n  }\r\n\r\n  // Pattern 2: @(expression) - extract identifiers from inside\r\n  const expressionPattern = /@\\(([^)]+)\\)/g;\r\n\r\n  while ((match = expressionPattern.exec(markdown)) !== null) {\r\n    const expression = match[1];\r\n    // Extract all identifiers from the expression\r\n    const identifiers = expression.match(/\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b/g) || [];\r\n\r\n    for (const identifier of identifiers) {\r\n      // Skip C# keywords and Razor keywords\r\n      if (!isCSharpKeyword(identifier) && !razorKeywords.includes(identifier)) {\r\n        variables.add(identifier);\r\n      }\r\n    }\r\n  }\r\n\r\n  // Pattern 3: @if (condition) - extract from condition\r\n  const ifPattern = /@if\\s*\\(([^)]+)\\)/g;\r\n\r\n  while ((match = ifPattern.exec(markdown)) !== null) {\r\n    const condition = match[1];\r\n    const identifiers = condition.match(/\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b/g) || [];\r\n\r\n    for (const identifier of identifiers) {\r\n      if (!isCSharpKeyword(identifier) && !razorKeywords.includes(identifier)) {\r\n        variables.add(identifier);\r\n      }\r\n    }\r\n  }\r\n\r\n  // Pattern 4: @foreach (var item in collection)\r\n  const foreachPattern = /@foreach\\s*\\(\\s*var\\s+[a-zA-Z_][a-zA-Z0-9_]*\\s+in\\s+([a-zA-Z_][a-zA-Z0-9_.]*)\\s*\\)/g;\r\n\r\n  while ((match = foreachPattern.exec(markdown)) !== null) {\r\n    const collection = match[1];\r\n    const rootVar = collection.split('.')[0];\r\n\r\n    if (!razorKeywords.includes(rootVar)) {\r\n      variables.add(rootVar);\r\n    }\r\n  }\r\n\r\n  // Pattern 5: @for (var i = 0; i < count; i++)\r\n  const forPattern = /@for\\s*\\([^)]+\\)/g;\r\n\r\n  while ((match = forPattern.exec(markdown)) !== null) {\r\n    const forExpression = match[0];\r\n    const identifiers = forExpression.match(/\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b/g) || [];\r\n\r\n    for (const identifier of identifiers) {\r\n      if (!isCSharpKeyword(identifier) && !razorKeywords.includes(identifier) && identifier !== 'i' && identifier !== 'j' && identifier !== 'k') {\r\n        variables.add(identifier);\r\n      }\r\n    }\r\n  }\r\n\r\n  // Pattern 6: @switch (expression)\r\n  const switchPattern = /@switch\\s*\\(([^)]+)\\)/g;\r\n\r\n  while ((match = switchPattern.exec(markdown)) !== null) {\r\n    const expression = match[1];\r\n    const identifiers = expression.match(/\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b/g) || [];\r\n\r\n    for (const identifier of identifiers) {\r\n      if (!isCSharpKeyword(identifier) && !razorKeywords.includes(identifier)) {\r\n        variables.add(identifier);\r\n      }\r\n    }\r\n  }\r\n\r\n  return variables;\r\n}",
+  "body_templates": [
+    {
+      "hash": "1f1e6210",
+      "type": "IfStatement",
+      "condition": "!markdown || typeof markdown !== 'string'",
+      "babel_source": "if (!markdown || typeof markdown !== 'string') {\r\n    return new Set();\r\n  }",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "74d049c9",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "!markdown || typeof markdown !== 'string'",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d77f9c11",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!markdown",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a62e6486",
+      "type": "BinaryExpression",
+      "operator": "!==",
+      "babel_source": "typeof markdown !== 'string'",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1b8b2a1a",
+      "type": "UnaryExpression",
+      "operator": "typeof",
+      "babel_source": "typeof markdown",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "deec1c11",
+      "type": "ReturnStatement",
+      "babel_source": "return new Set();",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1ae36cea",
+      "type": "NewExpression",
+      "babel_source": "new Set()",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ac4d7a17",
+      "type": "VariableDeclaration",
+      "babel_source": "const variables = new Set();",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1ae36cea",
+      "type": "NewExpression",
+      "babel_source": "new Set()",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f529da2c",
+      "type": "VariableDeclaration",
+      "babel_source": "const razorKeywords = ['if', 'else', 'foreach', 'for', 'while', 'switch', 'case', 'default', 'break', 'var'];",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3dba3e8b",
+      "type": "ArrayExpression",
+      "babel_source": "['if', 'else', 'foreach', 'for', 'while', 'switch', 'case', 'default', 'break', 'var']",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bb391354",
+      "type": "VariableDeclaration",
+      "babel_source": "const variablePattern = /@([a-zA-Z_][a-zA-Z0-9_]*(?:\\.[a-zA-Z_][a-zA-Z0-9_]*)*)/g;",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b18887b9",
+      "type": "RegExpLiteral",
+      "pattern": "@([a-zA-Z_][a-zA-Z0-9_]*(?:\\.[a-zA-Z_][a-zA-Z0-9_]*)*)",
+      "flags": "g",
+      "babel_source": "/@([a-zA-Z_][a-zA-Z0-9_]*(?:\\.[a-zA-Z_][a-zA-Z0-9_]*)*)/g",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "233963de",
+      "type": "VariableDeclaration",
+      "babel_source": "let match;",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fa0baefe",
+      "type": "WhileStatement",
+      "babel_source": "while ((match = variablePattern.exec(markdown)) !== null) {\r\n    const fullPath = match[1]; // e.g., \"product.Name\" or \"price\"\r\n    const rootVar = fullPath.split('.')[0]; // Get root variable\r\n\r\n    // Skip Razor keywords\r\n    if (!razorKeywords.includes(rootVar)) {\r\n      variables.add(rootVar);\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b6a152de",
+      "type": "BinaryExpression",
+      "operator": "!==",
+      "babel_source": "(match = variablePattern.exec(markdown)) !== null",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "52bb9589",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "match = variablePattern.exec(markdown)",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7e54e23b",
+      "type": "VariableDeclaration",
+      "babel_source": "const fullPath = match[1];",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fa09676d",
+      "type": "VariableDeclaration",
+      "babel_source": "const rootVar = fullPath.split('.')[0];",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "772e8ee6",
+      "type": "IfStatement",
+      "condition": "!razorKeywords.includes(rootVar)",
+      "babel_source": "if (!razorKeywords.includes(rootVar)) {\r\n      variables.add(rootVar);\r\n    }",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b9e311a2",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!razorKeywords.includes(rootVar)",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3ea94ab2",
+      "type": "VariableDeclaration",
+      "babel_source": "const expressionPattern = /@\\(([^)]+)\\)/g;",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c4dbce8b",
+      "type": "RegExpLiteral",
+      "pattern": "@\\(([^)]+)\\)",
+      "flags": "g",
+      "babel_source": "/@\\(([^)]+)\\)/g",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2663305b",
+      "type": "WhileStatement",
+      "babel_source": "while ((match = expressionPattern.exec(markdown)) !== null) {\r\n    const expression = match[1];\r\n    // Extract all identifiers from the expression\r\n    const identifiers = expression.match(/\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b/g) || [];\r\n\r\n    for (const identifier of identifiers) {\r\n      // Skip C# keywords and Razor keywords\r\n      if (!isCSharpKeyword(identifier) && !razorKeywords.includes(identifier)) {\r\n        variables.add(identifier);\r\n      }\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "149d86e1",
+      "type": "BinaryExpression",
+      "operator": "!==",
+      "babel_source": "(match = expressionPattern.exec(markdown)) !== null",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "68eb3a86",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "match = expressionPattern.exec(markdown)",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "da3a725d",
+      "type": "VariableDeclaration",
+      "babel_source": "const expression = match[1];",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "66cf6de4",
+      "type": "VariableDeclaration",
+      "babel_source": "const identifiers = expression.match(/\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b/g) || [];",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "75d23e86",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "expression.match(/\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b/g) || []",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7e4f3323",
+      "type": "RegExpLiteral",
+      "pattern": "\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b",
+      "flags": "g",
+      "babel_source": "/\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b/g",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "40d6f731",
+      "type": "ForOfStatement",
+      "babel_source": "for (const identifier of identifiers) {\r\n      // Skip C# keywords and Razor keywords\r\n      if (!isCSharpKeyword(identifier) && !razorKeywords.includes(identifier)) {\r\n        variables.add(identifier);\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f7ad1a21",
+      "type": "VariableDeclaration",
+      "babel_source": "const identifier",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fc746a82",
+      "type": "IfStatement",
+      "condition": "!isCSharpKeyword(identifier) && !razorKeywords.includes(identifier)",
+      "babel_source": "if (!isCSharpKeyword(identifier) && !razorKeywords.includes(identifier)) {\r\n        variables.add(identifier);\r\n      }",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "064cc746",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "!isCSharpKeyword(identifier) && !razorKeywords.includes(identifier)",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "78e0ad96",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!isCSharpKeyword(identifier)",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4141b84b",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!razorKeywords.includes(identifier)",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9743f6de",
+      "type": "VariableDeclaration",
+      "babel_source": "const ifPattern = /@if\\s*\\(([^)]+)\\)/g;",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b3f52c07",
+      "type": "RegExpLiteral",
+      "pattern": "@if\\s*\\(([^)]+)\\)",
+      "flags": "g",
+      "babel_source": "/@if\\s*\\(([^)]+)\\)/g",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6317e8f3",
+      "type": "WhileStatement",
+      "babel_source": "while ((match = ifPattern.exec(markdown)) !== null) {\r\n    const condition = match[1];\r\n    const identifiers = condition.match(/\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b/g) || [];\r\n\r\n    for (const identifier of identifiers) {\r\n      if (!isCSharpKeyword(identifier) && !razorKeywords.includes(identifier)) {\r\n        variables.add(identifier);\r\n      }\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1f5f0249",
+      "type": "BinaryExpression",
+      "operator": "!==",
+      "babel_source": "(match = ifPattern.exec(markdown)) !== null",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6b4e9436",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "match = ifPattern.exec(markdown)",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2f78b3dc",
+      "type": "VariableDeclaration",
+      "babel_source": "const condition = match[1];",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "906d8b8d",
+      "type": "VariableDeclaration",
+      "babel_source": "const identifiers = condition.match(/\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b/g) || [];",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6a193c97",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "condition.match(/\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b/g) || []",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7e4f3323",
+      "type": "RegExpLiteral",
+      "pattern": "\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b",
+      "flags": "g",
+      "babel_source": "/\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b/g",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f1eaa2b1",
+      "type": "ForOfStatement",
+      "babel_source": "for (const identifier of identifiers) {\r\n      if (!isCSharpKeyword(identifier) && !razorKeywords.includes(identifier)) {\r\n        variables.add(identifier);\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f7ad1a21",
+      "type": "VariableDeclaration",
+      "babel_source": "const identifier",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fc746a82",
+      "type": "IfStatement",
+      "condition": "!isCSharpKeyword(identifier) && !razorKeywords.includes(identifier)",
+      "babel_source": "if (!isCSharpKeyword(identifier) && !razorKeywords.includes(identifier)) {\r\n        variables.add(identifier);\r\n      }",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "064cc746",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "!isCSharpKeyword(identifier) && !razorKeywords.includes(identifier)",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "78e0ad96",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!isCSharpKeyword(identifier)",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4141b84b",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!razorKeywords.includes(identifier)",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0a7df24a",
+      "type": "VariableDeclaration",
+      "babel_source": "const foreachPattern = /@foreach\\s*\\(\\s*var\\s+[a-zA-Z_][a-zA-Z0-9_]*\\s+in\\s+([a-zA-Z_][a-zA-Z0-9_.]*)\\s*\\)/g;",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d2b116b0",
+      "type": "RegExpLiteral",
+      "pattern": "@foreach\\s*\\(\\s*var\\s+[a-zA-Z_][a-zA-Z0-9_]*\\s+in\\s+([a-zA-Z_][a-zA-Z0-9_.]*)\\s*\\)",
+      "flags": "g",
+      "babel_source": "/@foreach\\s*\\(\\s*var\\s+[a-zA-Z_][a-zA-Z0-9_]*\\s+in\\s+([a-zA-Z_][a-zA-Z0-9_.]*)\\s*\\)/g",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6295adf0",
+      "type": "WhileStatement",
+      "babel_source": "while ((match = foreachPattern.exec(markdown)) !== null) {\r\n    const collection = match[1];\r\n    const rootVar = collection.split('.')[0];\r\n\r\n    if (!razorKeywords.includes(rootVar)) {\r\n      variables.add(rootVar);\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5c11b5e3",
+      "type": "BinaryExpression",
+      "operator": "!==",
+      "babel_source": "(match = foreachPattern.exec(markdown)) !== null",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "18c28d3c",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "match = foreachPattern.exec(markdown)",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2380aec9",
+      "type": "VariableDeclaration",
+      "babel_source": "const collection = match[1];",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5792b630",
+      "type": "VariableDeclaration",
+      "babel_source": "const rootVar = collection.split('.')[0];",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "772e8ee6",
+      "type": "IfStatement",
+      "condition": "!razorKeywords.includes(rootVar)",
+      "babel_source": "if (!razorKeywords.includes(rootVar)) {\r\n      variables.add(rootVar);\r\n    }",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b9e311a2",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!razorKeywords.includes(rootVar)",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4928e798",
+      "type": "VariableDeclaration",
+      "babel_source": "const forPattern = /@for\\s*\\([^)]+\\)/g;",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d5f2e8c1",
+      "type": "RegExpLiteral",
+      "pattern": "@for\\s*\\([^)]+\\)",
+      "flags": "g",
+      "babel_source": "/@for\\s*\\([^)]+\\)/g",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "214c7a60",
+      "type": "WhileStatement",
+      "babel_source": "while ((match = forPattern.exec(markdown)) !== null) {\r\n    const forExpression = match[0];\r\n    const identifiers = forExpression.match(/\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b/g) || [];\r\n\r\n    for (const identifier of identifiers) {\r\n      if (!isCSharpKeyword(identifier) && !razorKeywords.includes(identifier) && identifier !== 'i' && identifier !== 'j' && identifier !== 'k') {\r\n        variables.add(identifier);\r\n      }\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "455ea01a",
+      "type": "BinaryExpression",
+      "operator": "!==",
+      "babel_source": "(match = forPattern.exec(markdown)) !== null",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "85163b3d",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "match = forPattern.exec(markdown)",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0f4db5ce",
+      "type": "VariableDeclaration",
+      "babel_source": "const forExpression = match[0];",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0df13546",
+      "type": "VariableDeclaration",
+      "babel_source": "const identifiers = forExpression.match(/\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b/g) || [];",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0ddffb0a",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "forExpression.match(/\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b/g) || []",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7e4f3323",
+      "type": "RegExpLiteral",
+      "pattern": "\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b",
+      "flags": "g",
+      "babel_source": "/\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b/g",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ae54ac1a",
+      "type": "ForOfStatement",
+      "babel_source": "for (const identifier of identifiers) {\r\n      if (!isCSharpKeyword(identifier) && !razorKeywords.includes(identifier) && identifier !== 'i' && identifier !== 'j' && identifier !== 'k') {\r\n        variables.add(identifier);\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f7ad1a21",
+      "type": "VariableDeclaration",
+      "babel_source": "const identifier",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c06949bb",
+      "type": "IfStatement",
+      "condition": "!isCSharpKeyword(identifier) && !razorKeywords.includes(identifier) && identifier !== 'i' && identifier !== 'j' && identifier !== 'k'",
+      "babel_source": "if (!isCSharpKeyword(identifier) && !razorKeywords.includes(identifier) && identifier !== 'i' && identifier !== 'j' && identifier !== 'k') {\r\n        variables.add(identifier);\r\n      }",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c9675512",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "!isCSharpKeyword(identifier) && !razorKeywords.includes(identifier) && identifier !== 'i' && identifier !== 'j' && identifier !== 'k'",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a5e00c6c",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "!isCSharpKeyword(identifier) && !razorKeywords.includes(identifier) && identifier !== 'i' && identifier !== 'j'",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab7e6f73",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "!isCSharpKeyword(identifier) && !razorKeywords.includes(identifier) && identifier !== 'i'",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "064cc746",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "!isCSharpKeyword(identifier) && !razorKeywords.includes(identifier)",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "78e0ad96",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!isCSharpKeyword(identifier)",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4141b84b",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!razorKeywords.includes(identifier)",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "32445693",
+      "type": "BinaryExpression",
+      "operator": "!==",
+      "babel_source": "identifier !== 'i'",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b93f86d1",
+      "type": "BinaryExpression",
+      "operator": "!==",
+      "babel_source": "identifier !== 'j'",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "23bb7960",
+      "type": "BinaryExpression",
+      "operator": "!==",
+      "babel_source": "identifier !== 'k'",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3b58388c",
+      "type": "VariableDeclaration",
+      "babel_source": "const switchPattern = /@switch\\s*\\(([^)]+)\\)/g;",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3734ba3f",
+      "type": "RegExpLiteral",
+      "pattern": "@switch\\s*\\(([^)]+)\\)",
+      "flags": "g",
+      "babel_source": "/@switch\\s*\\(([^)]+)\\)/g",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4161a7a3",
+      "type": "WhileStatement",
+      "babel_source": "while ((match = switchPattern.exec(markdown)) !== null) {\r\n    const expression = match[1];\r\n    const identifiers = expression.match(/\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b/g) || [];\r\n\r\n    for (const identifier of identifiers) {\r\n      if (!isCSharpKeyword(identifier) && !razorKeywords.includes(identifier)) {\r\n        variables.add(identifier);\r\n      }\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7adc7a37",
+      "type": "BinaryExpression",
+      "operator": "!==",
+      "babel_source": "(match = switchPattern.exec(markdown)) !== null",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "714c1a40",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "match = switchPattern.exec(markdown)",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "da3a725d",
+      "type": "VariableDeclaration",
+      "babel_source": "const expression = match[1];",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "66cf6de4",
+      "type": "VariableDeclaration",
+      "babel_source": "const identifiers = expression.match(/\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b/g) || [];",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "75d23e86",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "expression.match(/\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b/g) || []",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7e4f3323",
+      "type": "RegExpLiteral",
+      "pattern": "\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b",
+      "flags": "g",
+      "babel_source": "/\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b/g",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f1eaa2b1",
+      "type": "ForOfStatement",
+      "babel_source": "for (const identifier of identifiers) {\r\n      if (!isCSharpKeyword(identifier) && !razorKeywords.includes(identifier)) {\r\n        variables.add(identifier);\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f7ad1a21",
+      "type": "VariableDeclaration",
+      "babel_source": "const identifier",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fc746a82",
+      "type": "IfStatement",
+      "condition": "!isCSharpKeyword(identifier) && !razorKeywords.includes(identifier)",
+      "babel_source": "if (!isCSharpKeyword(identifier) && !razorKeywords.includes(identifier)) {\r\n        variables.add(identifier);\r\n      }",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "064cc746",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "!isCSharpKeyword(identifier) && !razorKeywords.includes(identifier)",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "78e0ad96",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!isCSharpKeyword(identifier)",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4141b84b",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!razorKeywords.includes(identifier)",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "41cfdb61",
+      "type": "ReturnStatement",
+      "babel_source": "return variables;",
+      "parentContext": {
+        "functionName": "extractRazorVariables",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/razorDetection.cjs"
+  ]
+}

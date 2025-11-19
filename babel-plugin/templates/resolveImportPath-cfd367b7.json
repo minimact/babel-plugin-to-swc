@@ -1,0 +1,169 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "resolveImportPath",
+  "params": [
+    {
+      "name": "importSource",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "currentDir",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function resolveImportPath(importSource, currentDir) {\r\n  const extensions = ['.tsx', '.ts', '.jsx', '.js'];\r\n\r\n  // Try each extension\r\n  for (const ext of extensions) {\r\n    const withExt = importSource.endsWith(ext) ? importSource : importSource + ext;\r\n    const resolved = path.resolve(currentDir, withExt);\r\n\r\n    if (fs.existsSync(resolved)) {\r\n      return resolved;\r\n    }\r\n  }\r\n\r\n  return null;\r\n}",
+  "body_templates": [
+    {
+      "hash": "bd23929c",
+      "type": "VariableDeclaration",
+      "babel_source": "const extensions = ['.tsx', '.ts', '.jsx', '.js'];",
+      "parentContext": {
+        "functionName": "resolveImportPath",
+        "functionParams": [
+          "importSource",
+          "currentDir"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ca568c5c",
+      "type": "ArrayExpression",
+      "babel_source": "['.tsx', '.ts', '.jsx', '.js']",
+      "parentContext": {
+        "functionName": "resolveImportPath",
+        "functionParams": [
+          "importSource",
+          "currentDir"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b4046052",
+      "type": "ForOfStatement",
+      "babel_source": "for (const ext of extensions) {\r\n    const withExt = importSource.endsWith(ext) ? importSource : importSource + ext;\r\n    const resolved = path.resolve(currentDir, withExt);\r\n\r\n    if (fs.existsSync(resolved)) {\r\n      return resolved;\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "resolveImportPath",
+        "functionParams": [
+          "importSource",
+          "currentDir"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6eb99156",
+      "type": "VariableDeclaration",
+      "babel_source": "const ext",
+      "parentContext": {
+        "functionName": "resolveImportPath",
+        "functionParams": [
+          "importSource",
+          "currentDir"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8fa0e931",
+      "type": "VariableDeclaration",
+      "babel_source": "const withExt = importSource.endsWith(ext) ? importSource : importSource + ext;",
+      "parentContext": {
+        "functionName": "resolveImportPath",
+        "functionParams": [
+          "importSource",
+          "currentDir"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "98815ec1",
+      "type": "ConditionalExpression",
+      "babel_source": "importSource.endsWith(ext) ? importSource : importSource + ext",
+      "parentContext": {
+        "functionName": "resolveImportPath",
+        "functionParams": [
+          "importSource",
+          "currentDir"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5fec3dde",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "importSource + ext",
+      "parentContext": {
+        "functionName": "resolveImportPath",
+        "functionParams": [
+          "importSource",
+          "currentDir"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a33ed102",
+      "type": "VariableDeclaration",
+      "babel_source": "const resolved = path.resolve(currentDir, withExt);",
+      "parentContext": {
+        "functionName": "resolveImportPath",
+        "functionParams": [
+          "importSource",
+          "currentDir"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "49730c00",
+      "type": "IfStatement",
+      "condition": "fs.existsSync(resolved)",
+      "babel_source": "if (fs.existsSync(resolved)) {\r\n      return resolved;\r\n    }",
+      "parentContext": {
+        "functionName": "resolveImportPath",
+        "functionParams": [
+          "importSource",
+          "currentDir"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cf9cb2bb",
+      "type": "ReturnStatement",
+      "babel_source": "return resolved;",
+      "parentContext": {
+        "functionName": "resolveImportPath",
+        "functionParams": [
+          "importSource",
+          "currentDir"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "resolveImportPath",
+        "functionParams": [
+          "importSource",
+          "currentDir"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/hookImports.cjs"
+  ]
+}

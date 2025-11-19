@@ -1,0 +1,137 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "tsTypeToCSharpType",
+  "params": [
+    {
+      "name": "tsType",
+      "inferredType": "Option<&TsType>",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "&'static str",
+  "babel_source": "function tsTypeToCSharpType(tsType) {\r\n  if (!tsType) return 'dynamic';\r\n\r\n  // TSStringKeyword -> string\r\n  if (t.isTSStringKeyword(tsType)) return 'string';\r\n\r\n  // TSNumberKeyword -> double\r\n  if (t.isTSNumberKeyword(tsType)) return 'double';\r\n\r\n  // TSBooleanKeyword -> bool\r\n  if (t.isTSBooleanKeyword(tsType)) return 'bool';\r\n\r\n  // TSAnyKeyword -> dynamic\r\n  if (t.isTSAnyKeyword(tsType)) return 'dynamic';\r\n\r\n  // TSArrayType -> List<T>\r\n  if (t.isTSArrayType(tsType)) {\r\n    const elementType = tsTypeToCSharpType(tsType.elementType);\r\n    return `List<${elementType}>`;\r\n  }\r\n\r\n  // TSTypeLiteral (object type) -> dynamic\r\n  if (t.isTSTypeLiteral(tsType)) return 'dynamic';\r\n\r\n  // TSTypeReference (custom types, interfaces)\r\n  if (t.isTSTypeReference(tsType)) {\r\n    // Handle @minimact/mvc type mappings\r\n    if (t.isIdentifier(tsType.typeName)) {\r\n      const typeName = tsType.typeName.name;\r\n\r\n      // Map @minimact/mvc types to C# types\r\n      const typeMap = {\r\n        'decimal': 'decimal',\r\n        'int': 'int',\r\n        'int32': 'int',\r\n        'int64': 'long',\r\n        'long': 'long',\r\n        'float': 'float',\r\n        'float32': 'float',\r\n        'float64': 'double',\r\n        'double': 'double',\r\n        'short': 'short',\r\n        'int16': 'short',\r\n        'byte': 'byte',\r\n        'Guid': 'Guid',\r\n        'DateTime': 'DateTime',\r\n        'DateOnly': 'DateOnly',\r\n        'TimeOnly': 'TimeOnly'\r\n      };\r\n\r\n      if (typeMap[typeName]) {\r\n        return typeMap[typeName];\r\n      }\r\n    }\r\n\r\n    // Other type references default to dynamic\r\n    return 'dynamic';\r\n  }\r\n\r\n  // Default to dynamic for full JSX semantics\r\n  return 'dynamic';\r\n}",
+  "body_templates": [
+    {
+      "hash": "d2f4f74e",
+      "type": "IfStatement",
+      "condition": "!tsType",
+      "babel_source": "if (!tsType) return 'dynamic';",
+      "parentContext": {
+        "functionName": "tsTypeToCSharpType",
+        "functionParams": ["tsType"]
+      },
+      "rust_translation": "let ts_type = match ts_type {\n    Some(t) => t,\n    None => return \"dynamic\",\n};"
+    },
+    {
+      "hash": "913558ba",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!tsType",
+      "parentContext": {
+        "functionName": "tsTypeToCSharpType",
+        "functionParams": ["tsType"]
+      },
+      "rust_translation": "ts_type.is_none()"
+    },
+    {
+      "hash": "d31bdf27",
+      "type": "ReturnStatement",
+      "babel_source": "return 'dynamic';",
+      "parentContext": {
+        "functionName": "tsTypeToCSharpType",
+        "functionParams": ["tsType"]
+      },
+      "rust_translation": "return \"dynamic\";"
+    },
+    {
+      "hash": "60812ba0",
+      "type": "IfStatement",
+      "condition": "t.isTSStringKeyword(tsType)",
+      "babel_source": "if (t.isTSStringKeyword(tsType)) return 'string';",
+      "parentContext": {
+        "functionName": "tsTypeToCSharpType",
+        "functionParams": ["tsType"]
+      },
+      "rust_translation": "if let TsType::TsKeywordType(TsKeywordType { kind: TsKeywordTypeKind::TsStringKeyword, .. }) = ts_type {\n    return \"string\";\n}"
+    },
+    {
+      "hash": "22a10e01",
+      "type": "BabelTypeCheck",
+      "method": "isTSStringKeyword",
+      "babel_source": "t.isTSStringKeyword(tsType)",
+      "parentContext": {
+        "functionName": "tsTypeToCSharpType",
+        "functionParams": ["tsType"]
+      },
+      "rust_translation": "matches!(ts_type, TsType::TsKeywordType(TsKeywordType { kind: TsKeywordTypeKind::TsStringKeyword, .. }))"
+    },
+    {
+      "hash": "f83ace9b",
+      "type": "ReturnStatement",
+      "babel_source": "return 'string';",
+      "parentContext": {
+        "functionName": "tsTypeToCSharpType",
+        "functionParams": ["tsType"]
+      },
+      "rust_translation": "return \"string\";"
+    },
+    {
+      "hash": "fbd16d01",
+      "type": "IfStatement",
+      "condition": "t.isTSNumberKeyword(tsType)",
+      "babel_source": "if (t.isTSNumberKeyword(tsType)) return 'double';",
+      "parentContext": {
+        "functionName": "tsTypeToCSharpType",
+        "functionParams": ["tsType"]
+      },
+      "rust_translation": "if let TsType::TsKeywordType(TsKeywordType { kind: TsKeywordTypeKind::TsNumberKeyword, .. }) = ts_type {\n    return \"double\";\n}"
+    },
+    {
+      "hash": "2ecc3658",
+      "type": "BabelTypeCheck",
+      "method": "isTSNumberKeyword",
+      "babel_source": "t.isTSNumberKeyword(tsType)",
+      "parentContext": {
+        "functionName": "tsTypeToCSharpType",
+        "functionParams": ["tsType"]
+      },
+      "rust_translation": "matches!(ts_type, TsType::TsKeywordType(TsKeywordType { kind: TsKeywordTypeKind::TsNumberKeyword, .. }))"
+    },
+    {
+      "hash": "f086ee1a",
+      "type": "ReturnStatement",
+      "babel_source": "return 'double';",
+      "parentContext": {
+        "functionName": "tsTypeToCSharpType",
+        "functionParams": ["tsType"]
+      },
+      "rust_translation": "return \"double\";"
+    },
+    {
+      "hash": "2c367594",
+      "type": "IfStatement",
+      "condition": "t.isTSBooleanKeyword(tsType)",
+      "babel_source": "if (t.isTSBooleanKeyword(tsType)) return 'bool';",
+      "parentContext": {
+        "functionName": "tsTypeToCSharpType",
+        "functionParams": ["tsType"]
+      },
+      "rust_translation": "if let TsType::TsKeywordType(TsKeywordType { kind: TsKeywordTypeKind::TsBooleanKeyword, .. }) = ts_type {\n    return \"bool\";\n}"
+    },
+    {
+      "hash": "fce1ad67",
+      "type": "BabelTypeCheck",
+      "method": "isTSBooleanKeyword",
+      "babel_source": "t.isTSBooleanKeyword(tsType)",
+      "parentContext": {
+        "functionName": "tsTypeToCSharpType",
+        "functionParams": ["tsType"]
+      },
+      "rust_translation": "matches!(ts_type, TsType::TsKeywordType(TsKeywordType { kind: TsKeywordTypeKind::TsBooleanKeyword, .. }))"
+    }
+  ],
+  "rust_translation": "fn ts_type_to_csharp_type(ts_type: Option<&TsType>) -> &'static str {\n    let ts_type = match ts_type {\n        Some(t) => t,\n        None => return \"dynamic\",\n    };\n\n    // TSStringKeyword -> string\n    if let TsType::TsKeywordType(TsKeywordType { kind: TsKeywordTypeKind::TsStringKeyword, .. }) = ts_type {\n        return \"string\";\n    }\n\n    // TSNumberKeyword -> double\n    if let TsType::TsKeywordType(TsKeywordType { kind: TsKeywordTypeKind::TsNumberKeyword, .. }) = ts_type {\n        return \"double\";\n    }\n\n    // TSBooleanKeyword -> bool\n    if let TsType::TsKeywordType(TsKeywordType { kind: TsKeywordTypeKind::TsBooleanKeyword, .. }) = ts_type {\n        return \"bool\";\n    }\n\n    // TSAnyKeyword -> dynamic\n    if let TsType::TsKeywordType(TsKeywordType { kind: TsKeywordTypeKind::TsAnyKeyword, .. }) = ts_type {\n        return \"dynamic\";\n    }\n\n    // TSArrayType -> List<T>\n    if let TsType::TsArrayType(arr) = ts_type {\n        let element_type = ts_type_to_csharp_type(Some(&arr.elem_type));\n        return Box::leak(format!(\"List<{}>\", element_type).into_boxed_str());\n    }\n\n    // TSTypeLiteral -> dynamic\n    if let TsType::TsTypeLit(_) = ts_type {\n        return \"dynamic\";\n    }\n\n    // TSTypeReference\n    if let TsType::TsTypeRef(type_ref) = ts_type {\n        if let TsEntityName::Ident(ident) = &type_ref.type_name {\n            let type_name = ident.sym.as_ref();\n            match type_name {\n                \"decimal\" => return \"decimal\",\n                \"int\" | \"int32\" => return \"int\",\n                \"int64\" | \"long\" => return \"long\",\n                \"float\" | \"float32\" => return \"float\",\n                \"float64\" | \"double\" => return \"double\",\n                \"short\" | \"int16\" => return \"short\",\n                \"byte\" => return \"byte\",\n                \"Guid\" => return \"Guid\",\n                \"DateTime\" => return \"DateTime\",\n                \"DateOnly\" => return \"DateOnly\",\n                \"TimeOnly\" => return \"TimeOnly\",\n                _ => return \"dynamic\",\n            }\n        }\n        return \"dynamic\";\n    }\n\n    \"dynamic\"\n}",
+  "found_in": [
+    "types/typeConversion.cjs"
+  ]
+}

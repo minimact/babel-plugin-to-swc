@@ -1,0 +1,92 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "findAttribute",
+  "params": [
+    {
+      "name": "attributes",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "name",
+      "inferredType": "&str",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function findAttribute(attributes, name) {\r\n  return attributes.find(attr =>\r\n    t.isJSXAttribute(attr) && attr.name.name === name\r\n  );\r\n}",
+  "body_templates": [
+    {
+      "hash": "e9e9f7dc",
+      "type": "ReturnStatement",
+      "babel_source": "return attributes.find(attr =>\r\n    t.isJSXAttribute(attr) && attr.name.name === name\r\n  );",
+      "parentContext": {
+        "functionName": "findAttribute",
+        "functionParams": [
+          "attributes",
+          "name"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a948e0a1",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "attr =>\r\n    t.isJSXAttribute(attr) && attr.name.name === name",
+      "parentContext": {
+        "functionName": "findAttribute",
+        "functionParams": [
+          "attributes",
+          "name"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a15585f1",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isJSXAttribute(attr) && attr.name.name === name",
+      "parentContext": {
+        "functionName": "findAttribute",
+        "functionParams": [
+          "attributes",
+          "name"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7468026c",
+      "type": "BabelTypeCheck",
+      "method": "isJSXAttribute",
+      "babel_source": "t.isJSXAttribute(attr)",
+      "parentContext": {
+        "functionName": "findAttribute",
+        "functionParams": [
+          "attributes",
+          "name"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0eae8804",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "attr.name.name === name",
+      "parentContext": {
+        "functionName": "findAttribute",
+        "functionParams": [
+          "attributes",
+          "name"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/analyzePluginUsage.cjs"
+  ]
+}

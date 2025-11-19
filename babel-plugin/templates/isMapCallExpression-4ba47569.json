@@ -1,0 +1,350 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "isMapCallExpression",
+  "params": [
+    {
+      "name": "expr",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "bool",
+  "babel_source": "function isMapCallExpression(expr) {\r\n  if (!t.isCallExpression(expr)) {\r\n    return false;\r\n  }\r\n\r\n  // Check if it's a direct .map() call\r\n  if (t.isMemberExpression(expr.callee) &&\r\n      t.isIdentifier(expr.callee.property) &&\r\n      expr.callee.property.name === 'map') {\r\n    return true;\r\n  }\r\n\r\n  // Check if it's a chained call ending in .map()\r\n  // e.g., items.filter(...).map(...), items.slice(0, 10).map(...)\r\n  let current = expr;\r\n  while (t.isCallExpression(current)) {\r\n    if (t.isMemberExpression(current.callee) &&\r\n        t.isIdentifier(current.callee.property) &&\r\n        current.callee.property.name === 'map') {\r\n      return true;\r\n    }\r\n    // Move to the next call in the chain\r\n    if (t.isMemberExpression(current.callee)) {\r\n      current = current.callee.object;\r\n    } else {\r\n      break;\r\n    }\r\n  }\r\n\r\n  return false;\r\n}",
+  "body_templates": [
+    {
+      "hash": "6602d7f3",
+      "type": "IfStatement",
+      "condition": "!t.isCallExpression(expr)",
+      "babel_source": "if (!t.isCallExpression(expr)) {\r\n    return false;\r\n  }",
+      "parentContext": {
+        "functionName": "isMapCallExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b1e6ccef",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isCallExpression(expr)",
+      "parentContext": {
+        "functionName": "isMapCallExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "46479f62",
+      "type": "BabelTypeCheck",
+      "method": "isCallExpression",
+      "babel_source": "t.isCallExpression(expr)",
+      "parentContext": {
+        "functionName": "isMapCallExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dabbdf16",
+      "type": "ReturnStatement",
+      "babel_source": "return false;",
+      "parentContext": {
+        "functionName": "isMapCallExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f3086e26",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(expr.callee) &&\r\n      t.isIdentifier(expr.callee.property) &&\r\n      expr.callee.property.name === 'map'",
+      "babel_source": "if (t.isMemberExpression(expr.callee) &&\r\n      t.isIdentifier(expr.callee.property) &&\r\n      expr.callee.property.name === 'map') {\r\n    return true;\r\n  }",
+      "parentContext": {
+        "functionName": "isMapCallExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1db3b2e3",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isMemberExpression(expr.callee) &&\r\n      t.isIdentifier(expr.callee.property) &&\r\n      expr.callee.property.name === 'map'",
+      "parentContext": {
+        "functionName": "isMapCallExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2d6c6b54",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isMemberExpression(expr.callee) &&\r\n      t.isIdentifier(expr.callee.property)",
+      "parentContext": {
+        "functionName": "isMapCallExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d6c41024",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(expr.callee)",
+      "parentContext": {
+        "functionName": "isMapCallExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "583415b7",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(expr.callee.property)",
+      "parentContext": {
+        "functionName": "isMapCallExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "029bdfda",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "expr.callee.property.name === 'map'",
+      "parentContext": {
+        "functionName": "isMapCallExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "10e0fa08",
+      "type": "ReturnStatement",
+      "babel_source": "return true;",
+      "parentContext": {
+        "functionName": "isMapCallExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b74a5e61",
+      "type": "VariableDeclaration",
+      "babel_source": "let current = expr;",
+      "parentContext": {
+        "functionName": "isMapCallExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "93f9646f",
+      "type": "WhileStatement",
+      "babel_source": "while (t.isCallExpression(current)) {\r\n    if (t.isMemberExpression(current.callee) &&\r\n        t.isIdentifier(current.callee.property) &&\r\n        current.callee.property.name === 'map') {\r\n      return true;\r\n    }\r\n    // Move to the next call in the chain\r\n    if (t.isMemberExpression(current.callee)) {\r\n      current = current.callee.object;\r\n    } else {\r\n      break;\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "isMapCallExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "93a81dc8",
+      "type": "BabelTypeCheck",
+      "method": "isCallExpression",
+      "babel_source": "t.isCallExpression(current)",
+      "parentContext": {
+        "functionName": "isMapCallExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "342cd70e",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(current.callee) &&\r\n        t.isIdentifier(current.callee.property) &&\r\n        current.callee.property.name === 'map'",
+      "babel_source": "if (t.isMemberExpression(current.callee) &&\r\n        t.isIdentifier(current.callee.property) &&\r\n        current.callee.property.name === 'map') {\r\n      return true;\r\n    }",
+      "parentContext": {
+        "functionName": "isMapCallExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2da8f62e",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isMemberExpression(current.callee) &&\r\n        t.isIdentifier(current.callee.property) &&\r\n        current.callee.property.name === 'map'",
+      "parentContext": {
+        "functionName": "isMapCallExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b3769d71",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isMemberExpression(current.callee) &&\r\n        t.isIdentifier(current.callee.property)",
+      "parentContext": {
+        "functionName": "isMapCallExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3d0daaec",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(current.callee)",
+      "parentContext": {
+        "functionName": "isMapCallExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1bb0c2d0",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(current.callee.property)",
+      "parentContext": {
+        "functionName": "isMapCallExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7f4f7e68",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "current.callee.property.name === 'map'",
+      "parentContext": {
+        "functionName": "isMapCallExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "10e0fa08",
+      "type": "ReturnStatement",
+      "babel_source": "return true;",
+      "parentContext": {
+        "functionName": "isMapCallExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "95858b1a",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(current.callee)",
+      "babel_source": "if (t.isMemberExpression(current.callee)) {\r\n      current = current.callee.object;\r\n    } else {\r\n      break;\r\n    }",
+      "parentContext": {
+        "functionName": "isMapCallExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3d0daaec",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(current.callee)",
+      "parentContext": {
+        "functionName": "isMapCallExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c6da7486",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "current = current.callee.object",
+      "parentContext": {
+        "functionName": "isMapCallExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42af036c",
+      "type": "BreakStatement",
+      "babel_source": "break;",
+      "parentContext": {
+        "functionName": "isMapCallExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dabbdf16",
+      "type": "ReturnStatement",
+      "babel_source": "return false;",
+      "parentContext": {
+        "functionName": "isMapCallExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/templates.cjs"
+  ]
+}

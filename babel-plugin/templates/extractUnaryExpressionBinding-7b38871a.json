@@ -1,0 +1,67 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractUnaryExpressionBinding",
+  "params": [
+    {
+      "name": "expr",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractUnaryExpressionBinding(expr) {\r\n  const identifiers = [];\r\n  extractIdentifiersShared(expr, identifiers);\r\n\r\n  // Use __expr__ prefix to indicate this is a computed expression\r\n  return `__expr__:${identifiers.join(',')}`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "6b6132bd",
+      "type": "VariableDeclaration",
+      "babel_source": "const identifiers = [];",
+      "parentContext": {
+        "functionName": "extractUnaryExpressionBinding",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractUnaryExpressionBinding",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0ef2fb73",
+      "type": "ReturnStatement",
+      "babel_source": "return `__expr__:${identifiers.join(',')}`;",
+      "parentContext": {
+        "functionName": "extractUnaryExpressionBinding",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "80700c94",
+      "type": "TemplateLiteral",
+      "babel_source": "`__expr__:${identifiers.join(',')}`",
+      "parentContext": {
+        "functionName": "extractUnaryExpressionBinding",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/templates.cjs"
+  ]
+}

@@ -1,0 +1,1625 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateChildren",
+  "params": [
+    {
+      "name": "children",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "indent",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateChildren(children, component, indent) {\r\n  const result = [];\r\n\r\n  // Lazy load to avoid circular dependency\r\n  const { generateJSXExpression } = require('./expressions.cjs');\r\n\r\n  // First pass: collect all children with their types\r\n  const childList = [];\r\n  for (const child of children) {\r\n    // Skip undefined/null children\r\n    if (!child) {\r\n      console.warn('[jsx.cjs] Skipping undefined child in children array');\r\n      continue;\r\n    }\r\n\r\n    if (t.isJSXText(child)) {\r\n      const text = child.value.trim();\r\n      if (text) {\r\n        childList.push({ type: 'text', code: `\"${escapeCSharpString(text)}\"`, raw: text, node: child });\r\n      }\r\n    } else if (t.isJSXElement(child)) {\r\n      childList.push({ type: 'element', code: generateJSXElement(child, component, indent + 1), node: child });\r\n    } else if (t.isJSXExpressionContainer(child)) {\r\n      const expr = child.expression;\r\n\r\n      // Skip JSX comments (empty expressions like {/* comment */})\r\n      if (t.isJSXEmptyExpression(expr)) {\r\n        continue; // Don't add to childList - comments are ignored\r\n      }\r\n\r\n      // Check if this is a custom hook UI variable (e.g., {counterUI})\r\n      if (t.isIdentifier(expr) && component.customHooks) {\r\n        const hookInstance = component.customHooks.find(h => h.uiVarName === expr.name);\r\n        if (hookInstance) {\r\n          // This is a custom hook UI! Generate VComponentWrapper instead\r\n          const hexPath = child.__minimactPath || '';\r\n          const wrapperCode = generateCustomHookWrapper(hookInstance, hexPath, component, indent);\r\n          childList.push({ type: 'element', code: wrapperCode, node: child });\r\n          continue; // Skip normal expression handling\r\n        }\r\n      }\r\n\r\n      // Skip structural JSX\r\n      const isStructural = t.isJSXElement(expr) ||\r\n                           t.isJSXFragment(expr) ||\r\n                           (t.isLogicalExpression(expr) && (t.isJSXElement(expr.right) || t.isJSXFragment(expr.right))) ||\r\n                           (t.isConditionalExpression(expr) &&\r\n                            (t.isJSXElement(expr.consequent) || t.isJSXElement(expr.alternate) ||\r\n                             t.isJSXFragment(expr.consequent) || t.isJSXFragment(expr.alternate)));\r\n\r\n      if (!isStructural) {\r\n        childList.push({ type: 'expression', code: generateJSXExpression(expr, component, indent), node: child });\r\n      } else {\r\n        childList.push({ type: 'element', code: generateJSXExpression(expr, component, indent), node: child });\r\n      }\r\n    } else if (t.isJSXFragment(child)) {\r\n      childList.push({ type: 'element', code: generateFragment(child, component, indent + 1), node: child });\r\n    } else {\r\n      console.warn(`[jsx.cjs] Unknown child type: ${child.type}`);\r\n    }\r\n  }\r\n\r\n  // Second pass: merge consecutive text/expression children into mixed content\r\n  let i = 0;\r\n  while (i < childList.length) {\r\n    const current = childList[i];\r\n\r\n    // Check if this starts a mixed content sequence (text or expression followed by text or expression)\r\n    if ((current.type === 'text' || current.type === 'expression') && i + 1 < childList.length) {\r\n      const next = childList[i + 1];\r\n\r\n      if (next.type === 'text' || next.type === 'expression') {\r\n        // Found mixed content! Merge consecutive text/expression children\r\n        const mixedChildren = [current];\r\n        let j = i + 1;\r\n\r\n        while (j < childList.length && (childList[j].type === 'text' || childList[j].type === 'expression')) {\r\n          mixedChildren.push(childList[j]);\r\n          j++;\r\n        }\r\n\r\n        // Build a single interpolated string\r\n        let interpolatedCode = '';\r\n        for (const child of mixedChildren) {\r\n          if (child.type === 'text') {\r\n            interpolatedCode += escapeCSharpString(child.raw);\r\n          } else {\r\n            interpolatedCode += `{(${child.code})}`;\r\n          }\r\n        }\r\n\r\n        result.push({ type: 'mixed', code: `$\"${interpolatedCode}\"` });\r\n        i = j; // Skip merged children\r\n        continue;\r\n      }\r\n    }\r\n\r\n    // Not mixed content, add as-is\r\n    result.push(current);\r\n    i++;\r\n  }\r\n\r\n  return result;\r\n}",
+  "body_templates": [
+    {
+      "hash": "1b60f337",
+      "type": "VariableDeclaration",
+      "babel_source": "const result = [];",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6e3b0f20",
+      "type": "VariableDeclaration",
+      "babel_source": "const { generateJSXExpression } = require('./expressions.cjs');",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ca42e535",
+      "type": "VariableDeclaration",
+      "babel_source": "const childList = [];",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7c401bb3",
+      "type": "ForOfStatement",
+      "babel_source": "for (const child of children) {\r\n    // Skip undefined/null children\r\n    if (!child) {\r\n      console.warn('[jsx.cjs] Skipping undefined child in children array');\r\n      continue;\r\n    }\r\n\r\n    if (t.isJSXText(child)) {\r\n      const text = child.value.trim();\r\n      if (text) {\r\n        childList.push({ type: 'text', code: `\"${escapeCSharpString(text)}\"`, raw: text, node: child });\r\n      }\r\n    } else if (t.isJSXElement(child)) {\r\n      childList.push({ type: 'element', code: generateJSXElement(child, component, indent + 1), node: child });\r\n    } else if (t.isJSXExpressionContainer(child)) {\r\n      const expr = child.expression;\r\n\r\n      // Skip JSX comments (empty expressions like {/* comment */})\r\n      if (t.isJSXEmptyExpression(expr)) {\r\n        continue; // Don't add to childList - comments are ignored\r\n      }\r\n\r\n      // Check if this is a custom hook UI variable (e.g., {counterUI})\r\n      if (t.isIdentifier(expr) && component.customHooks) {\r\n        const hookInstance = component.customHooks.find(h => h.uiVarName === expr.name);\r\n        if (hookInstance) {\r\n          // This is a custom hook UI! Generate VComponentWrapper instead\r\n          const hexPath = child.__minimactPath || '';\r\n          const wrapperCode = generateCustomHookWrapper(hookInstance, hexPath, component, indent);\r\n          childList.push({ type: 'element', code: wrapperCode, node: child });\r\n          continue; // Skip normal expression handling\r\n        }\r\n      }\r\n\r\n      // Skip structural JSX\r\n      const isStructural = t.isJSXElement(expr) ||\r\n                           t.isJSXFragment(expr) ||\r\n                           (t.isLogicalExpression(expr) && (t.isJSXElement(expr.right) || t.isJSXFragment(expr.right))) ||\r\n                           (t.isConditionalExpression(expr) &&\r\n                            (t.isJSXElement(expr.consequent) || t.isJSXElement(expr.alternate) ||\r\n                             t.isJSXFragment(expr.consequent) || t.isJSXFragment(expr.alternate)));\r\n\r\n      if (!isStructural) {\r\n        childList.push({ type: 'expression', code: generateJSXExpression(expr, component, indent), node: child });\r\n      } else {\r\n        childList.push({ type: 'element', code: generateJSXExpression(expr, component, indent), node: child });\r\n      }\r\n    } else if (t.isJSXFragment(child)) {\r\n      childList.push({ type: 'element', code: generateFragment(child, component, indent + 1), node: child });\r\n    } else {\r\n      console.warn(`[jsx.cjs] Unknown child type: ${child.type}`);\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "efdd3930",
+      "type": "VariableDeclaration",
+      "babel_source": "const child",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6ddb5ab9",
+      "type": "IfStatement",
+      "condition": "!child",
+      "babel_source": "if (!child) {\r\n      console.warn('[jsx.cjs] Skipping undefined child in children array');\r\n      continue;\r\n    }",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5ed7b34b",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!child",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0bf37874",
+      "type": "ContinueStatement",
+      "babel_source": "continue;",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1e7babed",
+      "type": "IfStatement",
+      "condition": "t.isJSXText(child)",
+      "babel_source": "if (t.isJSXText(child)) {\r\n      const text = child.value.trim();\r\n      if (text) {\r\n        childList.push({ type: 'text', code: `\"${escapeCSharpString(text)}\"`, raw: text, node: child });\r\n      }\r\n    } else if (t.isJSXElement(child)) {\r\n      childList.push({ type: 'element', code: generateJSXElement(child, component, indent + 1), node: child });\r\n    } else if (t.isJSXExpressionContainer(child)) {\r\n      const expr = child.expression;\r\n\r\n      // Skip JSX comments (empty expressions like {/* comment */})\r\n      if (t.isJSXEmptyExpression(expr)) {\r\n        continue; // Don't add to childList - comments are ignored\r\n      }\r\n\r\n      // Check if this is a custom hook UI variable (e.g., {counterUI})\r\n      if (t.isIdentifier(expr) && component.customHooks) {\r\n        const hookInstance = component.customHooks.find(h => h.uiVarName === expr.name);\r\n        if (hookInstance) {\r\n          // This is a custom hook UI! Generate VComponentWrapper instead\r\n          const hexPath = child.__minimactPath || '';\r\n          const wrapperCode = generateCustomHookWrapper(hookInstance, hexPath, component, indent);\r\n          childList.push({ type: 'element', code: wrapperCode, node: child });\r\n          continue; // Skip normal expression handling\r\n        }\r\n      }\r\n\r\n      // Skip structural JSX\r\n      const isStructural = t.isJSXElement(expr) ||\r\n                           t.isJSXFragment(expr) ||\r\n                           (t.isLogicalExpression(expr) && (t.isJSXElement(expr.right) || t.isJSXFragment(expr.right))) ||\r\n                           (t.isConditionalExpression(expr) &&\r\n                            (t.isJSXElement(expr.consequent) || t.isJSXElement(expr.alternate) ||\r\n                             t.isJSXFragment(expr.consequent) || t.isJSXFragment(expr.alternate)));\r\n\r\n      if (!isStructural) {\r\n        childList.push({ type: 'expression', code: generateJSXExpression(expr, component, indent), node: child });\r\n      } else {\r\n        childList.push({ type: 'element', code: generateJSXExpression(expr, component, indent), node: child });\r\n      }\r\n    } else if (t.isJSXFragment(child)) {\r\n      childList.push({ type: 'element', code: generateFragment(child, component, indent + 1), node: child });\r\n    } else {\r\n      console.warn(`[jsx.cjs] Unknown child type: ${child.type}`);\r\n    }",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8cc41c4e",
+      "type": "BabelTypeCheck",
+      "method": "isJSXText",
+      "babel_source": "t.isJSXText(child)",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9fb13957",
+      "type": "VariableDeclaration",
+      "babel_source": "const text = child.value.trim();",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "92274575",
+      "type": "IfStatement",
+      "condition": "text",
+      "babel_source": "if (text) {\r\n        childList.push({ type: 'text', code: `\"${escapeCSharpString(text)}\"`, raw: text, node: child });\r\n      }",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8a6093bc",
+      "type": "ObjectExpression",
+      "babel_source": "{ type: 'text', code: `\"${escapeCSharpString(text)}\"`, raw: text, node: child }",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "044fae09",
+      "type": "TemplateLiteral",
+      "babel_source": "`\"${escapeCSharpString(text)}\"`",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7d7a9156",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(child)",
+      "babel_source": "if (t.isJSXElement(child)) {\r\n      childList.push({ type: 'element', code: generateJSXElement(child, component, indent + 1), node: child });\r\n    } else if (t.isJSXExpressionContainer(child)) {\r\n      const expr = child.expression;\r\n\r\n      // Skip JSX comments (empty expressions like {/* comment */})\r\n      if (t.isJSXEmptyExpression(expr)) {\r\n        continue; // Don't add to childList - comments are ignored\r\n      }\r\n\r\n      // Check if this is a custom hook UI variable (e.g., {counterUI})\r\n      if (t.isIdentifier(expr) && component.customHooks) {\r\n        const hookInstance = component.customHooks.find(h => h.uiVarName === expr.name);\r\n        if (hookInstance) {\r\n          // This is a custom hook UI! Generate VComponentWrapper instead\r\n          const hexPath = child.__minimactPath || '';\r\n          const wrapperCode = generateCustomHookWrapper(hookInstance, hexPath, component, indent);\r\n          childList.push({ type: 'element', code: wrapperCode, node: child });\r\n          continue; // Skip normal expression handling\r\n        }\r\n      }\r\n\r\n      // Skip structural JSX\r\n      const isStructural = t.isJSXElement(expr) ||\r\n                           t.isJSXFragment(expr) ||\r\n                           (t.isLogicalExpression(expr) && (t.isJSXElement(expr.right) || t.isJSXFragment(expr.right))) ||\r\n                           (t.isConditionalExpression(expr) &&\r\n                            (t.isJSXElement(expr.consequent) || t.isJSXElement(expr.alternate) ||\r\n                             t.isJSXFragment(expr.consequent) || t.isJSXFragment(expr.alternate)));\r\n\r\n      if (!isStructural) {\r\n        childList.push({ type: 'expression', code: generateJSXExpression(expr, component, indent), node: child });\r\n      } else {\r\n        childList.push({ type: 'element', code: generateJSXExpression(expr, component, indent), node: child });\r\n      }\r\n    } else if (t.isJSXFragment(child)) {\r\n      childList.push({ type: 'element', code: generateFragment(child, component, indent + 1), node: child });\r\n    } else {\r\n      console.warn(`[jsx.cjs] Unknown child type: ${child.type}`);\r\n    }",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d44bd174",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(child)",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fa9d1c82",
+      "type": "ObjectExpression",
+      "babel_source": "{ type: 'element', code: generateJSXElement(child, component, indent + 1), node: child }",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "51639547",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "indent + 1",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c1dab6fa",
+      "type": "IfStatement",
+      "condition": "t.isJSXExpressionContainer(child)",
+      "babel_source": "if (t.isJSXExpressionContainer(child)) {\r\n      const expr = child.expression;\r\n\r\n      // Skip JSX comments (empty expressions like {/* comment */})\r\n      if (t.isJSXEmptyExpression(expr)) {\r\n        continue; // Don't add to childList - comments are ignored\r\n      }\r\n\r\n      // Check if this is a custom hook UI variable (e.g., {counterUI})\r\n      if (t.isIdentifier(expr) && component.customHooks) {\r\n        const hookInstance = component.customHooks.find(h => h.uiVarName === expr.name);\r\n        if (hookInstance) {\r\n          // This is a custom hook UI! Generate VComponentWrapper instead\r\n          const hexPath = child.__minimactPath || '';\r\n          const wrapperCode = generateCustomHookWrapper(hookInstance, hexPath, component, indent);\r\n          childList.push({ type: 'element', code: wrapperCode, node: child });\r\n          continue; // Skip normal expression handling\r\n        }\r\n      }\r\n\r\n      // Skip structural JSX\r\n      const isStructural = t.isJSXElement(expr) ||\r\n                           t.isJSXFragment(expr) ||\r\n                           (t.isLogicalExpression(expr) && (t.isJSXElement(expr.right) || t.isJSXFragment(expr.right))) ||\r\n                           (t.isConditionalExpression(expr) &&\r\n                            (t.isJSXElement(expr.consequent) || t.isJSXElement(expr.alternate) ||\r\n                             t.isJSXFragment(expr.consequent) || t.isJSXFragment(expr.alternate)));\r\n\r\n      if (!isStructural) {\r\n        childList.push({ type: 'expression', code: generateJSXExpression(expr, component, indent), node: child });\r\n      } else {\r\n        childList.push({ type: 'element', code: generateJSXExpression(expr, component, indent), node: child });\r\n      }\r\n    } else if (t.isJSXFragment(child)) {\r\n      childList.push({ type: 'element', code: generateFragment(child, component, indent + 1), node: child });\r\n    } else {\r\n      console.warn(`[jsx.cjs] Unknown child type: ${child.type}`);\r\n    }",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c53c8d32",
+      "type": "BabelTypeCheck",
+      "method": "isJSXExpressionContainer",
+      "babel_source": "t.isJSXExpressionContainer(child)",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9e5f0b19",
+      "type": "VariableDeclaration",
+      "babel_source": "const expr = child.expression;",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e76b464d",
+      "type": "IfStatement",
+      "condition": "t.isJSXEmptyExpression(expr)",
+      "babel_source": "if (t.isJSXEmptyExpression(expr)) {\r\n        continue; // Don't add to childList - comments are ignored\r\n      }",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8c0d56b6",
+      "type": "BabelTypeCheck",
+      "method": "isJSXEmptyExpression",
+      "babel_source": "t.isJSXEmptyExpression(expr)",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0bf37874",
+      "type": "ContinueStatement",
+      "babel_source": "continue;",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7559baa3",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(expr) && component.customHooks",
+      "babel_source": "if (t.isIdentifier(expr) && component.customHooks) {\r\n        const hookInstance = component.customHooks.find(h => h.uiVarName === expr.name);\r\n        if (hookInstance) {\r\n          // This is a custom hook UI! Generate VComponentWrapper instead\r\n          const hexPath = child.__minimactPath || '';\r\n          const wrapperCode = generateCustomHookWrapper(hookInstance, hexPath, component, indent);\r\n          childList.push({ type: 'element', code: wrapperCode, node: child });\r\n          continue; // Skip normal expression handling\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8d082ddb",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isIdentifier(expr) && component.customHooks",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42d26fd4",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(expr)",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d50ee2c6",
+      "type": "VariableDeclaration",
+      "babel_source": "const hookInstance = component.customHooks.find(h => h.uiVarName === expr.name);",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "431e84b4",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "h => h.uiVarName === expr.name",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "eec54976",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "h.uiVarName === expr.name",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f9e59c08",
+      "type": "IfStatement",
+      "condition": "hookInstance",
+      "babel_source": "if (hookInstance) {\r\n          // This is a custom hook UI! Generate VComponentWrapper instead\r\n          const hexPath = child.__minimactPath || '';\r\n          const wrapperCode = generateCustomHookWrapper(hookInstance, hexPath, component, indent);\r\n          childList.push({ type: 'element', code: wrapperCode, node: child });\r\n          continue; // Skip normal expression handling\r\n        }",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "109b5b61",
+      "type": "VariableDeclaration",
+      "babel_source": "const hexPath = child.__minimactPath || '';",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cd9d929f",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "child.__minimactPath || ''",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "370a0157",
+      "type": "VariableDeclaration",
+      "babel_source": "const wrapperCode = generateCustomHookWrapper(hookInstance, hexPath, component, indent);",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "91403c48",
+      "type": "ObjectExpression",
+      "babel_source": "{ type: 'element', code: wrapperCode, node: child }",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0bf37874",
+      "type": "ContinueStatement",
+      "babel_source": "continue;",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "11a46f79",
+      "type": "VariableDeclaration",
+      "babel_source": "const isStructural = t.isJSXElement(expr) ||\r\n                           t.isJSXFragment(expr) ||\r\n                           (t.isLogicalExpression(expr) && (t.isJSXElement(expr.right) || t.isJSXFragment(expr.right))) ||\r\n                           (t.isConditionalExpression(expr) &&\r\n                            (t.isJSXElement(expr.consequent) || t.isJSXElement(expr.alternate) ||\r\n                             t.isJSXFragment(expr.consequent) || t.isJSXFragment(expr.alternate)));",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ba72b128",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isJSXElement(expr) ||\r\n                           t.isJSXFragment(expr) ||\r\n                           (t.isLogicalExpression(expr) && (t.isJSXElement(expr.right) || t.isJSXFragment(expr.right))) ||\r\n                           (t.isConditionalExpression(expr) &&\r\n                            (t.isJSXElement(expr.consequent) || t.isJSXElement(expr.alternate) ||\r\n                             t.isJSXFragment(expr.consequent) || t.isJSXFragment(expr.alternate)))",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6e798d6b",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isJSXElement(expr) ||\r\n                           t.isJSXFragment(expr) ||\r\n                           (t.isLogicalExpression(expr) && (t.isJSXElement(expr.right) || t.isJSXFragment(expr.right)))",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "900b88d0",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isJSXElement(expr) ||\r\n                           t.isJSXFragment(expr)",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fa747faa",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(expr)",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7f0adb11",
+      "type": "BabelTypeCheck",
+      "method": "isJSXFragment",
+      "babel_source": "t.isJSXFragment(expr)",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7f16bc4b",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isLogicalExpression(expr) && (t.isJSXElement(expr.right) || t.isJSXFragment(expr.right))",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c20dd732",
+      "type": "BabelTypeCheck",
+      "method": "isLogicalExpression",
+      "babel_source": "t.isLogicalExpression(expr)",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e01c732e",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isJSXElement(expr.right) || t.isJSXFragment(expr.right)",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bd996365",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(expr.right)",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e9fbc5da",
+      "type": "BabelTypeCheck",
+      "method": "isJSXFragment",
+      "babel_source": "t.isJSXFragment(expr.right)",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "354fe9f5",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isConditionalExpression(expr) &&\r\n                            (t.isJSXElement(expr.consequent) || t.isJSXElement(expr.alternate) ||\r\n                             t.isJSXFragment(expr.consequent) || t.isJSXFragment(expr.alternate))",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5574ecc1",
+      "type": "BabelTypeCheck",
+      "method": "isConditionalExpression",
+      "babel_source": "t.isConditionalExpression(expr)",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e81d4381",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isJSXElement(expr.consequent) || t.isJSXElement(expr.alternate) ||\r\n                             t.isJSXFragment(expr.consequent) || t.isJSXFragment(expr.alternate)",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2d064acc",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isJSXElement(expr.consequent) || t.isJSXElement(expr.alternate) ||\r\n                             t.isJSXFragment(expr.consequent)",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9cfb3e87",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isJSXElement(expr.consequent) || t.isJSXElement(expr.alternate)",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fe57f7c7",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(expr.consequent)",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8d091804",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(expr.alternate)",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7367ca38",
+      "type": "BabelTypeCheck",
+      "method": "isJSXFragment",
+      "babel_source": "t.isJSXFragment(expr.consequent)",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1bc44162",
+      "type": "BabelTypeCheck",
+      "method": "isJSXFragment",
+      "babel_source": "t.isJSXFragment(expr.alternate)",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b9cb0733",
+      "type": "IfStatement",
+      "condition": "!isStructural",
+      "babel_source": "if (!isStructural) {\r\n        childList.push({ type: 'expression', code: generateJSXExpression(expr, component, indent), node: child });\r\n      } else {\r\n        childList.push({ type: 'element', code: generateJSXExpression(expr, component, indent), node: child });\r\n      }",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e14cef38",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!isStructural",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "55eb7baa",
+      "type": "ObjectExpression",
+      "babel_source": "{ type: 'expression', code: generateJSXExpression(expr, component, indent), node: child }",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2962adcc",
+      "type": "ObjectExpression",
+      "babel_source": "{ type: 'element', code: generateJSXExpression(expr, component, indent), node: child }",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f63e6d65",
+      "type": "IfStatement",
+      "condition": "t.isJSXFragment(child)",
+      "babel_source": "if (t.isJSXFragment(child)) {\r\n      childList.push({ type: 'element', code: generateFragment(child, component, indent + 1), node: child });\r\n    } else {\r\n      console.warn(`[jsx.cjs] Unknown child type: ${child.type}`);\r\n    }",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dab54e28",
+      "type": "BabelTypeCheck",
+      "method": "isJSXFragment",
+      "babel_source": "t.isJSXFragment(child)",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fdffd0b6",
+      "type": "ObjectExpression",
+      "babel_source": "{ type: 'element', code: generateFragment(child, component, indent + 1), node: child }",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "51639547",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "indent + 1",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1752a0f7",
+      "type": "TemplateLiteral",
+      "babel_source": "`[jsx.cjs] Unknown child type: ${child.type}`",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ecbbe1fc",
+      "type": "VariableDeclaration",
+      "babel_source": "let i = 0;",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c0824c93",
+      "type": "WhileStatement",
+      "babel_source": "while (i < childList.length) {\r\n    const current = childList[i];\r\n\r\n    // Check if this starts a mixed content sequence (text or expression followed by text or expression)\r\n    if ((current.type === 'text' || current.type === 'expression') && i + 1 < childList.length) {\r\n      const next = childList[i + 1];\r\n\r\n      if (next.type === 'text' || next.type === 'expression') {\r\n        // Found mixed content! Merge consecutive text/expression children\r\n        const mixedChildren = [current];\r\n        let j = i + 1;\r\n\r\n        while (j < childList.length && (childList[j].type === 'text' || childList[j].type === 'expression')) {\r\n          mixedChildren.push(childList[j]);\r\n          j++;\r\n        }\r\n\r\n        // Build a single interpolated string\r\n        let interpolatedCode = '';\r\n        for (const child of mixedChildren) {\r\n          if (child.type === 'text') {\r\n            interpolatedCode += escapeCSharpString(child.raw);\r\n          } else {\r\n            interpolatedCode += `{(${child.code})}`;\r\n          }\r\n        }\r\n\r\n        result.push({ type: 'mixed', code: `$\"${interpolatedCode}\"` });\r\n        i = j; // Skip merged children\r\n        continue;\r\n      }\r\n    }\r\n\r\n    // Not mixed content, add as-is\r\n    result.push(current);\r\n    i++;\r\n  }",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a81c00ca",
+      "type": "BinaryExpression",
+      "operator": "<",
+      "babel_source": "i < childList.length",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cb9d9422",
+      "type": "VariableDeclaration",
+      "babel_source": "const current = childList[i];",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c5d89275",
+      "type": "IfStatement",
+      "condition": "(current.type === 'text' || current.type === 'expression') && i + 1 < childList.length",
+      "babel_source": "if ((current.type === 'text' || current.type === 'expression') && i + 1 < childList.length) {\r\n      const next = childList[i + 1];\r\n\r\n      if (next.type === 'text' || next.type === 'expression') {\r\n        // Found mixed content! Merge consecutive text/expression children\r\n        const mixedChildren = [current];\r\n        let j = i + 1;\r\n\r\n        while (j < childList.length && (childList[j].type === 'text' || childList[j].type === 'expression')) {\r\n          mixedChildren.push(childList[j]);\r\n          j++;\r\n        }\r\n\r\n        // Build a single interpolated string\r\n        let interpolatedCode = '';\r\n        for (const child of mixedChildren) {\r\n          if (child.type === 'text') {\r\n            interpolatedCode += escapeCSharpString(child.raw);\r\n          } else {\r\n            interpolatedCode += `{(${child.code})}`;\r\n          }\r\n        }\r\n\r\n        result.push({ type: 'mixed', code: `$\"${interpolatedCode}\"` });\r\n        i = j; // Skip merged children\r\n        continue;\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "df540942",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "(current.type === 'text' || current.type === 'expression') && i + 1 < childList.length",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d6572f00",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "current.type === 'text' || current.type === 'expression'",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b8f27f17",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "current.type === 'text'",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4a799657",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "current.type === 'expression'",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "373e9711",
+      "type": "BinaryExpression",
+      "operator": "<",
+      "babel_source": "i + 1 < childList.length",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3cdd668f",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "i + 1",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab88fbdf",
+      "type": "VariableDeclaration",
+      "babel_source": "const next = childList[i + 1];",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3cdd668f",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "i + 1",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c276342b",
+      "type": "IfStatement",
+      "condition": "next.type === 'text' || next.type === 'expression'",
+      "babel_source": "if (next.type === 'text' || next.type === 'expression') {\r\n        // Found mixed content! Merge consecutive text/expression children\r\n        const mixedChildren = [current];\r\n        let j = i + 1;\r\n\r\n        while (j < childList.length && (childList[j].type === 'text' || childList[j].type === 'expression')) {\r\n          mixedChildren.push(childList[j]);\r\n          j++;\r\n        }\r\n\r\n        // Build a single interpolated string\r\n        let interpolatedCode = '';\r\n        for (const child of mixedChildren) {\r\n          if (child.type === 'text') {\r\n            interpolatedCode += escapeCSharpString(child.raw);\r\n          } else {\r\n            interpolatedCode += `{(${child.code})}`;\r\n          }\r\n        }\r\n\r\n        result.push({ type: 'mixed', code: `$\"${interpolatedCode}\"` });\r\n        i = j; // Skip merged children\r\n        continue;\r\n      }",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2b80350f",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "next.type === 'text' || next.type === 'expression'",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4b4f9aee",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "next.type === 'text'",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "411694a6",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "next.type === 'expression'",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "da6ffc8c",
+      "type": "VariableDeclaration",
+      "babel_source": "const mixedChildren = [current];",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "049daed8",
+      "type": "ArrayExpression",
+      "babel_source": "[current]",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8dd1b258",
+      "type": "VariableDeclaration",
+      "babel_source": "let j = i + 1;",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3cdd668f",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "i + 1",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "eb032a11",
+      "type": "WhileStatement",
+      "babel_source": "while (j < childList.length && (childList[j].type === 'text' || childList[j].type === 'expression')) {\r\n          mixedChildren.push(childList[j]);\r\n          j++;\r\n        }",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1777b2ff",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "j < childList.length && (childList[j].type === 'text' || childList[j].type === 'expression')",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8ec3a6bf",
+      "type": "BinaryExpression",
+      "operator": "<",
+      "babel_source": "j < childList.length",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b9412ee2",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "childList[j].type === 'text' || childList[j].type === 'expression'",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "da43f31f",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "childList[j].type === 'text'",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4588b1e0",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "childList[j].type === 'expression'",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "84588e6a",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "j++",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d91967f4",
+      "type": "VariableDeclaration",
+      "babel_source": "let interpolatedCode = '';",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1c30b57e",
+      "type": "ForOfStatement",
+      "babel_source": "for (const child of mixedChildren) {\r\n          if (child.type === 'text') {\r\n            interpolatedCode += escapeCSharpString(child.raw);\r\n          } else {\r\n            interpolatedCode += `{(${child.code})}`;\r\n          }\r\n        }",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "efdd3930",
+      "type": "VariableDeclaration",
+      "babel_source": "const child",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0f79b339",
+      "type": "IfStatement",
+      "condition": "child.type === 'text'",
+      "babel_source": "if (child.type === 'text') {\r\n            interpolatedCode += escapeCSharpString(child.raw);\r\n          } else {\r\n            interpolatedCode += `{(${child.code})}`;\r\n          }",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d2269b66",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "child.type === 'text'",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d1cf7000",
+      "type": "AssignmentExpression",
+      "operator": "+=",
+      "babel_source": "interpolatedCode += escapeCSharpString(child.raw)",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "12202198",
+      "type": "AssignmentExpression",
+      "operator": "+=",
+      "babel_source": "interpolatedCode += `{(${child.code})}`",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fd8ae716",
+      "type": "TemplateLiteral",
+      "babel_source": "`{(${child.code})}`",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3b237302",
+      "type": "ObjectExpression",
+      "babel_source": "{ type: 'mixed', code: `$\"${interpolatedCode}\"` }",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9eb49962",
+      "type": "TemplateLiteral",
+      "babel_source": "`$\"${interpolatedCode}\"`",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b8cdb387",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "i = j",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0bf37874",
+      "type": "ContinueStatement",
+      "babel_source": "continue;",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e8dee0e1",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "i++",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "882101dd",
+      "type": "ReturnStatement",
+      "babel_source": "return result;",
+      "parentContext": {
+        "functionName": "generateChildren",
+        "functionParams": [
+          "children",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/jsx.cjs"
+  ]
+}

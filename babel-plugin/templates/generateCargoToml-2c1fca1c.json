@@ -1,0 +1,63 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateCargoToml",
+  "params": [
+    {
+      "name": "outputDir",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "taskFiles",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateCargoToml(outputDir, taskFiles) {\r\n  const cargoToml = `[package]\r\nname = \"minimact-rust-tasks\"\r\nversion = \"0.1.0\"\r\nedition = \"2021\"\r\n\r\n[lib]\r\ncrate-type = [\"cdylib\", \"rlib\"]\r\n\r\n[dependencies]\r\ntokio = { version = \"1\", features = [\"full\"] }\r\nserde = { version = \"1\", features = [\"derive\"] }\r\nserde_json = \"1\"\r\nrayon = \"1.7\"\r\n\r\n[[example]]\r\nname = \"test_task\"\r\npath = \"examples/test.rs\"\r\n`;\r\n\r\n  const filePath = path.join(outputDir, 'Cargo.toml');\r\n  fs.writeFileSync(filePath, cargoToml);\r\n  console.log('[Rust] Generated Cargo.toml');\r\n}",
+  "body_templates": [
+    {
+      "hash": "54a286d6",
+      "type": "VariableDeclaration",
+      "babel_source": "const cargoToml = `[package]\r\nname = \"minimact-rust-tasks\"\r\nversion = \"0.1.0\"\r\nedition = \"2021\"\r\n\r\n[lib]\r\ncrate-type = [\"cdylib\", \"rlib\"]\r\n\r\n[dependencies]\r\ntokio = { version = \"1\", features = [\"full\"] }\r\nserde = { version = \"1\", features = [\"derive\"] }\r\nserde_json = \"1\"\r\nrayon = \"1.7\"\r\n\r\n[[example]]\r\nname = \"test_task\"\r\npath = \"examples/test.rs\"\r\n`;",
+      "parentContext": {
+        "functionName": "generateCargoToml",
+        "functionParams": [
+          "outputDir",
+          "taskFiles"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "16db1f0b",
+      "type": "TemplateLiteral",
+      "babel_source": "`[package]\r\nname = \"minimact-rust-tasks\"\r\nversion = \"0.1.0\"\r\nedition = \"2021\"\r\n\r\n[lib]\r\ncrate-type = [\"cdylib\", \"rlib\"]\r\n\r\n[dependencies]\r\ntokio = { version = \"1\", features = [\"full\"] }\r\nserde = { version = \"1\", features = [\"derive\"] }\r\nserde_json = \"1\"\r\nrayon = \"1.7\"\r\n\r\n[[example]]\r\nname = \"test_task\"\r\npath = \"examples/test.rs\"\r\n`",
+      "parentContext": {
+        "functionName": "generateCargoToml",
+        "functionParams": [
+          "outputDir",
+          "taskFiles"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0f65968b",
+      "type": "VariableDeclaration",
+      "babel_source": "const filePath = path.join(outputDir, 'Cargo.toml');",
+      "parentContext": {
+        "functionName": "generateCargoToml",
+        "functionParams": [
+          "outputDir",
+          "taskFiles"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/rustTask.cjs"
+  ]
+}

@@ -1,0 +1,157 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractElementTemplate",
+  "params": [
+    {
+      "name": "jsxElement",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "itemVar",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "indexVar",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractElementTemplate(jsxElement, itemVar, indexVar) {\r\n    const tagName = jsxElement.openingElement.name.name;\r\n\r\n    // Extract prop templates\r\n    const propsTemplates = extractPropTemplates(\r\n      jsxElement.openingElement.attributes,\r\n      itemVar,\r\n      indexVar\r\n    );\r\n\r\n    // Extract children templates\r\n    const childrenTemplates = extractChildrenTemplates(\r\n      jsxElement.children,\r\n      itemVar,\r\n      indexVar\r\n    );\r\n\r\n    return {\r\n      type: 'Element',\r\n      tag: tagName,\r\n      propsTemplates: Object.keys(propsTemplates).length > 0 ? propsTemplates : null,\r\n      childrenTemplates: childrenTemplates.length > 0 ? childrenTemplates : null\r\n    };\r\n  }",
+  "body_templates": [
+    {
+      "hash": "ba4ebc27",
+      "type": "VariableDeclaration",
+      "babel_source": "const tagName = jsxElement.openingElement.name.name;",
+      "parentContext": {
+        "functionName": "extractElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8068d36b",
+      "type": "VariableDeclaration",
+      "babel_source": "const propsTemplates = extractPropTemplates(\r\n      jsxElement.openingElement.attributes,\r\n      itemVar,\r\n      indexVar\r\n    );",
+      "parentContext": {
+        "functionName": "extractElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "47e65de7",
+      "type": "VariableDeclaration",
+      "babel_source": "const childrenTemplates = extractChildrenTemplates(\r\n      jsxElement.children,\r\n      itemVar,\r\n      indexVar\r\n    );",
+      "parentContext": {
+        "functionName": "extractElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6652bbf4",
+      "type": "ReturnStatement",
+      "babel_source": "return {\r\n      type: 'Element',\r\n      tag: tagName,\r\n      propsTemplates: Object.keys(propsTemplates).length > 0 ? propsTemplates : null,\r\n      childrenTemplates: childrenTemplates.length > 0 ? childrenTemplates : null\r\n    };",
+      "parentContext": {
+        "functionName": "extractElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b9091c35",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n      type: 'Element',\r\n      tag: tagName,\r\n      propsTemplates: Object.keys(propsTemplates).length > 0 ? propsTemplates : null,\r\n      childrenTemplates: childrenTemplates.length > 0 ? childrenTemplates : null\r\n    }",
+      "parentContext": {
+        "functionName": "extractElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "41ca9fd0",
+      "type": "ConditionalExpression",
+      "babel_source": "Object.keys(propsTemplates).length > 0 ? propsTemplates : null",
+      "parentContext": {
+        "functionName": "extractElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c765045f",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "Object.keys(propsTemplates).length > 0",
+      "parentContext": {
+        "functionName": "extractElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5acd981d",
+      "type": "ConditionalExpression",
+      "babel_source": "childrenTemplates.length > 0 ? childrenTemplates : null",
+      "parentContext": {
+        "functionName": "extractElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "23fc408c",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "childrenTemplates.length > 0",
+      "parentContext": {
+        "functionName": "extractElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/loopTemplates.cjs"
+  ]
+}

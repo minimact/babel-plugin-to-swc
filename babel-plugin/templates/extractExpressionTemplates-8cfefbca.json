@@ -1,0 +1,2983 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractExpressionTemplates",
+  "params": [
+    {
+      "name": "renderBody",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractExpressionTemplates(renderBody, component) {\r\n  if (!renderBody) return [];\r\n\r\n  const expressionTemplates = [];\r\n\r\n  /**\r\n   * Traverse JSX tree looking for expression containers\r\n   */\r\n  function traverseJSX(node, path = []) {\r\n    if (t.isJSXElement(node)) {\r\n      // Check children for expressions\r\n      for (let i = 0; i < node.children.length; i++) {\r\n        const child = node.children[i];\r\n\r\n        if (t.isJSXExpressionContainer(child)) {\r\n          const template = extractExpressionTemplate(child.expression, component, [...path, i]);\r\n          if (template) {\r\n            expressionTemplates.push(template);\r\n          }\r\n        } else if (t.isJSXElement(child)) {\r\n          traverseJSX(child, [...path, i]);\r\n        }\r\n      }\r\n\r\n      // Check attributes for expressions\r\n      for (const attr of node.openingElement.attributes) {\r\n        if (t.isJSXAttribute(attr) && t.isJSXExpressionContainer(attr.value)) {\r\n          const template = extractExpressionTemplate(attr.value.expression, component, path);\r\n          if (template) {\r\n            template.attribute = attr.name.name;\r\n            expressionTemplates.push(template);\r\n          }\r\n        }\r\n      }\r\n    }\r\n  }\r\n\r\n  /**\r\n   * Extract expression template from expression node\r\n   */\r\n  function extractExpressionTemplate(expr, component, path) {\r\n    // Skip if it's a simple identifier (no transformation)\r\n    if (t.isIdentifier(expr)) {\r\n      return null;\r\n    }\r\n\r\n    // Skip conditionals (handled by structural templates)\r\n    if (t.isConditionalExpression(expr) || t.isLogicalExpression(expr)) {\r\n      return null;\r\n    }\r\n\r\n    // Method call: price.toFixed(2)\r\n    if (t.isCallExpression(expr) && t.isMemberExpression(expr.callee)) {\r\n      return extractMethodCallTemplate(expr, component, path);\r\n    }\r\n\r\n    // Binary expression: count * 2 + 1\r\n    if (t.isBinaryExpression(expr)) {\r\n      return extractBinaryExpressionTemplate(expr, component, path);\r\n    }\r\n\r\n    // Member expression: user.name, items.length\r\n    if (t.isMemberExpression(expr)) {\r\n      return extractMemberExpressionTemplate(expr, component, path);\r\n    }\r\n\r\n    // Unary expression: -count, +value\r\n    if (t.isUnaryExpression(expr)) {\r\n      return extractUnaryExpressionTemplate(expr, component, path);\r\n    }\r\n\r\n    return null;\r\n  }\r\n\r\n  /**\r\n   * Extract template from method call\r\n   *\r\n   * Example: price.toFixed(2)\r\n   * →\r\n   * {\r\n   *   type: 'methodCall',\r\n   *   binding: 'price',\r\n   *   method: 'toFixed',\r\n   *   args: [2],\r\n   *   transform: { type: 'numberFormat', method: 'toFixed', args: [2] }\r\n   * }\r\n   */\r\n  function extractMethodCallTemplate(callExpr, component, path) {\r\n    const callee = callExpr.callee;\r\n    const args = callExpr.arguments;\r\n\r\n    // Get binding (e.g., 'price' from price.toFixed())\r\n    const binding = extractBinding(callee.object);\r\n    if (!binding) return null;\r\n\r\n    // Get method name\r\n    const methodName = callee.property.name;\r\n\r\n    // Check if this is a supported transformation\r\n    if (!SUPPORTED_TRANSFORMS[methodName]) {\r\n      console.warn(`[Expression Template] Unsupported method: ${methodName}`);\r\n      return null;\r\n    }\r\n\r\n    // Extract arguments\r\n    const extractedArgs = args.map(arg => {\r\n      if (t.isNumericLiteral(arg)) return arg.value;\r\n      if (t.isStringLiteral(arg)) return arg.value;\r\n      if (t.isBooleanLiteral(arg)) return arg.value;\r\n      return null;\r\n    }).filter(a => a !== null);\r\n\r\n    // Determine state key\r\n    const stateKey = extractStateKey(callee.object, component);\r\n\r\n    return {\r\n      type: 'methodCall',\r\n      stateKey: stateKey || binding,\r\n      binding,\r\n      method: methodName,\r\n      args: extractedArgs,\r\n      transform: {\r\n        type: SUPPORTED_TRANSFORMS[methodName].type,\r\n        method: methodName,\r\n        args: extractedArgs\r\n      },\r\n      path\r\n    };\r\n  }\r\n\r\n  /**\r\n   * Extract template from binary expression\r\n   *\r\n   * Example: count * 2 + 1\r\n   * →\r\n   * {\r\n   *   type: 'binaryExpression',\r\n   *   bindings: ['count'],\r\n   *   expression: 'count * 2 + 1',\r\n   *   transform: {\r\n   *     type: 'arithmetic',\r\n   *     operations: [\r\n   *       { op: '*', right: 2 },\r\n   *       { op: '+', right: 1 }\r\n   *     ]\r\n   *   }\r\n   * }\r\n   */\r\n  function extractBinaryExpressionTemplate(binaryExpr, component, path) {\r\n    // Extract all identifiers\r\n    const identifiers = [];\r\n    extractIdentifiers(binaryExpr, identifiers);\r\n\r\n    if (identifiers.length === 0) return null;\r\n\r\n    // For simple cases (single identifier with constant), extract transform\r\n    if (identifiers.length === 1) {\r\n      const binding = identifiers[0];\r\n      const transform = analyzeBinaryExpression(binaryExpr, binding);\r\n\r\n      if (transform) {\r\n        const stateKey = binding.split('.')[0];\r\n        return {\r\n          type: 'binaryExpression',\r\n          stateKey,\r\n          bindings: [binding],\r\n          transform,\r\n          path\r\n        };\r\n      }\r\n    }\r\n\r\n    // Complex multi-variable expression - store as formula\r\n    return {\r\n      type: 'complexExpression',\r\n      stateKey: identifiers[0].split('.')[0],\r\n      bindings: identifiers,\r\n      expression: generateExpressionString(binaryExpr),\r\n      path\r\n    };\r\n  }\r\n\r\n  /**\r\n   * Analyze binary expression to extract arithmetic operations\r\n   *\r\n   * Example: count * 2 + 1 with binding=\"count\"\r\n   * →\r\n   * {\r\n   *   type: 'arithmetic',\r\n   *   operations: [\r\n   *     { op: '*', value: 2 },\r\n   *     { op: '+', value: 1 }\r\n   *   ]\r\n   * }\r\n   */\r\n  function analyzeBinaryExpression(expr, targetBinding) {\r\n    const operations = [];\r\n\r\n    function analyze(node) {\r\n      if (t.isBinaryExpression(node)) {\r\n        const { left, operator, right } = node;\r\n\r\n        // Check if one side is our target binding\r\n        const leftIsTarget = isBindingExpression(left, targetBinding);\r\n        const rightIsTarget = isBindingExpression(right, targetBinding);\r\n\r\n        if (leftIsTarget && t.isNumericLiteral(right)) {\r\n          operations.push({ op: operator, value: right.value, side: 'right' });\r\n        } else if (rightIsTarget && t.isNumericLiteral(left)) {\r\n          operations.push({ op: operator, value: left.value, side: 'left' });\r\n        } else {\r\n          // Recurse\r\n          analyze(left);\r\n          analyze(right);\r\n        }\r\n      }\r\n    }\r\n\r\n    analyze(expr);\r\n\r\n    if (operations.length > 0) {\r\n      return {\r\n        type: 'arithmetic',\r\n        operations\r\n      };\r\n    }\r\n\r\n    return null;\r\n  }\r\n\r\n  /**\r\n   * Check if expression is our target binding\r\n   */\r\n  function isBindingExpression(expr, targetBinding) {\r\n    const binding = extractBinding(expr);\r\n    return binding === targetBinding;\r\n  }\r\n\r\n  /**\r\n   * Extract template from member expression\r\n   *\r\n   * Example: items.length\r\n   * →\r\n   * {\r\n   *   type: 'memberExpression',\r\n   *   binding: 'items.length',\r\n   *   transform: { type: 'property', property: 'length' }\r\n   * }\r\n   */\r\n  function extractMemberExpressionTemplate(memberExpr, component, path) {\r\n    // Check for computed property access: item[field]\r\n    if (memberExpr.computed) {\r\n      console.warn('[Minimact Warning] Computed property access detected - skipping template optimization (requires runtime evaluation)');\r\n\r\n      // Return a special marker indicating this needs runtime evaluation\r\n      // The C# generator will handle this as dynamic property access\r\n      return {\r\n        type: 'computedMemberExpression',\r\n        isComputed: true,\r\n        requiresRuntimeEval: true,\r\n        object: memberExpr.object,\r\n        property: memberExpr.property,\r\n        path\r\n      };\r\n    }\r\n\r\n    const binding = buildMemberPath(memberExpr);\r\n    if (!binding) return null;\r\n\r\n    // Get property name (only for non-computed properties)\r\n    const propertyName = memberExpr.property.name;\r\n\r\n    // Check if it's a supported property\r\n    if (!SUPPORTED_TRANSFORMS[propertyName]) {\r\n      return null;\r\n    }\r\n\r\n    const stateKey = extractStateKey(memberExpr, component);\r\n\r\n    return {\r\n      type: 'memberExpression',\r\n      stateKey: stateKey || binding.split('.')[0],\r\n      binding,\r\n      property: propertyName,\r\n      transform: {\r\n        type: SUPPORTED_TRANSFORMS[propertyName].type,\r\n        property: propertyName\r\n      },\r\n      path\r\n    };\r\n  }\r\n\r\n  /**\r\n   * Extract template from unary expression\r\n   *\r\n   * Example: -count, +value\r\n   */\r\n  function extractUnaryExpressionTemplate(unaryExpr, component, path) {\r\n    const { operator, argument } = unaryExpr;\r\n\r\n    const binding = extractBinding(argument);\r\n    if (!binding) return null;\r\n\r\n    if (operator === '-' || operator === '+') {\r\n      const stateKey = extractStateKey(argument, component);\r\n\r\n      return {\r\n        type: 'unaryExpression',\r\n        stateKey: stateKey || binding,\r\n        binding,\r\n        operator,\r\n        transform: {\r\n          type: 'unary',\r\n          operator\r\n        },\r\n        path\r\n      };\r\n    }\r\n\r\n    return null;\r\n  }\r\n\r\n  /**\r\n   * Extract binding from expression\r\n   */\r\n  function extractBinding(expr) {\r\n    if (t.isIdentifier(expr)) {\r\n      return expr.name;\r\n    } else if (t.isMemberExpression(expr)) {\r\n      return buildMemberPath(expr);\r\n    }\r\n    return null;\r\n  }\r\n\r\n  /**\r\n   * Extract state key (root variable)\r\n   */\r\n  function extractStateKey(expr, component) {\r\n    if (t.isIdentifier(expr)) {\r\n      return expr.name;\r\n    } else if (t.isMemberExpression(expr)) {\r\n      let current = expr;\r\n      while (t.isMemberExpression(current)) {\r\n        current = current.object;\r\n      }\r\n      if (t.isIdentifier(current)) {\r\n        return current.name;\r\n      }\r\n    }\r\n    return null;\r\n  }\r\n\r\n  /**\r\n   * Build member expression path\r\n   */\r\n  function buildMemberPath(expr) {\r\n    const parts = [];\r\n    let current = expr;\r\n\r\n    while (t.isMemberExpression(current)) {\r\n      if (t.isIdentifier(current.property)) {\r\n        parts.unshift(current.property.name);\r\n      }\r\n      current = current.object;\r\n    }\r\n\r\n    if (t.isIdentifier(current)) {\r\n      parts.unshift(current.name);\r\n    }\r\n\r\n    return parts.join('.');\r\n  }\r\n\r\n  /**\r\n   * Extract all identifiers from expression\r\n   */\r\n  function extractIdentifiers(expr, result) {\r\n    if (t.isIdentifier(expr)) {\r\n      result.push(expr.name);\r\n    } else if (t.isBinaryExpression(expr)) {\r\n      extractIdentifiers(expr.left, result);\r\n      extractIdentifiers(expr.right, result);\r\n    } else if (t.isUnaryExpression(expr)) {\r\n      extractIdentifiers(expr.argument, result);\r\n    } else if (t.isMemberExpression(expr)) {\r\n      const path = buildMemberPath(expr);\r\n      if (path) result.push(path);\r\n    }\r\n  }\r\n\r\n  /**\r\n   * Generate expression string for complex expressions\r\n   */\r\n  function generateExpressionString(expr) {\r\n    if (t.isIdentifier(expr)) {\r\n      return expr.name;\r\n    } else if (t.isNumericLiteral(expr)) {\r\n      return String(expr.value);\r\n    } else if (t.isBinaryExpression(expr)) {\r\n      const left = generateExpressionString(expr.left);\r\n      const right = generateExpressionString(expr.right);\r\n      return `${left} ${expr.operator} ${right}`;\r\n    } else if (t.isUnaryExpression(expr)) {\r\n      const arg = generateExpressionString(expr.argument);\r\n      return `${expr.operator}${arg}`;\r\n    } else if (t.isMemberExpression(expr)) {\r\n      return buildMemberPath(expr);\r\n    }\r\n    return '?';\r\n  }\r\n\r\n  // Start traversal\r\n  traverseJSX(renderBody);\r\n\r\n  return expressionTemplates;\r\n}",
+  "body_templates": [
+    {
+      "hash": "7ba9f7aa",
+      "type": "IfStatement",
+      "condition": "!renderBody",
+      "babel_source": "if (!renderBody) return [];",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bc65e16e",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!renderBody",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c7221e11",
+      "type": "ReturnStatement",
+      "babel_source": "return [];",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "10702c18",
+      "type": "VariableDeclaration",
+      "babel_source": "const expressionTemplates = [];",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c6644532",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(node)",
+      "babel_source": "if (t.isJSXElement(node)) {\r\n      // Check children for expressions\r\n      for (let i = 0; i < node.children.length; i++) {\r\n        const child = node.children[i];\r\n\r\n        if (t.isJSXExpressionContainer(child)) {\r\n          const template = extractExpressionTemplate(child.expression, component, [...path, i]);\r\n          if (template) {\r\n            expressionTemplates.push(template);\r\n          }\r\n        } else if (t.isJSXElement(child)) {\r\n          traverseJSX(child, [...path, i]);\r\n        }\r\n      }\r\n\r\n      // Check attributes for expressions\r\n      for (const attr of node.openingElement.attributes) {\r\n        if (t.isJSXAttribute(attr) && t.isJSXExpressionContainer(attr.value)) {\r\n          const template = extractExpressionTemplate(attr.value.expression, component, path);\r\n          if (template) {\r\n            template.attribute = attr.name.name;\r\n            expressionTemplates.push(template);\r\n          }\r\n        }\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "606ccdc5",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(node)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "be449466",
+      "type": "ForStatement",
+      "babel_source": "for (let i = 0; i < node.children.length; i++) {\r\n        const child = node.children[i];\r\n\r\n        if (t.isJSXExpressionContainer(child)) {\r\n          const template = extractExpressionTemplate(child.expression, component, [...path, i]);\r\n          if (template) {\r\n            expressionTemplates.push(template);\r\n          }\r\n        } else if (t.isJSXElement(child)) {\r\n          traverseJSX(child, [...path, i]);\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ecb911a1",
+      "type": "VariableDeclaration",
+      "babel_source": "let i = 0",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a6e11c46",
+      "type": "BinaryExpression",
+      "operator": "<",
+      "babel_source": "i < node.children.length",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e8dee0e1",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "i++",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "489e538d",
+      "type": "VariableDeclaration",
+      "babel_source": "const child = node.children[i];",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a2ea0454",
+      "type": "IfStatement",
+      "condition": "t.isJSXExpressionContainer(child)",
+      "babel_source": "if (t.isJSXExpressionContainer(child)) {\r\n          const template = extractExpressionTemplate(child.expression, component, [...path, i]);\r\n          if (template) {\r\n            expressionTemplates.push(template);\r\n          }\r\n        } else if (t.isJSXElement(child)) {\r\n          traverseJSX(child, [...path, i]);\r\n        }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c53c8d32",
+      "type": "BabelTypeCheck",
+      "method": "isJSXExpressionContainer",
+      "babel_source": "t.isJSXExpressionContainer(child)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0d1ae79d",
+      "type": "VariableDeclaration",
+      "babel_source": "const template = extractExpressionTemplate(child.expression, component, [...path, i]);",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "31f59839",
+      "type": "ArrayExpression",
+      "babel_source": "[...path, i]",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1d557abe",
+      "type": "SpreadElement",
+      "babel_source": "...path",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "462b0c72",
+      "type": "IfStatement",
+      "condition": "template",
+      "babel_source": "if (template) {\r\n            expressionTemplates.push(template);\r\n          }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c300e860",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(child)",
+      "babel_source": "if (t.isJSXElement(child)) {\r\n          traverseJSX(child, [...path, i]);\r\n        }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d44bd174",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(child)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "31f59839",
+      "type": "ArrayExpression",
+      "babel_source": "[...path, i]",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1d557abe",
+      "type": "SpreadElement",
+      "babel_source": "...path",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ef50a03b",
+      "type": "ForOfStatement",
+      "babel_source": "for (const attr of node.openingElement.attributes) {\r\n        if (t.isJSXAttribute(attr) && t.isJSXExpressionContainer(attr.value)) {\r\n          const template = extractExpressionTemplate(attr.value.expression, component, path);\r\n          if (template) {\r\n            template.attribute = attr.name.name;\r\n            expressionTemplates.push(template);\r\n          }\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "02ca2e7f",
+      "type": "VariableDeclaration",
+      "babel_source": "const attr",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8f775337",
+      "type": "IfStatement",
+      "condition": "t.isJSXAttribute(attr) && t.isJSXExpressionContainer(attr.value)",
+      "babel_source": "if (t.isJSXAttribute(attr) && t.isJSXExpressionContainer(attr.value)) {\r\n          const template = extractExpressionTemplate(attr.value.expression, component, path);\r\n          if (template) {\r\n            template.attribute = attr.name.name;\r\n            expressionTemplates.push(template);\r\n          }\r\n        }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4e918ac0",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isJSXAttribute(attr) && t.isJSXExpressionContainer(attr.value)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7468026c",
+      "type": "BabelTypeCheck",
+      "method": "isJSXAttribute",
+      "babel_source": "t.isJSXAttribute(attr)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7bbf8e47",
+      "type": "BabelTypeCheck",
+      "method": "isJSXExpressionContainer",
+      "babel_source": "t.isJSXExpressionContainer(attr.value)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "13cba7d5",
+      "type": "VariableDeclaration",
+      "babel_source": "const template = extractExpressionTemplate(attr.value.expression, component, path);",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0e648a0e",
+      "type": "IfStatement",
+      "condition": "template",
+      "babel_source": "if (template) {\r\n            template.attribute = attr.name.name;\r\n            expressionTemplates.push(template);\r\n          }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "aaba6fa7",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "template.attribute = attr.name.name",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c7e3a346",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(expr)",
+      "babel_source": "if (t.isIdentifier(expr)) {\r\n      return null;\r\n    }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42d26fd4",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(expr)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "caea504b",
+      "type": "IfStatement",
+      "condition": "t.isConditionalExpression(expr) || t.isLogicalExpression(expr)",
+      "babel_source": "if (t.isConditionalExpression(expr) || t.isLogicalExpression(expr)) {\r\n      return null;\r\n    }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1a0e00de",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isConditionalExpression(expr) || t.isLogicalExpression(expr)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5574ecc1",
+      "type": "BabelTypeCheck",
+      "method": "isConditionalExpression",
+      "babel_source": "t.isConditionalExpression(expr)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c20dd732",
+      "type": "BabelTypeCheck",
+      "method": "isLogicalExpression",
+      "babel_source": "t.isLogicalExpression(expr)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "579174d2",
+      "type": "IfStatement",
+      "condition": "t.isCallExpression(expr) && t.isMemberExpression(expr.callee)",
+      "babel_source": "if (t.isCallExpression(expr) && t.isMemberExpression(expr.callee)) {\r\n      return extractMethodCallTemplate(expr, component, path);\r\n    }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c2656421",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isCallExpression(expr) && t.isMemberExpression(expr.callee)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "46479f62",
+      "type": "BabelTypeCheck",
+      "method": "isCallExpression",
+      "babel_source": "t.isCallExpression(expr)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d6c41024",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(expr.callee)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b63d78da",
+      "type": "ReturnStatement",
+      "babel_source": "return extractMethodCallTemplate(expr, component, path);",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8118ee5e",
+      "type": "IfStatement",
+      "condition": "t.isBinaryExpression(expr)",
+      "babel_source": "if (t.isBinaryExpression(expr)) {\r\n      return extractBinaryExpressionTemplate(expr, component, path);\r\n    }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8db0ee56",
+      "type": "BabelTypeCheck",
+      "method": "isBinaryExpression",
+      "babel_source": "t.isBinaryExpression(expr)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9d23400b",
+      "type": "ReturnStatement",
+      "babel_source": "return extractBinaryExpressionTemplate(expr, component, path);",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "79b73aa9",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(expr)",
+      "babel_source": "if (t.isMemberExpression(expr)) {\r\n      return extractMemberExpressionTemplate(expr, component, path);\r\n    }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c8858c63",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(expr)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "06a46a2d",
+      "type": "ReturnStatement",
+      "babel_source": "return extractMemberExpressionTemplate(expr, component, path);",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dc70bfa3",
+      "type": "IfStatement",
+      "condition": "t.isUnaryExpression(expr)",
+      "babel_source": "if (t.isUnaryExpression(expr)) {\r\n      return extractUnaryExpressionTemplate(expr, component, path);\r\n    }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4b2e045a",
+      "type": "BabelTypeCheck",
+      "method": "isUnaryExpression",
+      "babel_source": "t.isUnaryExpression(expr)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "874beb04",
+      "type": "ReturnStatement",
+      "babel_source": "return extractUnaryExpressionTemplate(expr, component, path);",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1829eee5",
+      "type": "VariableDeclaration",
+      "babel_source": "const callee = callExpr.callee;",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "197b5cd7",
+      "type": "VariableDeclaration",
+      "babel_source": "const args = callExpr.arguments;",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0a3a04b8",
+      "type": "VariableDeclaration",
+      "babel_source": "const binding = extractBinding(callee.object);",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e8e906d0",
+      "type": "IfStatement",
+      "condition": "!binding",
+      "babel_source": "if (!binding) return null;",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cbb1eae6",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!binding",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0ea37fc2",
+      "type": "VariableDeclaration",
+      "babel_source": "const methodName = callee.property.name;",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6e870192",
+      "type": "IfStatement",
+      "condition": "!SUPPORTED_TRANSFORMS[methodName]",
+      "babel_source": "if (!SUPPORTED_TRANSFORMS[methodName]) {\r\n      console.warn(`[Expression Template] Unsupported method: ${methodName}`);\r\n      return null;\r\n    }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2d26404d",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!SUPPORTED_TRANSFORMS[methodName]",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1a1ce22c",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Expression Template] Unsupported method: ${methodName}`",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "24fe3fc4",
+      "type": "VariableDeclaration",
+      "babel_source": "const extractedArgs = args.map(arg => {\r\n      if (t.isNumericLiteral(arg)) return arg.value;\r\n      if (t.isStringLiteral(arg)) return arg.value;\r\n      if (t.isBooleanLiteral(arg)) return arg.value;\r\n      return null;\r\n    }).filter(a => a !== null);",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b0dbd182",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "arg => {\r\n      if (t.isNumericLiteral(arg)) return arg.value;\r\n      if (t.isStringLiteral(arg)) return arg.value;\r\n      if (t.isBooleanLiteral(arg)) return arg.value;\r\n      return null;\r\n    }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1fbeef54",
+      "type": "IfStatement",
+      "condition": "t.isNumericLiteral(arg)",
+      "babel_source": "if (t.isNumericLiteral(arg)) return arg.value;",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f154633b",
+      "type": "BabelTypeCheck",
+      "method": "isNumericLiteral",
+      "babel_source": "t.isNumericLiteral(arg)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a32a50fe",
+      "type": "ReturnStatement",
+      "babel_source": "return arg.value;",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d8b3a0ff",
+      "type": "IfStatement",
+      "condition": "t.isStringLiteral(arg)",
+      "babel_source": "if (t.isStringLiteral(arg)) return arg.value;",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3be46d5d",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(arg)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a32a50fe",
+      "type": "ReturnStatement",
+      "babel_source": "return arg.value;",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9c7bb4c9",
+      "type": "IfStatement",
+      "condition": "t.isBooleanLiteral(arg)",
+      "babel_source": "if (t.isBooleanLiteral(arg)) return arg.value;",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1f7a5aa1",
+      "type": "BabelTypeCheck",
+      "method": "isBooleanLiteral",
+      "babel_source": "t.isBooleanLiteral(arg)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a32a50fe",
+      "type": "ReturnStatement",
+      "babel_source": "return arg.value;",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f5298ae6",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "a => a !== null",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0cf4460c",
+      "type": "BinaryExpression",
+      "operator": "!==",
+      "babel_source": "a !== null",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7abcf2e0",
+      "type": "VariableDeclaration",
+      "babel_source": "const stateKey = extractStateKey(callee.object, component);",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "39a1ca08",
+      "type": "ReturnStatement",
+      "babel_source": "return {\r\n      type: 'methodCall',\r\n      stateKey: stateKey || binding,\r\n      binding,\r\n      method: methodName,\r\n      args: extractedArgs,\r\n      transform: {\r\n        type: SUPPORTED_TRANSFORMS[methodName].type,\r\n        method: methodName,\r\n        args: extractedArgs\r\n      },\r\n      path\r\n    };",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "df861d77",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n      type: 'methodCall',\r\n      stateKey: stateKey || binding,\r\n      binding,\r\n      method: methodName,\r\n      args: extractedArgs,\r\n      transform: {\r\n        type: SUPPORTED_TRANSFORMS[methodName].type,\r\n        method: methodName,\r\n        args: extractedArgs\r\n      },\r\n      path\r\n    }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "35e29e56",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "stateKey || binding",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5e4fc2d0",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n        type: SUPPORTED_TRANSFORMS[methodName].type,\r\n        method: methodName,\r\n        args: extractedArgs\r\n      }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6b6132bd",
+      "type": "VariableDeclaration",
+      "babel_source": "const identifiers = [];",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "85ee027f",
+      "type": "IfStatement",
+      "condition": "identifiers.length === 0",
+      "babel_source": "if (identifiers.length === 0) return null;",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "116987ff",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "identifiers.length === 0",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "27411c0e",
+      "type": "IfStatement",
+      "condition": "identifiers.length === 1",
+      "babel_source": "if (identifiers.length === 1) {\r\n      const binding = identifiers[0];\r\n      const transform = analyzeBinaryExpression(binaryExpr, binding);\r\n\r\n      if (transform) {\r\n        const stateKey = binding.split('.')[0];\r\n        return {\r\n          type: 'binaryExpression',\r\n          stateKey,\r\n          bindings: [binding],\r\n          transform,\r\n          path\r\n        };\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "267b7133",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "identifiers.length === 1",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42f2ea3e",
+      "type": "VariableDeclaration",
+      "babel_source": "const binding = identifiers[0];",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "acf36058",
+      "type": "VariableDeclaration",
+      "babel_source": "const transform = analyzeBinaryExpression(binaryExpr, binding);",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c6fa7a6f",
+      "type": "IfStatement",
+      "condition": "transform",
+      "babel_source": "if (transform) {\r\n        const stateKey = binding.split('.')[0];\r\n        return {\r\n          type: 'binaryExpression',\r\n          stateKey,\r\n          bindings: [binding],\r\n          transform,\r\n          path\r\n        };\r\n      }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "853133b7",
+      "type": "VariableDeclaration",
+      "babel_source": "const stateKey = binding.split('.')[0];",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3df846eb",
+      "type": "ReturnStatement",
+      "babel_source": "return {\r\n          type: 'binaryExpression',\r\n          stateKey,\r\n          bindings: [binding],\r\n          transform,\r\n          path\r\n        };",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cd8e4947",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n          type: 'binaryExpression',\r\n          stateKey,\r\n          bindings: [binding],\r\n          transform,\r\n          path\r\n        }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b854dc8e",
+      "type": "ArrayExpression",
+      "babel_source": "[binding]",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "818425af",
+      "type": "ReturnStatement",
+      "babel_source": "return {\r\n      type: 'complexExpression',\r\n      stateKey: identifiers[0].split('.')[0],\r\n      bindings: identifiers,\r\n      expression: generateExpressionString(binaryExpr),\r\n      path\r\n    };",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9e69eec6",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n      type: 'complexExpression',\r\n      stateKey: identifiers[0].split('.')[0],\r\n      bindings: identifiers,\r\n      expression: generateExpressionString(binaryExpr),\r\n      path\r\n    }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "65fcb15f",
+      "type": "VariableDeclaration",
+      "babel_source": "const operations = [];",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b321812e",
+      "type": "IfStatement",
+      "condition": "t.isBinaryExpression(node)",
+      "babel_source": "if (t.isBinaryExpression(node)) {\r\n        const { left, operator, right } = node;\r\n\r\n        // Check if one side is our target binding\r\n        const leftIsTarget = isBindingExpression(left, targetBinding);\r\n        const rightIsTarget = isBindingExpression(right, targetBinding);\r\n\r\n        if (leftIsTarget && t.isNumericLiteral(right)) {\r\n          operations.push({ op: operator, value: right.value, side: 'right' });\r\n        } else if (rightIsTarget && t.isNumericLiteral(left)) {\r\n          operations.push({ op: operator, value: left.value, side: 'left' });\r\n        } else {\r\n          // Recurse\r\n          analyze(left);\r\n          analyze(right);\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ae0955e9",
+      "type": "BabelTypeCheck",
+      "method": "isBinaryExpression",
+      "babel_source": "t.isBinaryExpression(node)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a613c762",
+      "type": "VariableDeclaration",
+      "babel_source": "const { left, operator, right } = node;",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3a36beec",
+      "type": "VariableDeclaration",
+      "babel_source": "const leftIsTarget = isBindingExpression(left, targetBinding);",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "78c9282d",
+      "type": "VariableDeclaration",
+      "babel_source": "const rightIsTarget = isBindingExpression(right, targetBinding);",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b11c62d5",
+      "type": "IfStatement",
+      "condition": "leftIsTarget && t.isNumericLiteral(right)",
+      "babel_source": "if (leftIsTarget && t.isNumericLiteral(right)) {\r\n          operations.push({ op: operator, value: right.value, side: 'right' });\r\n        } else if (rightIsTarget && t.isNumericLiteral(left)) {\r\n          operations.push({ op: operator, value: left.value, side: 'left' });\r\n        } else {\r\n          // Recurse\r\n          analyze(left);\r\n          analyze(right);\r\n        }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6f2e9c23",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "leftIsTarget && t.isNumericLiteral(right)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bf8de6a8",
+      "type": "BabelTypeCheck",
+      "method": "isNumericLiteral",
+      "babel_source": "t.isNumericLiteral(right)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "86f1e32a",
+      "type": "ObjectExpression",
+      "babel_source": "{ op: operator, value: right.value, side: 'right' }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5c056df1",
+      "type": "IfStatement",
+      "condition": "rightIsTarget && t.isNumericLiteral(left)",
+      "babel_source": "if (rightIsTarget && t.isNumericLiteral(left)) {\r\n          operations.push({ op: operator, value: left.value, side: 'left' });\r\n        } else {\r\n          // Recurse\r\n          analyze(left);\r\n          analyze(right);\r\n        }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9521fcfa",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "rightIsTarget && t.isNumericLiteral(left)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "848670c7",
+      "type": "BabelTypeCheck",
+      "method": "isNumericLiteral",
+      "babel_source": "t.isNumericLiteral(left)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b56b9fee",
+      "type": "ObjectExpression",
+      "babel_source": "{ op: operator, value: left.value, side: 'left' }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0589a642",
+      "type": "IfStatement",
+      "condition": "operations.length > 0",
+      "babel_source": "if (operations.length > 0) {\r\n      return {\r\n        type: 'arithmetic',\r\n        operations\r\n      };\r\n    }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c365b1fd",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "operations.length > 0",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "50fce684",
+      "type": "ReturnStatement",
+      "babel_source": "return {\r\n        type: 'arithmetic',\r\n        operations\r\n      };",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "baa6be14",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n        type: 'arithmetic',\r\n        operations\r\n      }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e0c550b8",
+      "type": "VariableDeclaration",
+      "babel_source": "const binding = extractBinding(expr);",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c56118a3",
+      "type": "ReturnStatement",
+      "babel_source": "return binding === targetBinding;",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "45c6917b",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "binding === targetBinding",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9cd5d1d2",
+      "type": "IfStatement",
+      "condition": "memberExpr.computed",
+      "babel_source": "if (memberExpr.computed) {\r\n      console.warn('[Minimact Warning] Computed property access detected - skipping template optimization (requires runtime evaluation)');\r\n\r\n      // Return a special marker indicating this needs runtime evaluation\r\n      // The C# generator will handle this as dynamic property access\r\n      return {\r\n        type: 'computedMemberExpression',\r\n        isComputed: true,\r\n        requiresRuntimeEval: true,\r\n        object: memberExpr.object,\r\n        property: memberExpr.property,\r\n        path\r\n      };\r\n    }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bf08cb9d",
+      "type": "ReturnStatement",
+      "babel_source": "return {\r\n        type: 'computedMemberExpression',\r\n        isComputed: true,\r\n        requiresRuntimeEval: true,\r\n        object: memberExpr.object,\r\n        property: memberExpr.property,\r\n        path\r\n      };",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b309b38f",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n        type: 'computedMemberExpression',\r\n        isComputed: true,\r\n        requiresRuntimeEval: true,\r\n        object: memberExpr.object,\r\n        property: memberExpr.property,\r\n        path\r\n      }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "865f45a9",
+      "type": "VariableDeclaration",
+      "babel_source": "const binding = buildMemberPath(memberExpr);",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e8e906d0",
+      "type": "IfStatement",
+      "condition": "!binding",
+      "babel_source": "if (!binding) return null;",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cbb1eae6",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!binding",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "35f2f8d8",
+      "type": "VariableDeclaration",
+      "babel_source": "const propertyName = memberExpr.property.name;",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "92c0df15",
+      "type": "IfStatement",
+      "condition": "!SUPPORTED_TRANSFORMS[propertyName]",
+      "babel_source": "if (!SUPPORTED_TRANSFORMS[propertyName]) {\r\n      return null;\r\n    }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7919639c",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!SUPPORTED_TRANSFORMS[propertyName]",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d21b5e24",
+      "type": "VariableDeclaration",
+      "babel_source": "const stateKey = extractStateKey(memberExpr, component);",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8ea7a90c",
+      "type": "ReturnStatement",
+      "babel_source": "return {\r\n      type: 'memberExpression',\r\n      stateKey: stateKey || binding.split('.')[0],\r\n      binding,\r\n      property: propertyName,\r\n      transform: {\r\n        type: SUPPORTED_TRANSFORMS[propertyName].type,\r\n        property: propertyName\r\n      },\r\n      path\r\n    };",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ff16a49e",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n      type: 'memberExpression',\r\n      stateKey: stateKey || binding.split('.')[0],\r\n      binding,\r\n      property: propertyName,\r\n      transform: {\r\n        type: SUPPORTED_TRANSFORMS[propertyName].type,\r\n        property: propertyName\r\n      },\r\n      path\r\n    }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7bc4fd62",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "stateKey || binding.split('.')[0]",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9d7512d5",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n        type: SUPPORTED_TRANSFORMS[propertyName].type,\r\n        property: propertyName\r\n      }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2147eab0",
+      "type": "VariableDeclaration",
+      "babel_source": "const { operator, argument } = unaryExpr;",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0749b8dc",
+      "type": "VariableDeclaration",
+      "babel_source": "const binding = extractBinding(argument);",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e8e906d0",
+      "type": "IfStatement",
+      "condition": "!binding",
+      "babel_source": "if (!binding) return null;",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cbb1eae6",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!binding",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "73bd19bc",
+      "type": "IfStatement",
+      "condition": "operator === '-' || operator === '+'",
+      "babel_source": "if (operator === '-' || operator === '+') {\r\n      const stateKey = extractStateKey(argument, component);\r\n\r\n      return {\r\n        type: 'unaryExpression',\r\n        stateKey: stateKey || binding,\r\n        binding,\r\n        operator,\r\n        transform: {\r\n          type: 'unary',\r\n          operator\r\n        },\r\n        path\r\n      };\r\n    }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fdb6dd38",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "operator === '-' || operator === '+'",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0c57951b",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "operator === '-'",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a3ec5924",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "operator === '+'",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a28e98b2",
+      "type": "VariableDeclaration",
+      "babel_source": "const stateKey = extractStateKey(argument, component);",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8077c974",
+      "type": "ReturnStatement",
+      "babel_source": "return {\r\n        type: 'unaryExpression',\r\n        stateKey: stateKey || binding,\r\n        binding,\r\n        operator,\r\n        transform: {\r\n          type: 'unary',\r\n          operator\r\n        },\r\n        path\r\n      };",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e587f7e4",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n        type: 'unaryExpression',\r\n        stateKey: stateKey || binding,\r\n        binding,\r\n        operator,\r\n        transform: {\r\n          type: 'unary',\r\n          operator\r\n        },\r\n        path\r\n      }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "35e29e56",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "stateKey || binding",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "54ccd352",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n          type: 'unary',\r\n          operator\r\n        }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "332810e3",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(expr)",
+      "babel_source": "if (t.isIdentifier(expr)) {\r\n      return expr.name;\r\n    } else if (t.isMemberExpression(expr)) {\r\n      return buildMemberPath(expr);\r\n    }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42d26fd4",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(expr)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dc053a27",
+      "type": "ReturnStatement",
+      "babel_source": "return expr.name;",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2081d490",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(expr)",
+      "babel_source": "if (t.isMemberExpression(expr)) {\r\n      return buildMemberPath(expr);\r\n    }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c8858c63",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(expr)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "555e4b1f",
+      "type": "ReturnStatement",
+      "babel_source": "return buildMemberPath(expr);",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "51d0305a",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(expr)",
+      "babel_source": "if (t.isIdentifier(expr)) {\r\n      return expr.name;\r\n    } else if (t.isMemberExpression(expr)) {\r\n      let current = expr;\r\n      while (t.isMemberExpression(current)) {\r\n        current = current.object;\r\n      }\r\n      if (t.isIdentifier(current)) {\r\n        return current.name;\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42d26fd4",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(expr)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dc053a27",
+      "type": "ReturnStatement",
+      "babel_source": "return expr.name;",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c3cee422",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(expr)",
+      "babel_source": "if (t.isMemberExpression(expr)) {\r\n      let current = expr;\r\n      while (t.isMemberExpression(current)) {\r\n        current = current.object;\r\n      }\r\n      if (t.isIdentifier(current)) {\r\n        return current.name;\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c8858c63",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(expr)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b74a5e61",
+      "type": "VariableDeclaration",
+      "babel_source": "let current = expr;",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "847810c1",
+      "type": "WhileStatement",
+      "babel_source": "while (t.isMemberExpression(current)) {\r\n        current = current.object;\r\n      }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "99ac970d",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(current)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "05723cfe",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "current = current.object",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "17c54bb7",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(current)",
+      "babel_source": "if (t.isIdentifier(current)) {\r\n        return current.name;\r\n      }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f41cdd7f",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(current)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8eb838fb",
+      "type": "ReturnStatement",
+      "babel_source": "return current.name;",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c4133e54",
+      "type": "VariableDeclaration",
+      "babel_source": "const parts = [];",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b74a5e61",
+      "type": "VariableDeclaration",
+      "babel_source": "let current = expr;",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ec94361c",
+      "type": "WhileStatement",
+      "babel_source": "while (t.isMemberExpression(current)) {\r\n      if (t.isIdentifier(current.property)) {\r\n        parts.unshift(current.property.name);\r\n      }\r\n      current = current.object;\r\n    }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "99ac970d",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(current)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d63eee77",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(current.property)",
+      "babel_source": "if (t.isIdentifier(current.property)) {\r\n        parts.unshift(current.property.name);\r\n      }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "70f404ee",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(current.property)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "05723cfe",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "current = current.object",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bf9886fb",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(current)",
+      "babel_source": "if (t.isIdentifier(current)) {\r\n      parts.unshift(current.name);\r\n    }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f41cdd7f",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(current)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42163b24",
+      "type": "ReturnStatement",
+      "babel_source": "return parts.join('.');",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3f512760",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(expr)",
+      "babel_source": "if (t.isIdentifier(expr)) {\r\n      result.push(expr.name);\r\n    } else if (t.isBinaryExpression(expr)) {\r\n      extractIdentifiers(expr.left, result);\r\n      extractIdentifiers(expr.right, result);\r\n    } else if (t.isUnaryExpression(expr)) {\r\n      extractIdentifiers(expr.argument, result);\r\n    } else if (t.isMemberExpression(expr)) {\r\n      const path = buildMemberPath(expr);\r\n      if (path) result.push(path);\r\n    }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42d26fd4",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(expr)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "71daa2fd",
+      "type": "IfStatement",
+      "condition": "t.isBinaryExpression(expr)",
+      "babel_source": "if (t.isBinaryExpression(expr)) {\r\n      extractIdentifiers(expr.left, result);\r\n      extractIdentifiers(expr.right, result);\r\n    } else if (t.isUnaryExpression(expr)) {\r\n      extractIdentifiers(expr.argument, result);\r\n    } else if (t.isMemberExpression(expr)) {\r\n      const path = buildMemberPath(expr);\r\n      if (path) result.push(path);\r\n    }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8db0ee56",
+      "type": "BabelTypeCheck",
+      "method": "isBinaryExpression",
+      "babel_source": "t.isBinaryExpression(expr)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dceb1877",
+      "type": "IfStatement",
+      "condition": "t.isUnaryExpression(expr)",
+      "babel_source": "if (t.isUnaryExpression(expr)) {\r\n      extractIdentifiers(expr.argument, result);\r\n    } else if (t.isMemberExpression(expr)) {\r\n      const path = buildMemberPath(expr);\r\n      if (path) result.push(path);\r\n    }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4b2e045a",
+      "type": "BabelTypeCheck",
+      "method": "isUnaryExpression",
+      "babel_source": "t.isUnaryExpression(expr)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2b682674",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(expr)",
+      "babel_source": "if (t.isMemberExpression(expr)) {\r\n      const path = buildMemberPath(expr);\r\n      if (path) result.push(path);\r\n    }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c8858c63",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(expr)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "25318da5",
+      "type": "VariableDeclaration",
+      "babel_source": "const path = buildMemberPath(expr);",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9615f47b",
+      "type": "IfStatement",
+      "condition": "path",
+      "babel_source": "if (path) result.push(path);",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "330fe461",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(expr)",
+      "babel_source": "if (t.isIdentifier(expr)) {\r\n      return expr.name;\r\n    } else if (t.isNumericLiteral(expr)) {\r\n      return String(expr.value);\r\n    } else if (t.isBinaryExpression(expr)) {\r\n      const left = generateExpressionString(expr.left);\r\n      const right = generateExpressionString(expr.right);\r\n      return `${left} ${expr.operator} ${right}`;\r\n    } else if (t.isUnaryExpression(expr)) {\r\n      const arg = generateExpressionString(expr.argument);\r\n      return `${expr.operator}${arg}`;\r\n    } else if (t.isMemberExpression(expr)) {\r\n      return buildMemberPath(expr);\r\n    }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42d26fd4",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(expr)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dc053a27",
+      "type": "ReturnStatement",
+      "babel_source": "return expr.name;",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b1a3d8da",
+      "type": "IfStatement",
+      "condition": "t.isNumericLiteral(expr)",
+      "babel_source": "if (t.isNumericLiteral(expr)) {\r\n      return String(expr.value);\r\n    } else if (t.isBinaryExpression(expr)) {\r\n      const left = generateExpressionString(expr.left);\r\n      const right = generateExpressionString(expr.right);\r\n      return `${left} ${expr.operator} ${right}`;\r\n    } else if (t.isUnaryExpression(expr)) {\r\n      const arg = generateExpressionString(expr.argument);\r\n      return `${expr.operator}${arg}`;\r\n    } else if (t.isMemberExpression(expr)) {\r\n      return buildMemberPath(expr);\r\n    }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bed165a3",
+      "type": "BabelTypeCheck",
+      "method": "isNumericLiteral",
+      "babel_source": "t.isNumericLiteral(expr)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "82a2e109",
+      "type": "ReturnStatement",
+      "babel_source": "return String(expr.value);",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "87138390",
+      "type": "IfStatement",
+      "condition": "t.isBinaryExpression(expr)",
+      "babel_source": "if (t.isBinaryExpression(expr)) {\r\n      const left = generateExpressionString(expr.left);\r\n      const right = generateExpressionString(expr.right);\r\n      return `${left} ${expr.operator} ${right}`;\r\n    } else if (t.isUnaryExpression(expr)) {\r\n      const arg = generateExpressionString(expr.argument);\r\n      return `${expr.operator}${arg}`;\r\n    } else if (t.isMemberExpression(expr)) {\r\n      return buildMemberPath(expr);\r\n    }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8db0ee56",
+      "type": "BabelTypeCheck",
+      "method": "isBinaryExpression",
+      "babel_source": "t.isBinaryExpression(expr)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b19840b2",
+      "type": "VariableDeclaration",
+      "babel_source": "const left = generateExpressionString(expr.left);",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "571ef552",
+      "type": "VariableDeclaration",
+      "babel_source": "const right = generateExpressionString(expr.right);",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0f7105cf",
+      "type": "ReturnStatement",
+      "babel_source": "return `${left} ${expr.operator} ${right}`;",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e8579891",
+      "type": "TemplateLiteral",
+      "babel_source": "`${left} ${expr.operator} ${right}`",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5a00d6f1",
+      "type": "IfStatement",
+      "condition": "t.isUnaryExpression(expr)",
+      "babel_source": "if (t.isUnaryExpression(expr)) {\r\n      const arg = generateExpressionString(expr.argument);\r\n      return `${expr.operator}${arg}`;\r\n    } else if (t.isMemberExpression(expr)) {\r\n      return buildMemberPath(expr);\r\n    }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4b2e045a",
+      "type": "BabelTypeCheck",
+      "method": "isUnaryExpression",
+      "babel_source": "t.isUnaryExpression(expr)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3f01e3e4",
+      "type": "VariableDeclaration",
+      "babel_source": "const arg = generateExpressionString(expr.argument);",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "97a08cbe",
+      "type": "ReturnStatement",
+      "babel_source": "return `${expr.operator}${arg}`;",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2698d6e5",
+      "type": "TemplateLiteral",
+      "babel_source": "`${expr.operator}${arg}`",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2081d490",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(expr)",
+      "babel_source": "if (t.isMemberExpression(expr)) {\r\n      return buildMemberPath(expr);\r\n    }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c8858c63",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(expr)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "555e4b1f",
+      "type": "ReturnStatement",
+      "babel_source": "return buildMemberPath(expr);",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9b4906ff",
+      "type": "ReturnStatement",
+      "babel_source": "return '?';",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "72614b69",
+      "type": "ReturnStatement",
+      "babel_source": "return expressionTemplates;",
+      "parentContext": {
+        "functionName": "extractExpressionTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/expressionTemplates.cjs"
+  ]
+}

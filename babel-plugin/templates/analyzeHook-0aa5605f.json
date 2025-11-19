@@ -1,0 +1,630 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "analyzeHook",
+  "params": [
+    {
+      "name": "hookPath",
+      "inferredType": "&Path",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "AnalysisResult",
+  "babel_source": "function analyzeHook(hookPath) {\r\n  const name = getHookName(hookPath);\r\n  const params = getHookParameters(hookPath);\r\n  const body = getHookBody(hookPath);\r\n\r\n  const analysis = {\r\n    name: name,\r\n    className: `${capitalize(name)}Hook`,\r\n    params: params,\r\n    states: [],\r\n    methods: [],\r\n    jsxElements: [],\r\n    returnValues: [],\r\n    eventHandlers: []\r\n  };\r\n\r\n  if (!body) {\r\n    return analysis;\r\n  }\r\n\r\n  // Extract useState calls\r\n  hookPath.traverse({\r\n    CallExpression(path) {\r\n      if (t.isIdentifier(path.node.callee) &&\r\n          path.node.callee.name === 'useState') {\r\n        const state = extractStateFromUseState(path);\r\n        if (state) {\r\n          analysis.states.push(state);\r\n        }\r\n      }\r\n    }\r\n  });\r\n\r\n  // Extract methods (arrow functions, function declarations in body)\r\n  if (t.isBlockStatement(body)) {\r\n    body.body.forEach(statement => {\r\n      // const method = () => { ... }\r\n      if (t.isVariableDeclaration(statement)) {\r\n        statement.declarations.forEach(declarator => {\r\n          if (t.isVariableDeclarator(declarator)) {\r\n            const method = extractMethod(declarator);\r\n            if (method) {\r\n              analysis.methods.push(method);\r\n            }\r\n          }\r\n        });\r\n      }\r\n      // function method() { ... }\r\n      else if (t.isFunctionDeclaration(statement)) {\r\n        const method = extractFunctionDeclaration(statement);\r\n        if (method) {\r\n          analysis.methods.push(method);\r\n        }\r\n      }\r\n    });\r\n  }\r\n\r\n  // Extract JSX elements and return values\r\n  hookPath.traverse({\r\n    ReturnStatement(path) {\r\n      const returnNode = path.node.argument;\r\n\r\n      // Find JSX in return\r\n      if (returnNode) {\r\n        const jsx = extractJSXFromReturn(returnNode, analysis, hookPath);\r\n        if (jsx) {\r\n          analysis.jsxElements.push(jsx);\r\n        }\r\n\r\n        // Extract return values (usually array destructuring pattern)\r\n        const returnVals = extractReturnValues(returnNode);\r\n        analysis.returnValues = returnVals;\r\n      }\r\n    }\r\n  });\r\n\r\n  // Second pass: Improve return value type inference with context\r\n  if (analysis.returnValues.length > 0) {\r\n    analysis.returnValues = analysis.returnValues.map(ret => ({\r\n      ...ret,\r\n      type: inferReturnValueType(ret.name, analysis)\r\n    }));\r\n  }\r\n\r\n  return analysis;\r\n}",
+  "body_templates": [
+    {
+      "hash": "1049be91",
+      "type": "VariableDeclaration",
+      "babel_source": "const name = getHookName(hookPath);",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4a1675b7",
+      "type": "VariableDeclaration",
+      "babel_source": "const params = getHookParameters(hookPath);",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "78ec0654",
+      "type": "VariableDeclaration",
+      "babel_source": "const body = getHookBody(hookPath);",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2651ec9f",
+      "type": "VariableDeclaration",
+      "babel_source": "const analysis = {\r\n    name: name,\r\n    className: `${capitalize(name)}Hook`,\r\n    params: params,\r\n    states: [],\r\n    methods: [],\r\n    jsxElements: [],\r\n    returnValues: [],\r\n    eventHandlers: []\r\n  };",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5152caa7",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    name: name,\r\n    className: `${capitalize(name)}Hook`,\r\n    params: params,\r\n    states: [],\r\n    methods: [],\r\n    jsxElements: [],\r\n    returnValues: [],\r\n    eventHandlers: []\r\n  }",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6ef24b40",
+      "type": "TemplateLiteral",
+      "babel_source": "`${capitalize(name)}Hook`",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7e8eb3aa",
+      "type": "IfStatement",
+      "condition": "!body",
+      "babel_source": "if (!body) {\r\n    return analysis;\r\n  }",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5de10c93",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!body",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "59a4c8cf",
+      "type": "ReturnStatement",
+      "babel_source": "return analysis;",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "65cf1ee5",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    CallExpression(path) {\r\n      if (t.isIdentifier(path.node.callee) &&\r\n          path.node.callee.name === 'useState') {\r\n        const state = extractStateFromUseState(path);\r\n        if (state) {\r\n          analysis.states.push(state);\r\n        }\r\n      }\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1d9f7396",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(path.node.callee) &&\r\n          path.node.callee.name === 'useState'",
+      "babel_source": "if (t.isIdentifier(path.node.callee) &&\r\n          path.node.callee.name === 'useState') {\r\n        const state = extractStateFromUseState(path);\r\n        if (state) {\r\n          analysis.states.push(state);\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "57ed6e98",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isIdentifier(path.node.callee) &&\r\n          path.node.callee.name === 'useState'",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c08568ed",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(path.node.callee)",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab5aa86d",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "path.node.callee.name === 'useState'",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e0a128fe",
+      "type": "VariableDeclaration",
+      "babel_source": "const state = extractStateFromUseState(path);",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d970fc38",
+      "type": "IfStatement",
+      "condition": "state",
+      "babel_source": "if (state) {\r\n          analysis.states.push(state);\r\n        }",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8d608dde",
+      "type": "IfStatement",
+      "condition": "t.isBlockStatement(body)",
+      "babel_source": "if (t.isBlockStatement(body)) {\r\n    body.body.forEach(statement => {\r\n      // const method = () => { ... }\r\n      if (t.isVariableDeclaration(statement)) {\r\n        statement.declarations.forEach(declarator => {\r\n          if (t.isVariableDeclarator(declarator)) {\r\n            const method = extractMethod(declarator);\r\n            if (method) {\r\n              analysis.methods.push(method);\r\n            }\r\n          }\r\n        });\r\n      }\r\n      // function method() { ... }\r\n      else if (t.isFunctionDeclaration(statement)) {\r\n        const method = extractFunctionDeclaration(statement);\r\n        if (method) {\r\n          analysis.methods.push(method);\r\n        }\r\n      }\r\n    });\r\n  }",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8f74e258",
+      "type": "BabelTypeCheck",
+      "method": "isBlockStatement",
+      "babel_source": "t.isBlockStatement(body)",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5cef0e8c",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "statement => {\r\n      // const method = () => { ... }\r\n      if (t.isVariableDeclaration(statement)) {\r\n        statement.declarations.forEach(declarator => {\r\n          if (t.isVariableDeclarator(declarator)) {\r\n            const method = extractMethod(declarator);\r\n            if (method) {\r\n              analysis.methods.push(method);\r\n            }\r\n          }\r\n        });\r\n      }\r\n      // function method() { ... }\r\n      else if (t.isFunctionDeclaration(statement)) {\r\n        const method = extractFunctionDeclaration(statement);\r\n        if (method) {\r\n          analysis.methods.push(method);\r\n        }\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ee216a98",
+      "type": "IfStatement",
+      "condition": "t.isVariableDeclaration(statement)",
+      "babel_source": "if (t.isVariableDeclaration(statement)) {\r\n        statement.declarations.forEach(declarator => {\r\n          if (t.isVariableDeclarator(declarator)) {\r\n            const method = extractMethod(declarator);\r\n            if (method) {\r\n              analysis.methods.push(method);\r\n            }\r\n          }\r\n        });\r\n      }\r\n      // function method() { ... }\r\n      else if (t.isFunctionDeclaration(statement)) {\r\n        const method = extractFunctionDeclaration(statement);\r\n        if (method) {\r\n          analysis.methods.push(method);\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "80813906",
+      "type": "BabelTypeCheck",
+      "method": "isVariableDeclaration",
+      "babel_source": "t.isVariableDeclaration(statement)",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "66294a95",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "declarator => {\r\n          if (t.isVariableDeclarator(declarator)) {\r\n            const method = extractMethod(declarator);\r\n            if (method) {\r\n              analysis.methods.push(method);\r\n            }\r\n          }\r\n        }",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ebff7afb",
+      "type": "IfStatement",
+      "condition": "t.isVariableDeclarator(declarator)",
+      "babel_source": "if (t.isVariableDeclarator(declarator)) {\r\n            const method = extractMethod(declarator);\r\n            if (method) {\r\n              analysis.methods.push(method);\r\n            }\r\n          }",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d35c5437",
+      "type": "BabelTypeCheck",
+      "method": "isVariableDeclarator",
+      "babel_source": "t.isVariableDeclarator(declarator)",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "db865462",
+      "type": "VariableDeclaration",
+      "babel_source": "const method = extractMethod(declarator);",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "97b2b243",
+      "type": "IfStatement",
+      "condition": "method",
+      "babel_source": "if (method) {\r\n              analysis.methods.push(method);\r\n            }",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6564d52b",
+      "type": "IfStatement",
+      "condition": "t.isFunctionDeclaration(statement)",
+      "babel_source": "if (t.isFunctionDeclaration(statement)) {\r\n        const method = extractFunctionDeclaration(statement);\r\n        if (method) {\r\n          analysis.methods.push(method);\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9944da02",
+      "type": "BabelTypeCheck",
+      "method": "isFunctionDeclaration",
+      "babel_source": "t.isFunctionDeclaration(statement)",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a94f3857",
+      "type": "VariableDeclaration",
+      "babel_source": "const method = extractFunctionDeclaration(statement);",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3f1e72df",
+      "type": "IfStatement",
+      "condition": "method",
+      "babel_source": "if (method) {\r\n          analysis.methods.push(method);\r\n        }",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d7200c9a",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    ReturnStatement(path) {\r\n      const returnNode = path.node.argument;\r\n\r\n      // Find JSX in return\r\n      if (returnNode) {\r\n        const jsx = extractJSXFromReturn(returnNode, analysis, hookPath);\r\n        if (jsx) {\r\n          analysis.jsxElements.push(jsx);\r\n        }\r\n\r\n        // Extract return values (usually array destructuring pattern)\r\n        const returnVals = extractReturnValues(returnNode);\r\n        analysis.returnValues = returnVals;\r\n      }\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "041d30f0",
+      "type": "VariableDeclaration",
+      "babel_source": "const returnNode = path.node.argument;",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1dcc7882",
+      "type": "IfStatement",
+      "condition": "returnNode",
+      "babel_source": "if (returnNode) {\r\n        const jsx = extractJSXFromReturn(returnNode, analysis, hookPath);\r\n        if (jsx) {\r\n          analysis.jsxElements.push(jsx);\r\n        }\r\n\r\n        // Extract return values (usually array destructuring pattern)\r\n        const returnVals = extractReturnValues(returnNode);\r\n        analysis.returnValues = returnVals;\r\n      }",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5da4a7fe",
+      "type": "VariableDeclaration",
+      "babel_source": "const jsx = extractJSXFromReturn(returnNode, analysis, hookPath);",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c406dd42",
+      "type": "IfStatement",
+      "condition": "jsx",
+      "babel_source": "if (jsx) {\r\n          analysis.jsxElements.push(jsx);\r\n        }",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7f04f6ec",
+      "type": "VariableDeclaration",
+      "babel_source": "const returnVals = extractReturnValues(returnNode);",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e6720dee",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "analysis.returnValues = returnVals",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "39e443bd",
+      "type": "IfStatement",
+      "condition": "analysis.returnValues.length > 0",
+      "babel_source": "if (analysis.returnValues.length > 0) {\r\n    analysis.returnValues = analysis.returnValues.map(ret => ({\r\n      ...ret,\r\n      type: inferReturnValueType(ret.name, analysis)\r\n    }));\r\n  }",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d7e11f07",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "analysis.returnValues.length > 0",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "39c6aa41",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "analysis.returnValues = analysis.returnValues.map(ret => ({\r\n      ...ret,\r\n      type: inferReturnValueType(ret.name, analysis)\r\n    }))",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8f7051ec",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "ret => ({\r\n      ...ret,\r\n      type: inferReturnValueType(ret.name, analysis)\r\n    })",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e59343dc",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n      ...ret,\r\n      type: inferReturnValueType(ret.name, analysis)\r\n    }",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ed7f174c",
+      "type": "SpreadElement",
+      "babel_source": "...ret",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "59a4c8cf",
+      "type": "ReturnStatement",
+      "babel_source": "return analysis;",
+      "parentContext": {
+        "functionName": "analyzeHook",
+        "functionParams": [
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/hookAnalyzer.cjs"
+  ]
+}

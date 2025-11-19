@@ -1,0 +1,255 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractStateBinding",
+  "params": [
+    {
+      "name": "callExpr",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    },
+    {
+      "name": "timeline",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractStateBinding(callExpr, timeline) {\r\n  const args = callExpr.arguments;\r\n\r\n  if (args.length >= 3) {\r\n    const stateKeyArg = args[1];\r\n    const setterArg = args[2];\r\n    const interpolateArg = args[3];\r\n\r\n    if (t.isStringLiteral(stateKeyArg) && t.isIdentifier(setterArg)) {\r\n      const binding = {\r\n        stateKey: stateKeyArg.value,\r\n        setterName: setterArg.name,\r\n        interpolate: false,\r\n        stateType: 'unknown'\r\n      };\r\n\r\n      if (interpolateArg && t.isBooleanLiteral(interpolateArg)) {\r\n        binding.interpolate = interpolateArg.value;\r\n      }\r\n\r\n      timeline.stateBindings.set(binding.stateKey, binding);\r\n      console.log(`[Timeline] State binding: ${binding.stateKey} (interpolate: ${binding.interpolate})`);\r\n    }\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "197b5cd7",
+      "type": "VariableDeclaration",
+      "babel_source": "const args = callExpr.arguments;",
+      "parentContext": {
+        "functionName": "extractStateBinding",
+        "functionParams": [
+          "callExpr",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "90f39c49",
+      "type": "IfStatement",
+      "condition": "args.length >= 3",
+      "babel_source": "if (args.length >= 3) {\r\n    const stateKeyArg = args[1];\r\n    const setterArg = args[2];\r\n    const interpolateArg = args[3];\r\n\r\n    if (t.isStringLiteral(stateKeyArg) && t.isIdentifier(setterArg)) {\r\n      const binding = {\r\n        stateKey: stateKeyArg.value,\r\n        setterName: setterArg.name,\r\n        interpolate: false,\r\n        stateType: 'unknown'\r\n      };\r\n\r\n      if (interpolateArg && t.isBooleanLiteral(interpolateArg)) {\r\n        binding.interpolate = interpolateArg.value;\r\n      }\r\n\r\n      timeline.stateBindings.set(binding.stateKey, binding);\r\n      console.log(`[Timeline] State binding: ${binding.stateKey} (interpolate: ${binding.interpolate})`);\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "extractStateBinding",
+        "functionParams": [
+          "callExpr",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a6411d6c",
+      "type": "BinaryExpression",
+      "operator": ">=",
+      "babel_source": "args.length >= 3",
+      "parentContext": {
+        "functionName": "extractStateBinding",
+        "functionParams": [
+          "callExpr",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d31dfe57",
+      "type": "VariableDeclaration",
+      "babel_source": "const stateKeyArg = args[1];",
+      "parentContext": {
+        "functionName": "extractStateBinding",
+        "functionParams": [
+          "callExpr",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4565ea12",
+      "type": "VariableDeclaration",
+      "babel_source": "const setterArg = args[2];",
+      "parentContext": {
+        "functionName": "extractStateBinding",
+        "functionParams": [
+          "callExpr",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "87ae4a39",
+      "type": "VariableDeclaration",
+      "babel_source": "const interpolateArg = args[3];",
+      "parentContext": {
+        "functionName": "extractStateBinding",
+        "functionParams": [
+          "callExpr",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2a33280a",
+      "type": "IfStatement",
+      "condition": "t.isStringLiteral(stateKeyArg) && t.isIdentifier(setterArg)",
+      "babel_source": "if (t.isStringLiteral(stateKeyArg) && t.isIdentifier(setterArg)) {\r\n      const binding = {\r\n        stateKey: stateKeyArg.value,\r\n        setterName: setterArg.name,\r\n        interpolate: false,\r\n        stateType: 'unknown'\r\n      };\r\n\r\n      if (interpolateArg && t.isBooleanLiteral(interpolateArg)) {\r\n        binding.interpolate = interpolateArg.value;\r\n      }\r\n\r\n      timeline.stateBindings.set(binding.stateKey, binding);\r\n      console.log(`[Timeline] State binding: ${binding.stateKey} (interpolate: ${binding.interpolate})`);\r\n    }",
+      "parentContext": {
+        "functionName": "extractStateBinding",
+        "functionParams": [
+          "callExpr",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3243b206",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isStringLiteral(stateKeyArg) && t.isIdentifier(setterArg)",
+      "parentContext": {
+        "functionName": "extractStateBinding",
+        "functionParams": [
+          "callExpr",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f095d476",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(stateKeyArg)",
+      "parentContext": {
+        "functionName": "extractStateBinding",
+        "functionParams": [
+          "callExpr",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1b8374fc",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(setterArg)",
+      "parentContext": {
+        "functionName": "extractStateBinding",
+        "functionParams": [
+          "callExpr",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7149545e",
+      "type": "VariableDeclaration",
+      "babel_source": "const binding = {\r\n        stateKey: stateKeyArg.value,\r\n        setterName: setterArg.name,\r\n        interpolate: false,\r\n        stateType: 'unknown'\r\n      };",
+      "parentContext": {
+        "functionName": "extractStateBinding",
+        "functionParams": [
+          "callExpr",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5f66568f",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n        stateKey: stateKeyArg.value,\r\n        setterName: setterArg.name,\r\n        interpolate: false,\r\n        stateType: 'unknown'\r\n      }",
+      "parentContext": {
+        "functionName": "extractStateBinding",
+        "functionParams": [
+          "callExpr",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "06ffcdf0",
+      "type": "IfStatement",
+      "condition": "interpolateArg && t.isBooleanLiteral(interpolateArg)",
+      "babel_source": "if (interpolateArg && t.isBooleanLiteral(interpolateArg)) {\r\n        binding.interpolate = interpolateArg.value;\r\n      }",
+      "parentContext": {
+        "functionName": "extractStateBinding",
+        "functionParams": [
+          "callExpr",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f2359080",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "interpolateArg && t.isBooleanLiteral(interpolateArg)",
+      "parentContext": {
+        "functionName": "extractStateBinding",
+        "functionParams": [
+          "callExpr",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "95d9fa35",
+      "type": "BabelTypeCheck",
+      "method": "isBooleanLiteral",
+      "babel_source": "t.isBooleanLiteral(interpolateArg)",
+      "parentContext": {
+        "functionName": "extractStateBinding",
+        "functionParams": [
+          "callExpr",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c26472a5",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "binding.interpolate = interpolateArg.value",
+      "parentContext": {
+        "functionName": "extractStateBinding",
+        "functionParams": [
+          "callExpr",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f6237d81",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Timeline] State binding: ${binding.stateKey} (interpolate: ${binding.interpolate})`",
+      "parentContext": {
+        "functionName": "extractStateBinding",
+        "functionParams": [
+          "callExpr",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/timelineAnalyzer.cjs"
+  ]
+}

@@ -1,0 +1,1374 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractHookSignature",
+  "params": [
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractHookSignature(component) {\r\n  const hooks = [];\r\n  let index = 0;\r\n\r\n  // Extract useState\r\n  for (const stateInfo of component.useState) {\r\n    hooks.push({\r\n      type: 'useState',\r\n      varName: stateInfo.name,\r\n      index: index++\r\n    });\r\n  }\r\n\r\n  // Extract useClientState\r\n  for (const stateInfo of component.useClientState) {\r\n    hooks.push({\r\n      type: 'useClientState',\r\n      varName: stateInfo.name,\r\n      index: index++\r\n    });\r\n  }\r\n\r\n  // Extract useStateX (declarative state projections)\r\n  if (component.useStateX) {\r\n    for (const stateInfo of component.useStateX) {\r\n      hooks.push({\r\n        type: 'useStateX',\r\n        varName: stateInfo.name,\r\n        index: index++\r\n      });\r\n    }\r\n  }\r\n\r\n  // Extract useEffect\r\n  for (const effect of component.useEffect) {\r\n    const depsCount = effect.dependencies\r\n      ? (effect.dependencies.elements ? effect.dependencies.elements.length : -1)\r\n      : -1; // -1 = no deps array (runs every render)\r\n\r\n    hooks.push({\r\n      type: 'useEffect',\r\n      depsCount: depsCount,\r\n      index: index++\r\n    });\r\n  }\r\n\r\n  // Extract useRef\r\n  for (const refInfo of component.useRef) {\r\n    hooks.push({\r\n      type: 'useRef',\r\n      varName: refInfo.name,\r\n      index: index++\r\n    });\r\n  }\r\n\r\n  // Extract useMarkdown\r\n  for (const markdownInfo of component.useMarkdown) {\r\n    hooks.push({\r\n      type: 'useMarkdown',\r\n      varName: markdownInfo.name,\r\n      index: index++\r\n    });\r\n  }\r\n\r\n  // Extract useRazorMarkdown\r\n  if (component.useRazorMarkdown) {\r\n    for (const razorInfo of component.useRazorMarkdown) {\r\n      hooks.push({\r\n        type: 'useRazorMarkdown',\r\n        varName: razorInfo.name,\r\n        index: index++\r\n      });\r\n    }\r\n  }\r\n\r\n  // Extract useTemplate\r\n  if (component.useTemplate) {\r\n    hooks.push({\r\n      type: 'useTemplate',\r\n      templateName: component.useTemplate.name,\r\n      index: index++\r\n    });\r\n  }\r\n\r\n  // Extract useValidation\r\n  for (const validation of component.useValidation) {\r\n    hooks.push({\r\n      type: 'useValidation',\r\n      varName: validation.name,\r\n      fieldKey: validation.fieldKey,\r\n      index: index++\r\n    });\r\n  }\r\n\r\n  // Extract useModal\r\n  for (const modal of component.useModal) {\r\n    hooks.push({\r\n      type: 'useModal',\r\n      varName: modal.name,\r\n      index: index++\r\n    });\r\n  }\r\n\r\n  // Extract useToggle\r\n  for (const toggle of component.useToggle) {\r\n    hooks.push({\r\n      type: 'useToggle',\r\n      varName: toggle.name,\r\n      index: index++\r\n    });\r\n  }\r\n\r\n  // Extract useDropdown\r\n  for (const dropdown of component.useDropdown) {\r\n    hooks.push({\r\n      type: 'useDropdown',\r\n      varName: dropdown.name,\r\n      index: index++\r\n    });\r\n  }\r\n\r\n  // Extract usePub\r\n  if (component.usePub) {\r\n    for (const pub of component.usePub) {\r\n      hooks.push({\r\n        type: 'usePub',\r\n        varName: pub.name,\r\n        channel: pub.channel,\r\n        index: index++\r\n      });\r\n    }\r\n  }\r\n\r\n  // Extract useSub\r\n  if (component.useSub) {\r\n    for (const sub of component.useSub) {\r\n      hooks.push({\r\n        type: 'useSub',\r\n        varName: sub.name,\r\n        channel: sub.channel,\r\n        index: index++\r\n      });\r\n    }\r\n  }\r\n\r\n  // Extract useMicroTask\r\n  if (component.useMicroTask) {\r\n    for (const _ of component.useMicroTask) {\r\n      hooks.push({\r\n        type: 'useMicroTask',\r\n        index: index++\r\n      });\r\n    }\r\n  }\r\n\r\n  // Extract useMacroTask\r\n  if (component.useMacroTask) {\r\n    for (const task of component.useMacroTask) {\r\n      hooks.push({\r\n        type: 'useMacroTask',\r\n        delay: task.delay,\r\n        index: index++\r\n      });\r\n    }\r\n  }\r\n\r\n  // Extract useSignalR\r\n  if (component.useSignalR) {\r\n    for (const signalR of component.useSignalR) {\r\n      hooks.push({\r\n        type: 'useSignalR',\r\n        varName: signalR.name,\r\n        hubUrl: signalR.hubUrl,\r\n        index: index++\r\n      });\r\n    }\r\n  }\r\n\r\n  // Extract usePredictHint\r\n  if (component.usePredictHint) {\r\n    for (const hint of component.usePredictHint) {\r\n      hooks.push({\r\n        type: 'usePredictHint',\r\n        hintId: hint.hintId,\r\n        index: index++\r\n      });\r\n    }\r\n  }\r\n\r\n  // Extract useServerTask\r\n  if (component.useServerTask) {\r\n    for (const task of component.useServerTask) {\r\n      hooks.push({\r\n        type: 'useServerTask',\r\n        varName: task.name,\r\n        runtime: task.runtime,\r\n        isStreaming: task.isStreaming,\r\n        index: index++\r\n      });\r\n    }\r\n  }\r\n\r\n  // Extract usePaginatedServerTask (tracked via paginatedTasks)\r\n  if (component.paginatedTasks) {\r\n    for (const pagTask of component.paginatedTasks) {\r\n      hooks.push({\r\n        type: 'usePaginatedServerTask',\r\n        varName: pagTask.name,\r\n        runtime: pagTask.runtime,\r\n        index: index++\r\n      });\r\n    }\r\n  }\r\n\r\n  // Extract useMvcState\r\n  if (component.useMvcState) {\r\n    for (const mvcState of component.useMvcState) {\r\n      hooks.push({\r\n        type: 'useMvcState',\r\n        varName: mvcState.name,\r\n        propertyName: mvcState.propertyName,\r\n        index: index++\r\n      });\r\n    }\r\n  }\r\n\r\n  // Extract useMvcViewModel\r\n  if (component.useMvcViewModel) {\r\n    for (const mvcViewModel of component.useMvcViewModel) {\r\n      hooks.push({\r\n        type: 'useMvcViewModel',\r\n        varName: mvcViewModel.name,\r\n        index: index++\r\n      });\r\n    }\r\n  }\r\n\r\n  return hooks;\r\n}",
+  "body_templates": [
+    {
+      "hash": "585825ca",
+      "type": "VariableDeclaration",
+      "babel_source": "const hooks = [];",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a9fd87de",
+      "type": "VariableDeclaration",
+      "babel_source": "let index = 0;",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "36a6e146",
+      "type": "ForOfStatement",
+      "babel_source": "for (const stateInfo of component.useState) {\r\n    hooks.push({\r\n      type: 'useState',\r\n      varName: stateInfo.name,\r\n      index: index++\r\n    });\r\n  }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6b75dbfd",
+      "type": "VariableDeclaration",
+      "babel_source": "const stateInfo",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dd12c3c9",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n      type: 'useState',\r\n      varName: stateInfo.name,\r\n      index: index++\r\n    }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "525f9f3f",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "index++",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1bf55db2",
+      "type": "ForOfStatement",
+      "babel_source": "for (const stateInfo of component.useClientState) {\r\n    hooks.push({\r\n      type: 'useClientState',\r\n      varName: stateInfo.name,\r\n      index: index++\r\n    });\r\n  }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6b75dbfd",
+      "type": "VariableDeclaration",
+      "babel_source": "const stateInfo",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a0dc09f1",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n      type: 'useClientState',\r\n      varName: stateInfo.name,\r\n      index: index++\r\n    }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "525f9f3f",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "index++",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "63c25f88",
+      "type": "IfStatement",
+      "condition": "component.useStateX",
+      "babel_source": "if (component.useStateX) {\r\n    for (const stateInfo of component.useStateX) {\r\n      hooks.push({\r\n        type: 'useStateX',\r\n        varName: stateInfo.name,\r\n        index: index++\r\n      });\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "29a4600b",
+      "type": "ForOfStatement",
+      "babel_source": "for (const stateInfo of component.useStateX) {\r\n      hooks.push({\r\n        type: 'useStateX',\r\n        varName: stateInfo.name,\r\n        index: index++\r\n      });\r\n    }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6b75dbfd",
+      "type": "VariableDeclaration",
+      "babel_source": "const stateInfo",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1829ae66",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n        type: 'useStateX',\r\n        varName: stateInfo.name,\r\n        index: index++\r\n      }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "525f9f3f",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "index++",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f279cd98",
+      "type": "ForOfStatement",
+      "babel_source": "for (const effect of component.useEffect) {\r\n    const depsCount = effect.dependencies\r\n      ? (effect.dependencies.elements ? effect.dependencies.elements.length : -1)\r\n      : -1; // -1 = no deps array (runs every render)\r\n\r\n    hooks.push({\r\n      type: 'useEffect',\r\n      depsCount: depsCount,\r\n      index: index++\r\n    });\r\n  }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ce38c228",
+      "type": "VariableDeclaration",
+      "babel_source": "const effect",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "94d4e71d",
+      "type": "VariableDeclaration",
+      "babel_source": "const depsCount = effect.dependencies\r\n      ? (effect.dependencies.elements ? effect.dependencies.elements.length : -1)\r\n      : -1;",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1561904a",
+      "type": "ConditionalExpression",
+      "babel_source": "effect.dependencies\r\n      ? (effect.dependencies.elements ? effect.dependencies.elements.length : -1)\r\n      : -1",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1b8f5789",
+      "type": "ConditionalExpression",
+      "babel_source": "effect.dependencies.elements ? effect.dependencies.elements.length : -1",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1bad6b8c",
+      "type": "UnaryExpression",
+      "operator": "-",
+      "babel_source": "-1",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1bad6b8c",
+      "type": "UnaryExpression",
+      "operator": "-",
+      "babel_source": "-1",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "786914eb",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n      type: 'useEffect',\r\n      depsCount: depsCount,\r\n      index: index++\r\n    }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "525f9f3f",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "index++",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2d3a2b90",
+      "type": "ForOfStatement",
+      "babel_source": "for (const refInfo of component.useRef) {\r\n    hooks.push({\r\n      type: 'useRef',\r\n      varName: refInfo.name,\r\n      index: index++\r\n    });\r\n  }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6ff1aea0",
+      "type": "VariableDeclaration",
+      "babel_source": "const refInfo",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1b70a376",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n      type: 'useRef',\r\n      varName: refInfo.name,\r\n      index: index++\r\n    }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "525f9f3f",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "index++",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "14cc793c",
+      "type": "ForOfStatement",
+      "babel_source": "for (const markdownInfo of component.useMarkdown) {\r\n    hooks.push({\r\n      type: 'useMarkdown',\r\n      varName: markdownInfo.name,\r\n      index: index++\r\n    });\r\n  }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8d53091d",
+      "type": "VariableDeclaration",
+      "babel_source": "const markdownInfo",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "639ebef7",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n      type: 'useMarkdown',\r\n      varName: markdownInfo.name,\r\n      index: index++\r\n    }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "525f9f3f",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "index++",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "48f46184",
+      "type": "IfStatement",
+      "condition": "component.useRazorMarkdown",
+      "babel_source": "if (component.useRazorMarkdown) {\r\n    for (const razorInfo of component.useRazorMarkdown) {\r\n      hooks.push({\r\n        type: 'useRazorMarkdown',\r\n        varName: razorInfo.name,\r\n        index: index++\r\n      });\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9605b06e",
+      "type": "ForOfStatement",
+      "babel_source": "for (const razorInfo of component.useRazorMarkdown) {\r\n      hooks.push({\r\n        type: 'useRazorMarkdown',\r\n        varName: razorInfo.name,\r\n        index: index++\r\n      });\r\n    }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5b8e235a",
+      "type": "VariableDeclaration",
+      "babel_source": "const razorInfo",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d0a04088",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n        type: 'useRazorMarkdown',\r\n        varName: razorInfo.name,\r\n        index: index++\r\n      }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "525f9f3f",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "index++",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "55fb9f59",
+      "type": "IfStatement",
+      "condition": "component.useTemplate",
+      "babel_source": "if (component.useTemplate) {\r\n    hooks.push({\r\n      type: 'useTemplate',\r\n      templateName: component.useTemplate.name,\r\n      index: index++\r\n    });\r\n  }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4125d4f8",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n      type: 'useTemplate',\r\n      templateName: component.useTemplate.name,\r\n      index: index++\r\n    }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "525f9f3f",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "index++",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "df3c1e7d",
+      "type": "ForOfStatement",
+      "babel_source": "for (const validation of component.useValidation) {\r\n    hooks.push({\r\n      type: 'useValidation',\r\n      varName: validation.name,\r\n      fieldKey: validation.fieldKey,\r\n      index: index++\r\n    });\r\n  }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2a6d231a",
+      "type": "VariableDeclaration",
+      "babel_source": "const validation",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "73de1c13",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n      type: 'useValidation',\r\n      varName: validation.name,\r\n      fieldKey: validation.fieldKey,\r\n      index: index++\r\n    }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "525f9f3f",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "index++",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9b3bb52d",
+      "type": "ForOfStatement",
+      "babel_source": "for (const modal of component.useModal) {\r\n    hooks.push({\r\n      type: 'useModal',\r\n      varName: modal.name,\r\n      index: index++\r\n    });\r\n  }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "921a14d7",
+      "type": "VariableDeclaration",
+      "babel_source": "const modal",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a9e5575d",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n      type: 'useModal',\r\n      varName: modal.name,\r\n      index: index++\r\n    }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "525f9f3f",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "index++",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "90e9f5ee",
+      "type": "ForOfStatement",
+      "babel_source": "for (const toggle of component.useToggle) {\r\n    hooks.push({\r\n      type: 'useToggle',\r\n      varName: toggle.name,\r\n      index: index++\r\n    });\r\n  }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0f9f37a6",
+      "type": "VariableDeclaration",
+      "babel_source": "const toggle",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "85d0a2d3",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n      type: 'useToggle',\r\n      varName: toggle.name,\r\n      index: index++\r\n    }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "525f9f3f",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "index++",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "833680bd",
+      "type": "ForOfStatement",
+      "babel_source": "for (const dropdown of component.useDropdown) {\r\n    hooks.push({\r\n      type: 'useDropdown',\r\n      varName: dropdown.name,\r\n      index: index++\r\n    });\r\n  }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0c5eb4ee",
+      "type": "VariableDeclaration",
+      "babel_source": "const dropdown",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d4b68398",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n      type: 'useDropdown',\r\n      varName: dropdown.name,\r\n      index: index++\r\n    }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "525f9f3f",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "index++",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f4c50d28",
+      "type": "IfStatement",
+      "condition": "component.usePub",
+      "babel_source": "if (component.usePub) {\r\n    for (const pub of component.usePub) {\r\n      hooks.push({\r\n        type: 'usePub',\r\n        varName: pub.name,\r\n        channel: pub.channel,\r\n        index: index++\r\n      });\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "305b270c",
+      "type": "ForOfStatement",
+      "babel_source": "for (const pub of component.usePub) {\r\n      hooks.push({\r\n        type: 'usePub',\r\n        varName: pub.name,\r\n        channel: pub.channel,\r\n        index: index++\r\n      });\r\n    }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "87eb847e",
+      "type": "VariableDeclaration",
+      "babel_source": "const pub",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ca757425",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n        type: 'usePub',\r\n        varName: pub.name,\r\n        channel: pub.channel,\r\n        index: index++\r\n      }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "525f9f3f",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "index++",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3dd719b2",
+      "type": "IfStatement",
+      "condition": "component.useSub",
+      "babel_source": "if (component.useSub) {\r\n    for (const sub of component.useSub) {\r\n      hooks.push({\r\n        type: 'useSub',\r\n        varName: sub.name,\r\n        channel: sub.channel,\r\n        index: index++\r\n      });\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "aa44c440",
+      "type": "ForOfStatement",
+      "babel_source": "for (const sub of component.useSub) {\r\n      hooks.push({\r\n        type: 'useSub',\r\n        varName: sub.name,\r\n        channel: sub.channel,\r\n        index: index++\r\n      });\r\n    }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "43c95233",
+      "type": "VariableDeclaration",
+      "babel_source": "const sub",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "eae1d59a",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n        type: 'useSub',\r\n        varName: sub.name,\r\n        channel: sub.channel,\r\n        index: index++\r\n      }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "525f9f3f",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "index++",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "63a08fef",
+      "type": "IfStatement",
+      "condition": "component.useMicroTask",
+      "babel_source": "if (component.useMicroTask) {\r\n    for (const _ of component.useMicroTask) {\r\n      hooks.push({\r\n        type: 'useMicroTask',\r\n        index: index++\r\n      });\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2da95fd8",
+      "type": "ForOfStatement",
+      "babel_source": "for (const _ of component.useMicroTask) {\r\n      hooks.push({\r\n        type: 'useMicroTask',\r\n        index: index++\r\n      });\r\n    }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1f7d177a",
+      "type": "VariableDeclaration",
+      "babel_source": "const _",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bd9f271a",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n        type: 'useMicroTask',\r\n        index: index++\r\n      }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "525f9f3f",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "index++",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9782f96c",
+      "type": "IfStatement",
+      "condition": "component.useMacroTask",
+      "babel_source": "if (component.useMacroTask) {\r\n    for (const task of component.useMacroTask) {\r\n      hooks.push({\r\n        type: 'useMacroTask',\r\n        delay: task.delay,\r\n        index: index++\r\n      });\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3008d260",
+      "type": "ForOfStatement",
+      "babel_source": "for (const task of component.useMacroTask) {\r\n      hooks.push({\r\n        type: 'useMacroTask',\r\n        delay: task.delay,\r\n        index: index++\r\n      });\r\n    }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "52d08538",
+      "type": "VariableDeclaration",
+      "babel_source": "const task",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "52b3fcf5",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n        type: 'useMacroTask',\r\n        delay: task.delay,\r\n        index: index++\r\n      }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "525f9f3f",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "index++",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "13909572",
+      "type": "IfStatement",
+      "condition": "component.useSignalR",
+      "babel_source": "if (component.useSignalR) {\r\n    for (const signalR of component.useSignalR) {\r\n      hooks.push({\r\n        type: 'useSignalR',\r\n        varName: signalR.name,\r\n        hubUrl: signalR.hubUrl,\r\n        index: index++\r\n      });\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d3bd13f1",
+      "type": "ForOfStatement",
+      "babel_source": "for (const signalR of component.useSignalR) {\r\n      hooks.push({\r\n        type: 'useSignalR',\r\n        varName: signalR.name,\r\n        hubUrl: signalR.hubUrl,\r\n        index: index++\r\n      });\r\n    }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "439462f1",
+      "type": "VariableDeclaration",
+      "babel_source": "const signalR",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "203f7f68",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n        type: 'useSignalR',\r\n        varName: signalR.name,\r\n        hubUrl: signalR.hubUrl,\r\n        index: index++\r\n      }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "525f9f3f",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "index++",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "88e8f11f",
+      "type": "IfStatement",
+      "condition": "component.usePredictHint",
+      "babel_source": "if (component.usePredictHint) {\r\n    for (const hint of component.usePredictHint) {\r\n      hooks.push({\r\n        type: 'usePredictHint',\r\n        hintId: hint.hintId,\r\n        index: index++\r\n      });\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4360a9fa",
+      "type": "ForOfStatement",
+      "babel_source": "for (const hint of component.usePredictHint) {\r\n      hooks.push({\r\n        type: 'usePredictHint',\r\n        hintId: hint.hintId,\r\n        index: index++\r\n      });\r\n    }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fb83d5b0",
+      "type": "VariableDeclaration",
+      "babel_source": "const hint",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f765098e",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n        type: 'usePredictHint',\r\n        hintId: hint.hintId,\r\n        index: index++\r\n      }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "525f9f3f",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "index++",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "79e09e7f",
+      "type": "IfStatement",
+      "condition": "component.useServerTask",
+      "babel_source": "if (component.useServerTask) {\r\n    for (const task of component.useServerTask) {\r\n      hooks.push({\r\n        type: 'useServerTask',\r\n        varName: task.name,\r\n        runtime: task.runtime,\r\n        isStreaming: task.isStreaming,\r\n        index: index++\r\n      });\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3af72d8a",
+      "type": "ForOfStatement",
+      "babel_source": "for (const task of component.useServerTask) {\r\n      hooks.push({\r\n        type: 'useServerTask',\r\n        varName: task.name,\r\n        runtime: task.runtime,\r\n        isStreaming: task.isStreaming,\r\n        index: index++\r\n      });\r\n    }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "52d08538",
+      "type": "VariableDeclaration",
+      "babel_source": "const task",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8ca8e936",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n        type: 'useServerTask',\r\n        varName: task.name,\r\n        runtime: task.runtime,\r\n        isStreaming: task.isStreaming,\r\n        index: index++\r\n      }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "525f9f3f",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "index++",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e09f3ea1",
+      "type": "IfStatement",
+      "condition": "component.paginatedTasks",
+      "babel_source": "if (component.paginatedTasks) {\r\n    for (const pagTask of component.paginatedTasks) {\r\n      hooks.push({\r\n        type: 'usePaginatedServerTask',\r\n        varName: pagTask.name,\r\n        runtime: pagTask.runtime,\r\n        index: index++\r\n      });\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "de8226bc",
+      "type": "ForOfStatement",
+      "babel_source": "for (const pagTask of component.paginatedTasks) {\r\n      hooks.push({\r\n        type: 'usePaginatedServerTask',\r\n        varName: pagTask.name,\r\n        runtime: pagTask.runtime,\r\n        index: index++\r\n      });\r\n    }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f2f14414",
+      "type": "VariableDeclaration",
+      "babel_source": "const pagTask",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "90a74c55",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n        type: 'usePaginatedServerTask',\r\n        varName: pagTask.name,\r\n        runtime: pagTask.runtime,\r\n        index: index++\r\n      }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "525f9f3f",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "index++",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "eb5ec18a",
+      "type": "IfStatement",
+      "condition": "component.useMvcState",
+      "babel_source": "if (component.useMvcState) {\r\n    for (const mvcState of component.useMvcState) {\r\n      hooks.push({\r\n        type: 'useMvcState',\r\n        varName: mvcState.name,\r\n        propertyName: mvcState.propertyName,\r\n        index: index++\r\n      });\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "739ce9d7",
+      "type": "ForOfStatement",
+      "babel_source": "for (const mvcState of component.useMvcState) {\r\n      hooks.push({\r\n        type: 'useMvcState',\r\n        varName: mvcState.name,\r\n        propertyName: mvcState.propertyName,\r\n        index: index++\r\n      });\r\n    }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0bcd8c24",
+      "type": "VariableDeclaration",
+      "babel_source": "const mvcState",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8d366f65",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n        type: 'useMvcState',\r\n        varName: mvcState.name,\r\n        propertyName: mvcState.propertyName,\r\n        index: index++\r\n      }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "525f9f3f",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "index++",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6fe6c5bd",
+      "type": "IfStatement",
+      "condition": "component.useMvcViewModel",
+      "babel_source": "if (component.useMvcViewModel) {\r\n    for (const mvcViewModel of component.useMvcViewModel) {\r\n      hooks.push({\r\n        type: 'useMvcViewModel',\r\n        varName: mvcViewModel.name,\r\n        index: index++\r\n      });\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4dea51f7",
+      "type": "ForOfStatement",
+      "babel_source": "for (const mvcViewModel of component.useMvcViewModel) {\r\n      hooks.push({\r\n        type: 'useMvcViewModel',\r\n        varName: mvcViewModel.name,\r\n        index: index++\r\n      });\r\n    }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5e522a1c",
+      "type": "VariableDeclaration",
+      "babel_source": "const mvcViewModel",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "db7524b4",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n        type: 'useMvcViewModel',\r\n        varName: mvcViewModel.name,\r\n        index: index++\r\n      }",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "525f9f3f",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "index++",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "01432d68",
+      "type": "ReturnStatement",
+      "babel_source": "return hooks;",
+      "parentContext": {
+        "functionName": "extractHookSignature",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/hookSignature.cjs"
+  ]
+}

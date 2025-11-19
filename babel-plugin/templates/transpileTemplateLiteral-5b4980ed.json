@@ -1,0 +1,232 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "transpileTemplateLiteral",
+  "params": [
+    {
+      "name": "expr",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function transpileTemplateLiteral(expr) {\r\n  let formatStr = '';\r\n  const formatArgs = [];\r\n\r\n  for (let i = 0; i < expr.quasis.length; i++) {\r\n    formatStr += expr.quasis[i].value.cooked;\r\n\r\n    if (i < expr.expressions.length) {\r\n      formatStr += '{}';\r\n      formatArgs.push(transpileExpression(expr.expressions[i]));\r\n    }\r\n  }\r\n\r\n  if (formatArgs.length === 0) {\r\n    return `\"${formatStr}\".to_string()`;\r\n  }\r\n\r\n  return `format!(\"${formatStr}\", ${formatArgs.join(', ')})`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "375988f3",
+      "type": "VariableDeclaration",
+      "babel_source": "let formatStr = '';",
+      "parentContext": {
+        "functionName": "transpileTemplateLiteral",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9c212d56",
+      "type": "VariableDeclaration",
+      "babel_source": "const formatArgs = [];",
+      "parentContext": {
+        "functionName": "transpileTemplateLiteral",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "transpileTemplateLiteral",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ea51c36e",
+      "type": "ForStatement",
+      "babel_source": "for (let i = 0; i < expr.quasis.length; i++) {\r\n    formatStr += expr.quasis[i].value.cooked;\r\n\r\n    if (i < expr.expressions.length) {\r\n      formatStr += '{}';\r\n      formatArgs.push(transpileExpression(expr.expressions[i]));\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "transpileTemplateLiteral",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ecb911a1",
+      "type": "VariableDeclaration",
+      "babel_source": "let i = 0",
+      "parentContext": {
+        "functionName": "transpileTemplateLiteral",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5276d941",
+      "type": "BinaryExpression",
+      "operator": "<",
+      "babel_source": "i < expr.quasis.length",
+      "parentContext": {
+        "functionName": "transpileTemplateLiteral",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e8dee0e1",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "i++",
+      "parentContext": {
+        "functionName": "transpileTemplateLiteral",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8306bea9",
+      "type": "AssignmentExpression",
+      "operator": "+=",
+      "babel_source": "formatStr += expr.quasis[i].value.cooked",
+      "parentContext": {
+        "functionName": "transpileTemplateLiteral",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b0929b66",
+      "type": "IfStatement",
+      "condition": "i < expr.expressions.length",
+      "babel_source": "if (i < expr.expressions.length) {\r\n      formatStr += '{}';\r\n      formatArgs.push(transpileExpression(expr.expressions[i]));\r\n    }",
+      "parentContext": {
+        "functionName": "transpileTemplateLiteral",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d57c8bfe",
+      "type": "BinaryExpression",
+      "operator": "<",
+      "babel_source": "i < expr.expressions.length",
+      "parentContext": {
+        "functionName": "transpileTemplateLiteral",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "263eb5ef",
+      "type": "AssignmentExpression",
+      "operator": "+=",
+      "babel_source": "formatStr += '{}'",
+      "parentContext": {
+        "functionName": "transpileTemplateLiteral",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0edf76b1",
+      "type": "IfStatement",
+      "condition": "formatArgs.length === 0",
+      "babel_source": "if (formatArgs.length === 0) {\r\n    return `\"${formatStr}\".to_string()`;\r\n  }",
+      "parentContext": {
+        "functionName": "transpileTemplateLiteral",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ba542a29",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "formatArgs.length === 0",
+      "parentContext": {
+        "functionName": "transpileTemplateLiteral",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "df6827d6",
+      "type": "ReturnStatement",
+      "babel_source": "return `\"${formatStr}\".to_string()`;",
+      "parentContext": {
+        "functionName": "transpileTemplateLiteral",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1bee7c13",
+      "type": "TemplateLiteral",
+      "babel_source": "`\"${formatStr}\".to_string()`",
+      "parentContext": {
+        "functionName": "transpileTemplateLiteral",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7229a91c",
+      "type": "ReturnStatement",
+      "babel_source": "return `format!(\"${formatStr}\", ${formatArgs.join(', ')})`;",
+      "parentContext": {
+        "functionName": "transpileTemplateLiteral",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2f2f9b7b",
+      "type": "TemplateLiteral",
+      "babel_source": "`format!(\"${formatStr}\", ${formatArgs.join(', ')})`",
+      "parentContext": {
+        "functionName": "transpileTemplateLiteral",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "transpilers/typescriptToRust.cjs"
+  ]
+}

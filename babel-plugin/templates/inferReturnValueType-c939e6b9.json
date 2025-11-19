@@ -1,0 +1,417 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "inferReturnValueType",
+  "params": [
+    {
+      "name": "name",
+      "inferredType": "&str",
+      "defaultValue": null
+    },
+    {
+      "name": "analysis",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "&'static str",
+  "babel_source": "function inferReturnValueType(name, analysis) {\r\n  // Check if it's a setter (from useState)\r\n  if (analysis && analysis.states) {\r\n    const isStateSetter = analysis.states.some(s => s.setterName === name);\r\n    if (isStateSetter) return 'setter';\r\n\r\n    const isStateValue = analysis.states.some(s => s.varName === name);\r\n    if (isStateValue) return 'state';\r\n  }\r\n\r\n  // Check if it's a method\r\n  if (analysis && analysis.methods) {\r\n    const isMethod = analysis.methods.some(m => m.name === name);\r\n    if (isMethod) return 'method';\r\n  }\r\n\r\n  // Fallback to name-based inference\r\n  if (name.startsWith('set')) return 'setter';\r\n  if (name === 'ui' || name.endsWith('UI')) return 'jsx';\r\n  if (name.includes('handle') || name.includes('on')) return 'method';\r\n\r\n  return 'state';\r\n}",
+  "body_templates": [
+    {
+      "hash": "aedd0e73",
+      "type": "IfStatement",
+      "condition": "analysis && analysis.states",
+      "babel_source": "if (analysis && analysis.states) {\r\n    const isStateSetter = analysis.states.some(s => s.setterName === name);\r\n    if (isStateSetter) return 'setter';\r\n\r\n    const isStateValue = analysis.states.some(s => s.varName === name);\r\n    if (isStateValue) return 'state';\r\n  }",
+      "parentContext": {
+        "functionName": "inferReturnValueType",
+        "functionParams": [
+          "name",
+          "analysis"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f17714c0",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "analysis && analysis.states",
+      "parentContext": {
+        "functionName": "inferReturnValueType",
+        "functionParams": [
+          "name",
+          "analysis"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dd004f30",
+      "type": "VariableDeclaration",
+      "babel_source": "const isStateSetter = analysis.states.some(s => s.setterName === name);",
+      "parentContext": {
+        "functionName": "inferReturnValueType",
+        "functionParams": [
+          "name",
+          "analysis"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "217dceb1",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "s => s.setterName === name",
+      "parentContext": {
+        "functionName": "inferReturnValueType",
+        "functionParams": [
+          "name",
+          "analysis"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "04316d20",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "s.setterName === name",
+      "parentContext": {
+        "functionName": "inferReturnValueType",
+        "functionParams": [
+          "name",
+          "analysis"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "72f1556d",
+      "type": "IfStatement",
+      "condition": "isStateSetter",
+      "babel_source": "if (isStateSetter) return 'setter';",
+      "parentContext": {
+        "functionName": "inferReturnValueType",
+        "functionParams": [
+          "name",
+          "analysis"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "273e1b31",
+      "type": "ReturnStatement",
+      "babel_source": "return 'setter';",
+      "parentContext": {
+        "functionName": "inferReturnValueType",
+        "functionParams": [
+          "name",
+          "analysis"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "10eea96f",
+      "type": "VariableDeclaration",
+      "babel_source": "const isStateValue = analysis.states.some(s => s.varName === name);",
+      "parentContext": {
+        "functionName": "inferReturnValueType",
+        "functionParams": [
+          "name",
+          "analysis"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "53cea6a9",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "s => s.varName === name",
+      "parentContext": {
+        "functionName": "inferReturnValueType",
+        "functionParams": [
+          "name",
+          "analysis"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1c49207d",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "s.varName === name",
+      "parentContext": {
+        "functionName": "inferReturnValueType",
+        "functionParams": [
+          "name",
+          "analysis"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5cab919e",
+      "type": "IfStatement",
+      "condition": "isStateValue",
+      "babel_source": "if (isStateValue) return 'state';",
+      "parentContext": {
+        "functionName": "inferReturnValueType",
+        "functionParams": [
+          "name",
+          "analysis"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "79cfba95",
+      "type": "ReturnStatement",
+      "babel_source": "return 'state';",
+      "parentContext": {
+        "functionName": "inferReturnValueType",
+        "functionParams": [
+          "name",
+          "analysis"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4803ef6e",
+      "type": "IfStatement",
+      "condition": "analysis && analysis.methods",
+      "babel_source": "if (analysis && analysis.methods) {\r\n    const isMethod = analysis.methods.some(m => m.name === name);\r\n    if (isMethod) return 'method';\r\n  }",
+      "parentContext": {
+        "functionName": "inferReturnValueType",
+        "functionParams": [
+          "name",
+          "analysis"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "695f02fc",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "analysis && analysis.methods",
+      "parentContext": {
+        "functionName": "inferReturnValueType",
+        "functionParams": [
+          "name",
+          "analysis"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4a431fc1",
+      "type": "VariableDeclaration",
+      "babel_source": "const isMethod = analysis.methods.some(m => m.name === name);",
+      "parentContext": {
+        "functionName": "inferReturnValueType",
+        "functionParams": [
+          "name",
+          "analysis"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9d3b3e97",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "m => m.name === name",
+      "parentContext": {
+        "functionName": "inferReturnValueType",
+        "functionParams": [
+          "name",
+          "analysis"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8436bb1f",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "m.name === name",
+      "parentContext": {
+        "functionName": "inferReturnValueType",
+        "functionParams": [
+          "name",
+          "analysis"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "451ff0bc",
+      "type": "IfStatement",
+      "condition": "isMethod",
+      "babel_source": "if (isMethod) return 'method';",
+      "parentContext": {
+        "functionName": "inferReturnValueType",
+        "functionParams": [
+          "name",
+          "analysis"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bf0951e0",
+      "type": "ReturnStatement",
+      "babel_source": "return 'method';",
+      "parentContext": {
+        "functionName": "inferReturnValueType",
+        "functionParams": [
+          "name",
+          "analysis"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab003e86",
+      "type": "IfStatement",
+      "condition": "name.startsWith('set')",
+      "babel_source": "if (name.startsWith('set')) return 'setter';",
+      "parentContext": {
+        "functionName": "inferReturnValueType",
+        "functionParams": [
+          "name",
+          "analysis"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "273e1b31",
+      "type": "ReturnStatement",
+      "babel_source": "return 'setter';",
+      "parentContext": {
+        "functionName": "inferReturnValueType",
+        "functionParams": [
+          "name",
+          "analysis"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "05c65c02",
+      "type": "IfStatement",
+      "condition": "name === 'ui' || name.endsWith('UI')",
+      "babel_source": "if (name === 'ui' || name.endsWith('UI')) return 'jsx';",
+      "parentContext": {
+        "functionName": "inferReturnValueType",
+        "functionParams": [
+          "name",
+          "analysis"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "06e8c1ed",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "name === 'ui' || name.endsWith('UI')",
+      "parentContext": {
+        "functionName": "inferReturnValueType",
+        "functionParams": [
+          "name",
+          "analysis"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "880dd9d1",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "name === 'ui'",
+      "parentContext": {
+        "functionName": "inferReturnValueType",
+        "functionParams": [
+          "name",
+          "analysis"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3783375f",
+      "type": "ReturnStatement",
+      "babel_source": "return 'jsx';",
+      "parentContext": {
+        "functionName": "inferReturnValueType",
+        "functionParams": [
+          "name",
+          "analysis"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d3b8e985",
+      "type": "IfStatement",
+      "condition": "name.includes('handle') || name.includes('on')",
+      "babel_source": "if (name.includes('handle') || name.includes('on')) return 'method';",
+      "parentContext": {
+        "functionName": "inferReturnValueType",
+        "functionParams": [
+          "name",
+          "analysis"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5bfa019c",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "name.includes('handle') || name.includes('on')",
+      "parentContext": {
+        "functionName": "inferReturnValueType",
+        "functionParams": [
+          "name",
+          "analysis"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bf0951e0",
+      "type": "ReturnStatement",
+      "babel_source": "return 'method';",
+      "parentContext": {
+        "functionName": "inferReturnValueType",
+        "functionParams": [
+          "name",
+          "analysis"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "79cfba95",
+      "type": "ReturnStatement",
+      "babel_source": "return 'state';",
+      "parentContext": {
+        "functionName": "inferReturnValueType",
+        "functionParams": [
+          "name",
+          "analysis"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/hookAnalyzer.cjs"
+  ]
+}

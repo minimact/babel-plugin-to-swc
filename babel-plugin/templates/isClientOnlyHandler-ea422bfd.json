@@ -1,0 +1,813 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "isClientOnlyHandler",
+  "params": [
+    {
+      "name": "body",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "bool",
+  "babel_source": "function isClientOnlyHandler(body) {\r\n  let hasClientOnlyCode = false;\r\n  let hasServerCode = false;\r\n\r\n  function checkNode(node) {\r\n    if (!node) return;\r\n\r\n    // Server patterns\r\n    if (t.isCallExpression(node)) {\r\n      const callee = node.callee;\r\n\r\n      // setState, setXxx calls - SERVER\r\n      if (t.isIdentifier(callee) && (callee.name === 'setState' || callee.name.startsWith('set'))) {\r\n        hasServerCode = true;\r\n      }\r\n    }\r\n\r\n    // await - SERVER\r\n    if (t.isAwaitExpression(node)) {\r\n      hasServerCode = true;\r\n    }\r\n\r\n    // Client-only patterns\r\n    if (t.isMemberExpression(node)) {\r\n      // e.stopPropagation, e.preventDefault\r\n      if (t.isIdentifier(node.property) &&\r\n          (node.property.name === 'stopPropagation' || node.property.name === 'preventDefault')) {\r\n        hasClientOnlyCode = true;\r\n      }\r\n\r\n      // e.currentTarget.style.X, e.target.style.X\r\n      if (t.isMemberExpression(node.object) &&\r\n          t.isIdentifier(node.object.property, { name: 'style' })) {\r\n        hasClientOnlyCode = true;\r\n      }\r\n\r\n      // element.classList\r\n      if (t.isIdentifier(node.property, { name: 'classList' })) {\r\n        hasClientOnlyCode = true;\r\n      }\r\n\r\n      // element.focus, blur, etc\r\n      if (t.isIdentifier(node.property) &&\r\n          ['focus', 'blur', 'scrollIntoView', 'select'].includes(node.property.name)) {\r\n        hasClientOnlyCode = true;\r\n      }\r\n    }\r\n\r\n    // Assignment to style properties\r\n    if (t.isAssignmentExpression(node)) {\r\n      const left = node.left;\r\n      if (t.isMemberExpression(left)) {\r\n        // Check if assigning to style property\r\n        if (t.isMemberExpression(left.object) &&\r\n            t.isIdentifier(left.object.property, { name: 'style' })) {\r\n          hasClientOnlyCode = true;\r\n        }\r\n      }\r\n    }\r\n\r\n    // Recursively check children\r\n    for (const key in node) {\r\n      if (node[key] && typeof node[key] === 'object') {\r\n        if (Array.isArray(node[key])) {\r\n          node[key].forEach(child => checkNode(child));\r\n        } else {\r\n          checkNode(node[key]);\r\n        }\r\n      }\r\n    }\r\n  }\r\n\r\n  checkNode(body);\r\n\r\n  // Only client-only if it has client code AND no server code\r\n  return hasClientOnlyCode && !hasServerCode;\r\n}",
+  "body_templates": [
+    {
+      "hash": "9a4c9df0",
+      "type": "VariableDeclaration",
+      "babel_source": "let hasClientOnlyCode = false;",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e689eeda",
+      "type": "VariableDeclaration",
+      "babel_source": "let hasServerCode = false;",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "38309af2",
+      "type": "IfStatement",
+      "condition": "!node",
+      "babel_source": "if (!node) return;",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e10d47ee",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!node",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8beaabe2",
+      "type": "ReturnStatement",
+      "babel_source": "return;",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c210ddb3",
+      "type": "IfStatement",
+      "condition": "t.isCallExpression(node)",
+      "babel_source": "if (t.isCallExpression(node)) {\r\n      const callee = node.callee;\r\n\r\n      // setState, setXxx calls - SERVER\r\n      if (t.isIdentifier(callee) && (callee.name === 'setState' || callee.name.startsWith('set'))) {\r\n        hasServerCode = true;\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1088dc62",
+      "type": "BabelTypeCheck",
+      "method": "isCallExpression",
+      "babel_source": "t.isCallExpression(node)",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "41649f9c",
+      "type": "VariableDeclaration",
+      "babel_source": "const callee = node.callee;",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a98b5c70",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(callee) && (callee.name === 'setState' || callee.name.startsWith('set'))",
+      "babel_source": "if (t.isIdentifier(callee) && (callee.name === 'setState' || callee.name.startsWith('set'))) {\r\n        hasServerCode = true;\r\n      }",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1cb9c41c",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isIdentifier(callee) && (callee.name === 'setState' || callee.name.startsWith('set'))",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a65c4b09",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(callee)",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5d16c6ca",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "callee.name === 'setState' || callee.name.startsWith('set')",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "81e2cac9",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "callee.name === 'setState'",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cbf4c317",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "hasServerCode = true",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "19fcce03",
+      "type": "IfStatement",
+      "condition": "t.isAwaitExpression(node)",
+      "babel_source": "if (t.isAwaitExpression(node)) {\r\n      hasServerCode = true;\r\n    }",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ce15fb6",
+      "type": "BabelTypeCheck",
+      "method": "isAwaitExpression",
+      "babel_source": "t.isAwaitExpression(node)",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cbf4c317",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "hasServerCode = true",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2f4d9dc5",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(node)",
+      "babel_source": "if (t.isMemberExpression(node)) {\r\n      // e.stopPropagation, e.preventDefault\r\n      if (t.isIdentifier(node.property) &&\r\n          (node.property.name === 'stopPropagation' || node.property.name === 'preventDefault')) {\r\n        hasClientOnlyCode = true;\r\n      }\r\n\r\n      // e.currentTarget.style.X, e.target.style.X\r\n      if (t.isMemberExpression(node.object) &&\r\n          t.isIdentifier(node.object.property, { name: 'style' })) {\r\n        hasClientOnlyCode = true;\r\n      }\r\n\r\n      // element.classList\r\n      if (t.isIdentifier(node.property, { name: 'classList' })) {\r\n        hasClientOnlyCode = true;\r\n      }\r\n\r\n      // element.focus, blur, etc\r\n      if (t.isIdentifier(node.property) &&\r\n          ['focus', 'blur', 'scrollIntoView', 'select'].includes(node.property.name)) {\r\n        hasClientOnlyCode = true;\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e4025d71",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(node)",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3c088c57",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(node.property) &&\r\n          (node.property.name === 'stopPropagation' || node.property.name === 'preventDefault')",
+      "babel_source": "if (t.isIdentifier(node.property) &&\r\n          (node.property.name === 'stopPropagation' || node.property.name === 'preventDefault')) {\r\n        hasClientOnlyCode = true;\r\n      }",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dfffe12c",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isIdentifier(node.property) &&\r\n          (node.property.name === 'stopPropagation' || node.property.name === 'preventDefault')",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a42af9c4",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.property)",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f18bd49b",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "node.property.name === 'stopPropagation' || node.property.name === 'preventDefault'",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d774b8e8",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "node.property.name === 'stopPropagation'",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f4a0848d",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "node.property.name === 'preventDefault'",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0defaf81",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "hasClientOnlyCode = true",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0e57a04a",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(node.object) &&\r\n          t.isIdentifier(node.object.property, { name: 'style' })",
+      "babel_source": "if (t.isMemberExpression(node.object) &&\r\n          t.isIdentifier(node.object.property, { name: 'style' })) {\r\n        hasClientOnlyCode = true;\r\n      }",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f49eb926",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isMemberExpression(node.object) &&\r\n          t.isIdentifier(node.object.property, { name: 'style' })",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8b43b46f",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(node.object)",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "482d6f55",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.object.property, { name: 'style' })",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "903981a4",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'style' }",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0defaf81",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "hasClientOnlyCode = true",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8385bf45",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(node.property, { name: 'classList' })",
+      "babel_source": "if (t.isIdentifier(node.property, { name: 'classList' })) {\r\n        hasClientOnlyCode = true;\r\n      }",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7c2423b4",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.property, { name: 'classList' })",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "40c36b8a",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'classList' }",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0defaf81",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "hasClientOnlyCode = true",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b92e1004",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(node.property) &&\r\n          ['focus', 'blur', 'scrollIntoView', 'select'].includes(node.property.name)",
+      "babel_source": "if (t.isIdentifier(node.property) &&\r\n          ['focus', 'blur', 'scrollIntoView', 'select'].includes(node.property.name)) {\r\n        hasClientOnlyCode = true;\r\n      }",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d493dd1b",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isIdentifier(node.property) &&\r\n          ['focus', 'blur', 'scrollIntoView', 'select'].includes(node.property.name)",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a42af9c4",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.property)",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7198eaa6",
+      "type": "ArrayExpression",
+      "babel_source": "['focus', 'blur', 'scrollIntoView', 'select']",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0defaf81",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "hasClientOnlyCode = true",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b58a139e",
+      "type": "IfStatement",
+      "condition": "t.isAssignmentExpression(node)",
+      "babel_source": "if (t.isAssignmentExpression(node)) {\r\n      const left = node.left;\r\n      if (t.isMemberExpression(left)) {\r\n        // Check if assigning to style property\r\n        if (t.isMemberExpression(left.object) &&\r\n            t.isIdentifier(left.object.property, { name: 'style' })) {\r\n          hasClientOnlyCode = true;\r\n        }\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f78a196e",
+      "type": "BabelTypeCheck",
+      "method": "isAssignmentExpression",
+      "babel_source": "t.isAssignmentExpression(node)",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "54b34918",
+      "type": "VariableDeclaration",
+      "babel_source": "const left = node.left;",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "54258ae4",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(left)",
+      "babel_source": "if (t.isMemberExpression(left)) {\r\n        // Check if assigning to style property\r\n        if (t.isMemberExpression(left.object) &&\r\n            t.isIdentifier(left.object.property, { name: 'style' })) {\r\n          hasClientOnlyCode = true;\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4998a247",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(left)",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "97cfed00",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(left.object) &&\r\n            t.isIdentifier(left.object.property, { name: 'style' })",
+      "babel_source": "if (t.isMemberExpression(left.object) &&\r\n            t.isIdentifier(left.object.property, { name: 'style' })) {\r\n          hasClientOnlyCode = true;\r\n        }",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a25a4273",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isMemberExpression(left.object) &&\r\n            t.isIdentifier(left.object.property, { name: 'style' })",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a160ecbf",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(left.object)",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8eb2c0e5",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(left.object.property, { name: 'style' })",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "903981a4",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'style' }",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0defaf81",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "hasClientOnlyCode = true",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "03672b30",
+      "type": "VariableDeclaration",
+      "babel_source": "const key",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8f9104ce",
+      "type": "IfStatement",
+      "condition": "node[key] && typeof node[key] === 'object'",
+      "babel_source": "if (node[key] && typeof node[key] === 'object') {\r\n        if (Array.isArray(node[key])) {\r\n          node[key].forEach(child => checkNode(child));\r\n        } else {\r\n          checkNode(node[key]);\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "aff4720f",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "node[key] && typeof node[key] === 'object'",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "33a7a2e2",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "typeof node[key] === 'object'",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e916ed5b",
+      "type": "UnaryExpression",
+      "operator": "typeof",
+      "babel_source": "typeof node[key]",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a643e978",
+      "type": "IfStatement",
+      "condition": "Array.isArray(node[key])",
+      "babel_source": "if (Array.isArray(node[key])) {\r\n          node[key].forEach(child => checkNode(child));\r\n        } else {\r\n          checkNode(node[key]);\r\n        }",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "35d75076",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "child => checkNode(child)",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d0527909",
+      "type": "ReturnStatement",
+      "babel_source": "return hasClientOnlyCode && !hasServerCode;",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4e53ff21",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "hasClientOnlyCode && !hasServerCode",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dbc30781",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!hasServerCode",
+      "parentContext": {
+        "functionName": "isClientOnlyHandler",
+        "functionParams": [
+          "body"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/eventHandlers.cjs"
+  ]
+}

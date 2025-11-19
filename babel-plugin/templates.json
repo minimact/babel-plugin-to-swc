@@ -1,0 +1,773 @@
+{
+  "version": "1.0",
+  "generated_at": "2025-11-18T23:55:33.280Z",
+  "source_dir": "J:\\projects\\babel-plugin-to-swc\\babel-plugin-to-swc\\example\\babel-plugin-minimact\\src",
+  "files": {
+    "utils/helpers.cjs": {
+      "helper_imports": {},
+      "template_hashes": [
+        "cf394d07",
+        "f2fac6c2"
+      ]
+    },
+    "utils/pathAssignment.cjs": {
+      "helper_imports": {
+        "HexPathGenerator": {
+          "source": "./hexPath.cjs",
+          "imported": "HexPathGenerator"
+        }
+      },
+      "template_hashes": [
+        "a3e2e810",
+        "bdcbce19",
+        "1fda04b6",
+        "aa6c1483",
+        "77531d2e",
+        "04e549ff",
+        "8a5a848f",
+        "6185fccb",
+        "9c2c038a",
+        "36a7bd44"
+      ]
+    },
+    "utils/styleConverter.cjs": {
+      "helper_imports": {},
+      "template_hashes": [
+        "5c68f96d",
+        "76ad9bbd",
+        "e4ff4657"
+      ]
+    },
+    "analyzers/analyzePluginUsage.cjs": {
+      "helper_imports": {},
+      "template_hashes": [
+        "76470843",
+        "1ae204af",
+        "fe186f53",
+        "1a02865d",
+        "0af72221",
+        "801387db",
+        "722c628f",
+        "1e70f748",
+        "5d7990f3",
+        "ab68ba9f",
+        "5ad19151"
+      ]
+    },
+    "analyzers/classification.cjs": {
+      "helper_imports": {},
+      "template_hashes": [
+        "e41dae53"
+      ]
+    },
+    "analyzers/dependencies.cjs": {
+      "helper_imports": {},
+      "template_hashes": [
+        "0f8f367a",
+        "82357ad8"
+      ]
+    },
+    "analyzers/detection.cjs": {
+      "helper_imports": {},
+      "template_hashes": [
+        "b311dbbd",
+        "78acb044",
+        "94f32563"
+      ]
+    },
+    "analyzers/hookAnalyzer.cjs": {
+      "helper_imports": {
+        "getHookName": {
+          "source": "./hookDetector.cjs",
+          "imported": "getHookName"
+        },
+        "getHookParameters": {
+          "source": "./hookDetector.cjs",
+          "imported": "getHookParameters"
+        },
+        "getHookBody": {
+          "source": "./hookDetector.cjs",
+          "imported": "getHookBody"
+        },
+        "extractTypeString": {
+          "source": "./hookDetector.cjs",
+          "imported": "extractTypeString"
+        },
+        "generateCSharpExpression": {
+          "source": "../generators/expressions.cjs",
+          "imported": "generateCSharpExpression"
+        },
+        "transpileBlockStatement": {
+          "source": "../transpilers/typescriptToCSharp.cjs",
+          "imported": "transpileBlockStatement"
+        },
+        "transpileExpression": {
+          "source": "../transpilers/typescriptToCSharp.cjs",
+          "imported": "transpileExpression"
+        }
+      },
+      "template_hashes": [
+        "0aa5605f",
+        "bbd25263",
+        "a4544940",
+        "81b8d329",
+        "f549083b",
+        "9952f3d7",
+        "7182654d",
+        "c939e6b9",
+        "01b4d100",
+        "151c10b7",
+        "1035f627",
+        "4179e439"
+      ]
+    },
+    "analyzers/hookDetector.cjs": {
+      "helper_imports": {},
+      "template_hashes": [
+        "dac9e746",
+        "faa77987",
+        "72e5f926",
+        "483e81c1",
+        "4712420b",
+        "c02b42bc",
+        "30bdcf77",
+        "8917127c"
+      ]
+    },
+    "analyzers/hookImports.cjs": {
+      "helper_imports": {
+        "isCustomHook": {
+          "source": "./hookDetector.cjs",
+          "imported": "isCustomHook"
+        },
+        "getHookName": {
+          "source": "./hookDetector.cjs",
+          "imported": "getHookName"
+        },
+        "analyzeHook": {
+          "source": "./hookAnalyzer.cjs",
+          "imported": "analyzeHook"
+        }
+      },
+      "template_hashes": [
+        "48fcef73",
+        "cfd367b7",
+        "3d756253",
+        "dae40cab"
+      ]
+    },
+    "analyzers/propTypeInference.cjs": {
+      "helper_imports": {},
+      "template_hashes": [
+        "0bfcd24f",
+        "82a6316f",
+        "cddd7786"
+      ]
+    },
+    "analyzers/razorDetection.cjs": {
+      "helper_imports": {},
+      "template_hashes": [
+        "3239d023",
+        "446dd288",
+        "0688b3e7"
+      ]
+    },
+    "analyzers/timelineAnalyzer.cjs": {
+      "helper_imports": {},
+      "template_hashes": [
+        "b2027adb",
+        "acd73e00",
+        "b382f424",
+        "8e40dce3",
+        "13f97a07",
+        "5cf698cc",
+        "e05cef97",
+        "3a127d01",
+        "fd18f0ca"
+      ]
+    },
+    "extractors/conditionalElementTemplates.cjs": {
+      "helper_imports": {},
+      "template_hashes": [
+        "c39c355f",
+        "6ea74560",
+        "6fe19ce7",
+        "74d83491",
+        "a2a823b3",
+        "4d9cf8e7",
+        "8daa9ae2",
+        "0b90c11f",
+        "b0b1cbcb",
+        "591d5191",
+        "07b38537"
+      ]
+    },
+    "extractors/eventHandlers.cjs": {
+      "helper_imports": {
+        "analyzeHookUsage": {
+          "source": "./hooks.cjs",
+          "imported": "analyzeHookUsage"
+        },
+        "transformHandlerFunction": {
+          "source": "./hooks.cjs",
+          "imported": "transformHandlerFunction"
+        }
+      },
+      "template_hashes": [
+        "ea422bfd",
+        "f2afebc2",
+        "6c229e7a",
+        "bacb673d"
+      ]
+    },
+    "extractors/expressionTemplates.cjs": {
+      "helper_imports": {},
+      "template_hashes": [
+        "8cfefbca",
+        "6bcb65ab",
+        "cac66067",
+        "33c4ab1d",
+        "06d26e71",
+        "dbce4c38",
+        "d2cd21a8",
+        "ddf6cc9d",
+        "3ead26e8",
+        "076b6dc9",
+        "7ecb760c",
+        "4cf8c448",
+        "04dc8022",
+        "a5ca7857",
+        "dd0a1a91"
+      ]
+    },
+    "extractors/hooks.cjs": {
+      "helper_imports": {
+        "generateCSharpExpression": {
+          "source": "../generators/expressions.cjs",
+          "imported": "generateCSharpExpression"
+        },
+        "inferType": {
+          "source": "../types/typeConversion.cjs",
+          "imported": "inferType"
+        },
+        "tsTypeToCSharpType": {
+          "source": "../types/typeConversion.cjs",
+          "imported": "tsTypeToCSharpType"
+        },
+        "extractUseStateX": {
+          "source": "./useStateX.cjs",
+          "imported": "extractUseStateX"
+        }
+      },
+      "template_hashes": [
+        "dcf3be47",
+        "88956ff4",
+        "aad8e8a5",
+        "88e1b361",
+        "4dea3160",
+        "8908745f",
+        "13c75c82",
+        "c77f1413",
+        "2ab3067d",
+        "e997b494",
+        "6cb4cb4b",
+        "92d7c121",
+        "f63d61f4",
+        "314dc817",
+        "ba984f60",
+        "dfbefec3",
+        "6c6cf8f2",
+        "1c66554b",
+        "a16ef519",
+        "8666304f",
+        "f33c895f",
+        "9826ed3a",
+        "6f39ad7e",
+        "969824f0",
+        "1c70a08d",
+        "62da4e31",
+        "01b4d100",
+        "1e97d581",
+        "147ebba1",
+        "843071cf"
+      ]
+    },
+    "extractors/hookSignature.cjs": {
+      "helper_imports": {},
+      "template_hashes": [
+        "a81d2c32",
+        "34e3c322",
+        "5dc231ac",
+        "842a4484",
+        "3d38e9fe"
+      ]
+    },
+    "extractors/localVariables.cjs": {
+      "helper_imports": {
+        "generateCSharpExpression": {
+          "source": "../generators/expressions.cjs",
+          "imported": "generateCSharpExpression"
+        },
+        "tsTypeToCSharpType": {
+          "source": "../types/typeConversion.cjs",
+          "imported": "tsTypeToCSharpType"
+        }
+      },
+      "template_hashes": [
+        "c6bf64d2",
+        "68db4fdb"
+      ]
+    },
+    "extractors/loopTemplates.cjs": {
+      "helper_imports": {},
+      "template_hashes": [
+        "10169809",
+        "94400f77",
+        "264235c4",
+        "d74e84b8",
+        "4f40de9c",
+        "3ae5cc83",
+        "525816fc",
+        "c1b72833",
+        "3c7a8a35",
+        "20e3cd98",
+        "c87f8957",
+        "4e546471",
+        "95762d39",
+        "5160725b",
+        "1f752750",
+        "61c88937",
+        "f4195383",
+        "9e135b67",
+        "9f6f23da",
+        "09e4aae7",
+        "4c38f9b0"
+      ]
+    },
+    "extractors/structuralTemplates.cjs": {
+      "helper_imports": {},
+      "template_hashes": [
+        "59b1cc91",
+        "b74d3a44",
+        "49b14e62",
+        "377f4cc2",
+        "fddc67eb",
+        "4f5168ba",
+        "61f275d0",
+        "794d4fc2",
+        "04dc8022"
+      ]
+    },
+    "extractors/templates.cjs": {
+      "helper_imports": {
+        "getPathFromNode": {
+          "source": "../utils/pathAssignment.cjs",
+          "imported": "getPathFromNode"
+        },
+        "getPathSegmentsFromNode": {
+          "source": "../utils/pathAssignment.cjs",
+          "imported": "getPathSegmentsFromNode"
+        },
+        "convertStyleObjectToCss": {
+          "source": "../utils/styleConverter.cjs",
+          "imported": "convertStyleObjectToCss"
+        }
+      },
+      "template_hashes": [
+        "15874984",
+        "32943362",
+        "51935764",
+        "93f0987d",
+        "9badb4d8",
+        "4ba47569",
+        "d04a490d",
+        "cbc3d08a",
+        "7b38871a",
+        "4aa4be3b",
+        "d11b3634",
+        "45467d8a",
+        "56d52a46",
+        "db3bcd2b",
+        "fc87d3b3",
+        "d6565b60",
+        "4c386a32",
+        "ad82a402",
+        "fddb335d",
+        "04dc8022",
+        "fba017f2",
+        "6b7c8063",
+        "824252d8",
+        "42b0e349",
+        "89c93d51",
+        "b8a20f9e",
+        "f19d6ed3",
+        "503b5151",
+        "cd7d4412",
+        "a3bfc5b5"
+      ]
+    },
+    "extractors/useStateX.cjs": {
+      "helper_imports": {
+        "generateCSharpExpression": {
+          "source": "../generators/expressions.cjs",
+          "imported": "generateCSharpExpression"
+        },
+        "inferType": {
+          "source": "../types/typeConversion.cjs",
+          "imported": "inferType"
+        }
+      },
+      "template_hashes": [
+        "0d7dc2de",
+        "b1fc18d4",
+        "2d7635df",
+        "e331f03d",
+        "b33004aa",
+        "b85e502a",
+        "691172d4",
+        "3230eb4b",
+        "4ad02e86",
+        "e7419daa"
+      ]
+    },
+    "generators/component.cjs": {
+      "helper_imports": {
+        "generateRenderBody": {
+          "source": "./renderBody.cjs",
+          "imported": "generateRenderBody"
+        },
+        "generateCSharpExpression": {
+          "source": "./expressions.cjs",
+          "imported": "generateCSharpExpression"
+        },
+        "generateCSharpStatement": {
+          "source": "./expressions.cjs",
+          "imported": "generateCSharpStatement"
+        },
+        "setCurrentComponent": {
+          "source": "./expressions.cjs",
+          "imported": "setCurrentComponent"
+        },
+        "generateServerTaskMethods": {
+          "source": "./serverTask.cjs",
+          "imported": "generateServerTaskMethods"
+        },
+        "generateTimelineAttributes": {
+          "source": "./timelineGenerator.cjs",
+          "imported": "generateTimelineAttributes"
+        },
+        "convertRazorMarkdownToCSharp": {
+          "source": "./razorMarkdown.cjs",
+          "imported": "convertRazorMarkdownToCSharp"
+        }
+      },
+      "template_hashes": [
+        "cdc9b34c",
+        "32825e4e"
+      ]
+    },
+    "generators/csharpFile.cjs": {
+      "helper_imports": {
+        "generateComponent": {
+          "source": "./component.cjs",
+          "imported": "generateComponent"
+        },
+        "usesPlugins": {
+          "source": "./plugin.cjs",
+          "imported": "usesPlugins"
+        }
+      },
+      "template_hashes": [
+        "bb71725f"
+      ]
+    },
+    "generators/expressions.cjs": {
+      "helper_imports": {
+        "escapeCSharpString": {
+          "source": "../utils/helpers.cjs",
+          "imported": "escapeCSharpString"
+        },
+        "analyzeDependencies": {
+          "source": "../analyzers/dependencies.cjs",
+          "imported": "analyzeDependencies"
+        },
+        "classifyNode": {
+          "source": "../analyzers/classification.cjs",
+          "imported": "classifyNode"
+        },
+        "generateRuntimeHelperForJSXNode": {
+          "source": "./runtimeHelpers.cjs",
+          "imported": "generateRuntimeHelperForJSXNode"
+        },
+        "generateJSXElement": {
+          "source": "./jsx.cjs",
+          "imported": "generateJSXElement"
+        },
+        "getPathFromNode": {
+          "source": "../utils/pathAssignment.cjs",
+          "imported": "getPathFromNode"
+        }
+      },
+      "template_hashes": [
+        "562c2da3",
+        "4a09227e",
+        "1aaf19b9",
+        "63ec6649",
+        "3aea3559",
+        "090c13ff",
+        "94d8002a",
+        "e2cb890e",
+        "d12b3e93",
+        "39a13ef5",
+        "e43456c6"
+      ]
+    },
+    "generators/hookClassGenerator.cjs": {
+      "helper_imports": {
+        "generateRenderBody": {
+          "source": "./renderBody.cjs",
+          "imported": "generateRenderBody"
+        },
+        "assignPathsToJSX": {
+          "source": "../utils/pathAssignment.cjs",
+          "imported": "assignPathsToJSX"
+        },
+        "HexPathGenerator": {
+          "source": "../utils/hexPath.cjs",
+          "imported": "HexPathGenerator"
+        }
+      },
+      "template_hashes": [
+        "d6ae983d",
+        "039a46d1",
+        "debef6d0",
+        "365afa1c",
+        "e42a9b65"
+      ]
+    },
+    "generators/jsx.cjs": {
+      "helper_imports": {
+        "escapeCSharpString": {
+          "source": "../utils/helpers.cjs",
+          "imported": "escapeCSharpString"
+        },
+        "hasSpreadProps": {
+          "source": "../analyzers/detection.cjs",
+          "imported": "hasSpreadProps"
+        },
+        "hasDynamicChildren": {
+          "source": "../analyzers/detection.cjs",
+          "imported": "hasDynamicChildren"
+        },
+        "hasComplexProps": {
+          "source": "../analyzers/detection.cjs",
+          "imported": "hasComplexProps"
+        },
+        "extractEventHandler": {
+          "source": "../extractors/eventHandlers.cjs",
+          "imported": "extractEventHandler"
+        },
+        "getPathFromNode": {
+          "source": "../utils/pathAssignment.cjs",
+          "imported": "getPathFromNode"
+        },
+        "generateCSharpExpression": {
+          "source": "./expressions.cjs",
+          "imported": "generateCSharpExpression"
+        },
+        "generatePluginNode": {
+          "source": "./plugin.cjs",
+          "imported": "generatePluginNode"
+        },
+        "generateRuntimeHelperCall": {
+          "source": "./runtimeHelpers.cjs",
+          "imported": "generateRuntimeHelperCall"
+        },
+        "convertStyleObjectToCss": {
+          "source": "../utils/styleConverter.cjs",
+          "imported": "convertStyleObjectToCss"
+        },
+        "generateJSXExpression": {
+          "source": "./expressions.cjs",
+          "imported": "generateJSXExpression"
+        }
+      },
+      "template_hashes": [
+        "a66f6b5c",
+        "2f3883db",
+        "16209e0b",
+        "2b0badd2",
+        "f4608139"
+      ]
+    },
+    "generators/plugin.cjs": {
+      "helper_imports": {
+        "generateCSharpExpression": {
+          "source": "./expressions.cjs",
+          "imported": "generateCSharpExpression"
+        }
+      },
+      "template_hashes": [
+        "56b5643e",
+        "1f891c49",
+        "3696b3cf",
+        "0e7b9b1d",
+        "9913d05c",
+        "df5ce567",
+        "d5721eec"
+      ]
+    },
+    "generators/razorMarkdown.cjs": {
+      "helper_imports": {},
+      "template_hashes": [
+        "e5d91ade",
+        "c901ce1a",
+        "8fa8b972",
+        "2359a394",
+        "197bab3c",
+        "2f8609fe",
+        "fbe32fa1",
+        "f38cedd2"
+      ]
+    },
+    "generators/renderBody.cjs": {
+      "helper_imports": {
+        "generateJSXElement": {
+          "source": "./jsx.cjs",
+          "imported": "generateJSXElement"
+        },
+        "generateConditional": {
+          "source": "./expressions.cjs",
+          "imported": "generateConditional"
+        },
+        "generateShortCircuit": {
+          "source": "./expressions.cjs",
+          "imported": "generateShortCircuit"
+        },
+        "generateMapExpression": {
+          "source": "./expressions.cjs",
+          "imported": "generateMapExpression"
+        }
+      },
+      "template_hashes": [
+        "2112b113"
+      ]
+    },
+    "generators/runtimeHelpers.cjs": {
+      "helper_imports": {
+        "escapeCSharpString": {
+          "source": "../utils/helpers.cjs",
+          "imported": "escapeCSharpString"
+        },
+        "getPathFromNode": {
+          "source": "../utils/pathAssignment.cjs",
+          "imported": "getPathFromNode"
+        },
+        "generateCSharpExpression": {
+          "source": "./expressions.cjs",
+          "imported": "generateCSharpExpression"
+        },
+        "generateJSXElement": {
+          "source": "./jsx.cjs",
+          "imported": "generateJSXElement"
+        },
+        "convertStyleObjectToCss": {
+          "source": "../utils/styleConverter.cjs",
+          "imported": "convertStyleObjectToCss"
+        },
+        "generateBooleanExpression": {
+          "source": "./expressions.cjs",
+          "imported": "generateBooleanExpression"
+        },
+        "generateMapExpression": {
+          "source": "./expressions.cjs",
+          "imported": "generateMapExpression"
+        }
+      },
+      "template_hashes": [
+        "46217ff8",
+        "bfd13383"
+      ]
+    },
+    "generators/rustTask.cjs": {
+      "helper_imports": {
+        "transpileAsyncFunctionToRust": {
+          "source": "../transpilers/typescriptToRust.cjs",
+          "imported": "transpileAsyncFunctionToRust"
+        }
+      },
+      "template_hashes": [
+        "718a758a",
+        "56acc79d",
+        "054301a8",
+        "2c1fca1c",
+        "7638b232",
+        "144f3132"
+      ]
+    },
+    "generators/serverTask.cjs": {
+      "helper_imports": {
+        "transpileAsyncFunctionToCSharp": {
+          "source": "../transpilers/typescriptToCSharp.cjs",
+          "imported": "transpileAsyncFunctionToCSharp"
+        }
+      },
+      "template_hashes": [
+        "d0cb570a",
+        "d9fe1db8",
+        "827d339a"
+      ]
+    },
+    "generators/timelineGenerator.cjs": {
+      "helper_imports": {},
+      "template_hashes": [
+        "bbcae025",
+        "83fbd0c4",
+        "52593d4b",
+        "a9424fa9"
+      ]
+    },
+    "types/typeConversion.cjs": {
+      "helper_imports": {},
+      "template_hashes": [
+        "e5f76cda",
+        "dad0618d"
+      ]
+    },
+    "transpilers/typescriptToCSharp.cjs": {
+      "helper_imports": {},
+      "template_hashes": [
+        "f95e0878",
+        "af525ae9",
+        "562c2da3",
+        "0b8b1d35",
+        "2e378183",
+        "7b35fed1",
+        "82d0dfef",
+        "0a28dcc7",
+        "174128a4",
+        "f5097e07",
+        "533656df",
+        "d9fe1db8",
+        "bd9692f6"
+      ]
+    },
+    "transpilers/typescriptToRust.cjs": {
+      "helper_imports": {},
+      "template_hashes": [
+        "a2e9a6ef",
+        "8b2eb3f6",
+        "58f99ca6",
+        "67252a69",
+        "4dfc2c99",
+        "1ab60505",
+        "0a28dcc7",
+        "a75c0ed6",
+        "5b4980ed",
+        "533656df",
+        "4422fd61"
+      ]
+    }
+  },
+  "template_count": 282
+}

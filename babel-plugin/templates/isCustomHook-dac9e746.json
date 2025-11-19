@@ -1,0 +1,451 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "isCustomHook",
+  "params": [
+    {
+      "name": "path",
+      "inferredType": "&Path",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "bool",
+  "babel_source": "function isCustomHook(path) {\r\n  let node, name, params;\r\n\r\n  // Handle function declaration: function useCounter(namespace, start) { ... }\r\n  if (t.isFunctionDeclaration(path.node)) {\r\n    node = path.node;\r\n    name = node.id?.name;\r\n    params = node.params;\r\n  }\r\n  // Handle variable declarator with arrow function: const useCounter = (namespace, start) => { ... }\r\n  else if (t.isVariableDeclarator(path.node)) {\r\n    const init = path.node.init;\r\n    if (t.isArrowFunctionExpression(init) || t.isFunctionExpression(init)) {\r\n      node = init;\r\n      name = path.node.id?.name;\r\n      params = init.params;\r\n    } else {\r\n      return false;\r\n    }\r\n  }\r\n  else {\r\n    return false;\r\n  }\r\n\r\n  // Must have a name\r\n  if (!name) return false;\r\n\r\n  // Must start with 'use'\r\n  if (!name.startsWith('use')) return false;\r\n\r\n  // Must have at least one parameter\r\n  if (!params || params.length === 0) return false;\r\n\r\n  // First parameter must be 'namespace'\r\n  const firstParam = params[0];\r\n  if (!isNamespaceParameter(firstParam)) return false;\r\n\r\n  return true;\r\n}",
+  "body_templates": [
+    {
+      "hash": "00fbcf06",
+      "type": "VariableDeclaration",
+      "babel_source": "let node, name, params;",
+      "parentContext": {
+        "functionName": "isCustomHook",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9086a456",
+      "type": "IfStatement",
+      "condition": "t.isFunctionDeclaration(path.node)",
+      "babel_source": "if (t.isFunctionDeclaration(path.node)) {\r\n    node = path.node;\r\n    name = node.id?.name;\r\n    params = node.params;\r\n  }\r\n  // Handle variable declarator with arrow function: const useCounter = (namespace, start) => { ... }\r\n  else if (t.isVariableDeclarator(path.node)) {\r\n    const init = path.node.init;\r\n    if (t.isArrowFunctionExpression(init) || t.isFunctionExpression(init)) {\r\n      node = init;\r\n      name = path.node.id?.name;\r\n      params = init.params;\r\n    } else {\r\n      return false;\r\n    }\r\n  }\r\n  else {\r\n    return false;\r\n  }",
+      "parentContext": {
+        "functionName": "isCustomHook",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3633f955",
+      "type": "BabelTypeCheck",
+      "method": "isFunctionDeclaration",
+      "babel_source": "t.isFunctionDeclaration(path.node)",
+      "parentContext": {
+        "functionName": "isCustomHook",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b302ddec",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "node = path.node",
+      "parentContext": {
+        "functionName": "isCustomHook",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cc2d4d9e",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "name = node.id?.name",
+      "parentContext": {
+        "functionName": "isCustomHook",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "86f07544",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "params = node.params",
+      "parentContext": {
+        "functionName": "isCustomHook",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "589fc82b",
+      "type": "IfStatement",
+      "condition": "t.isVariableDeclarator(path.node)",
+      "babel_source": "if (t.isVariableDeclarator(path.node)) {\r\n    const init = path.node.init;\r\n    if (t.isArrowFunctionExpression(init) || t.isFunctionExpression(init)) {\r\n      node = init;\r\n      name = path.node.id?.name;\r\n      params = init.params;\r\n    } else {\r\n      return false;\r\n    }\r\n  }\r\n  else {\r\n    return false;\r\n  }",
+      "parentContext": {
+        "functionName": "isCustomHook",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d06bdb04",
+      "type": "BabelTypeCheck",
+      "method": "isVariableDeclarator",
+      "babel_source": "t.isVariableDeclarator(path.node)",
+      "parentContext": {
+        "functionName": "isCustomHook",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d97ea1ee",
+      "type": "VariableDeclaration",
+      "babel_source": "const init = path.node.init;",
+      "parentContext": {
+        "functionName": "isCustomHook",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9160b3b6",
+      "type": "IfStatement",
+      "condition": "t.isArrowFunctionExpression(init) || t.isFunctionExpression(init)",
+      "babel_source": "if (t.isArrowFunctionExpression(init) || t.isFunctionExpression(init)) {\r\n      node = init;\r\n      name = path.node.id?.name;\r\n      params = init.params;\r\n    } else {\r\n      return false;\r\n    }",
+      "parentContext": {
+        "functionName": "isCustomHook",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "28364cae",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isArrowFunctionExpression(init) || t.isFunctionExpression(init)",
+      "parentContext": {
+        "functionName": "isCustomHook",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "55a4b373",
+      "type": "BabelTypeCheck",
+      "method": "isArrowFunctionExpression",
+      "babel_source": "t.isArrowFunctionExpression(init)",
+      "parentContext": {
+        "functionName": "isCustomHook",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0f3cacc8",
+      "type": "BabelTypeCheck",
+      "method": "isFunctionExpression",
+      "babel_source": "t.isFunctionExpression(init)",
+      "parentContext": {
+        "functionName": "isCustomHook",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d8341cef",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "node = init",
+      "parentContext": {
+        "functionName": "isCustomHook",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0860a014",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "name = path.node.id?.name",
+      "parentContext": {
+        "functionName": "isCustomHook",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "56f6006c",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "params = init.params",
+      "parentContext": {
+        "functionName": "isCustomHook",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dabbdf16",
+      "type": "ReturnStatement",
+      "babel_source": "return false;",
+      "parentContext": {
+        "functionName": "isCustomHook",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dabbdf16",
+      "type": "ReturnStatement",
+      "babel_source": "return false;",
+      "parentContext": {
+        "functionName": "isCustomHook",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cd8201b0",
+      "type": "IfStatement",
+      "condition": "!name",
+      "babel_source": "if (!name) return false;",
+      "parentContext": {
+        "functionName": "isCustomHook",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c00b6a5b",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!name",
+      "parentContext": {
+        "functionName": "isCustomHook",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dabbdf16",
+      "type": "ReturnStatement",
+      "babel_source": "return false;",
+      "parentContext": {
+        "functionName": "isCustomHook",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "10111fa9",
+      "type": "IfStatement",
+      "condition": "!name.startsWith('use')",
+      "babel_source": "if (!name.startsWith('use')) return false;",
+      "parentContext": {
+        "functionName": "isCustomHook",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "579b5ef3",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!name.startsWith('use')",
+      "parentContext": {
+        "functionName": "isCustomHook",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dabbdf16",
+      "type": "ReturnStatement",
+      "babel_source": "return false;",
+      "parentContext": {
+        "functionName": "isCustomHook",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9a05b68c",
+      "type": "IfStatement",
+      "condition": "!params || params.length === 0",
+      "babel_source": "if (!params || params.length === 0) return false;",
+      "parentContext": {
+        "functionName": "isCustomHook",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0420bc6b",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "!params || params.length === 0",
+      "parentContext": {
+        "functionName": "isCustomHook",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f36677c4",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!params",
+      "parentContext": {
+        "functionName": "isCustomHook",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f5eb9196",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "params.length === 0",
+      "parentContext": {
+        "functionName": "isCustomHook",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dabbdf16",
+      "type": "ReturnStatement",
+      "babel_source": "return false;",
+      "parentContext": {
+        "functionName": "isCustomHook",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0e94514e",
+      "type": "VariableDeclaration",
+      "babel_source": "const firstParam = params[0];",
+      "parentContext": {
+        "functionName": "isCustomHook",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b91d984c",
+      "type": "IfStatement",
+      "condition": "!isNamespaceParameter(firstParam)",
+      "babel_source": "if (!isNamespaceParameter(firstParam)) return false;",
+      "parentContext": {
+        "functionName": "isCustomHook",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "53a829b6",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!isNamespaceParameter(firstParam)",
+      "parentContext": {
+        "functionName": "isCustomHook",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dabbdf16",
+      "type": "ReturnStatement",
+      "babel_source": "return false;",
+      "parentContext": {
+        "functionName": "isCustomHook",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "10e0fa08",
+      "type": "ReturnStatement",
+      "babel_source": "return true;",
+      "parentContext": {
+        "functionName": "isCustomHook",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/hookDetector.cjs"
+  ]
+}

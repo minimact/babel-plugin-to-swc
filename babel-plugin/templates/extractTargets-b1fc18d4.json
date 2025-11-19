@@ -1,0 +1,763 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractTargets",
+  "params": [
+    {
+      "name": "configObject",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractTargets(configObject) {\r\n  const targets = [];\r\n\r\n  // Find targets property\r\n  const targetsProp = configObject.properties.find(\r\n    p => t.isIdentifier(p.key) && p.key.name === 'targets'\r\n  );\r\n\r\n  if (!targetsProp || !t.isObjectExpression(targetsProp.value)) {\r\n    return targets;\r\n  }\r\n\r\n  // Process each target selector\r\n  targetsProp.value.properties.forEach(target => {\r\n    const selector = target.key.value || target.key.name;\r\n    const targetConfig = target.value;\r\n\r\n    if (!t.isObjectExpression(targetConfig)) {\r\n      return;\r\n    }\r\n\r\n    const projection = {\r\n      selector,\r\n      transform: null,\r\n      transformId: null,\r\n      transformType: 'none',\r\n      applyIf: null,\r\n      applyAs: 'textContent',\r\n      property: null,\r\n      template: null\r\n    };\r\n\r\n    // Extract each property\r\n    targetConfig.properties.forEach(prop => {\r\n      const propName = prop.key.name;\r\n      const propValue = prop.value;\r\n\r\n      switch (propName) {\r\n        case 'transform':\r\n          if (t.isArrowFunctionExpression(propValue) || t.isFunctionExpression(propValue)) {\r\n            // Analyze transform function\r\n            const transformAnalysis = analyzeTransformFunction(propValue);\r\n            projection.transform = transformAnalysis.csharpCode;\r\n            projection.transformType = transformAnalysis.type;\r\n          }\r\n          break;\r\n\r\n        case 'transformId':\r\n          if (t.isStringLiteral(propValue)) {\r\n            projection.transformId = propValue.value;\r\n            projection.transformType = 'registry';\r\n          }\r\n          break;\r\n\r\n        case 'applyIf':\r\n          if (t.isArrowFunctionExpression(propValue) || t.isFunctionExpression(propValue)) {\r\n            // Analyze applyIf condition\r\n            projection.applyIf = analyzeApplyIfCondition(propValue);\r\n          }\r\n          break;\r\n\r\n        case 'applyAs':\r\n          if (t.isStringLiteral(propValue)) {\r\n            projection.applyAs = propValue.value;\r\n          }\r\n          break;\r\n\r\n        case 'property':\r\n          if (t.isStringLiteral(propValue)) {\r\n            projection.property = propValue.value;\r\n          }\r\n          break;\r\n\r\n        case 'template':\r\n          if (t.isStringLiteral(propValue)) {\r\n            projection.template = propValue.value;\r\n          }\r\n          break;\r\n      }\r\n    });\r\n\r\n    targets.push(projection);\r\n  });\r\n\r\n  return targets;\r\n}",
+  "body_templates": [
+    {
+      "hash": "79bde274",
+      "type": "VariableDeclaration",
+      "babel_source": "const targets = [];",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1764b6c4",
+      "type": "VariableDeclaration",
+      "babel_source": "const targetsProp = configObject.properties.find(\r\n    p => t.isIdentifier(p.key) && p.key.name === 'targets'\r\n  );",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "09dad29e",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "p => t.isIdentifier(p.key) && p.key.name === 'targets'",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7f71823e",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isIdentifier(p.key) && p.key.name === 'targets'",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e2889dd8",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(p.key)",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "82b7e777",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "p.key.name === 'targets'",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0bbaa4a7",
+      "type": "IfStatement",
+      "condition": "!targetsProp || !t.isObjectExpression(targetsProp.value)",
+      "babel_source": "if (!targetsProp || !t.isObjectExpression(targetsProp.value)) {\r\n    return targets;\r\n  }",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d66962a3",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "!targetsProp || !t.isObjectExpression(targetsProp.value)",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3a36a551",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!targetsProp",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7d9bc4ce",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isObjectExpression(targetsProp.value)",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "10991f72",
+      "type": "BabelTypeCheck",
+      "method": "isObjectExpression",
+      "babel_source": "t.isObjectExpression(targetsProp.value)",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "439c8e64",
+      "type": "ReturnStatement",
+      "babel_source": "return targets;",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a13ed6f7",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "target => {\r\n    const selector = target.key.value || target.key.name;\r\n    const targetConfig = target.value;\r\n\r\n    if (!t.isObjectExpression(targetConfig)) {\r\n      return;\r\n    }\r\n\r\n    const projection = {\r\n      selector,\r\n      transform: null,\r\n      transformId: null,\r\n      transformType: 'none',\r\n      applyIf: null,\r\n      applyAs: 'textContent',\r\n      property: null,\r\n      template: null\r\n    };\r\n\r\n    // Extract each property\r\n    targetConfig.properties.forEach(prop => {\r\n      const propName = prop.key.name;\r\n      const propValue = prop.value;\r\n\r\n      switch (propName) {\r\n        case 'transform':\r\n          if (t.isArrowFunctionExpression(propValue) || t.isFunctionExpression(propValue)) {\r\n            // Analyze transform function\r\n            const transformAnalysis = analyzeTransformFunction(propValue);\r\n            projection.transform = transformAnalysis.csharpCode;\r\n            projection.transformType = transformAnalysis.type;\r\n          }\r\n          break;\r\n\r\n        case 'transformId':\r\n          if (t.isStringLiteral(propValue)) {\r\n            projection.transformId = propValue.value;\r\n            projection.transformType = 'registry';\r\n          }\r\n          break;\r\n\r\n        case 'applyIf':\r\n          if (t.isArrowFunctionExpression(propValue) || t.isFunctionExpression(propValue)) {\r\n            // Analyze applyIf condition\r\n            projection.applyIf = analyzeApplyIfCondition(propValue);\r\n          }\r\n          break;\r\n\r\n        case 'applyAs':\r\n          if (t.isStringLiteral(propValue)) {\r\n            projection.applyAs = propValue.value;\r\n          }\r\n          break;\r\n\r\n        case 'property':\r\n          if (t.isStringLiteral(propValue)) {\r\n            projection.property = propValue.value;\r\n          }\r\n          break;\r\n\r\n        case 'template':\r\n          if (t.isStringLiteral(propValue)) {\r\n            projection.template = propValue.value;\r\n          }\r\n          break;\r\n      }\r\n    });\r\n\r\n    targets.push(projection);\r\n  }",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3a836334",
+      "type": "VariableDeclaration",
+      "babel_source": "const selector = target.key.value || target.key.name;",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c6799eda",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "target.key.value || target.key.name",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b969f185",
+      "type": "VariableDeclaration",
+      "babel_source": "const targetConfig = target.value;",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "aa32cff2",
+      "type": "IfStatement",
+      "condition": "!t.isObjectExpression(targetConfig)",
+      "babel_source": "if (!t.isObjectExpression(targetConfig)) {\r\n      return;\r\n    }",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "be19a4da",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isObjectExpression(targetConfig)",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ee03ba87",
+      "type": "BabelTypeCheck",
+      "method": "isObjectExpression",
+      "babel_source": "t.isObjectExpression(targetConfig)",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8beaabe2",
+      "type": "ReturnStatement",
+      "babel_source": "return;",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2311c7d7",
+      "type": "VariableDeclaration",
+      "babel_source": "const projection = {\r\n      selector,\r\n      transform: null,\r\n      transformId: null,\r\n      transformType: 'none',\r\n      applyIf: null,\r\n      applyAs: 'textContent',\r\n      property: null,\r\n      template: null\r\n    };",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "131257ab",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n      selector,\r\n      transform: null,\r\n      transformId: null,\r\n      transformType: 'none',\r\n      applyIf: null,\r\n      applyAs: 'textContent',\r\n      property: null,\r\n      template: null\r\n    }",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "63fcb8e9",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "prop => {\r\n      const propName = prop.key.name;\r\n      const propValue = prop.value;\r\n\r\n      switch (propName) {\r\n        case 'transform':\r\n          if (t.isArrowFunctionExpression(propValue) || t.isFunctionExpression(propValue)) {\r\n            // Analyze transform function\r\n            const transformAnalysis = analyzeTransformFunction(propValue);\r\n            projection.transform = transformAnalysis.csharpCode;\r\n            projection.transformType = transformAnalysis.type;\r\n          }\r\n          break;\r\n\r\n        case 'transformId':\r\n          if (t.isStringLiteral(propValue)) {\r\n            projection.transformId = propValue.value;\r\n            projection.transformType = 'registry';\r\n          }\r\n          break;\r\n\r\n        case 'applyIf':\r\n          if (t.isArrowFunctionExpression(propValue) || t.isFunctionExpression(propValue)) {\r\n            // Analyze applyIf condition\r\n            projection.applyIf = analyzeApplyIfCondition(propValue);\r\n          }\r\n          break;\r\n\r\n        case 'applyAs':\r\n          if (t.isStringLiteral(propValue)) {\r\n            projection.applyAs = propValue.value;\r\n          }\r\n          break;\r\n\r\n        case 'property':\r\n          if (t.isStringLiteral(propValue)) {\r\n            projection.property = propValue.value;\r\n          }\r\n          break;\r\n\r\n        case 'template':\r\n          if (t.isStringLiteral(propValue)) {\r\n            projection.template = propValue.value;\r\n          }\r\n          break;\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b1602854",
+      "type": "VariableDeclaration",
+      "babel_source": "const propName = prop.key.name;",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "508b635d",
+      "type": "VariableDeclaration",
+      "babel_source": "const propValue = prop.value;",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "70e62d61",
+      "type": "SwitchStatement",
+      "babel_source": "switch (propName) {\r\n        case 'transform':\r\n          if (t.isArrowFunctionExpression(propValue) || t.isFunctionExpression(propValue)) {\r\n            // Analyze transform function\r\n            const transformAnalysis = analyzeTransformFunction(propValue);\r\n            projection.transform = transformAnalysis.csharpCode;\r\n            projection.transformType = transformAnalysis.type;\r\n          }\r\n          break;\r\n\r\n        case 'transformId':\r\n          if (t.isStringLiteral(propValue)) {\r\n            projection.transformId = propValue.value;\r\n            projection.transformType = 'registry';\r\n          }\r\n          break;\r\n\r\n        case 'applyIf':\r\n          if (t.isArrowFunctionExpression(propValue) || t.isFunctionExpression(propValue)) {\r\n            // Analyze applyIf condition\r\n            projection.applyIf = analyzeApplyIfCondition(propValue);\r\n          }\r\n          break;\r\n\r\n        case 'applyAs':\r\n          if (t.isStringLiteral(propValue)) {\r\n            projection.applyAs = propValue.value;\r\n          }\r\n          break;\r\n\r\n        case 'property':\r\n          if (t.isStringLiteral(propValue)) {\r\n            projection.property = propValue.value;\r\n          }\r\n          break;\r\n\r\n        case 'template':\r\n          if (t.isStringLiteral(propValue)) {\r\n            projection.template = propValue.value;\r\n          }\r\n          break;\r\n      }",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "39894c96",
+      "type": "IfStatement",
+      "condition": "t.isArrowFunctionExpression(propValue) || t.isFunctionExpression(propValue)",
+      "babel_source": "if (t.isArrowFunctionExpression(propValue) || t.isFunctionExpression(propValue)) {\r\n            // Analyze transform function\r\n            const transformAnalysis = analyzeTransformFunction(propValue);\r\n            projection.transform = transformAnalysis.csharpCode;\r\n            projection.transformType = transformAnalysis.type;\r\n          }",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f804da51",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isArrowFunctionExpression(propValue) || t.isFunctionExpression(propValue)",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c1eddd78",
+      "type": "BabelTypeCheck",
+      "method": "isArrowFunctionExpression",
+      "babel_source": "t.isArrowFunctionExpression(propValue)",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cc712b4d",
+      "type": "BabelTypeCheck",
+      "method": "isFunctionExpression",
+      "babel_source": "t.isFunctionExpression(propValue)",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d6cb2c5f",
+      "type": "VariableDeclaration",
+      "babel_source": "const transformAnalysis = analyzeTransformFunction(propValue);",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4145cc24",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "projection.transform = transformAnalysis.csharpCode",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "23205640",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "projection.transformType = transformAnalysis.type",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42af036c",
+      "type": "BreakStatement",
+      "babel_source": "break;",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "682a3f01",
+      "type": "IfStatement",
+      "condition": "t.isStringLiteral(propValue)",
+      "babel_source": "if (t.isStringLiteral(propValue)) {\r\n            projection.transformId = propValue.value;\r\n            projection.transformType = 'registry';\r\n          }",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d5e588e0",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(propValue)",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ac1de55b",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "projection.transformId = propValue.value",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "afbb26b7",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "projection.transformType = 'registry'",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42af036c",
+      "type": "BreakStatement",
+      "babel_source": "break;",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e006289c",
+      "type": "IfStatement",
+      "condition": "t.isArrowFunctionExpression(propValue) || t.isFunctionExpression(propValue)",
+      "babel_source": "if (t.isArrowFunctionExpression(propValue) || t.isFunctionExpression(propValue)) {\r\n            // Analyze applyIf condition\r\n            projection.applyIf = analyzeApplyIfCondition(propValue);\r\n          }",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f804da51",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isArrowFunctionExpression(propValue) || t.isFunctionExpression(propValue)",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c1eddd78",
+      "type": "BabelTypeCheck",
+      "method": "isArrowFunctionExpression",
+      "babel_source": "t.isArrowFunctionExpression(propValue)",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cc712b4d",
+      "type": "BabelTypeCheck",
+      "method": "isFunctionExpression",
+      "babel_source": "t.isFunctionExpression(propValue)",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2c82497a",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "projection.applyIf = analyzeApplyIfCondition(propValue)",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42af036c",
+      "type": "BreakStatement",
+      "babel_source": "break;",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "58627c48",
+      "type": "IfStatement",
+      "condition": "t.isStringLiteral(propValue)",
+      "babel_source": "if (t.isStringLiteral(propValue)) {\r\n            projection.applyAs = propValue.value;\r\n          }",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d5e588e0",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(propValue)",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3f2cb32c",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "projection.applyAs = propValue.value",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42af036c",
+      "type": "BreakStatement",
+      "babel_source": "break;",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "72e15271",
+      "type": "IfStatement",
+      "condition": "t.isStringLiteral(propValue)",
+      "babel_source": "if (t.isStringLiteral(propValue)) {\r\n            projection.property = propValue.value;\r\n          }",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d5e588e0",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(propValue)",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f49451b5",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "projection.property = propValue.value",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42af036c",
+      "type": "BreakStatement",
+      "babel_source": "break;",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ca003619",
+      "type": "IfStatement",
+      "condition": "t.isStringLiteral(propValue)",
+      "babel_source": "if (t.isStringLiteral(propValue)) {\r\n            projection.template = propValue.value;\r\n          }",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d5e588e0",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(propValue)",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "20defeae",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "projection.template = propValue.value",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42af036c",
+      "type": "BreakStatement",
+      "babel_source": "break;",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "439c8e64",
+      "type": "ReturnStatement",
+      "babel_source": "return targets;",
+      "parentContext": {
+        "functionName": "extractTargets",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/useStateX.cjs"
+  ]
+}

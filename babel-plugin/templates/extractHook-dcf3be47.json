@@ -1,0 +1,498 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractHook",
+  "params": [
+    {
+      "name": "path",
+      "inferredType": "&Path",
+      "defaultValue": null
+    },
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractHook(path, component) {\r\n  const node = path.node;\r\n\r\n  if (!t.isIdentifier(node.callee)) return;\r\n\r\n  const hookName = node.callee.name;\r\n\r\n  // 🔥 NEW: Check if this hook was imported (takes precedence over built-in hooks)\r\n  if (component.importedHookMetadata && component.importedHookMetadata.has(hookName)) {\r\n    console.log(`[Custom Hook] Found imported hook call: ${hookName}`);\r\n    extractCustomHookCall(path, component, hookName);\r\n    return;\r\n  }\r\n\r\n  switch (hookName) {\r\n    case 'useState':\r\n      extractUseState(path, component, 'useState');\r\n      break;\r\n    case 'useClientState':\r\n      extractUseState(path, component, 'useClientState');\r\n      break;\r\n    case 'useProtectedState':\r\n      extractUseProtectedState(path, component);\r\n      break;\r\n    case 'useStateX':\r\n      extractUseStateX(path, component);\r\n      break;\r\n    case 'useEffect':\r\n      extractUseEffect(path, component);\r\n      break;\r\n    case 'useRef':\r\n      extractUseRef(path, component);\r\n      break;\r\n    case 'useMarkdown':\r\n      extractUseMarkdown(path, component);\r\n      break;\r\n    case 'useRazorMarkdown':\r\n      extractUseRazorMarkdown(path, component);\r\n      break;\r\n    case 'useTemplate':\r\n      extractUseTemplate(path, component);\r\n      break;\r\n    case 'useValidation':\r\n      extractUseValidation(path, component);\r\n      break;\r\n    case 'useModal':\r\n      extractUseModal(path, component);\r\n      break;\r\n    case 'useToggle':\r\n      extractUseToggle(path, component);\r\n      break;\r\n    case 'useDropdown':\r\n      extractUseDropdown(path, component);\r\n      break;\r\n    case 'usePub':\r\n      extractUsePub(path, component);\r\n      break;\r\n    case 'useSub':\r\n      extractUseSub(path, component);\r\n      break;\r\n    case 'useMicroTask':\r\n      extractUseMicroTask(path, component);\r\n      break;\r\n    case 'useMacroTask':\r\n      extractUseMacroTask(path, component);\r\n      break;\r\n    case 'useSignalR':\r\n      extractUseSignalR(path, component);\r\n      break;\r\n    case 'usePredictHint':\r\n      extractUsePredictHint(path, component);\r\n      break;\r\n    case 'useServerTask':\r\n      extractUseServerTask(path, component);\r\n      break;\r\n    case 'usePaginatedServerTask':\r\n      extractUsePaginatedServerTask(path, component);\r\n      break;\r\n    case 'useMvcState':\r\n      extractUseMvcState(path, component);\r\n      break;\r\n    case 'useMvcViewModel':\r\n      extractUseMvcViewModel(path, component);\r\n      break;\r\n    default:\r\n      // Check if this is a custom hook (starts with 'use' and first param is 'namespace')\r\n      if (hookName.startsWith('use')) {\r\n        extractCustomHookCall(path, component, hookName);\r\n      }\r\n      break;\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "15f6e120",
+      "type": "VariableDeclaration",
+      "babel_source": "const node = path.node;",
+      "parentContext": {
+        "functionName": "extractHook",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ea9d1440",
+      "type": "IfStatement",
+      "condition": "!t.isIdentifier(node.callee)",
+      "babel_source": "if (!t.isIdentifier(node.callee)) return;",
+      "parentContext": {
+        "functionName": "extractHook",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "08ce0787",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isIdentifier(node.callee)",
+      "parentContext": {
+        "functionName": "extractHook",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "55f75a54",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee)",
+      "parentContext": {
+        "functionName": "extractHook",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8beaabe2",
+      "type": "ReturnStatement",
+      "babel_source": "return;",
+      "parentContext": {
+        "functionName": "extractHook",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6da92a93",
+      "type": "VariableDeclaration",
+      "babel_source": "const hookName = node.callee.name;",
+      "parentContext": {
+        "functionName": "extractHook",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d1b11f18",
+      "type": "IfStatement",
+      "condition": "component.importedHookMetadata && component.importedHookMetadata.has(hookName)",
+      "babel_source": "if (component.importedHookMetadata && component.importedHookMetadata.has(hookName)) {\r\n    console.log(`[Custom Hook] Found imported hook call: ${hookName}`);\r\n    extractCustomHookCall(path, component, hookName);\r\n    return;\r\n  }",
+      "parentContext": {
+        "functionName": "extractHook",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "18648454",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "component.importedHookMetadata && component.importedHookMetadata.has(hookName)",
+      "parentContext": {
+        "functionName": "extractHook",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9f1b58db",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Custom Hook] Found imported hook call: ${hookName}`",
+      "parentContext": {
+        "functionName": "extractHook",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8beaabe2",
+      "type": "ReturnStatement",
+      "babel_source": "return;",
+      "parentContext": {
+        "functionName": "extractHook",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1cd17def",
+      "type": "SwitchStatement",
+      "babel_source": "switch (hookName) {\r\n    case 'useState':\r\n      extractUseState(path, component, 'useState');\r\n      break;\r\n    case 'useClientState':\r\n      extractUseState(path, component, 'useClientState');\r\n      break;\r\n    case 'useProtectedState':\r\n      extractUseProtectedState(path, component);\r\n      break;\r\n    case 'useStateX':\r\n      extractUseStateX(path, component);\r\n      break;\r\n    case 'useEffect':\r\n      extractUseEffect(path, component);\r\n      break;\r\n    case 'useRef':\r\n      extractUseRef(path, component);\r\n      break;\r\n    case 'useMarkdown':\r\n      extractUseMarkdown(path, component);\r\n      break;\r\n    case 'useRazorMarkdown':\r\n      extractUseRazorMarkdown(path, component);\r\n      break;\r\n    case 'useTemplate':\r\n      extractUseTemplate(path, component);\r\n      break;\r\n    case 'useValidation':\r\n      extractUseValidation(path, component);\r\n      break;\r\n    case 'useModal':\r\n      extractUseModal(path, component);\r\n      break;\r\n    case 'useToggle':\r\n      extractUseToggle(path, component);\r\n      break;\r\n    case 'useDropdown':\r\n      extractUseDropdown(path, component);\r\n      break;\r\n    case 'usePub':\r\n      extractUsePub(path, component);\r\n      break;\r\n    case 'useSub':\r\n      extractUseSub(path, component);\r\n      break;\r\n    case 'useMicroTask':\r\n      extractUseMicroTask(path, component);\r\n      break;\r\n    case 'useMacroTask':\r\n      extractUseMacroTask(path, component);\r\n      break;\r\n    case 'useSignalR':\r\n      extractUseSignalR(path, component);\r\n      break;\r\n    case 'usePredictHint':\r\n      extractUsePredictHint(path, component);\r\n      break;\r\n    case 'useServerTask':\r\n      extractUseServerTask(path, component);\r\n      break;\r\n    case 'usePaginatedServerTask':\r\n      extractUsePaginatedServerTask(path, component);\r\n      break;\r\n    case 'useMvcState':\r\n      extractUseMvcState(path, component);\r\n      break;\r\n    case 'useMvcViewModel':\r\n      extractUseMvcViewModel(path, component);\r\n      break;\r\n    default:\r\n      // Check if this is a custom hook (starts with 'use' and first param is 'namespace')\r\n      if (hookName.startsWith('use')) {\r\n        extractCustomHookCall(path, component, hookName);\r\n      }\r\n      break;\r\n  }",
+      "parentContext": {
+        "functionName": "extractHook",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42af036c",
+      "type": "BreakStatement",
+      "babel_source": "break;",
+      "parentContext": {
+        "functionName": "extractHook",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42af036c",
+      "type": "BreakStatement",
+      "babel_source": "break;",
+      "parentContext": {
+        "functionName": "extractHook",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42af036c",
+      "type": "BreakStatement",
+      "babel_source": "break;",
+      "parentContext": {
+        "functionName": "extractHook",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42af036c",
+      "type": "BreakStatement",
+      "babel_source": "break;",
+      "parentContext": {
+        "functionName": "extractHook",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42af036c",
+      "type": "BreakStatement",
+      "babel_source": "break;",
+      "parentContext": {
+        "functionName": "extractHook",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42af036c",
+      "type": "BreakStatement",
+      "babel_source": "break;",
+      "parentContext": {
+        "functionName": "extractHook",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42af036c",
+      "type": "BreakStatement",
+      "babel_source": "break;",
+      "parentContext": {
+        "functionName": "extractHook",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42af036c",
+      "type": "BreakStatement",
+      "babel_source": "break;",
+      "parentContext": {
+        "functionName": "extractHook",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42af036c",
+      "type": "BreakStatement",
+      "babel_source": "break;",
+      "parentContext": {
+        "functionName": "extractHook",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42af036c",
+      "type": "BreakStatement",
+      "babel_source": "break;",
+      "parentContext": {
+        "functionName": "extractHook",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42af036c",
+      "type": "BreakStatement",
+      "babel_source": "break;",
+      "parentContext": {
+        "functionName": "extractHook",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42af036c",
+      "type": "BreakStatement",
+      "babel_source": "break;",
+      "parentContext": {
+        "functionName": "extractHook",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42af036c",
+      "type": "BreakStatement",
+      "babel_source": "break;",
+      "parentContext": {
+        "functionName": "extractHook",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42af036c",
+      "type": "BreakStatement",
+      "babel_source": "break;",
+      "parentContext": {
+        "functionName": "extractHook",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42af036c",
+      "type": "BreakStatement",
+      "babel_source": "break;",
+      "parentContext": {
+        "functionName": "extractHook",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42af036c",
+      "type": "BreakStatement",
+      "babel_source": "break;",
+      "parentContext": {
+        "functionName": "extractHook",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42af036c",
+      "type": "BreakStatement",
+      "babel_source": "break;",
+      "parentContext": {
+        "functionName": "extractHook",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42af036c",
+      "type": "BreakStatement",
+      "babel_source": "break;",
+      "parentContext": {
+        "functionName": "extractHook",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42af036c",
+      "type": "BreakStatement",
+      "babel_source": "break;",
+      "parentContext": {
+        "functionName": "extractHook",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42af036c",
+      "type": "BreakStatement",
+      "babel_source": "break;",
+      "parentContext": {
+        "functionName": "extractHook",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42af036c",
+      "type": "BreakStatement",
+      "babel_source": "break;",
+      "parentContext": {
+        "functionName": "extractHook",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42af036c",
+      "type": "BreakStatement",
+      "babel_source": "break;",
+      "parentContext": {
+        "functionName": "extractHook",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42af036c",
+      "type": "BreakStatement",
+      "babel_source": "break;",
+      "parentContext": {
+        "functionName": "extractHook",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3b2cd0ac",
+      "type": "IfStatement",
+      "condition": "hookName.startsWith('use')",
+      "babel_source": "if (hookName.startsWith('use')) {\r\n        extractCustomHookCall(path, component, hookName);\r\n      }",
+      "parentContext": {
+        "functionName": "extractHook",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42af036c",
+      "type": "BreakStatement",
+      "babel_source": "break;",
+      "parentContext": {
+        "functionName": "extractHook",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/hooks.cjs"
+  ]
+}

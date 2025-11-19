@@ -1,0 +1,395 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "traverseJSX",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "parentPath",
+      "inferredType": "&Path",
+      "defaultValue": "null"
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function traverseJSX(node, parentPath = null) {\r\n    if (t.isJSXElement(node)) {\r\n      // Process children\r\n      for (const child of node.children) {\r\n        if (t.isJSXExpressionContainer(child)) {\r\n          const expr = child.expression;\r\n\r\n          // Logical AND: {condition && <Element />}\r\n          if (t.isLogicalExpression(expr) && expr.operator === '&&') {\r\n            const template = extractLogicalAndElementTemplate(expr, child, parentPath);\r\n            if (template) {\r\n              const path = child.__minimactPath;\r\n              if (path) {\r\n                conditionalTemplates[path] = template;\r\n                // Recursively find nested conditionals inside this template\r\n                traverseJSX(expr.right, path);\r\n              }\r\n            }\r\n          }\r\n\r\n          // Ternary: {condition ? <A /> : <B />}\r\n          if (t.isConditionalExpression(expr)) {\r\n            const template = extractTernaryElementTemplate(expr, child, parentPath);\r\n            if (template) {\r\n              const path = child.__minimactPath;\r\n              if (path) {\r\n                conditionalTemplates[path] = template;\r\n                // Recursively find nested conditionals in both branches\r\n                if (expr.consequent) {\r\n                  traverseJSX(expr.consequent, path);\r\n                }\r\n                if (expr.alternate) {\r\n                  traverseJSX(expr.alternate, path);\r\n                }\r\n              }\r\n            }\r\n          }\r\n        } else if (t.isJSXElement(child)) {\r\n          traverseJSX(child, parentPath);\r\n        }\r\n      }\r\n    }\r\n  }",
+  "body_templates": [
+    {
+      "hash": "129cbbfe",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(node)",
+      "babel_source": "if (t.isJSXElement(node)) {\r\n      // Process children\r\n      for (const child of node.children) {\r\n        if (t.isJSXExpressionContainer(child)) {\r\n          const expr = child.expression;\r\n\r\n          // Logical AND: {condition && <Element />}\r\n          if (t.isLogicalExpression(expr) && expr.operator === '&&') {\r\n            const template = extractLogicalAndElementTemplate(expr, child, parentPath);\r\n            if (template) {\r\n              const path = child.__minimactPath;\r\n              if (path) {\r\n                conditionalTemplates[path] = template;\r\n                // Recursively find nested conditionals inside this template\r\n                traverseJSX(expr.right, path);\r\n              }\r\n            }\r\n          }\r\n\r\n          // Ternary: {condition ? <A /> : <B />}\r\n          if (t.isConditionalExpression(expr)) {\r\n            const template = extractTernaryElementTemplate(expr, child, parentPath);\r\n            if (template) {\r\n              const path = child.__minimactPath;\r\n              if (path) {\r\n                conditionalTemplates[path] = template;\r\n                // Recursively find nested conditionals in both branches\r\n                if (expr.consequent) {\r\n                  traverseJSX(expr.consequent, path);\r\n                }\r\n                if (expr.alternate) {\r\n                  traverseJSX(expr.alternate, path);\r\n                }\r\n              }\r\n            }\r\n          }\r\n        } else if (t.isJSXElement(child)) {\r\n          traverseJSX(child, parentPath);\r\n        }\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "606ccdc5",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(node)",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8156650b",
+      "type": "ForOfStatement",
+      "babel_source": "for (const child of node.children) {\r\n        if (t.isJSXExpressionContainer(child)) {\r\n          const expr = child.expression;\r\n\r\n          // Logical AND: {condition && <Element />}\r\n          if (t.isLogicalExpression(expr) && expr.operator === '&&') {\r\n            const template = extractLogicalAndElementTemplate(expr, child, parentPath);\r\n            if (template) {\r\n              const path = child.__minimactPath;\r\n              if (path) {\r\n                conditionalTemplates[path] = template;\r\n                // Recursively find nested conditionals inside this template\r\n                traverseJSX(expr.right, path);\r\n              }\r\n            }\r\n          }\r\n\r\n          // Ternary: {condition ? <A /> : <B />}\r\n          if (t.isConditionalExpression(expr)) {\r\n            const template = extractTernaryElementTemplate(expr, child, parentPath);\r\n            if (template) {\r\n              const path = child.__minimactPath;\r\n              if (path) {\r\n                conditionalTemplates[path] = template;\r\n                // Recursively find nested conditionals in both branches\r\n                if (expr.consequent) {\r\n                  traverseJSX(expr.consequent, path);\r\n                }\r\n                if (expr.alternate) {\r\n                  traverseJSX(expr.alternate, path);\r\n                }\r\n              }\r\n            }\r\n          }\r\n        } else if (t.isJSXElement(child)) {\r\n          traverseJSX(child, parentPath);\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "efdd3930",
+      "type": "VariableDeclaration",
+      "babel_source": "const child",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bfbdd59d",
+      "type": "IfStatement",
+      "condition": "t.isJSXExpressionContainer(child)",
+      "babel_source": "if (t.isJSXExpressionContainer(child)) {\r\n          const expr = child.expression;\r\n\r\n          // Logical AND: {condition && <Element />}\r\n          if (t.isLogicalExpression(expr) && expr.operator === '&&') {\r\n            const template = extractLogicalAndElementTemplate(expr, child, parentPath);\r\n            if (template) {\r\n              const path = child.__minimactPath;\r\n              if (path) {\r\n                conditionalTemplates[path] = template;\r\n                // Recursively find nested conditionals inside this template\r\n                traverseJSX(expr.right, path);\r\n              }\r\n            }\r\n          }\r\n\r\n          // Ternary: {condition ? <A /> : <B />}\r\n          if (t.isConditionalExpression(expr)) {\r\n            const template = extractTernaryElementTemplate(expr, child, parentPath);\r\n            if (template) {\r\n              const path = child.__minimactPath;\r\n              if (path) {\r\n                conditionalTemplates[path] = template;\r\n                // Recursively find nested conditionals in both branches\r\n                if (expr.consequent) {\r\n                  traverseJSX(expr.consequent, path);\r\n                }\r\n                if (expr.alternate) {\r\n                  traverseJSX(expr.alternate, path);\r\n                }\r\n              }\r\n            }\r\n          }\r\n        } else if (t.isJSXElement(child)) {\r\n          traverseJSX(child, parentPath);\r\n        }",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c53c8d32",
+      "type": "BabelTypeCheck",
+      "method": "isJSXExpressionContainer",
+      "babel_source": "t.isJSXExpressionContainer(child)",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9e5f0b19",
+      "type": "VariableDeclaration",
+      "babel_source": "const expr = child.expression;",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "da67dc73",
+      "type": "IfStatement",
+      "condition": "t.isLogicalExpression(expr) && expr.operator === '&&'",
+      "babel_source": "if (t.isLogicalExpression(expr) && expr.operator === '&&') {\r\n            const template = extractLogicalAndElementTemplate(expr, child, parentPath);\r\n            if (template) {\r\n              const path = child.__minimactPath;\r\n              if (path) {\r\n                conditionalTemplates[path] = template;\r\n                // Recursively find nested conditionals inside this template\r\n                traverseJSX(expr.right, path);\r\n              }\r\n            }\r\n          }",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "295b4c4d",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isLogicalExpression(expr) && expr.operator === '&&'",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c20dd732",
+      "type": "BabelTypeCheck",
+      "method": "isLogicalExpression",
+      "babel_source": "t.isLogicalExpression(expr)",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "312ae3e2",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "expr.operator === '&&'",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d373ec9b",
+      "type": "VariableDeclaration",
+      "babel_source": "const template = extractLogicalAndElementTemplate(expr, child, parentPath);",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "10ace4ac",
+      "type": "IfStatement",
+      "condition": "template",
+      "babel_source": "if (template) {\r\n              const path = child.__minimactPath;\r\n              if (path) {\r\n                conditionalTemplates[path] = template;\r\n                // Recursively find nested conditionals inside this template\r\n                traverseJSX(expr.right, path);\r\n              }\r\n            }",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f994acf6",
+      "type": "VariableDeclaration",
+      "babel_source": "const path = child.__minimactPath;",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fb607229",
+      "type": "IfStatement",
+      "condition": "path",
+      "babel_source": "if (path) {\r\n                conditionalTemplates[path] = template;\r\n                // Recursively find nested conditionals inside this template\r\n                traverseJSX(expr.right, path);\r\n              }",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "afdb900b",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "conditionalTemplates[path] = template",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3d4cff7f",
+      "type": "IfStatement",
+      "condition": "t.isConditionalExpression(expr)",
+      "babel_source": "if (t.isConditionalExpression(expr)) {\r\n            const template = extractTernaryElementTemplate(expr, child, parentPath);\r\n            if (template) {\r\n              const path = child.__minimactPath;\r\n              if (path) {\r\n                conditionalTemplates[path] = template;\r\n                // Recursively find nested conditionals in both branches\r\n                if (expr.consequent) {\r\n                  traverseJSX(expr.consequent, path);\r\n                }\r\n                if (expr.alternate) {\r\n                  traverseJSX(expr.alternate, path);\r\n                }\r\n              }\r\n            }\r\n          }",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5574ecc1",
+      "type": "BabelTypeCheck",
+      "method": "isConditionalExpression",
+      "babel_source": "t.isConditionalExpression(expr)",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e03255a9",
+      "type": "VariableDeclaration",
+      "babel_source": "const template = extractTernaryElementTemplate(expr, child, parentPath);",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8c4cc0f5",
+      "type": "IfStatement",
+      "condition": "template",
+      "babel_source": "if (template) {\r\n              const path = child.__minimactPath;\r\n              if (path) {\r\n                conditionalTemplates[path] = template;\r\n                // Recursively find nested conditionals in both branches\r\n                if (expr.consequent) {\r\n                  traverseJSX(expr.consequent, path);\r\n                }\r\n                if (expr.alternate) {\r\n                  traverseJSX(expr.alternate, path);\r\n                }\r\n              }\r\n            }",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f994acf6",
+      "type": "VariableDeclaration",
+      "babel_source": "const path = child.__minimactPath;",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ed64655a",
+      "type": "IfStatement",
+      "condition": "path",
+      "babel_source": "if (path) {\r\n                conditionalTemplates[path] = template;\r\n                // Recursively find nested conditionals in both branches\r\n                if (expr.consequent) {\r\n                  traverseJSX(expr.consequent, path);\r\n                }\r\n                if (expr.alternate) {\r\n                  traverseJSX(expr.alternate, path);\r\n                }\r\n              }",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "afdb900b",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "conditionalTemplates[path] = template",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a9a5cc09",
+      "type": "IfStatement",
+      "condition": "expr.consequent",
+      "babel_source": "if (expr.consequent) {\r\n                  traverseJSX(expr.consequent, path);\r\n                }",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "16ea0827",
+      "type": "IfStatement",
+      "condition": "expr.alternate",
+      "babel_source": "if (expr.alternate) {\r\n                  traverseJSX(expr.alternate, path);\r\n                }",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c34bc1c2",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(child)",
+      "babel_source": "if (t.isJSXElement(child)) {\r\n          traverseJSX(child, parentPath);\r\n        }",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d44bd174",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(child)",
+      "parentContext": {
+        "functionName": "traverseJSX",
+        "functionParams": [
+          "node",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/conditionalElementTemplates.cjs"
+  ]
+}

@@ -1,0 +1,272 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "validatePluginUsage",
+  "params": [
+    {
+      "name": "pluginUsages",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function validatePluginUsage(pluginUsages) {\r\n  for (const plugin of pluginUsages) {\r\n    // Validate plugin name format\r\n    if (!/^[A-Za-z][A-Za-z0-9]*$/.test(plugin.pluginName)) {\r\n      throw new Error(\r\n        `Invalid plugin name \"${plugin.pluginName}\". ` +\r\n        `Plugin names must start with a letter and contain only letters and numbers.`\r\n      );\r\n    }\r\n\r\n    // Validate state binding\r\n    if (plugin.stateBinding.binding === '__complex__') {\r\n      console.warn(\r\n        `[analyzePluginUsage] Complex expression used for plugin \"${plugin.pluginName}\" state. ` +\r\n        `This will be evaluated at runtime.`\r\n      );\r\n    }\r\n\r\n    // Validate version format if provided\r\n    if (plugin.version && !/^\\d+\\.\\d+\\.\\d+$/.test(plugin.version)) {\r\n      console.warn(\r\n        `[analyzePluginUsage] Invalid semver format for plugin \"${plugin.pluginName}\": ${plugin.version}`\r\n      );\r\n    }\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "d189b596",
+      "type": "ForOfStatement",
+      "babel_source": "for (const plugin of pluginUsages) {\r\n    // Validate plugin name format\r\n    if (!/^[A-Za-z][A-Za-z0-9]*$/.test(plugin.pluginName)) {\r\n      throw new Error(\r\n        `Invalid plugin name \"${plugin.pluginName}\". ` +\r\n        `Plugin names must start with a letter and contain only letters and numbers.`\r\n      );\r\n    }\r\n\r\n    // Validate state binding\r\n    if (plugin.stateBinding.binding === '__complex__') {\r\n      console.warn(\r\n        `[analyzePluginUsage] Complex expression used for plugin \"${plugin.pluginName}\" state. ` +\r\n        `This will be evaluated at runtime.`\r\n      );\r\n    }\r\n\r\n    // Validate version format if provided\r\n    if (plugin.version && !/^\\d+\\.\\d+\\.\\d+$/.test(plugin.version)) {\r\n      console.warn(\r\n        `[analyzePluginUsage] Invalid semver format for plugin \"${plugin.pluginName}\": ${plugin.version}`\r\n      );\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "validatePluginUsage",
+        "functionParams": [
+          "pluginUsages"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2f813a80",
+      "type": "VariableDeclaration",
+      "babel_source": "const plugin",
+      "parentContext": {
+        "functionName": "validatePluginUsage",
+        "functionParams": [
+          "pluginUsages"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c08256dc",
+      "type": "IfStatement",
+      "condition": "!/^[A-Za-z][A-Za-z0-9]*$/.test(plugin.pluginName)",
+      "babel_source": "if (!/^[A-Za-z][A-Za-z0-9]*$/.test(plugin.pluginName)) {\r\n      throw new Error(\r\n        `Invalid plugin name \"${plugin.pluginName}\". ` +\r\n        `Plugin names must start with a letter and contain only letters and numbers.`\r\n      );\r\n    }",
+      "parentContext": {
+        "functionName": "validatePluginUsage",
+        "functionParams": [
+          "pluginUsages"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d7901bb9",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!/^[A-Za-z][A-Za-z0-9]*$/.test(plugin.pluginName)",
+      "parentContext": {
+        "functionName": "validatePluginUsage",
+        "functionParams": [
+          "pluginUsages"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "077836a8",
+      "type": "RegExpLiteral",
+      "pattern": "^[A-Za-z][A-Za-z0-9]*$",
+      "flags": "",
+      "babel_source": "/^[A-Za-z][A-Za-z0-9]*$/",
+      "parentContext": {
+        "functionName": "validatePluginUsage",
+        "functionParams": [
+          "pluginUsages"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f63d83f9",
+      "type": "ThrowStatement",
+      "babel_source": "throw new Error(\r\n        `Invalid plugin name \"${plugin.pluginName}\". ` +\r\n        `Plugin names must start with a letter and contain only letters and numbers.`\r\n      );",
+      "parentContext": {
+        "functionName": "validatePluginUsage",
+        "functionParams": [
+          "pluginUsages"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fbce8b50",
+      "type": "NewExpression",
+      "babel_source": "new Error(\r\n        `Invalid plugin name \"${plugin.pluginName}\". ` +\r\n        `Plugin names must start with a letter and contain only letters and numbers.`\r\n      )",
+      "parentContext": {
+        "functionName": "validatePluginUsage",
+        "functionParams": [
+          "pluginUsages"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0915caa2",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "`Invalid plugin name \"${plugin.pluginName}\". ` +\r\n        `Plugin names must start with a letter and contain only letters and numbers.`",
+      "parentContext": {
+        "functionName": "validatePluginUsage",
+        "functionParams": [
+          "pluginUsages"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a71aad44",
+      "type": "TemplateLiteral",
+      "babel_source": "`Invalid plugin name \"${plugin.pluginName}\". `",
+      "parentContext": {
+        "functionName": "validatePluginUsage",
+        "functionParams": [
+          "pluginUsages"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "02867150",
+      "type": "TemplateLiteral",
+      "babel_source": "`Plugin names must start with a letter and contain only letters and numbers.`",
+      "parentContext": {
+        "functionName": "validatePluginUsage",
+        "functionParams": [
+          "pluginUsages"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c3eff5e0",
+      "type": "IfStatement",
+      "condition": "plugin.stateBinding.binding === '__complex__'",
+      "babel_source": "if (plugin.stateBinding.binding === '__complex__') {\r\n      console.warn(\r\n        `[analyzePluginUsage] Complex expression used for plugin \"${plugin.pluginName}\" state. ` +\r\n        `This will be evaluated at runtime.`\r\n      );\r\n    }",
+      "parentContext": {
+        "functionName": "validatePluginUsage",
+        "functionParams": [
+          "pluginUsages"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8e11b8f2",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "plugin.stateBinding.binding === '__complex__'",
+      "parentContext": {
+        "functionName": "validatePluginUsage",
+        "functionParams": [
+          "pluginUsages"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bd2ea97b",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "`[analyzePluginUsage] Complex expression used for plugin \"${plugin.pluginName}\" state. ` +\r\n        `This will be evaluated at runtime.`",
+      "parentContext": {
+        "functionName": "validatePluginUsage",
+        "functionParams": [
+          "pluginUsages"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6c577d9d",
+      "type": "TemplateLiteral",
+      "babel_source": "`[analyzePluginUsage] Complex expression used for plugin \"${plugin.pluginName}\" state. `",
+      "parentContext": {
+        "functionName": "validatePluginUsage",
+        "functionParams": [
+          "pluginUsages"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6522293a",
+      "type": "TemplateLiteral",
+      "babel_source": "`This will be evaluated at runtime.`",
+      "parentContext": {
+        "functionName": "validatePluginUsage",
+        "functionParams": [
+          "pluginUsages"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9fadc147",
+      "type": "IfStatement",
+      "condition": "plugin.version && !/^\\d+\\.\\d+\\.\\d+$/.test(plugin.version)",
+      "babel_source": "if (plugin.version && !/^\\d+\\.\\d+\\.\\d+$/.test(plugin.version)) {\r\n      console.warn(\r\n        `[analyzePluginUsage] Invalid semver format for plugin \"${plugin.pluginName}\": ${plugin.version}`\r\n      );\r\n    }",
+      "parentContext": {
+        "functionName": "validatePluginUsage",
+        "functionParams": [
+          "pluginUsages"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f2c0f91a",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "plugin.version && !/^\\d+\\.\\d+\\.\\d+$/.test(plugin.version)",
+      "parentContext": {
+        "functionName": "validatePluginUsage",
+        "functionParams": [
+          "pluginUsages"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "724ec58f",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!/^\\d+\\.\\d+\\.\\d+$/.test(plugin.version)",
+      "parentContext": {
+        "functionName": "validatePluginUsage",
+        "functionParams": [
+          "pluginUsages"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0dc72720",
+      "type": "RegExpLiteral",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "flags": "",
+      "babel_source": "/^\\d+\\.\\d+\\.\\d+$/",
+      "parentContext": {
+        "functionName": "validatePluginUsage",
+        "functionParams": [
+          "pluginUsages"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0ced582d",
+      "type": "TemplateLiteral",
+      "babel_source": "`[analyzePluginUsage] Invalid semver format for plugin \"${plugin.pluginName}\": ${plugin.version}`",
+      "parentContext": {
+        "functionName": "validatePluginUsage",
+        "functionParams": [
+          "pluginUsages"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/analyzePluginUsage.cjs"
+  ]
+}

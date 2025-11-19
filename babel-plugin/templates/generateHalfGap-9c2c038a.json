@@ -1,0 +1,357 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateHalfGap",
+  "params": [
+    {
+      "name": "prevKey",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "nextKey",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "parentPath",
+      "inferredType": "&Path",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateHalfGap(prevKey, nextKey, parentPath) {\r\n  // Remove parent path prefix to get just the child segment\r\n  const parentPrefix = parentPath ? parentPath + '.' : '';\r\n  const prevChild = prevKey.startsWith(parentPrefix) ? prevKey.slice(parentPrefix.length) : prevKey;\r\n  const nextChild = nextKey.startsWith(parentPrefix) ? nextKey.slice(parentPrefix.length) : nextKey;\r\n\r\n  // Convert child hex segments to decimal\r\n  const prevNum = parseInt(prevChild, 16);\r\n  const nextNum = parseInt(nextChild, 16);\r\n\r\n  // Calculate midpoint\r\n  const midNum = Math.floor((prevNum + nextNum) / 2);\r\n\r\n  // If midpoint equals prevNum, we need more precision (add a fractional hex digit)\r\n  if (midNum === prevNum) {\r\n    // Generate a value between prevNum and nextNum by adding .8 (half of 0x10)\r\n    const midHex = prevChild + '8';\r\n    return parentPath ? `${parentPath}.${midHex}` : midHex;\r\n  }\r\n\r\n  // Convert back to hex (without padding to keep it compact)\r\n  const midHex = midNum.toString(16);\r\n\r\n  // Build full path\r\n  return parentPath ? `${parentPath}.${midHex}` : midHex;\r\n}",
+  "body_templates": [
+    {
+      "hash": "5dc06ed6",
+      "type": "VariableDeclaration",
+      "babel_source": "const parentPrefix = parentPath ? parentPath + '.' : '';",
+      "parentContext": {
+        "functionName": "generateHalfGap",
+        "functionParams": [
+          "prevKey",
+          "nextKey",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4199634e",
+      "type": "ConditionalExpression",
+      "babel_source": "parentPath ? parentPath + '.' : ''",
+      "parentContext": {
+        "functionName": "generateHalfGap",
+        "functionParams": [
+          "prevKey",
+          "nextKey",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "164e2fe3",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "parentPath + '.'",
+      "parentContext": {
+        "functionName": "generateHalfGap",
+        "functionParams": [
+          "prevKey",
+          "nextKey",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1c700770",
+      "type": "VariableDeclaration",
+      "babel_source": "const prevChild = prevKey.startsWith(parentPrefix) ? prevKey.slice(parentPrefix.length) : prevKey;",
+      "parentContext": {
+        "functionName": "generateHalfGap",
+        "functionParams": [
+          "prevKey",
+          "nextKey",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "13d701c2",
+      "type": "ConditionalExpression",
+      "babel_source": "prevKey.startsWith(parentPrefix) ? prevKey.slice(parentPrefix.length) : prevKey",
+      "parentContext": {
+        "functionName": "generateHalfGap",
+        "functionParams": [
+          "prevKey",
+          "nextKey",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "78308925",
+      "type": "VariableDeclaration",
+      "babel_source": "const nextChild = nextKey.startsWith(parentPrefix) ? nextKey.slice(parentPrefix.length) : nextKey;",
+      "parentContext": {
+        "functionName": "generateHalfGap",
+        "functionParams": [
+          "prevKey",
+          "nextKey",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d3b96607",
+      "type": "ConditionalExpression",
+      "babel_source": "nextKey.startsWith(parentPrefix) ? nextKey.slice(parentPrefix.length) : nextKey",
+      "parentContext": {
+        "functionName": "generateHalfGap",
+        "functionParams": [
+          "prevKey",
+          "nextKey",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cc8ee255",
+      "type": "VariableDeclaration",
+      "babel_source": "const prevNum = parseInt(prevChild, 16);",
+      "parentContext": {
+        "functionName": "generateHalfGap",
+        "functionParams": [
+          "prevKey",
+          "nextKey",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5dc45fb0",
+      "type": "VariableDeclaration",
+      "babel_source": "const nextNum = parseInt(nextChild, 16);",
+      "parentContext": {
+        "functionName": "generateHalfGap",
+        "functionParams": [
+          "prevKey",
+          "nextKey",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42eea2fe",
+      "type": "VariableDeclaration",
+      "babel_source": "const midNum = Math.floor((prevNum + nextNum) / 2);",
+      "parentContext": {
+        "functionName": "generateHalfGap",
+        "functionParams": [
+          "prevKey",
+          "nextKey",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4d4997f7",
+      "type": "BinaryExpression",
+      "operator": "/",
+      "babel_source": "(prevNum + nextNum) / 2",
+      "parentContext": {
+        "functionName": "generateHalfGap",
+        "functionParams": [
+          "prevKey",
+          "nextKey",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2f14a3b3",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "prevNum + nextNum",
+      "parentContext": {
+        "functionName": "generateHalfGap",
+        "functionParams": [
+          "prevKey",
+          "nextKey",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e91d7657",
+      "type": "IfStatement",
+      "condition": "midNum === prevNum",
+      "babel_source": "if (midNum === prevNum) {\r\n    // Generate a value between prevNum and nextNum by adding .8 (half of 0x10)\r\n    const midHex = prevChild + '8';\r\n    return parentPath ? `${parentPath}.${midHex}` : midHex;\r\n  }",
+      "parentContext": {
+        "functionName": "generateHalfGap",
+        "functionParams": [
+          "prevKey",
+          "nextKey",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6d817170",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "midNum === prevNum",
+      "parentContext": {
+        "functionName": "generateHalfGap",
+        "functionParams": [
+          "prevKey",
+          "nextKey",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b7bcbdfc",
+      "type": "VariableDeclaration",
+      "babel_source": "const midHex = prevChild + '8';",
+      "parentContext": {
+        "functionName": "generateHalfGap",
+        "functionParams": [
+          "prevKey",
+          "nextKey",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9b076c49",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "prevChild + '8'",
+      "parentContext": {
+        "functionName": "generateHalfGap",
+        "functionParams": [
+          "prevKey",
+          "nextKey",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6e117843",
+      "type": "ReturnStatement",
+      "babel_source": "return parentPath ? `${parentPath}.${midHex}` : midHex;",
+      "parentContext": {
+        "functionName": "generateHalfGap",
+        "functionParams": [
+          "prevKey",
+          "nextKey",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e85852bd",
+      "type": "ConditionalExpression",
+      "babel_source": "parentPath ? `${parentPath}.${midHex}` : midHex",
+      "parentContext": {
+        "functionName": "generateHalfGap",
+        "functionParams": [
+          "prevKey",
+          "nextKey",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bde42e85",
+      "type": "TemplateLiteral",
+      "babel_source": "`${parentPath}.${midHex}`",
+      "parentContext": {
+        "functionName": "generateHalfGap",
+        "functionParams": [
+          "prevKey",
+          "nextKey",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0c3570c8",
+      "type": "VariableDeclaration",
+      "babel_source": "const midHex = midNum.toString(16);",
+      "parentContext": {
+        "functionName": "generateHalfGap",
+        "functionParams": [
+          "prevKey",
+          "nextKey",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6e117843",
+      "type": "ReturnStatement",
+      "babel_source": "return parentPath ? `${parentPath}.${midHex}` : midHex;",
+      "parentContext": {
+        "functionName": "generateHalfGap",
+        "functionParams": [
+          "prevKey",
+          "nextKey",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e85852bd",
+      "type": "ConditionalExpression",
+      "babel_source": "parentPath ? `${parentPath}.${midHex}` : midHex",
+      "parentContext": {
+        "functionName": "generateHalfGap",
+        "functionParams": [
+          "prevKey",
+          "nextKey",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bde42e85",
+      "type": "TemplateLiteral",
+      "babel_source": "`${parentPath}.${midHex}`",
+      "parentContext": {
+        "functionName": "generateHalfGap",
+        "functionParams": [
+          "prevKey",
+          "nextKey",
+          "parentPath"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "utils/pathAssignment.cjs"
+  ]
+}

@@ -1,0 +1,267 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "convertStyleObjectToCss",
+  "params": [
+    {
+      "name": "objectExpression",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function convertStyleObjectToCss(objectExpression) {\r\n  if (!t.isObjectExpression(objectExpression)) {\r\n    throw new Error('Expected ObjectExpression for style');\r\n  }\r\n\r\n  const cssProperties = [];\r\n\r\n  for (const prop of objectExpression.properties) {\r\n    if (t.isObjectProperty(prop) && !prop.computed) {\r\n      const key = t.isIdentifier(prop.key) ? prop.key.name : String(prop.key.value);\r\n      const cssKey = camelToKebab(key);\r\n      const cssValue = convertStyleValue(prop.value);\r\n      cssProperties.push(`${cssKey}: ${cssValue}`);\r\n    }\r\n  }\r\n\r\n  return cssProperties.join('; ');\r\n}",
+  "body_templates": [
+    {
+      "hash": "274efd59",
+      "type": "IfStatement",
+      "condition": "!t.isObjectExpression(objectExpression)",
+      "babel_source": "if (!t.isObjectExpression(objectExpression)) {\r\n    throw new Error('Expected ObjectExpression for style');\r\n  }",
+      "parentContext": {
+        "functionName": "convertStyleObjectToCss",
+        "functionParams": [
+          "objectExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f16c08d8",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isObjectExpression(objectExpression)",
+      "parentContext": {
+        "functionName": "convertStyleObjectToCss",
+        "functionParams": [
+          "objectExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c9539163",
+      "type": "BabelTypeCheck",
+      "method": "isObjectExpression",
+      "babel_source": "t.isObjectExpression(objectExpression)",
+      "parentContext": {
+        "functionName": "convertStyleObjectToCss",
+        "functionParams": [
+          "objectExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0cbb57aa",
+      "type": "ThrowStatement",
+      "babel_source": "throw new Error('Expected ObjectExpression for style');",
+      "parentContext": {
+        "functionName": "convertStyleObjectToCss",
+        "functionParams": [
+          "objectExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d35f071f",
+      "type": "NewExpression",
+      "babel_source": "new Error('Expected ObjectExpression for style')",
+      "parentContext": {
+        "functionName": "convertStyleObjectToCss",
+        "functionParams": [
+          "objectExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bc5a2fc2",
+      "type": "VariableDeclaration",
+      "babel_source": "const cssProperties = [];",
+      "parentContext": {
+        "functionName": "convertStyleObjectToCss",
+        "functionParams": [
+          "objectExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "convertStyleObjectToCss",
+        "functionParams": [
+          "objectExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "26c094ee",
+      "type": "ForOfStatement",
+      "babel_source": "for (const prop of objectExpression.properties) {\r\n    if (t.isObjectProperty(prop) && !prop.computed) {\r\n      const key = t.isIdentifier(prop.key) ? prop.key.name : String(prop.key.value);\r\n      const cssKey = camelToKebab(key);\r\n      const cssValue = convertStyleValue(prop.value);\r\n      cssProperties.push(`${cssKey}: ${cssValue}`);\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "convertStyleObjectToCss",
+        "functionParams": [
+          "objectExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "098a3cb5",
+      "type": "VariableDeclaration",
+      "babel_source": "const prop",
+      "parentContext": {
+        "functionName": "convertStyleObjectToCss",
+        "functionParams": [
+          "objectExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4fd33ed7",
+      "type": "IfStatement",
+      "condition": "t.isObjectProperty(prop) && !prop.computed",
+      "babel_source": "if (t.isObjectProperty(prop) && !prop.computed) {\r\n      const key = t.isIdentifier(prop.key) ? prop.key.name : String(prop.key.value);\r\n      const cssKey = camelToKebab(key);\r\n      const cssValue = convertStyleValue(prop.value);\r\n      cssProperties.push(`${cssKey}: ${cssValue}`);\r\n    }",
+      "parentContext": {
+        "functionName": "convertStyleObjectToCss",
+        "functionParams": [
+          "objectExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7bf97dad",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isObjectProperty(prop) && !prop.computed",
+      "parentContext": {
+        "functionName": "convertStyleObjectToCss",
+        "functionParams": [
+          "objectExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d8cb3d9e",
+      "type": "BabelTypeCheck",
+      "method": "isObjectProperty",
+      "babel_source": "t.isObjectProperty(prop)",
+      "parentContext": {
+        "functionName": "convertStyleObjectToCss",
+        "functionParams": [
+          "objectExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6f4dbf03",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!prop.computed",
+      "parentContext": {
+        "functionName": "convertStyleObjectToCss",
+        "functionParams": [
+          "objectExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5d9f562b",
+      "type": "VariableDeclaration",
+      "babel_source": "const key = t.isIdentifier(prop.key) ? prop.key.name : String(prop.key.value);",
+      "parentContext": {
+        "functionName": "convertStyleObjectToCss",
+        "functionParams": [
+          "objectExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fe0bcb3e",
+      "type": "ConditionalExpression",
+      "babel_source": "t.isIdentifier(prop.key) ? prop.key.name : String(prop.key.value)",
+      "parentContext": {
+        "functionName": "convertStyleObjectToCss",
+        "functionParams": [
+          "objectExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f3845e36",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(prop.key)",
+      "parentContext": {
+        "functionName": "convertStyleObjectToCss",
+        "functionParams": [
+          "objectExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fe8294c1",
+      "type": "VariableDeclaration",
+      "babel_source": "const cssKey = camelToKebab(key);",
+      "parentContext": {
+        "functionName": "convertStyleObjectToCss",
+        "functionParams": [
+          "objectExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b8b2947a",
+      "type": "VariableDeclaration",
+      "babel_source": "const cssValue = convertStyleValue(prop.value);",
+      "parentContext": {
+        "functionName": "convertStyleObjectToCss",
+        "functionParams": [
+          "objectExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bc867602",
+      "type": "TemplateLiteral",
+      "babel_source": "`${cssKey}: ${cssValue}`",
+      "parentContext": {
+        "functionName": "convertStyleObjectToCss",
+        "functionParams": [
+          "objectExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a86b2e73",
+      "type": "ReturnStatement",
+      "babel_source": "return cssProperties.join('; ');",
+      "parentContext": {
+        "functionName": "convertStyleObjectToCss",
+        "functionParams": [
+          "objectExpression"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "utils/styleConverter.cjs"
+  ]
+}

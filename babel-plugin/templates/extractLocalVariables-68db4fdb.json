@@ -1,0 +1,465 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractLocalVariables",
+  "params": [
+    {
+      "name": "path",
+      "inferredType": "&Path",
+      "defaultValue": null
+    },
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "types",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractLocalVariables(path, component, types) {\r\n  const declarations = path.node.declarations;\r\n\r\n  for (const declarator of declarations) {\r\n    // Skip if it's a hook call (already handled)\r\n    if (t.isCallExpression(declarator.init)) {\r\n      const callee = declarator.init.callee;\r\n      if (t.isIdentifier(callee) && callee.name.startsWith('use')) {\r\n        continue; // Skip hook calls\r\n      }\r\n    }\r\n\r\n    // Check if this is an event handler (arrow function or function expression)\r\n    if (t.isIdentifier(declarator.id) && declarator.init) {\r\n      const varName = declarator.id.name;\r\n\r\n      // If it's an arrow function or function expression\r\n      if (t.isArrowFunctionExpression(declarator.init) || t.isFunctionExpression(declarator.init)) {\r\n        // Check if the function body uses external libraries\r\n        const usesExternal = usesExternalLibrary(declarator.init.body, component.externalImports);\r\n\r\n        if (usesExternal) {\r\n          // Mark as client-computed function\r\n          component.clientComputedVars.add(varName);\r\n\r\n          component.localVariables.push({\r\n            name: varName,\r\n            type: 'dynamic', // Will be refined to Func<> in generator\r\n            initialValue: 'null',\r\n            isClientComputed: true,\r\n            isFunction: true,\r\n            init: declarator.init\r\n          });\r\n        } else {\r\n          // Regular event handler\r\n          component.eventHandlers.push({\r\n            name: varName,\r\n            body: declarator.init.body,\r\n            params: declarator.init.params\r\n          });\r\n        }\r\n        continue;\r\n      }\r\n\r\n      // Check if this variable uses external libraries\r\n      const isClientComputed = usesExternalLibrary(declarator.init, component.externalImports);\r\n\r\n      if (isClientComputed) {\r\n        // Mark as client-computed\r\n        component.clientComputedVars.add(varName);\r\n      }\r\n\r\n      // Otherwise, treat as a regular local variable\r\n      const initValue = generateCSharpExpression(declarator.init);\r\n\r\n      // Try to infer type from TypeScript annotation or initial value\r\n      let varType = 'var'; // C# var for type inference\r\n      if (declarator.id.typeAnnotation?.typeAnnotation) {\r\n        varType = tsTypeToCSharpType(declarator.id.typeAnnotation.typeAnnotation);\r\n      }\r\n\r\n      component.localVariables.push({\r\n        name: varName,\r\n        type: varType,\r\n        initialValue: initValue,\r\n        isClientComputed: isClientComputed,  // NEW: Flag for client-computed\r\n        init: declarator.init  // NEW: Store AST node for type inference\r\n      });\r\n    }\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "f321c877",
+      "type": "VariableDeclaration",
+      "babel_source": "const declarations = path.node.declarations;",
+      "parentContext": {
+        "functionName": "extractLocalVariables",
+        "functionParams": [
+          "path",
+          "component",
+          "types"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8ba8c7d3",
+      "type": "ForOfStatement",
+      "babel_source": "for (const declarator of declarations) {\r\n    // Skip if it's a hook call (already handled)\r\n    if (t.isCallExpression(declarator.init)) {\r\n      const callee = declarator.init.callee;\r\n      if (t.isIdentifier(callee) && callee.name.startsWith('use')) {\r\n        continue; // Skip hook calls\r\n      }\r\n    }\r\n\r\n    // Check if this is an event handler (arrow function or function expression)\r\n    if (t.isIdentifier(declarator.id) && declarator.init) {\r\n      const varName = declarator.id.name;\r\n\r\n      // If it's an arrow function or function expression\r\n      if (t.isArrowFunctionExpression(declarator.init) || t.isFunctionExpression(declarator.init)) {\r\n        // Check if the function body uses external libraries\r\n        const usesExternal = usesExternalLibrary(declarator.init.body, component.externalImports);\r\n\r\n        if (usesExternal) {\r\n          // Mark as client-computed function\r\n          component.clientComputedVars.add(varName);\r\n\r\n          component.localVariables.push({\r\n            name: varName,\r\n            type: 'dynamic', // Will be refined to Func<> in generator\r\n            initialValue: 'null',\r\n            isClientComputed: true,\r\n            isFunction: true,\r\n            init: declarator.init\r\n          });\r\n        } else {\r\n          // Regular event handler\r\n          component.eventHandlers.push({\r\n            name: varName,\r\n            body: declarator.init.body,\r\n            params: declarator.init.params\r\n          });\r\n        }\r\n        continue;\r\n      }\r\n\r\n      // Check if this variable uses external libraries\r\n      const isClientComputed = usesExternalLibrary(declarator.init, component.externalImports);\r\n\r\n      if (isClientComputed) {\r\n        // Mark as client-computed\r\n        component.clientComputedVars.add(varName);\r\n      }\r\n\r\n      // Otherwise, treat as a regular local variable\r\n      const initValue = generateCSharpExpression(declarator.init);\r\n\r\n      // Try to infer type from TypeScript annotation or initial value\r\n      let varType = 'var'; // C# var for type inference\r\n      if (declarator.id.typeAnnotation?.typeAnnotation) {\r\n        varType = tsTypeToCSharpType(declarator.id.typeAnnotation.typeAnnotation);\r\n      }\r\n\r\n      component.localVariables.push({\r\n        name: varName,\r\n        type: varType,\r\n        initialValue: initValue,\r\n        isClientComputed: isClientComputed,  // NEW: Flag for client-computed\r\n        init: declarator.init  // NEW: Store AST node for type inference\r\n      });\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "extractLocalVariables",
+        "functionParams": [
+          "path",
+          "component",
+          "types"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42c4f561",
+      "type": "VariableDeclaration",
+      "babel_source": "const declarator",
+      "parentContext": {
+        "functionName": "extractLocalVariables",
+        "functionParams": [
+          "path",
+          "component",
+          "types"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1c3bec1d",
+      "type": "IfStatement",
+      "condition": "t.isCallExpression(declarator.init)",
+      "babel_source": "if (t.isCallExpression(declarator.init)) {\r\n      const callee = declarator.init.callee;\r\n      if (t.isIdentifier(callee) && callee.name.startsWith('use')) {\r\n        continue; // Skip hook calls\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "extractLocalVariables",
+        "functionParams": [
+          "path",
+          "component",
+          "types"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ac2c73ad",
+      "type": "BabelTypeCheck",
+      "method": "isCallExpression",
+      "babel_source": "t.isCallExpression(declarator.init)",
+      "parentContext": {
+        "functionName": "extractLocalVariables",
+        "functionParams": [
+          "path",
+          "component",
+          "types"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "38d11465",
+      "type": "VariableDeclaration",
+      "babel_source": "const callee = declarator.init.callee;",
+      "parentContext": {
+        "functionName": "extractLocalVariables",
+        "functionParams": [
+          "path",
+          "component",
+          "types"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "620669bb",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(callee) && callee.name.startsWith('use')",
+      "babel_source": "if (t.isIdentifier(callee) && callee.name.startsWith('use')) {\r\n        continue; // Skip hook calls\r\n      }",
+      "parentContext": {
+        "functionName": "extractLocalVariables",
+        "functionParams": [
+          "path",
+          "component",
+          "types"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5c4a9b2f",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isIdentifier(callee) && callee.name.startsWith('use')",
+      "parentContext": {
+        "functionName": "extractLocalVariables",
+        "functionParams": [
+          "path",
+          "component",
+          "types"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a65c4b09",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(callee)",
+      "parentContext": {
+        "functionName": "extractLocalVariables",
+        "functionParams": [
+          "path",
+          "component",
+          "types"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0bf37874",
+      "type": "ContinueStatement",
+      "babel_source": "continue;",
+      "parentContext": {
+        "functionName": "extractLocalVariables",
+        "functionParams": [
+          "path",
+          "component",
+          "types"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5590ec49",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(declarator.id) && declarator.init",
+      "babel_source": "if (t.isIdentifier(declarator.id) && declarator.init) {\r\n      const varName = declarator.id.name;\r\n\r\n      // If it's an arrow function or function expression\r\n      if (t.isArrowFunctionExpression(declarator.init) || t.isFunctionExpression(declarator.init)) {\r\n        // Check if the function body uses external libraries\r\n        const usesExternal = usesExternalLibrary(declarator.init.body, component.externalImports);\r\n\r\n        if (usesExternal) {\r\n          // Mark as client-computed function\r\n          component.clientComputedVars.add(varName);\r\n\r\n          component.localVariables.push({\r\n            name: varName,\r\n            type: 'dynamic', // Will be refined to Func<> in generator\r\n            initialValue: 'null',\r\n            isClientComputed: true,\r\n            isFunction: true,\r\n            init: declarator.init\r\n          });\r\n        } else {\r\n          // Regular event handler\r\n          component.eventHandlers.push({\r\n            name: varName,\r\n            body: declarator.init.body,\r\n            params: declarator.init.params\r\n          });\r\n        }\r\n        continue;\r\n      }\r\n\r\n      // Check if this variable uses external libraries\r\n      const isClientComputed = usesExternalLibrary(declarator.init, component.externalImports);\r\n\r\n      if (isClientComputed) {\r\n        // Mark as client-computed\r\n        component.clientComputedVars.add(varName);\r\n      }\r\n\r\n      // Otherwise, treat as a regular local variable\r\n      const initValue = generateCSharpExpression(declarator.init);\r\n\r\n      // Try to infer type from TypeScript annotation or initial value\r\n      let varType = 'var'; // C# var for type inference\r\n      if (declarator.id.typeAnnotation?.typeAnnotation) {\r\n        varType = tsTypeToCSharpType(declarator.id.typeAnnotation.typeAnnotation);\r\n      }\r\n\r\n      component.localVariables.push({\r\n        name: varName,\r\n        type: varType,\r\n        initialValue: initValue,\r\n        isClientComputed: isClientComputed,  // NEW: Flag for client-computed\r\n        init: declarator.init  // NEW: Store AST node for type inference\r\n      });\r\n    }",
+      "parentContext": {
+        "functionName": "extractLocalVariables",
+        "functionParams": [
+          "path",
+          "component",
+          "types"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2fb6d775",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isIdentifier(declarator.id) && declarator.init",
+      "parentContext": {
+        "functionName": "extractLocalVariables",
+        "functionParams": [
+          "path",
+          "component",
+          "types"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d3ad7621",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(declarator.id)",
+      "parentContext": {
+        "functionName": "extractLocalVariables",
+        "functionParams": [
+          "path",
+          "component",
+          "types"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7ff67f37",
+      "type": "VariableDeclaration",
+      "babel_source": "const varName = declarator.id.name;",
+      "parentContext": {
+        "functionName": "extractLocalVariables",
+        "functionParams": [
+          "path",
+          "component",
+          "types"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3e33c525",
+      "type": "IfStatement",
+      "condition": "t.isArrowFunctionExpression(declarator.init) || t.isFunctionExpression(declarator.init)",
+      "babel_source": "if (t.isArrowFunctionExpression(declarator.init) || t.isFunctionExpression(declarator.init)) {\r\n        // Check if the function body uses external libraries\r\n        const usesExternal = usesExternalLibrary(declarator.init.body, component.externalImports);\r\n\r\n        if (usesExternal) {\r\n          // Mark as client-computed function\r\n          component.clientComputedVars.add(varName);\r\n\r\n          component.localVariables.push({\r\n            name: varName,\r\n            type: 'dynamic', // Will be refined to Func<> in generator\r\n            initialValue: 'null',\r\n            isClientComputed: true,\r\n            isFunction: true,\r\n            init: declarator.init\r\n          });\r\n        } else {\r\n          // Regular event handler\r\n          component.eventHandlers.push({\r\n            name: varName,\r\n            body: declarator.init.body,\r\n            params: declarator.init.params\r\n          });\r\n        }\r\n        continue;\r\n      }",
+      "parentContext": {
+        "functionName": "extractLocalVariables",
+        "functionParams": [
+          "path",
+          "component",
+          "types"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab49d4cd",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isArrowFunctionExpression(declarator.init) || t.isFunctionExpression(declarator.init)",
+      "parentContext": {
+        "functionName": "extractLocalVariables",
+        "functionParams": [
+          "path",
+          "component",
+          "types"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9171ba1c",
+      "type": "BabelTypeCheck",
+      "method": "isArrowFunctionExpression",
+      "babel_source": "t.isArrowFunctionExpression(declarator.init)",
+      "parentContext": {
+        "functionName": "extractLocalVariables",
+        "functionParams": [
+          "path",
+          "component",
+          "types"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a61fd5eb",
+      "type": "BabelTypeCheck",
+      "method": "isFunctionExpression",
+      "babel_source": "t.isFunctionExpression(declarator.init)",
+      "parentContext": {
+        "functionName": "extractLocalVariables",
+        "functionParams": [
+          "path",
+          "component",
+          "types"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ba44a753",
+      "type": "VariableDeclaration",
+      "babel_source": "const usesExternal = usesExternalLibrary(declarator.init.body, component.externalImports);",
+      "parentContext": {
+        "functionName": "extractLocalVariables",
+        "functionParams": [
+          "path",
+          "component",
+          "types"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7ae78196",
+      "type": "IfStatement",
+      "condition": "usesExternal",
+      "babel_source": "if (usesExternal) {\r\n          // Mark as client-computed function\r\n          component.clientComputedVars.add(varName);\r\n\r\n          component.localVariables.push({\r\n            name: varName,\r\n            type: 'dynamic', // Will be refined to Func<> in generator\r\n            initialValue: 'null',\r\n            isClientComputed: true,\r\n            isFunction: true,\r\n            init: declarator.init\r\n          });\r\n        } else {\r\n          // Regular event handler\r\n          component.eventHandlers.push({\r\n            name: varName,\r\n            body: declarator.init.body,\r\n            params: declarator.init.params\r\n          });\r\n        }",
+      "parentContext": {
+        "functionName": "extractLocalVariables",
+        "functionParams": [
+          "path",
+          "component",
+          "types"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "762448a3",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n            name: varName,\r\n            type: 'dynamic', // Will be refined to Func<> in generator\r\n            initialValue: 'null',\r\n            isClientComputed: true,\r\n            isFunction: true,\r\n            init: declarator.init\r\n          }",
+      "parentContext": {
+        "functionName": "extractLocalVariables",
+        "functionParams": [
+          "path",
+          "component",
+          "types"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "acbc472a",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n            name: varName,\r\n            body: declarator.init.body,\r\n            params: declarator.init.params\r\n          }",
+      "parentContext": {
+        "functionName": "extractLocalVariables",
+        "functionParams": [
+          "path",
+          "component",
+          "types"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0bf37874",
+      "type": "ContinueStatement",
+      "babel_source": "continue;",
+      "parentContext": {
+        "functionName": "extractLocalVariables",
+        "functionParams": [
+          "path",
+          "component",
+          "types"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4e5851de",
+      "type": "VariableDeclaration",
+      "babel_source": "const isClientComputed = usesExternalLibrary(declarator.init, component.externalImports);",
+      "parentContext": {
+        "functionName": "extractLocalVariables",
+        "functionParams": [
+          "path",
+          "component",
+          "types"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cf1b92ec",
+      "type": "IfStatement",
+      "condition": "isClientComputed",
+      "babel_source": "if (isClientComputed) {\r\n        // Mark as client-computed\r\n        component.clientComputedVars.add(varName);\r\n      }",
+      "parentContext": {
+        "functionName": "extractLocalVariables",
+        "functionParams": [
+          "path",
+          "component",
+          "types"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "191e850d",
+      "type": "VariableDeclaration",
+      "babel_source": "const initValue = generateCSharpExpression(declarator.init);",
+      "parentContext": {
+        "functionName": "extractLocalVariables",
+        "functionParams": [
+          "path",
+          "component",
+          "types"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a4c263ee",
+      "type": "VariableDeclaration",
+      "babel_source": "let varType = 'var';",
+      "parentContext": {
+        "functionName": "extractLocalVariables",
+        "functionParams": [
+          "path",
+          "component",
+          "types"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cd043b77",
+      "type": "IfStatement",
+      "condition": "declarator.id.typeAnnotation?.typeAnnotation",
+      "babel_source": "if (declarator.id.typeAnnotation?.typeAnnotation) {\r\n        varType = tsTypeToCSharpType(declarator.id.typeAnnotation.typeAnnotation);\r\n      }",
+      "parentContext": {
+        "functionName": "extractLocalVariables",
+        "functionParams": [
+          "path",
+          "component",
+          "types"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "da1afb2a",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "varType = tsTypeToCSharpType(declarator.id.typeAnnotation.typeAnnotation)",
+      "parentContext": {
+        "functionName": "extractLocalVariables",
+        "functionParams": [
+          "path",
+          "component",
+          "types"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2678ec96",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n        name: varName,\r\n        type: varType,\r\n        initialValue: initValue,\r\n        isClientComputed: isClientComputed,  // NEW: Flag for client-computed\r\n        init: declarator.init  // NEW: Store AST node for type inference\r\n      }",
+      "parentContext": {
+        "functionName": "extractLocalVariables",
+        "functionParams": [
+          "path",
+          "component",
+          "types"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/localVariables.cjs"
+  ]
+}

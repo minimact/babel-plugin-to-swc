@@ -1,0 +1,103 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateCSharpFromMemberExpression",
+  "params": [
+    {
+      "name": "memberExpr",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    },
+    {
+      "name": "paramName",
+      "inferredType": "&str",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateCSharpFromMemberExpression(memberExpr, paramName) {\r\n  const object = generateCSharpFromExpression(memberExpr.object, paramName);\r\n  const property = memberExpr.property.name;\r\n\r\n  // Pascal case the property name for C#\r\n  const csharpProperty = property.charAt(0).toUpperCase() + property.slice(1);\r\n\r\n  return `${object}.${csharpProperty}`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "8a99b8ad",
+      "type": "VariableDeclaration",
+      "babel_source": "const object = generateCSharpFromExpression(memberExpr.object, paramName);",
+      "parentContext": {
+        "functionName": "generateCSharpFromMemberExpression",
+        "functionParams": [
+          "memberExpr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a1221159",
+      "type": "VariableDeclaration",
+      "babel_source": "const property = memberExpr.property.name;",
+      "parentContext": {
+        "functionName": "generateCSharpFromMemberExpression",
+        "functionParams": [
+          "memberExpr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "91eabf90",
+      "type": "VariableDeclaration",
+      "babel_source": "const csharpProperty = property.charAt(0).toUpperCase() + property.slice(1);",
+      "parentContext": {
+        "functionName": "generateCSharpFromMemberExpression",
+        "functionParams": [
+          "memberExpr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ec4f3f24",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "property.charAt(0).toUpperCase() + property.slice(1)",
+      "parentContext": {
+        "functionName": "generateCSharpFromMemberExpression",
+        "functionParams": [
+          "memberExpr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6b01148f",
+      "type": "ReturnStatement",
+      "babel_source": "return `${object}.${csharpProperty}`;",
+      "parentContext": {
+        "functionName": "generateCSharpFromMemberExpression",
+        "functionParams": [
+          "memberExpr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f49e49d8",
+      "type": "TemplateLiteral",
+      "babel_source": "`${object}.${csharpProperty}`",
+      "parentContext": {
+        "functionName": "generateCSharpFromMemberExpression",
+        "functionParams": [
+          "memberExpr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/useStateX.cjs"
+  ]
+}

@@ -1,0 +1,287 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractArrayBinding",
+  "params": [
+    {
+      "name": "expr",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractArrayBinding(expr) {\r\n    if (t.isIdentifier(expr)) {\r\n      return expr.name;\r\n    } else if (t.isMemberExpression(expr)) {\r\n      // Get the last property name\r\n      if (t.isIdentifier(expr.property)) {\r\n        return expr.property.name;\r\n      }\r\n    } else if (t.isCallExpression(expr)) {\r\n      // Handle array methods like .reverse(), .slice()\r\n      if (t.isMemberExpression(expr.callee)) {\r\n        return extractArrayBinding(expr.callee.object);\r\n      }\r\n    } else if (t.isArrayExpression(expr)) {\r\n      // Spread array: [...todos]\r\n      if (expr.elements.length > 0 && t.isSpreadElement(expr.elements[0])) {\r\n        return extractArrayBinding(expr.elements[0].argument);\r\n      }\r\n    }\r\n    return null;\r\n  }",
+  "body_templates": [
+    {
+      "hash": "0df9b31a",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(expr)",
+      "babel_source": "if (t.isIdentifier(expr)) {\r\n      return expr.name;\r\n    } else if (t.isMemberExpression(expr)) {\r\n      // Get the last property name\r\n      if (t.isIdentifier(expr.property)) {\r\n        return expr.property.name;\r\n      }\r\n    } else if (t.isCallExpression(expr)) {\r\n      // Handle array methods like .reverse(), .slice()\r\n      if (t.isMemberExpression(expr.callee)) {\r\n        return extractArrayBinding(expr.callee.object);\r\n      }\r\n    } else if (t.isArrayExpression(expr)) {\r\n      // Spread array: [...todos]\r\n      if (expr.elements.length > 0 && t.isSpreadElement(expr.elements[0])) {\r\n        return extractArrayBinding(expr.elements[0].argument);\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "extractArrayBinding",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42d26fd4",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(expr)",
+      "parentContext": {
+        "functionName": "extractArrayBinding",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dc053a27",
+      "type": "ReturnStatement",
+      "babel_source": "return expr.name;",
+      "parentContext": {
+        "functionName": "extractArrayBinding",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ee276492",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(expr)",
+      "babel_source": "if (t.isMemberExpression(expr)) {\r\n      // Get the last property name\r\n      if (t.isIdentifier(expr.property)) {\r\n        return expr.property.name;\r\n      }\r\n    } else if (t.isCallExpression(expr)) {\r\n      // Handle array methods like .reverse(), .slice()\r\n      if (t.isMemberExpression(expr.callee)) {\r\n        return extractArrayBinding(expr.callee.object);\r\n      }\r\n    } else if (t.isArrayExpression(expr)) {\r\n      // Spread array: [...todos]\r\n      if (expr.elements.length > 0 && t.isSpreadElement(expr.elements[0])) {\r\n        return extractArrayBinding(expr.elements[0].argument);\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "extractArrayBinding",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c8858c63",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(expr)",
+      "parentContext": {
+        "functionName": "extractArrayBinding",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "75996317",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(expr.property)",
+      "babel_source": "if (t.isIdentifier(expr.property)) {\r\n        return expr.property.name;\r\n      }",
+      "parentContext": {
+        "functionName": "extractArrayBinding",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6ae37d95",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(expr.property)",
+      "parentContext": {
+        "functionName": "extractArrayBinding",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "244299a3",
+      "type": "ReturnStatement",
+      "babel_source": "return expr.property.name;",
+      "parentContext": {
+        "functionName": "extractArrayBinding",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "449d4bcb",
+      "type": "IfStatement",
+      "condition": "t.isCallExpression(expr)",
+      "babel_source": "if (t.isCallExpression(expr)) {\r\n      // Handle array methods like .reverse(), .slice()\r\n      if (t.isMemberExpression(expr.callee)) {\r\n        return extractArrayBinding(expr.callee.object);\r\n      }\r\n    } else if (t.isArrayExpression(expr)) {\r\n      // Spread array: [...todos]\r\n      if (expr.elements.length > 0 && t.isSpreadElement(expr.elements[0])) {\r\n        return extractArrayBinding(expr.elements[0].argument);\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "extractArrayBinding",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "46479f62",
+      "type": "BabelTypeCheck",
+      "method": "isCallExpression",
+      "babel_source": "t.isCallExpression(expr)",
+      "parentContext": {
+        "functionName": "extractArrayBinding",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a3f172f4",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(expr.callee)",
+      "babel_source": "if (t.isMemberExpression(expr.callee)) {\r\n        return extractArrayBinding(expr.callee.object);\r\n      }",
+      "parentContext": {
+        "functionName": "extractArrayBinding",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d6c41024",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(expr.callee)",
+      "parentContext": {
+        "functionName": "extractArrayBinding",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "10cb1351",
+      "type": "ReturnStatement",
+      "babel_source": "return extractArrayBinding(expr.callee.object);",
+      "parentContext": {
+        "functionName": "extractArrayBinding",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f3d41cad",
+      "type": "IfStatement",
+      "condition": "t.isArrayExpression(expr)",
+      "babel_source": "if (t.isArrayExpression(expr)) {\r\n      // Spread array: [...todos]\r\n      if (expr.elements.length > 0 && t.isSpreadElement(expr.elements[0])) {\r\n        return extractArrayBinding(expr.elements[0].argument);\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "extractArrayBinding",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bf6cc4d1",
+      "type": "BabelTypeCheck",
+      "method": "isArrayExpression",
+      "babel_source": "t.isArrayExpression(expr)",
+      "parentContext": {
+        "functionName": "extractArrayBinding",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0fbc0cec",
+      "type": "IfStatement",
+      "condition": "expr.elements.length > 0 && t.isSpreadElement(expr.elements[0])",
+      "babel_source": "if (expr.elements.length > 0 && t.isSpreadElement(expr.elements[0])) {\r\n        return extractArrayBinding(expr.elements[0].argument);\r\n      }",
+      "parentContext": {
+        "functionName": "extractArrayBinding",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5e074c6c",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "expr.elements.length > 0 && t.isSpreadElement(expr.elements[0])",
+      "parentContext": {
+        "functionName": "extractArrayBinding",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a405e80c",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "expr.elements.length > 0",
+      "parentContext": {
+        "functionName": "extractArrayBinding",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1a1c2d7d",
+      "type": "BabelTypeCheck",
+      "method": "isSpreadElement",
+      "babel_source": "t.isSpreadElement(expr.elements[0])",
+      "parentContext": {
+        "functionName": "extractArrayBinding",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "054a3fad",
+      "type": "ReturnStatement",
+      "babel_source": "return extractArrayBinding(expr.elements[0].argument);",
+      "parentContext": {
+        "functionName": "extractArrayBinding",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractArrayBinding",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/loopTemplates.cjs"
+  ]
+}

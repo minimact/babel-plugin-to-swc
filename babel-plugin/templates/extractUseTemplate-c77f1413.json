@@ -1,0 +1,408 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractUseTemplate",
+  "params": [
+    {
+      "name": "path",
+      "inferredType": "&Path",
+      "defaultValue": null
+    },
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractUseTemplate(path, component) {\r\n  const templateName = path.node.arguments[0];\r\n  const templateProps = path.node.arguments[1];\r\n\r\n  if (t.isStringLiteral(templateName)) {\r\n    component.useTemplate = {\r\n      name: templateName.value,\r\n      props: {}\r\n    };\r\n\r\n    // Extract template props if provided\r\n    if (templateProps && t.isObjectExpression(templateProps)) {\r\n      for (const prop of templateProps.properties) {\r\n        if (t.isObjectProperty(prop) && t.isIdentifier(prop.key)) {\r\n          const propName = prop.key.name;\r\n          let propValue = '';\r\n\r\n          if (t.isStringLiteral(prop.value)) {\r\n            propValue = prop.value.value;\r\n          } else if (t.isNumericLiteral(prop.value)) {\r\n            propValue = prop.value.value.toString();\r\n          } else if (t.isBooleanLiteral(prop.value)) {\r\n            propValue = prop.value.value.toString();\r\n          }\r\n\r\n          component.useTemplate.props[propName] = propValue;\r\n        }\r\n      }\r\n    }\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "3071ab86",
+      "type": "VariableDeclaration",
+      "babel_source": "const templateName = path.node.arguments[0];",
+      "parentContext": {
+        "functionName": "extractUseTemplate",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "86a3de6f",
+      "type": "VariableDeclaration",
+      "babel_source": "const templateProps = path.node.arguments[1];",
+      "parentContext": {
+        "functionName": "extractUseTemplate",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ec5d88c5",
+      "type": "IfStatement",
+      "condition": "t.isStringLiteral(templateName)",
+      "babel_source": "if (t.isStringLiteral(templateName)) {\r\n    component.useTemplate = {\r\n      name: templateName.value,\r\n      props: {}\r\n    };\r\n\r\n    // Extract template props if provided\r\n    if (templateProps && t.isObjectExpression(templateProps)) {\r\n      for (const prop of templateProps.properties) {\r\n        if (t.isObjectProperty(prop) && t.isIdentifier(prop.key)) {\r\n          const propName = prop.key.name;\r\n          let propValue = '';\r\n\r\n          if (t.isStringLiteral(prop.value)) {\r\n            propValue = prop.value.value;\r\n          } else if (t.isNumericLiteral(prop.value)) {\r\n            propValue = prop.value.value.toString();\r\n          } else if (t.isBooleanLiteral(prop.value)) {\r\n            propValue = prop.value.value.toString();\r\n          }\r\n\r\n          component.useTemplate.props[propName] = propValue;\r\n        }\r\n      }\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "extractUseTemplate",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b366a19c",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(templateName)",
+      "parentContext": {
+        "functionName": "extractUseTemplate",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bc8349db",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "component.useTemplate = {\r\n      name: templateName.value,\r\n      props: {}\r\n    }",
+      "parentContext": {
+        "functionName": "extractUseTemplate",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ff8e9806",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n      name: templateName.value,\r\n      props: {}\r\n    }",
+      "parentContext": {
+        "functionName": "extractUseTemplate",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "44136fa3",
+      "type": "ObjectExpression",
+      "babel_source": "{}",
+      "parentContext": {
+        "functionName": "extractUseTemplate",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "33c41012",
+      "type": "IfStatement",
+      "condition": "templateProps && t.isObjectExpression(templateProps)",
+      "babel_source": "if (templateProps && t.isObjectExpression(templateProps)) {\r\n      for (const prop of templateProps.properties) {\r\n        if (t.isObjectProperty(prop) && t.isIdentifier(prop.key)) {\r\n          const propName = prop.key.name;\r\n          let propValue = '';\r\n\r\n          if (t.isStringLiteral(prop.value)) {\r\n            propValue = prop.value.value;\r\n          } else if (t.isNumericLiteral(prop.value)) {\r\n            propValue = prop.value.value.toString();\r\n          } else if (t.isBooleanLiteral(prop.value)) {\r\n            propValue = prop.value.value.toString();\r\n          }\r\n\r\n          component.useTemplate.props[propName] = propValue;\r\n        }\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "extractUseTemplate",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "481b1f3b",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "templateProps && t.isObjectExpression(templateProps)",
+      "parentContext": {
+        "functionName": "extractUseTemplate",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c77218a2",
+      "type": "BabelTypeCheck",
+      "method": "isObjectExpression",
+      "babel_source": "t.isObjectExpression(templateProps)",
+      "parentContext": {
+        "functionName": "extractUseTemplate",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f41bd0d3",
+      "type": "ForOfStatement",
+      "babel_source": "for (const prop of templateProps.properties) {\r\n        if (t.isObjectProperty(prop) && t.isIdentifier(prop.key)) {\r\n          const propName = prop.key.name;\r\n          let propValue = '';\r\n\r\n          if (t.isStringLiteral(prop.value)) {\r\n            propValue = prop.value.value;\r\n          } else if (t.isNumericLiteral(prop.value)) {\r\n            propValue = prop.value.value.toString();\r\n          } else if (t.isBooleanLiteral(prop.value)) {\r\n            propValue = prop.value.value.toString();\r\n          }\r\n\r\n          component.useTemplate.props[propName] = propValue;\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "extractUseTemplate",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "098a3cb5",
+      "type": "VariableDeclaration",
+      "babel_source": "const prop",
+      "parentContext": {
+        "functionName": "extractUseTemplate",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "61584fdd",
+      "type": "IfStatement",
+      "condition": "t.isObjectProperty(prop) && t.isIdentifier(prop.key)",
+      "babel_source": "if (t.isObjectProperty(prop) && t.isIdentifier(prop.key)) {\r\n          const propName = prop.key.name;\r\n          let propValue = '';\r\n\r\n          if (t.isStringLiteral(prop.value)) {\r\n            propValue = prop.value.value;\r\n          } else if (t.isNumericLiteral(prop.value)) {\r\n            propValue = prop.value.value.toString();\r\n          } else if (t.isBooleanLiteral(prop.value)) {\r\n            propValue = prop.value.value.toString();\r\n          }\r\n\r\n          component.useTemplate.props[propName] = propValue;\r\n        }",
+      "parentContext": {
+        "functionName": "extractUseTemplate",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "192fdbdf",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isObjectProperty(prop) && t.isIdentifier(prop.key)",
+      "parentContext": {
+        "functionName": "extractUseTemplate",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d8cb3d9e",
+      "type": "BabelTypeCheck",
+      "method": "isObjectProperty",
+      "babel_source": "t.isObjectProperty(prop)",
+      "parentContext": {
+        "functionName": "extractUseTemplate",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f3845e36",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(prop.key)",
+      "parentContext": {
+        "functionName": "extractUseTemplate",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b1602854",
+      "type": "VariableDeclaration",
+      "babel_source": "const propName = prop.key.name;",
+      "parentContext": {
+        "functionName": "extractUseTemplate",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "aa360085",
+      "type": "VariableDeclaration",
+      "babel_source": "let propValue = '';",
+      "parentContext": {
+        "functionName": "extractUseTemplate",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a52fa048",
+      "type": "IfStatement",
+      "condition": "t.isStringLiteral(prop.value)",
+      "babel_source": "if (t.isStringLiteral(prop.value)) {\r\n            propValue = prop.value.value;\r\n          } else if (t.isNumericLiteral(prop.value)) {\r\n            propValue = prop.value.value.toString();\r\n          } else if (t.isBooleanLiteral(prop.value)) {\r\n            propValue = prop.value.value.toString();\r\n          }",
+      "parentContext": {
+        "functionName": "extractUseTemplate",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f158ce2a",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(prop.value)",
+      "parentContext": {
+        "functionName": "extractUseTemplate",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "82893325",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "propValue = prop.value.value",
+      "parentContext": {
+        "functionName": "extractUseTemplate",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5f47c369",
+      "type": "IfStatement",
+      "condition": "t.isNumericLiteral(prop.value)",
+      "babel_source": "if (t.isNumericLiteral(prop.value)) {\r\n            propValue = prop.value.value.toString();\r\n          } else if (t.isBooleanLiteral(prop.value)) {\r\n            propValue = prop.value.value.toString();\r\n          }",
+      "parentContext": {
+        "functionName": "extractUseTemplate",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9f30200d",
+      "type": "BabelTypeCheck",
+      "method": "isNumericLiteral",
+      "babel_source": "t.isNumericLiteral(prop.value)",
+      "parentContext": {
+        "functionName": "extractUseTemplate",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fd81898a",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "propValue = prop.value.value.toString()",
+      "parentContext": {
+        "functionName": "extractUseTemplate",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e6333c50",
+      "type": "IfStatement",
+      "condition": "t.isBooleanLiteral(prop.value)",
+      "babel_source": "if (t.isBooleanLiteral(prop.value)) {\r\n            propValue = prop.value.value.toString();\r\n          }",
+      "parentContext": {
+        "functionName": "extractUseTemplate",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e824223e",
+      "type": "BabelTypeCheck",
+      "method": "isBooleanLiteral",
+      "babel_source": "t.isBooleanLiteral(prop.value)",
+      "parentContext": {
+        "functionName": "extractUseTemplate",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fd81898a",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "propValue = prop.value.value.toString()",
+      "parentContext": {
+        "functionName": "extractUseTemplate",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "04a38519",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "component.useTemplate.props[propName] = propValue",
+      "parentContext": {
+        "functionName": "extractUseTemplate",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/hooks.cjs"
+  ]
+}

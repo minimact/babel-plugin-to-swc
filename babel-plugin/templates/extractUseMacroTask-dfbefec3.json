@@ -1,0 +1,131 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractUseMacroTask",
+  "params": [
+    {
+      "name": "path",
+      "inferredType": "&Path",
+      "defaultValue": null
+    },
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractUseMacroTask(path, component) {\r\n  const callback = path.node.arguments[0];\r\n  const delay = path.node.arguments[1];\r\n\r\n  component.useMacroTask = component.useMacroTask || [];\r\n  component.useMacroTask.push({\r\n    body: callback,\r\n    delay: t.isNumericLiteral(delay) ? delay.value : 0\r\n  });\r\n}",
+  "body_templates": [
+    {
+      "hash": "0f136048",
+      "type": "VariableDeclaration",
+      "babel_source": "const callback = path.node.arguments[0];",
+      "parentContext": {
+        "functionName": "extractUseMacroTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e73e4e72",
+      "type": "VariableDeclaration",
+      "babel_source": "const delay = path.node.arguments[1];",
+      "parentContext": {
+        "functionName": "extractUseMacroTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8f6d83e3",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "component.useMacroTask = component.useMacroTask || []",
+      "parentContext": {
+        "functionName": "extractUseMacroTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "90cc927c",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "component.useMacroTask || []",
+      "parentContext": {
+        "functionName": "extractUseMacroTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractUseMacroTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7be76501",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    body: callback,\r\n    delay: t.isNumericLiteral(delay) ? delay.value : 0\r\n  }",
+      "parentContext": {
+        "functionName": "extractUseMacroTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42eb8e89",
+      "type": "ConditionalExpression",
+      "babel_source": "t.isNumericLiteral(delay) ? delay.value : 0",
+      "parentContext": {
+        "functionName": "extractUseMacroTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ac19d85c",
+      "type": "BabelTypeCheck",
+      "method": "isNumericLiteral",
+      "babel_source": "t.isNumericLiteral(delay)",
+      "parentContext": {
+        "functionName": "extractUseMacroTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/hooks.cjs"
+  ]
+}

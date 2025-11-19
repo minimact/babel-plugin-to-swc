@@ -1,0 +1,487 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "transformEffectCallback",
+  "params": [
+    {
+      "name": "callback",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "hookCalls",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function transformEffectCallback(callback, hookCalls) {\r\n  if (!t.isArrowFunctionExpression(callback) && !t.isFunctionExpression(callback)) {\r\n    throw new Error('Effect callback must be a function');\r\n  }\r\n\r\n  let functionBody = callback.body;\r\n\r\n  // If body is an expression, wrap in block statement\r\n  if (!t.isBlockStatement(functionBody)) {\r\n    functionBody = t.blockStatement([\r\n      t.returnStatement(functionBody)\r\n    ]);\r\n  }\r\n\r\n  // Build hook mapping statements\r\n  // const useState = this.useState;\r\n  // const useRef = this.useRef;\r\n  const hookMappings = hookCalls.map(hookName => {\r\n    return t.variableDeclaration('const', [\r\n      t.variableDeclarator(\r\n        t.identifier(hookName),\r\n        t.memberExpression(\r\n          t.thisExpression(),\r\n          t.identifier(hookName)\r\n        )\r\n      )\r\n    ]);\r\n  });\r\n\r\n  // Prepend hook mappings to function body\r\n  const newBody = t.blockStatement([\r\n    ...hookMappings,\r\n    ...functionBody.body\r\n  ]);\r\n\r\n  // Return regular function expression\r\n  return t.functionExpression(\r\n    null,                    // No name (anonymous)\r\n    callback.params,         // Keep original params (usually empty)\r\n    newBody,                 // Body with hook mappings\r\n    false,                   // Not a generator\r\n    callback.async || false  // Preserve async\r\n  );\r\n}",
+  "body_templates": [
+    {
+      "hash": "efa73f79",
+      "type": "IfStatement",
+      "condition": "!t.isArrowFunctionExpression(callback) && !t.isFunctionExpression(callback)",
+      "babel_source": "if (!t.isArrowFunctionExpression(callback) && !t.isFunctionExpression(callback)) {\r\n    throw new Error('Effect callback must be a function');\r\n  }",
+      "parentContext": {
+        "functionName": "transformEffectCallback",
+        "functionParams": [
+          "callback",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "68891635",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "!t.isArrowFunctionExpression(callback) && !t.isFunctionExpression(callback)",
+      "parentContext": {
+        "functionName": "transformEffectCallback",
+        "functionParams": [
+          "callback",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "58010413",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isArrowFunctionExpression(callback)",
+      "parentContext": {
+        "functionName": "transformEffectCallback",
+        "functionParams": [
+          "callback",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c04c3b2e",
+      "type": "BabelTypeCheck",
+      "method": "isArrowFunctionExpression",
+      "babel_source": "t.isArrowFunctionExpression(callback)",
+      "parentContext": {
+        "functionName": "transformEffectCallback",
+        "functionParams": [
+          "callback",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5496ec28",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isFunctionExpression(callback)",
+      "parentContext": {
+        "functionName": "transformEffectCallback",
+        "functionParams": [
+          "callback",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "03226c61",
+      "type": "BabelTypeCheck",
+      "method": "isFunctionExpression",
+      "babel_source": "t.isFunctionExpression(callback)",
+      "parentContext": {
+        "functionName": "transformEffectCallback",
+        "functionParams": [
+          "callback",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b0f667eb",
+      "type": "ThrowStatement",
+      "babel_source": "throw new Error('Effect callback must be a function');",
+      "parentContext": {
+        "functionName": "transformEffectCallback",
+        "functionParams": [
+          "callback",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ff69a5e2",
+      "type": "NewExpression",
+      "babel_source": "new Error('Effect callback must be a function')",
+      "parentContext": {
+        "functionName": "transformEffectCallback",
+        "functionParams": [
+          "callback",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3ef889b3",
+      "type": "VariableDeclaration",
+      "babel_source": "let functionBody = callback.body;",
+      "parentContext": {
+        "functionName": "transformEffectCallback",
+        "functionParams": [
+          "callback",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e27b2885",
+      "type": "IfStatement",
+      "condition": "!t.isBlockStatement(functionBody)",
+      "babel_source": "if (!t.isBlockStatement(functionBody)) {\r\n    functionBody = t.blockStatement([\r\n      t.returnStatement(functionBody)\r\n    ]);\r\n  }",
+      "parentContext": {
+        "functionName": "transformEffectCallback",
+        "functionParams": [
+          "callback",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ba29171",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isBlockStatement(functionBody)",
+      "parentContext": {
+        "functionName": "transformEffectCallback",
+        "functionParams": [
+          "callback",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "66a1929c",
+      "type": "BabelTypeCheck",
+      "method": "isBlockStatement",
+      "babel_source": "t.isBlockStatement(functionBody)",
+      "parentContext": {
+        "functionName": "transformEffectCallback",
+        "functionParams": [
+          "callback",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4e2da437",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "functionBody = t.blockStatement([\r\n      t.returnStatement(functionBody)\r\n    ])",
+      "parentContext": {
+        "functionName": "transformEffectCallback",
+        "functionParams": [
+          "callback",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ce08ced7",
+      "type": "BabelTypeCheck",
+      "method": "blockStatement",
+      "babel_source": "t.blockStatement([\r\n      t.returnStatement(functionBody)\r\n    ])",
+      "parentContext": {
+        "functionName": "transformEffectCallback",
+        "functionParams": [
+          "callback",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "00313dfc",
+      "type": "ArrayExpression",
+      "babel_source": "[\r\n      t.returnStatement(functionBody)\r\n    ]",
+      "parentContext": {
+        "functionName": "transformEffectCallback",
+        "functionParams": [
+          "callback",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dfe014dc",
+      "type": "BabelTypeCheck",
+      "method": "returnStatement",
+      "babel_source": "t.returnStatement(functionBody)",
+      "parentContext": {
+        "functionName": "transformEffectCallback",
+        "functionParams": [
+          "callback",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b66a816e",
+      "type": "VariableDeclaration",
+      "babel_source": "const hookMappings = hookCalls.map(hookName => {\r\n    return t.variableDeclaration('const', [\r\n      t.variableDeclarator(\r\n        t.identifier(hookName),\r\n        t.memberExpression(\r\n          t.thisExpression(),\r\n          t.identifier(hookName)\r\n        )\r\n      )\r\n    ]);\r\n  });",
+      "parentContext": {
+        "functionName": "transformEffectCallback",
+        "functionParams": [
+          "callback",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4eeb71d8",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "hookName => {\r\n    return t.variableDeclaration('const', [\r\n      t.variableDeclarator(\r\n        t.identifier(hookName),\r\n        t.memberExpression(\r\n          t.thisExpression(),\r\n          t.identifier(hookName)\r\n        )\r\n      )\r\n    ]);\r\n  }",
+      "parentContext": {
+        "functionName": "transformEffectCallback",
+        "functionParams": [
+          "callback",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f85c5d42",
+      "type": "ReturnStatement",
+      "babel_source": "return t.variableDeclaration('const', [\r\n      t.variableDeclarator(\r\n        t.identifier(hookName),\r\n        t.memberExpression(\r\n          t.thisExpression(),\r\n          t.identifier(hookName)\r\n        )\r\n      )\r\n    ]);",
+      "parentContext": {
+        "functionName": "transformEffectCallback",
+        "functionParams": [
+          "callback",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6e608c6f",
+      "type": "BabelTypeCheck",
+      "method": "variableDeclaration",
+      "babel_source": "t.variableDeclaration('const', [\r\n      t.variableDeclarator(\r\n        t.identifier(hookName),\r\n        t.memberExpression(\r\n          t.thisExpression(),\r\n          t.identifier(hookName)\r\n        )\r\n      )\r\n    ])",
+      "parentContext": {
+        "functionName": "transformEffectCallback",
+        "functionParams": [
+          "callback",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e226fe3c",
+      "type": "ArrayExpression",
+      "babel_source": "[\r\n      t.variableDeclarator(\r\n        t.identifier(hookName),\r\n        t.memberExpression(\r\n          t.thisExpression(),\r\n          t.identifier(hookName)\r\n        )\r\n      )\r\n    ]",
+      "parentContext": {
+        "functionName": "transformEffectCallback",
+        "functionParams": [
+          "callback",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6ba07800",
+      "type": "BabelTypeCheck",
+      "method": "variableDeclarator",
+      "babel_source": "t.variableDeclarator(\r\n        t.identifier(hookName),\r\n        t.memberExpression(\r\n          t.thisExpression(),\r\n          t.identifier(hookName)\r\n        )\r\n      )",
+      "parentContext": {
+        "functionName": "transformEffectCallback",
+        "functionParams": [
+          "callback",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1f78693c",
+      "type": "BabelTypeCheck",
+      "method": "identifier",
+      "babel_source": "t.identifier(hookName)",
+      "parentContext": {
+        "functionName": "transformEffectCallback",
+        "functionParams": [
+          "callback",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e2cc76a5",
+      "type": "BabelTypeCheck",
+      "method": "memberExpression",
+      "babel_source": "t.memberExpression(\r\n          t.thisExpression(),\r\n          t.identifier(hookName)\r\n        )",
+      "parentContext": {
+        "functionName": "transformEffectCallback",
+        "functionParams": [
+          "callback",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "806a12f3",
+      "type": "BabelTypeCheck",
+      "method": "thisExpression",
+      "babel_source": "t.thisExpression()",
+      "parentContext": {
+        "functionName": "transformEffectCallback",
+        "functionParams": [
+          "callback",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1f78693c",
+      "type": "BabelTypeCheck",
+      "method": "identifier",
+      "babel_source": "t.identifier(hookName)",
+      "parentContext": {
+        "functionName": "transformEffectCallback",
+        "functionParams": [
+          "callback",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f07fcc7c",
+      "type": "VariableDeclaration",
+      "babel_source": "const newBody = t.blockStatement([\r\n    ...hookMappings,\r\n    ...functionBody.body\r\n  ]);",
+      "parentContext": {
+        "functionName": "transformEffectCallback",
+        "functionParams": [
+          "callback",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "06194362",
+      "type": "BabelTypeCheck",
+      "method": "blockStatement",
+      "babel_source": "t.blockStatement([\r\n    ...hookMappings,\r\n    ...functionBody.body\r\n  ])",
+      "parentContext": {
+        "functionName": "transformEffectCallback",
+        "functionParams": [
+          "callback",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f6b68c9",
+      "type": "ArrayExpression",
+      "babel_source": "[\r\n    ...hookMappings,\r\n    ...functionBody.body\r\n  ]",
+      "parentContext": {
+        "functionName": "transformEffectCallback",
+        "functionParams": [
+          "callback",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "89180852",
+      "type": "SpreadElement",
+      "babel_source": "...hookMappings",
+      "parentContext": {
+        "functionName": "transformEffectCallback",
+        "functionParams": [
+          "callback",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "384f6d70",
+      "type": "SpreadElement",
+      "babel_source": "...functionBody.body",
+      "parentContext": {
+        "functionName": "transformEffectCallback",
+        "functionParams": [
+          "callback",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ecce9012",
+      "type": "ReturnStatement",
+      "babel_source": "return t.functionExpression(\r\n    null,                    // No name (anonymous)\r\n    callback.params,         // Keep original params (usually empty)\r\n    newBody,                 // Body with hook mappings\r\n    false,                   // Not a generator\r\n    callback.async || false  // Preserve async\r\n  );",
+      "parentContext": {
+        "functionName": "transformEffectCallback",
+        "functionParams": [
+          "callback",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "02c39387",
+      "type": "BabelTypeCheck",
+      "method": "functionExpression",
+      "babel_source": "t.functionExpression(\r\n    null,                    // No name (anonymous)\r\n    callback.params,         // Keep original params (usually empty)\r\n    newBody,                 // Body with hook mappings\r\n    false,                   // Not a generator\r\n    callback.async || false  // Preserve async\r\n  )",
+      "parentContext": {
+        "functionName": "transformEffectCallback",
+        "functionParams": [
+          "callback",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "208eb04c",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "callback.async || false",
+      "parentContext": {
+        "functionName": "transformEffectCallback",
+        "functionParams": [
+          "callback",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/hooks.cjs"
+  ]
+}

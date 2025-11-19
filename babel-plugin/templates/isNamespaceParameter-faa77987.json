@@ -1,0 +1,234 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "isNamespaceParameter",
+  "params": [
+    {
+      "name": "param",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "bool",
+  "babel_source": "function isNamespaceParameter(param) {\r\n  // Handle simple identifier: namespace\r\n  if (t.isIdentifier(param)) {\r\n    return param.name === 'namespace';\r\n  }\r\n\r\n  // Handle TypeScript annotation: namespace: string\r\n  if (param.typeAnnotation) {\r\n    const id = param;\r\n    if (t.isIdentifier(id) && id.name === 'namespace') {\r\n      // Optionally verify it's typed as string\r\n      const typeAnnotation = param.typeAnnotation;\r\n      if (t.isTSTypeAnnotation(typeAnnotation)) {\r\n        return t.isTSStringKeyword(typeAnnotation.typeAnnotation);\r\n      }\r\n      return true; // Accept without type annotation\r\n    }\r\n  }\r\n\r\n  return false;\r\n}",
+  "body_templates": [
+    {
+      "hash": "96d22dae",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(param)",
+      "babel_source": "if (t.isIdentifier(param)) {\r\n    return param.name === 'namespace';\r\n  }",
+      "parentContext": {
+        "functionName": "isNamespaceParameter",
+        "functionParams": [
+          "param"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9d26e740",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(param)",
+      "parentContext": {
+        "functionName": "isNamespaceParameter",
+        "functionParams": [
+          "param"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "43e5ca57",
+      "type": "ReturnStatement",
+      "babel_source": "return param.name === 'namespace';",
+      "parentContext": {
+        "functionName": "isNamespaceParameter",
+        "functionParams": [
+          "param"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9e94e7e6",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "param.name === 'namespace'",
+      "parentContext": {
+        "functionName": "isNamespaceParameter",
+        "functionParams": [
+          "param"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1557c92d",
+      "type": "IfStatement",
+      "condition": "param.typeAnnotation",
+      "babel_source": "if (param.typeAnnotation) {\r\n    const id = param;\r\n    if (t.isIdentifier(id) && id.name === 'namespace') {\r\n      // Optionally verify it's typed as string\r\n      const typeAnnotation = param.typeAnnotation;\r\n      if (t.isTSTypeAnnotation(typeAnnotation)) {\r\n        return t.isTSStringKeyword(typeAnnotation.typeAnnotation);\r\n      }\r\n      return true; // Accept without type annotation\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "isNamespaceParameter",
+        "functionParams": [
+          "param"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c241ce0b",
+      "type": "VariableDeclaration",
+      "babel_source": "const id = param;",
+      "parentContext": {
+        "functionName": "isNamespaceParameter",
+        "functionParams": [
+          "param"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bf53701b",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(id) && id.name === 'namespace'",
+      "babel_source": "if (t.isIdentifier(id) && id.name === 'namespace') {\r\n      // Optionally verify it's typed as string\r\n      const typeAnnotation = param.typeAnnotation;\r\n      if (t.isTSTypeAnnotation(typeAnnotation)) {\r\n        return t.isTSStringKeyword(typeAnnotation.typeAnnotation);\r\n      }\r\n      return true; // Accept without type annotation\r\n    }",
+      "parentContext": {
+        "functionName": "isNamespaceParameter",
+        "functionParams": [
+          "param"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "309e9238",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isIdentifier(id) && id.name === 'namespace'",
+      "parentContext": {
+        "functionName": "isNamespaceParameter",
+        "functionParams": [
+          "param"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "657b2270",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(id)",
+      "parentContext": {
+        "functionName": "isNamespaceParameter",
+        "functionParams": [
+          "param"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d67558d6",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "id.name === 'namespace'",
+      "parentContext": {
+        "functionName": "isNamespaceParameter",
+        "functionParams": [
+          "param"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e5a4b7f7",
+      "type": "VariableDeclaration",
+      "babel_source": "const typeAnnotation = param.typeAnnotation;",
+      "parentContext": {
+        "functionName": "isNamespaceParameter",
+        "functionParams": [
+          "param"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4e6c1831",
+      "type": "IfStatement",
+      "condition": "t.isTSTypeAnnotation(typeAnnotation)",
+      "babel_source": "if (t.isTSTypeAnnotation(typeAnnotation)) {\r\n        return t.isTSStringKeyword(typeAnnotation.typeAnnotation);\r\n      }",
+      "parentContext": {
+        "functionName": "isNamespaceParameter",
+        "functionParams": [
+          "param"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7e94ca13",
+      "type": "BabelTypeCheck",
+      "method": "isTSTypeAnnotation",
+      "babel_source": "t.isTSTypeAnnotation(typeAnnotation)",
+      "parentContext": {
+        "functionName": "isNamespaceParameter",
+        "functionParams": [
+          "param"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "27fdb243",
+      "type": "ReturnStatement",
+      "babel_source": "return t.isTSStringKeyword(typeAnnotation.typeAnnotation);",
+      "parentContext": {
+        "functionName": "isNamespaceParameter",
+        "functionParams": [
+          "param"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "94490516",
+      "type": "BabelTypeCheck",
+      "method": "isTSStringKeyword",
+      "babel_source": "t.isTSStringKeyword(typeAnnotation.typeAnnotation)",
+      "parentContext": {
+        "functionName": "isNamespaceParameter",
+        "functionParams": [
+          "param"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "10e0fa08",
+      "type": "ReturnStatement",
+      "babel_source": "return true;",
+      "parentContext": {
+        "functionName": "isNamespaceParameter",
+        "functionParams": [
+          "param"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dabbdf16",
+      "type": "ReturnStatement",
+      "babel_source": "return false;",
+      "parentContext": {
+        "functionName": "isNamespaceParameter",
+        "functionParams": [
+          "param"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/hookDetector.cjs"
+  ]
+}

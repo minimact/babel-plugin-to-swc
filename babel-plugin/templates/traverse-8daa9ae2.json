@@ -1,0 +1,174 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "traverse",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function traverse(node) {\r\n      if (t.isIdentifier(node)) {\r\n        bindings.add(node.name);\r\n      } else if (t.isLogicalExpression(node)) {\r\n        traverse(node.left);\r\n        traverse(node.right);\r\n      } else if (t.isUnaryExpression(node)) {\r\n        traverse(node.argument);\r\n      } else if (t.isBinaryExpression(node)) {\r\n        traverse(node.left);\r\n        traverse(node.right);\r\n      } else if (t.isMemberExpression(node)) {\r\n        const path = buildMemberPath(node);\r\n        if (path) bindings.add(path);\r\n      }\r\n    }",
+  "body_templates": [
+    {
+      "hash": "617fca03",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(node)",
+      "babel_source": "if (t.isIdentifier(node)) {\r\n        bindings.add(node.name);\r\n      } else if (t.isLogicalExpression(node)) {\r\n        traverse(node.left);\r\n        traverse(node.right);\r\n      } else if (t.isUnaryExpression(node)) {\r\n        traverse(node.argument);\r\n      } else if (t.isBinaryExpression(node)) {\r\n        traverse(node.left);\r\n        traverse(node.right);\r\n      } else if (t.isMemberExpression(node)) {\r\n        const path = buildMemberPath(node);\r\n        if (path) bindings.add(path);\r\n      }",
+      "parentContext": {
+        "functionName": "traverse",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "458e4c81",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node)",
+      "parentContext": {
+        "functionName": "traverse",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ecf832ef",
+      "type": "IfStatement",
+      "condition": "t.isLogicalExpression(node)",
+      "babel_source": "if (t.isLogicalExpression(node)) {\r\n        traverse(node.left);\r\n        traverse(node.right);\r\n      } else if (t.isUnaryExpression(node)) {\r\n        traverse(node.argument);\r\n      } else if (t.isBinaryExpression(node)) {\r\n        traverse(node.left);\r\n        traverse(node.right);\r\n      } else if (t.isMemberExpression(node)) {\r\n        const path = buildMemberPath(node);\r\n        if (path) bindings.add(path);\r\n      }",
+      "parentContext": {
+        "functionName": "traverse",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "00fb4fd3",
+      "type": "BabelTypeCheck",
+      "method": "isLogicalExpression",
+      "babel_source": "t.isLogicalExpression(node)",
+      "parentContext": {
+        "functionName": "traverse",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "40ece1b7",
+      "type": "IfStatement",
+      "condition": "t.isUnaryExpression(node)",
+      "babel_source": "if (t.isUnaryExpression(node)) {\r\n        traverse(node.argument);\r\n      } else if (t.isBinaryExpression(node)) {\r\n        traverse(node.left);\r\n        traverse(node.right);\r\n      } else if (t.isMemberExpression(node)) {\r\n        const path = buildMemberPath(node);\r\n        if (path) bindings.add(path);\r\n      }",
+      "parentContext": {
+        "functionName": "traverse",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "27f27257",
+      "type": "BabelTypeCheck",
+      "method": "isUnaryExpression",
+      "babel_source": "t.isUnaryExpression(node)",
+      "parentContext": {
+        "functionName": "traverse",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a44feedf",
+      "type": "IfStatement",
+      "condition": "t.isBinaryExpression(node)",
+      "babel_source": "if (t.isBinaryExpression(node)) {\r\n        traverse(node.left);\r\n        traverse(node.right);\r\n      } else if (t.isMemberExpression(node)) {\r\n        const path = buildMemberPath(node);\r\n        if (path) bindings.add(path);\r\n      }",
+      "parentContext": {
+        "functionName": "traverse",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ae0955e9",
+      "type": "BabelTypeCheck",
+      "method": "isBinaryExpression",
+      "babel_source": "t.isBinaryExpression(node)",
+      "parentContext": {
+        "functionName": "traverse",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f8c92a49",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(node)",
+      "babel_source": "if (t.isMemberExpression(node)) {\r\n        const path = buildMemberPath(node);\r\n        if (path) bindings.add(path);\r\n      }",
+      "parentContext": {
+        "functionName": "traverse",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e4025d71",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(node)",
+      "parentContext": {
+        "functionName": "traverse",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e730e75b",
+      "type": "VariableDeclaration",
+      "babel_source": "const path = buildMemberPath(node);",
+      "parentContext": {
+        "functionName": "traverse",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6fceff98",
+      "type": "IfStatement",
+      "condition": "path",
+      "babel_source": "if (path) bindings.add(path);",
+      "parentContext": {
+        "functionName": "traverse",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/conditionalElementTemplates.cjs"
+  ]
+}

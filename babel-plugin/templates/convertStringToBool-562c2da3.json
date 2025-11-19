@@ -1,0 +1,161 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "convertStringToBool",
+  "params": [
+    {
+      "name": "csharpTest",
+      "inferredType": "&str",
+      "defaultValue": null
+    },
+    {
+      "name": "originalTestNode",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function convertStringToBool(csharpTest, originalTestNode) {\r\n  // If it's already a boolean expression, return as-is\r\n  if (t.isBinaryExpression(originalTestNode) ||\r\n      t.isLogicalExpression(originalTestNode) ||\r\n      t.isUnaryExpression(originalTestNode, { operator: '!' })) {\r\n    return csharpTest;\r\n  }\r\n\r\n  // For any other expression, wrap with ToBool() helper\r\n  // This will handle strings, numbers, objects, etc. at runtime\r\n  return `MinimactHelpers.ToBool(${csharpTest})`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "5fba9c1d",
+      "type": "IfStatement",
+      "condition": "t.isBinaryExpression(originalTestNode) ||\r\n      t.isLogicalExpression(originalTestNode) ||\r\n      t.isUnaryExpression(originalTestNode, { operator: '!' })",
+      "babel_source": "if (t.isBinaryExpression(originalTestNode) ||\r\n      t.isLogicalExpression(originalTestNode) ||\r\n      t.isUnaryExpression(originalTestNode, { operator: '!' })) {\r\n    return csharpTest;\r\n  }",
+      "parentContext": {
+        "functionName": "convertStringToBool",
+        "functionParams": [
+          "csharpTest",
+          "originalTestNode"
+        ]
+      },
+      "rust_translation": "if matches!(original_test_node, Expr::Bin(_)) ||\n    matches!(original_test_node, Expr::Bin(BinExpr { op: BinaryOp::LogicalAnd | BinaryOp::LogicalOr, .. })) ||\n    matches!(original_test_node, Expr::Unary(UnaryExpr { op: UnaryOp::Bang, .. })) {\n    return csharp_test.to_string();\n}"
+    },
+    {
+      "hash": "5bfcc63f",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isBinaryExpression(originalTestNode) ||\r\n      t.isLogicalExpression(originalTestNode) ||\r\n      t.isUnaryExpression(originalTestNode, { operator: '!' })",
+      "parentContext": {
+        "functionName": "convertStringToBool",
+        "functionParams": [
+          "csharpTest",
+          "originalTestNode"
+        ]
+      },
+      "rust_translation": "matches!(original_test_node, Expr::Bin(_)) || is_logical_expr || is_not_unary"
+    },
+    {
+      "hash": "e8e23e73",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isBinaryExpression(originalTestNode) ||\r\n      t.isLogicalExpression(originalTestNode)",
+      "parentContext": {
+        "functionName": "convertStringToBool",
+        "functionParams": [
+          "csharpTest",
+          "originalTestNode"
+        ]
+      },
+      "rust_translation": "matches!(original_test_node, Expr::Bin(_)) || is_logical_expr"
+    },
+    {
+      "hash": "d1e8589a",
+      "type": "BabelTypeCheck",
+      "method": "isBinaryExpression",
+      "babel_source": "t.isBinaryExpression(originalTestNode)",
+      "parentContext": {
+        "functionName": "convertStringToBool",
+        "functionParams": [
+          "csharpTest",
+          "originalTestNode"
+        ]
+      },
+      "rust_translation": "matches!(original_test_node, Expr::Bin(_))"
+    },
+    {
+      "hash": "b42d9adf",
+      "type": "BabelTypeCheck",
+      "method": "isLogicalExpression",
+      "babel_source": "t.isLogicalExpression(originalTestNode)",
+      "parentContext": {
+        "functionName": "convertStringToBool",
+        "functionParams": [
+          "csharpTest",
+          "originalTestNode"
+        ]
+      },
+      "rust_translation": "matches!(original_test_node, Expr::Bin(BinExpr { op: BinaryOp::LogicalAnd | BinaryOp::LogicalOr, .. }))"
+    },
+    {
+      "hash": "1408dcdd",
+      "type": "BabelTypeCheck",
+      "method": "isUnaryExpression",
+      "babel_source": "t.isUnaryExpression(originalTestNode, { operator: '!' })",
+      "parentContext": {
+        "functionName": "convertStringToBool",
+        "functionParams": [
+          "csharpTest",
+          "originalTestNode"
+        ]
+      },
+      "rust_translation": "matches!(original_test_node, Expr::Unary(UnaryExpr { op: UnaryOp::Bang, .. }))"
+    },
+    {
+      "hash": "73f59a6b",
+      "type": "ObjectExpression",
+      "babel_source": "{ operator: '!' }",
+      "parentContext": {
+        "functionName": "convertStringToBool",
+        "functionParams": [
+          "csharpTest",
+          "originalTestNode"
+        ]
+      },
+      "rust_translation": "UnaryOp::Bang"
+    },
+    {
+      "hash": "ecede368",
+      "type": "ReturnStatement",
+      "babel_source": "return csharpTest;",
+      "parentContext": {
+        "functionName": "convertStringToBool",
+        "functionParams": [
+          "csharpTest",
+          "originalTestNode"
+        ]
+      },
+      "rust_translation": "return csharp_test.to_string();"
+    },
+    {
+      "hash": "9874d7d6",
+      "type": "ReturnStatement",
+      "babel_source": "return `MinimactHelpers.ToBool(${csharpTest})`;",
+      "parentContext": {
+        "functionName": "convertStringToBool",
+        "functionParams": [
+          "csharpTest",
+          "originalTestNode"
+        ]
+      },
+      "rust_translation": "format!(\"MinimactHelpers.ToBool({})\", csharp_test)"
+    },
+    {
+      "hash": "e6e22e7a",
+      "type": "TemplateLiteral",
+      "babel_source": "`MinimactHelpers.ToBool(${csharpTest})`",
+      "parentContext": {
+        "functionName": "convertStringToBool",
+        "functionParams": [
+          "csharpTest",
+          "originalTestNode"
+        ]
+      },
+      "rust_translation": "format!(\"MinimactHelpers.ToBool({})\", csharp_test)"
+    }
+  ],
+  "rust_translation": "pub fn convert_string_to_bool(csharp_test: &str, original_test_node: &Expr) -> String {\n    // If it's already a boolean expression, return as-is\n    let is_boolean_expr = match original_test_node {\n        Expr::Bin(_) => true,\n        Expr::Unary(UnaryExpr { op: UnaryOp::Bang, .. }) => true,\n        _ => false,\n    };\n\n    if is_boolean_expr {\n        return csharp_test.to_string();\n    }\n\n    // For any other expression, wrap with ToBool() helper\n    format!(\"MinimactHelpers.ToBool({})\", csharp_test)\n}",
+  "found_in": [
+    "generators/expressions.cjs",
+    "transpilers/typescriptToCSharp.cjs"
+  ]
+}

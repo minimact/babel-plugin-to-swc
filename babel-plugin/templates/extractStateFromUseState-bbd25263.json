@@ -1,0 +1,420 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractStateFromUseState",
+  "params": [
+    {
+      "name": "path",
+      "inferredType": "&Path",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractStateFromUseState(path) {\r\n  const parent = path.parent;\r\n\r\n  // Must be: const [value, setValue] = useState(initial);\r\n  if (!t.isVariableDeclarator(parent)) return null;\r\n  if (!t.isArrayPattern(parent.id)) return null;\r\n\r\n  const elements = parent.id.elements;\r\n  if (elements.length !== 2) return null;\r\n\r\n  const valueVar = elements[0];\r\n  const setterVar = elements[1];\r\n\r\n  if (!t.isIdentifier(valueVar) || !t.isIdentifier(setterVar)) return null;\r\n\r\n  const valueName = valueVar.name;\r\n  const setterName = setterVar.name;\r\n\r\n  // Get initial value\r\n  const initialValue = path.node.arguments[0];\r\n  let initialValueCode = null;\r\n  let inferredType = 'any';\r\n\r\n  if (initialValue) {\r\n    initialValueCode = generateExpressionCode(initialValue);\r\n    inferredType = inferType(initialValue);\r\n  }\r\n\r\n  return {\r\n    varName: valueName,\r\n    setterName: setterName,\r\n    type: inferredType,\r\n    initialValue: initialValueCode\r\n  };\r\n}",
+  "body_templates": [
+    {
+      "hash": "356fe96c",
+      "type": "VariableDeclaration",
+      "babel_source": "const parent = path.parent;",
+      "parentContext": {
+        "functionName": "extractStateFromUseState",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "686733ec",
+      "type": "IfStatement",
+      "condition": "!t.isVariableDeclarator(parent)",
+      "babel_source": "if (!t.isVariableDeclarator(parent)) return null;",
+      "parentContext": {
+        "functionName": "extractStateFromUseState",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dc772752",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isVariableDeclarator(parent)",
+      "parentContext": {
+        "functionName": "extractStateFromUseState",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "27a39ea7",
+      "type": "BabelTypeCheck",
+      "method": "isVariableDeclarator",
+      "babel_source": "t.isVariableDeclarator(parent)",
+      "parentContext": {
+        "functionName": "extractStateFromUseState",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractStateFromUseState",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "592dea30",
+      "type": "IfStatement",
+      "condition": "!t.isArrayPattern(parent.id)",
+      "babel_source": "if (!t.isArrayPattern(parent.id)) return null;",
+      "parentContext": {
+        "functionName": "extractStateFromUseState",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8b6a1332",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isArrayPattern(parent.id)",
+      "parentContext": {
+        "functionName": "extractStateFromUseState",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ac18b505",
+      "type": "BabelTypeCheck",
+      "method": "isArrayPattern",
+      "babel_source": "t.isArrayPattern(parent.id)",
+      "parentContext": {
+        "functionName": "extractStateFromUseState",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractStateFromUseState",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e9dbe09c",
+      "type": "VariableDeclaration",
+      "babel_source": "const elements = parent.id.elements;",
+      "parentContext": {
+        "functionName": "extractStateFromUseState",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e6dc32df",
+      "type": "IfStatement",
+      "condition": "elements.length !== 2",
+      "babel_source": "if (elements.length !== 2) return null;",
+      "parentContext": {
+        "functionName": "extractStateFromUseState",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1c16a4a5",
+      "type": "BinaryExpression",
+      "operator": "!==",
+      "babel_source": "elements.length !== 2",
+      "parentContext": {
+        "functionName": "extractStateFromUseState",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractStateFromUseState",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b0b56e24",
+      "type": "VariableDeclaration",
+      "babel_source": "const valueVar = elements[0];",
+      "parentContext": {
+        "functionName": "extractStateFromUseState",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "789b85ed",
+      "type": "VariableDeclaration",
+      "babel_source": "const setterVar = elements[1];",
+      "parentContext": {
+        "functionName": "extractStateFromUseState",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9641f545",
+      "type": "IfStatement",
+      "condition": "!t.isIdentifier(valueVar) || !t.isIdentifier(setterVar)",
+      "babel_source": "if (!t.isIdentifier(valueVar) || !t.isIdentifier(setterVar)) return null;",
+      "parentContext": {
+        "functionName": "extractStateFromUseState",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ee5f4711",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "!t.isIdentifier(valueVar) || !t.isIdentifier(setterVar)",
+      "parentContext": {
+        "functionName": "extractStateFromUseState",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cee3a433",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isIdentifier(valueVar)",
+      "parentContext": {
+        "functionName": "extractStateFromUseState",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "45f7eb8a",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(valueVar)",
+      "parentContext": {
+        "functionName": "extractStateFromUseState",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "18accbd2",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isIdentifier(setterVar)",
+      "parentContext": {
+        "functionName": "extractStateFromUseState",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0b42797c",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(setterVar)",
+      "parentContext": {
+        "functionName": "extractStateFromUseState",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractStateFromUseState",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d943ff09",
+      "type": "VariableDeclaration",
+      "babel_source": "const valueName = valueVar.name;",
+      "parentContext": {
+        "functionName": "extractStateFromUseState",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "27761502",
+      "type": "VariableDeclaration",
+      "babel_source": "const setterName = setterVar.name;",
+      "parentContext": {
+        "functionName": "extractStateFromUseState",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "32d467fb",
+      "type": "VariableDeclaration",
+      "babel_source": "const initialValue = path.node.arguments[0];",
+      "parentContext": {
+        "functionName": "extractStateFromUseState",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "280898cc",
+      "type": "VariableDeclaration",
+      "babel_source": "let initialValueCode = null;",
+      "parentContext": {
+        "functionName": "extractStateFromUseState",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "857e829a",
+      "type": "VariableDeclaration",
+      "babel_source": "let inferredType = 'any';",
+      "parentContext": {
+        "functionName": "extractStateFromUseState",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e84c4f47",
+      "type": "IfStatement",
+      "condition": "initialValue",
+      "babel_source": "if (initialValue) {\r\n    initialValueCode = generateExpressionCode(initialValue);\r\n    inferredType = inferType(initialValue);\r\n  }",
+      "parentContext": {
+        "functionName": "extractStateFromUseState",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e4248e2d",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "initialValueCode = generateExpressionCode(initialValue)",
+      "parentContext": {
+        "functionName": "extractStateFromUseState",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "de8c873c",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "inferredType = inferType(initialValue)",
+      "parentContext": {
+        "functionName": "extractStateFromUseState",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "12081762",
+      "type": "ReturnStatement",
+      "babel_source": "return {\r\n    varName: valueName,\r\n    setterName: setterName,\r\n    type: inferredType,\r\n    initialValue: initialValueCode\r\n  };",
+      "parentContext": {
+        "functionName": "extractStateFromUseState",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9c161225",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    varName: valueName,\r\n    setterName: setterName,\r\n    type: inferredType,\r\n    initialValue: initialValueCode\r\n  }",
+      "parentContext": {
+        "functionName": "extractStateFromUseState",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/hookAnalyzer.cjs"
+  ]
+}

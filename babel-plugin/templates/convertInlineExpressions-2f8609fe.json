@@ -1,0 +1,45 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "convertInlineExpressions",
+  "params": [
+    {
+      "name": "markdown",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function convertInlineExpressions(markdown) {\r\n  // Convert @(expression) → {(expression)}\r\n  return markdown.replace(/@\\(([^)]+)\\)/g, '{($1)}');\r\n}",
+  "body_templates": [
+    {
+      "hash": "1034770c",
+      "type": "ReturnStatement",
+      "babel_source": "return markdown.replace(/@\\(([^)]+)\\)/g, '{($1)}');",
+      "parentContext": {
+        "functionName": "convertInlineExpressions",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c4dbce8b",
+      "type": "RegExpLiteral",
+      "pattern": "@\\(([^)]+)\\)",
+      "flags": "g",
+      "babel_source": "/@\\(([^)]+)\\)/g",
+      "parentContext": {
+        "functionName": "convertInlineExpressions",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/razorMarkdown.cjs"
+  ]
+}

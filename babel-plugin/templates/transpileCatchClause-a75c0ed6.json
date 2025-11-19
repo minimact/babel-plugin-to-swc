@@ -1,0 +1,79 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "transpileCatchClause",
+  "params": [
+    {
+      "name": "handler",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function transpileCatchClause(handler) {\r\n  const param = handler.param ? handler.param.name : 'err';\r\n  const body = transpileBlockStatement(handler.body);\r\n  return `.or_else(|${param}| { ${body} })`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "5eb5a17b",
+      "type": "VariableDeclaration",
+      "babel_source": "const param = handler.param ? handler.param.name : 'err';",
+      "parentContext": {
+        "functionName": "transpileCatchClause",
+        "functionParams": [
+          "handler"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "617ff778",
+      "type": "ConditionalExpression",
+      "babel_source": "handler.param ? handler.param.name : 'err'",
+      "parentContext": {
+        "functionName": "transpileCatchClause",
+        "functionParams": [
+          "handler"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c2f0fc6b",
+      "type": "VariableDeclaration",
+      "babel_source": "const body = transpileBlockStatement(handler.body);",
+      "parentContext": {
+        "functionName": "transpileCatchClause",
+        "functionParams": [
+          "handler"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3a90c6af",
+      "type": "ReturnStatement",
+      "babel_source": "return `.or_else(|${param}| { ${body} })`;",
+      "parentContext": {
+        "functionName": "transpileCatchClause",
+        "functionParams": [
+          "handler"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "708eb85a",
+      "type": "TemplateLiteral",
+      "babel_source": "`.or_else(|${param}| { ${body} })`",
+      "parentContext": {
+        "functionName": "transpileCatchClause",
+        "functionParams": [
+          "handler"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "transpilers/typescriptToRust.cjs"
+  ]
+}

@@ -1,0 +1,292 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractKeyBinding",
+  "params": [
+    {
+      "name": "jsxElement",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "itemVar",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "indexVar",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractKeyBinding(jsxElement, itemVar, indexVar) {\r\n    const keyAttr = jsxElement.openingElement.attributes.find(\r\n      attr => t.isJSXAttribute(attr) &&\r\n              t.isIdentifier(attr.name) &&\r\n              attr.name.name === 'key'\r\n    );\r\n\r\n    if (!keyAttr) return null;\r\n\r\n    const keyValue = keyAttr.value;\r\n    if (t.isJSXExpressionContainer(keyValue)) {\r\n      return buildBindingPath(keyValue.expression, itemVar, indexVar);\r\n    } else if (t.isStringLiteral(keyValue)) {\r\n      return null; // Static key (not based on item data)\r\n    }\r\n\r\n    return null;\r\n  }",
+  "body_templates": [
+    {
+      "hash": "523d5acc",
+      "type": "VariableDeclaration",
+      "babel_source": "const keyAttr = jsxElement.openingElement.attributes.find(\r\n      attr => t.isJSXAttribute(attr) &&\r\n              t.isIdentifier(attr.name) &&\r\n              attr.name.name === 'key'\r\n    );",
+      "parentContext": {
+        "functionName": "extractKeyBinding",
+        "functionParams": [
+          "jsxElement",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "773d4d96",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "attr => t.isJSXAttribute(attr) &&\r\n              t.isIdentifier(attr.name) &&\r\n              attr.name.name === 'key'",
+      "parentContext": {
+        "functionName": "extractKeyBinding",
+        "functionParams": [
+          "jsxElement",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dcc44cf5",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isJSXAttribute(attr) &&\r\n              t.isIdentifier(attr.name) &&\r\n              attr.name.name === 'key'",
+      "parentContext": {
+        "functionName": "extractKeyBinding",
+        "functionParams": [
+          "jsxElement",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "abc6c6e2",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isJSXAttribute(attr) &&\r\n              t.isIdentifier(attr.name)",
+      "parentContext": {
+        "functionName": "extractKeyBinding",
+        "functionParams": [
+          "jsxElement",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7468026c",
+      "type": "BabelTypeCheck",
+      "method": "isJSXAttribute",
+      "babel_source": "t.isJSXAttribute(attr)",
+      "parentContext": {
+        "functionName": "extractKeyBinding",
+        "functionParams": [
+          "jsxElement",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "88a38815",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(attr.name)",
+      "parentContext": {
+        "functionName": "extractKeyBinding",
+        "functionParams": [
+          "jsxElement",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ebff5543",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "attr.name.name === 'key'",
+      "parentContext": {
+        "functionName": "extractKeyBinding",
+        "functionParams": [
+          "jsxElement",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6ad838b7",
+      "type": "IfStatement",
+      "condition": "!keyAttr",
+      "babel_source": "if (!keyAttr) return null;",
+      "parentContext": {
+        "functionName": "extractKeyBinding",
+        "functionParams": [
+          "jsxElement",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6090f1c1",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!keyAttr",
+      "parentContext": {
+        "functionName": "extractKeyBinding",
+        "functionParams": [
+          "jsxElement",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractKeyBinding",
+        "functionParams": [
+          "jsxElement",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "34b24268",
+      "type": "VariableDeclaration",
+      "babel_source": "const keyValue = keyAttr.value;",
+      "parentContext": {
+        "functionName": "extractKeyBinding",
+        "functionParams": [
+          "jsxElement",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8da32a1e",
+      "type": "IfStatement",
+      "condition": "t.isJSXExpressionContainer(keyValue)",
+      "babel_source": "if (t.isJSXExpressionContainer(keyValue)) {\r\n      return buildBindingPath(keyValue.expression, itemVar, indexVar);\r\n    } else if (t.isStringLiteral(keyValue)) {\r\n      return null; // Static key (not based on item data)\r\n    }",
+      "parentContext": {
+        "functionName": "extractKeyBinding",
+        "functionParams": [
+          "jsxElement",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "81bbd920",
+      "type": "BabelTypeCheck",
+      "method": "isJSXExpressionContainer",
+      "babel_source": "t.isJSXExpressionContainer(keyValue)",
+      "parentContext": {
+        "functionName": "extractKeyBinding",
+        "functionParams": [
+          "jsxElement",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9e982714",
+      "type": "ReturnStatement",
+      "babel_source": "return buildBindingPath(keyValue.expression, itemVar, indexVar);",
+      "parentContext": {
+        "functionName": "extractKeyBinding",
+        "functionParams": [
+          "jsxElement",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7b47bd51",
+      "type": "IfStatement",
+      "condition": "t.isStringLiteral(keyValue)",
+      "babel_source": "if (t.isStringLiteral(keyValue)) {\r\n      return null; // Static key (not based on item data)\r\n    }",
+      "parentContext": {
+        "functionName": "extractKeyBinding",
+        "functionParams": [
+          "jsxElement",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7a91bc34",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(keyValue)",
+      "parentContext": {
+        "functionName": "extractKeyBinding",
+        "functionParams": [
+          "jsxElement",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractKeyBinding",
+        "functionParams": [
+          "jsxElement",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractKeyBinding",
+        "functionParams": [
+          "jsxElement",
+          "itemVar",
+          "indexVar"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/loopTemplates.cjs"
+  ]
+}

@@ -1,0 +1,214 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractUseMvcViewModel",
+  "params": [
+    {
+      "name": "path",
+      "inferredType": "&Path",
+      "defaultValue": null
+    },
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractUseMvcViewModel(path, component) {\r\n  const parent = path.parent;\r\n\r\n  if (!t.isVariableDeclarator(parent)) return;\r\n  if (!t.isIdentifier(parent.id)) return;\r\n\r\n  const viewModelVarName = parent.id.name;\r\n\r\n  // Initialize useMvcViewModel array if needed\r\n  component.useMvcViewModel = component.useMvcViewModel || [];\r\n\r\n  component.useMvcViewModel.push({\r\n    name: viewModelVarName\r\n  });\r\n\r\n  // Note: This is primarily for documentation/tracking purposes.\r\n  // The actual ViewModel access happens client-side via window.__MINIMACT_VIEWMODEL__\r\n}",
+  "body_templates": [
+    {
+      "hash": "356fe96c",
+      "type": "VariableDeclaration",
+      "babel_source": "const parent = path.parent;",
+      "parentContext": {
+        "functionName": "extractUseMvcViewModel",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1cfe78c4",
+      "type": "IfStatement",
+      "condition": "!t.isVariableDeclarator(parent)",
+      "babel_source": "if (!t.isVariableDeclarator(parent)) return;",
+      "parentContext": {
+        "functionName": "extractUseMvcViewModel",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dc772752",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isVariableDeclarator(parent)",
+      "parentContext": {
+        "functionName": "extractUseMvcViewModel",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "27a39ea7",
+      "type": "BabelTypeCheck",
+      "method": "isVariableDeclarator",
+      "babel_source": "t.isVariableDeclarator(parent)",
+      "parentContext": {
+        "functionName": "extractUseMvcViewModel",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8beaabe2",
+      "type": "ReturnStatement",
+      "babel_source": "return;",
+      "parentContext": {
+        "functionName": "extractUseMvcViewModel",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5b97e4d2",
+      "type": "IfStatement",
+      "condition": "!t.isIdentifier(parent.id)",
+      "babel_source": "if (!t.isIdentifier(parent.id)) return;",
+      "parentContext": {
+        "functionName": "extractUseMvcViewModel",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "098cc3dd",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isIdentifier(parent.id)",
+      "parentContext": {
+        "functionName": "extractUseMvcViewModel",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "80500f78",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(parent.id)",
+      "parentContext": {
+        "functionName": "extractUseMvcViewModel",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8beaabe2",
+      "type": "ReturnStatement",
+      "babel_source": "return;",
+      "parentContext": {
+        "functionName": "extractUseMvcViewModel",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2e530878",
+      "type": "VariableDeclaration",
+      "babel_source": "const viewModelVarName = parent.id.name;",
+      "parentContext": {
+        "functionName": "extractUseMvcViewModel",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "91295015",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "component.useMvcViewModel = component.useMvcViewModel || []",
+      "parentContext": {
+        "functionName": "extractUseMvcViewModel",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2cafa06e",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "component.useMvcViewModel || []",
+      "parentContext": {
+        "functionName": "extractUseMvcViewModel",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractUseMvcViewModel",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "51407457",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    name: viewModelVarName\r\n  }",
+      "parentContext": {
+        "functionName": "extractUseMvcViewModel",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/hooks.cjs"
+  ]
+}

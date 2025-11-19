@@ -1,0 +1,127 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generatePluginComment",
+  "params": [
+    {
+      "name": "pluginMetadata",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generatePluginComment(pluginMetadata) {\r\n  const { pluginName, stateBinding, version } = pluginMetadata;\r\n\r\n  const versionInfo = version ? ` (v${version})` : '';\r\n  const stateInfo = stateBinding.stateType\r\n    ? ` : ${stateBinding.stateType}`\r\n    : '';\r\n\r\n  return `// Plugin: ${pluginName}${versionInfo}, State: ${stateBinding.binding}${stateInfo}`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "e7cf9c59",
+      "type": "VariableDeclaration",
+      "babel_source": "const { pluginName, stateBinding, version } = pluginMetadata;",
+      "parentContext": {
+        "functionName": "generatePluginComment",
+        "functionParams": [
+          "pluginMetadata"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3429bbe1",
+      "type": "VariableDeclaration",
+      "babel_source": "const versionInfo = version ? ` (v${version})` : '';",
+      "parentContext": {
+        "functionName": "generatePluginComment",
+        "functionParams": [
+          "pluginMetadata"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e562ba5e",
+      "type": "ConditionalExpression",
+      "babel_source": "version ? ` (v${version})` : ''",
+      "parentContext": {
+        "functionName": "generatePluginComment",
+        "functionParams": [
+          "pluginMetadata"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d3418e8b",
+      "type": "TemplateLiteral",
+      "babel_source": "` (v${version})`",
+      "parentContext": {
+        "functionName": "generatePluginComment",
+        "functionParams": [
+          "pluginMetadata"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e07fd6a0",
+      "type": "VariableDeclaration",
+      "babel_source": "const stateInfo = stateBinding.stateType\r\n    ? ` : ${stateBinding.stateType}`\r\n    : '';",
+      "parentContext": {
+        "functionName": "generatePluginComment",
+        "functionParams": [
+          "pluginMetadata"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8a6fc6cb",
+      "type": "ConditionalExpression",
+      "babel_source": "stateBinding.stateType\r\n    ? ` : ${stateBinding.stateType}`\r\n    : ''",
+      "parentContext": {
+        "functionName": "generatePluginComment",
+        "functionParams": [
+          "pluginMetadata"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "05387213",
+      "type": "TemplateLiteral",
+      "babel_source": "` : ${stateBinding.stateType}`",
+      "parentContext": {
+        "functionName": "generatePluginComment",
+        "functionParams": [
+          "pluginMetadata"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a5c26cc0",
+      "type": "ReturnStatement",
+      "babel_source": "return `// Plugin: ${pluginName}${versionInfo}, State: ${stateBinding.binding}${stateInfo}`;",
+      "parentContext": {
+        "functionName": "generatePluginComment",
+        "functionParams": [
+          "pluginMetadata"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d58bb45d",
+      "type": "TemplateLiteral",
+      "babel_source": "`// Plugin: ${pluginName}${versionInfo}, State: ${stateBinding.binding}${stateInfo}`",
+      "parentContext": {
+        "functionName": "generatePluginComment",
+        "functionParams": [
+          "pluginMetadata"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/plugin.cjs"
+  ]
+}

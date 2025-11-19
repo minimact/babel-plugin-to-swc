@@ -1,0 +1,803 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateVNodeRepresentation",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "path",
+      "inferredType": "&Path",
+      "defaultValue": null
+    },
+    {
+      "name": "t",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateVNodeRepresentation(node, path, t) {\r\n  if (!t.isJSXElement(node)) {\r\n    return null;\r\n  }\r\n\r\n  const tagName = node.openingElement.name.name;\r\n  const attributes = {};\r\n\r\n  // Extract attributes\r\n  for (const attr of node.openingElement.attributes) {\r\n    if (t.isJSXAttribute(attr) && t.isJSXIdentifier(attr.name)) {\r\n      const attrName = attr.name.name;\r\n\r\n      if (attrName === 'key') continue; // Skip key attribute\r\n\r\n      if (t.isStringLiteral(attr.value)) {\r\n        attributes[attrName] = attr.value.value;\r\n      } else if (t.isJSXExpressionContainer(attr.value)) {\r\n        // For expressions, mark as dynamic\r\n        attributes[attrName] = '__DYNAMIC__';\r\n      } else if (attr.value === null) {\r\n        // Boolean attribute (e.g., <input disabled />)\r\n        attributes[attrName] = true;\r\n      }\r\n    }\r\n  }\r\n\r\n  // Extract children (simplified - only static content and basic structure)\r\n  const children = [];\r\n  if (node.children) {\r\n    for (const child of node.children) {\r\n      if (t.isJSXText(child)) {\r\n        const text = child.value.trim();\r\n        if (text) {\r\n          children.push({\r\n            type: 'text',\r\n            path: child.__minimactPath || `${path}.${children.length + 1}`,\r\n            value: text\r\n          });\r\n        }\r\n      } else if (t.isJSXElement(child)) {\r\n        // Nested element - include path and tag\r\n        children.push({\r\n          type: 'element',\r\n          path: child.__minimactPath || `${path}.${children.length + 1}`,\r\n          tag: child.openingElement.name.name\r\n        });\r\n      } else if (t.isJSXExpressionContainer(child)) {\r\n        // Expression - mark as dynamic\r\n        children.push({\r\n          type: 'expression',\r\n          path: child.__minimactPath || `${path}.${children.length + 1}`,\r\n          value: '__DYNAMIC__'\r\n        });\r\n      }\r\n    }\r\n  }\r\n\r\n  return {\r\n    type: 'element',\r\n    tag: tagName,\r\n    path: path,\r\n    attributes: attributes,\r\n    children: children\r\n  };\r\n}",
+  "body_templates": [
+    {
+      "hash": "6b70e57e",
+      "type": "IfStatement",
+      "condition": "!t.isJSXElement(node)",
+      "babel_source": "if (!t.isJSXElement(node)) {\r\n    return null;\r\n  }",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "590c5219",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isJSXElement(node)",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "606ccdc5",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(node)",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c1132faa",
+      "type": "VariableDeclaration",
+      "babel_source": "const tagName = node.openingElement.name.name;",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f1b7a0f6",
+      "type": "VariableDeclaration",
+      "babel_source": "const attributes = {};",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "44136fa3",
+      "type": "ObjectExpression",
+      "babel_source": "{}",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "962ebcda",
+      "type": "ForOfStatement",
+      "babel_source": "for (const attr of node.openingElement.attributes) {\r\n    if (t.isJSXAttribute(attr) && t.isJSXIdentifier(attr.name)) {\r\n      const attrName = attr.name.name;\r\n\r\n      if (attrName === 'key') continue; // Skip key attribute\r\n\r\n      if (t.isStringLiteral(attr.value)) {\r\n        attributes[attrName] = attr.value.value;\r\n      } else if (t.isJSXExpressionContainer(attr.value)) {\r\n        // For expressions, mark as dynamic\r\n        attributes[attrName] = '__DYNAMIC__';\r\n      } else if (attr.value === null) {\r\n        // Boolean attribute (e.g., <input disabled />)\r\n        attributes[attrName] = true;\r\n      }\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "02ca2e7f",
+      "type": "VariableDeclaration",
+      "babel_source": "const attr",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3a6f1b00",
+      "type": "IfStatement",
+      "condition": "t.isJSXAttribute(attr) && t.isJSXIdentifier(attr.name)",
+      "babel_source": "if (t.isJSXAttribute(attr) && t.isJSXIdentifier(attr.name)) {\r\n      const attrName = attr.name.name;\r\n\r\n      if (attrName === 'key') continue; // Skip key attribute\r\n\r\n      if (t.isStringLiteral(attr.value)) {\r\n        attributes[attrName] = attr.value.value;\r\n      } else if (t.isJSXExpressionContainer(attr.value)) {\r\n        // For expressions, mark as dynamic\r\n        attributes[attrName] = '__DYNAMIC__';\r\n      } else if (attr.value === null) {\r\n        // Boolean attribute (e.g., <input disabled />)\r\n        attributes[attrName] = true;\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bddbb7c9",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isJSXAttribute(attr) && t.isJSXIdentifier(attr.name)",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7468026c",
+      "type": "BabelTypeCheck",
+      "method": "isJSXAttribute",
+      "babel_source": "t.isJSXAttribute(attr)",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "51c2fb7e",
+      "type": "BabelTypeCheck",
+      "method": "isJSXIdentifier",
+      "babel_source": "t.isJSXIdentifier(attr.name)",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e30061cb",
+      "type": "VariableDeclaration",
+      "babel_source": "const attrName = attr.name.name;",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "46965c65",
+      "type": "IfStatement",
+      "condition": "attrName === 'key'",
+      "babel_source": "if (attrName === 'key') continue;",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8cddd544",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "attrName === 'key'",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0bf37874",
+      "type": "ContinueStatement",
+      "babel_source": "continue;",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "06c968e6",
+      "type": "IfStatement",
+      "condition": "t.isStringLiteral(attr.value)",
+      "babel_source": "if (t.isStringLiteral(attr.value)) {\r\n        attributes[attrName] = attr.value.value;\r\n      } else if (t.isJSXExpressionContainer(attr.value)) {\r\n        // For expressions, mark as dynamic\r\n        attributes[attrName] = '__DYNAMIC__';\r\n      } else if (attr.value === null) {\r\n        // Boolean attribute (e.g., <input disabled />)\r\n        attributes[attrName] = true;\r\n      }",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9c3ea6d2",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(attr.value)",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "21eae2c9",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "attributes[attrName] = attr.value.value",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6c13e7d6",
+      "type": "IfStatement",
+      "condition": "t.isJSXExpressionContainer(attr.value)",
+      "babel_source": "if (t.isJSXExpressionContainer(attr.value)) {\r\n        // For expressions, mark as dynamic\r\n        attributes[attrName] = '__DYNAMIC__';\r\n      } else if (attr.value === null) {\r\n        // Boolean attribute (e.g., <input disabled />)\r\n        attributes[attrName] = true;\r\n      }",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7bbf8e47",
+      "type": "BabelTypeCheck",
+      "method": "isJSXExpressionContainer",
+      "babel_source": "t.isJSXExpressionContainer(attr.value)",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cfd3d949",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "attributes[attrName] = '__DYNAMIC__'",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "52480ad0",
+      "type": "IfStatement",
+      "condition": "attr.value === null",
+      "babel_source": "if (attr.value === null) {\r\n        // Boolean attribute (e.g., <input disabled />)\r\n        attributes[attrName] = true;\r\n      }",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4d4661c1",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "attr.value === null",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8e90dffa",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "attributes[attrName] = true",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "57c7254a",
+      "type": "VariableDeclaration",
+      "babel_source": "const children = [];",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c641942d",
+      "type": "IfStatement",
+      "condition": "node.children",
+      "babel_source": "if (node.children) {\r\n    for (const child of node.children) {\r\n      if (t.isJSXText(child)) {\r\n        const text = child.value.trim();\r\n        if (text) {\r\n          children.push({\r\n            type: 'text',\r\n            path: child.__minimactPath || `${path}.${children.length + 1}`,\r\n            value: text\r\n          });\r\n        }\r\n      } else if (t.isJSXElement(child)) {\r\n        // Nested element - include path and tag\r\n        children.push({\r\n          type: 'element',\r\n          path: child.__minimactPath || `${path}.${children.length + 1}`,\r\n          tag: child.openingElement.name.name\r\n        });\r\n      } else if (t.isJSXExpressionContainer(child)) {\r\n        // Expression - mark as dynamic\r\n        children.push({\r\n          type: 'expression',\r\n          path: child.__minimactPath || `${path}.${children.length + 1}`,\r\n          value: '__DYNAMIC__'\r\n        });\r\n      }\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "95bbe60c",
+      "type": "ForOfStatement",
+      "babel_source": "for (const child of node.children) {\r\n      if (t.isJSXText(child)) {\r\n        const text = child.value.trim();\r\n        if (text) {\r\n          children.push({\r\n            type: 'text',\r\n            path: child.__minimactPath || `${path}.${children.length + 1}`,\r\n            value: text\r\n          });\r\n        }\r\n      } else if (t.isJSXElement(child)) {\r\n        // Nested element - include path and tag\r\n        children.push({\r\n          type: 'element',\r\n          path: child.__minimactPath || `${path}.${children.length + 1}`,\r\n          tag: child.openingElement.name.name\r\n        });\r\n      } else if (t.isJSXExpressionContainer(child)) {\r\n        // Expression - mark as dynamic\r\n        children.push({\r\n          type: 'expression',\r\n          path: child.__minimactPath || `${path}.${children.length + 1}`,\r\n          value: '__DYNAMIC__'\r\n        });\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "efdd3930",
+      "type": "VariableDeclaration",
+      "babel_source": "const child",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9b6cbc5e",
+      "type": "IfStatement",
+      "condition": "t.isJSXText(child)",
+      "babel_source": "if (t.isJSXText(child)) {\r\n        const text = child.value.trim();\r\n        if (text) {\r\n          children.push({\r\n            type: 'text',\r\n            path: child.__minimactPath || `${path}.${children.length + 1}`,\r\n            value: text\r\n          });\r\n        }\r\n      } else if (t.isJSXElement(child)) {\r\n        // Nested element - include path and tag\r\n        children.push({\r\n          type: 'element',\r\n          path: child.__minimactPath || `${path}.${children.length + 1}`,\r\n          tag: child.openingElement.name.name\r\n        });\r\n      } else if (t.isJSXExpressionContainer(child)) {\r\n        // Expression - mark as dynamic\r\n        children.push({\r\n          type: 'expression',\r\n          path: child.__minimactPath || `${path}.${children.length + 1}`,\r\n          value: '__DYNAMIC__'\r\n        });\r\n      }",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8cc41c4e",
+      "type": "BabelTypeCheck",
+      "method": "isJSXText",
+      "babel_source": "t.isJSXText(child)",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9fb13957",
+      "type": "VariableDeclaration",
+      "babel_source": "const text = child.value.trim();",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "70672c3f",
+      "type": "IfStatement",
+      "condition": "text",
+      "babel_source": "if (text) {\r\n          children.push({\r\n            type: 'text',\r\n            path: child.__minimactPath || `${path}.${children.length + 1}`,\r\n            value: text\r\n          });\r\n        }",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a122b81e",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n            type: 'text',\r\n            path: child.__minimactPath || `${path}.${children.length + 1}`,\r\n            value: text\r\n          }",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "190d7b69",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "child.__minimactPath || `${path}.${children.length + 1}`",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3e454875",
+      "type": "TemplateLiteral",
+      "babel_source": "`${path}.${children.length + 1}`",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "df5b1b84",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "children.length + 1",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "60b2a4c2",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(child)",
+      "babel_source": "if (t.isJSXElement(child)) {\r\n        // Nested element - include path and tag\r\n        children.push({\r\n          type: 'element',\r\n          path: child.__minimactPath || `${path}.${children.length + 1}`,\r\n          tag: child.openingElement.name.name\r\n        });\r\n      } else if (t.isJSXExpressionContainer(child)) {\r\n        // Expression - mark as dynamic\r\n        children.push({\r\n          type: 'expression',\r\n          path: child.__minimactPath || `${path}.${children.length + 1}`,\r\n          value: '__DYNAMIC__'\r\n        });\r\n      }",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d44bd174",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(child)",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9ce99845",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n          type: 'element',\r\n          path: child.__minimactPath || `${path}.${children.length + 1}`,\r\n          tag: child.openingElement.name.name\r\n        }",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "190d7b69",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "child.__minimactPath || `${path}.${children.length + 1}`",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3e454875",
+      "type": "TemplateLiteral",
+      "babel_source": "`${path}.${children.length + 1}`",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "df5b1b84",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "children.length + 1",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "37556341",
+      "type": "IfStatement",
+      "condition": "t.isJSXExpressionContainer(child)",
+      "babel_source": "if (t.isJSXExpressionContainer(child)) {\r\n        // Expression - mark as dynamic\r\n        children.push({\r\n          type: 'expression',\r\n          path: child.__minimactPath || `${path}.${children.length + 1}`,\r\n          value: '__DYNAMIC__'\r\n        });\r\n      }",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c53c8d32",
+      "type": "BabelTypeCheck",
+      "method": "isJSXExpressionContainer",
+      "babel_source": "t.isJSXExpressionContainer(child)",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5c66f2af",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n          type: 'expression',\r\n          path: child.__minimactPath || `${path}.${children.length + 1}`,\r\n          value: '__DYNAMIC__'\r\n        }",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "190d7b69",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "child.__minimactPath || `${path}.${children.length + 1}`",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3e454875",
+      "type": "TemplateLiteral",
+      "babel_source": "`${path}.${children.length + 1}`",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "df5b1b84",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "children.length + 1",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ddc41759",
+      "type": "ReturnStatement",
+      "babel_source": "return {\r\n    type: 'element',\r\n    tag: tagName,\r\n    path: path,\r\n    attributes: attributes,\r\n    children: children\r\n  };",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8458e8b7",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    type: 'element',\r\n    tag: tagName,\r\n    path: path,\r\n    attributes: attributes,\r\n    children: children\r\n  }",
+      "parentContext": {
+        "functionName": "generateVNodeRepresentation",
+        "functionParams": [
+          "node",
+          "path",
+          "t"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "utils/pathAssignment.cjs"
+  ]
+}

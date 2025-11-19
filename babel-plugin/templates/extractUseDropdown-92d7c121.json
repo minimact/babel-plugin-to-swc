@@ -1,0 +1,200 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractUseDropdown",
+  "params": [
+    {
+      "name": "path",
+      "inferredType": "&Path",
+      "defaultValue": null
+    },
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractUseDropdown(path, component) {\r\n  const parent = path.parent;\r\n\r\n  if (!t.isVariableDeclarator(parent)) return;\r\n\r\n  const dropdownName = parent.id.name;\r\n  const routeArg = path.node.arguments[0];\r\n\r\n  let routeReference = null;\r\n\r\n  // Try to extract route reference (e.g., Routes.Api.Units.GetAll)\r\n  if (routeArg && t.isMemberExpression(routeArg)) {\r\n    routeReference = generateCSharpExpression(routeArg);\r\n  }\r\n\r\n  component.useDropdown.push({\r\n    name: dropdownName,\r\n    route: routeReference\r\n  });\r\n}",
+  "body_templates": [
+    {
+      "hash": "356fe96c",
+      "type": "VariableDeclaration",
+      "babel_source": "const parent = path.parent;",
+      "parentContext": {
+        "functionName": "extractUseDropdown",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1cfe78c4",
+      "type": "IfStatement",
+      "condition": "!t.isVariableDeclarator(parent)",
+      "babel_source": "if (!t.isVariableDeclarator(parent)) return;",
+      "parentContext": {
+        "functionName": "extractUseDropdown",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dc772752",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isVariableDeclarator(parent)",
+      "parentContext": {
+        "functionName": "extractUseDropdown",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "27a39ea7",
+      "type": "BabelTypeCheck",
+      "method": "isVariableDeclarator",
+      "babel_source": "t.isVariableDeclarator(parent)",
+      "parentContext": {
+        "functionName": "extractUseDropdown",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8beaabe2",
+      "type": "ReturnStatement",
+      "babel_source": "return;",
+      "parentContext": {
+        "functionName": "extractUseDropdown",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "50b22d6f",
+      "type": "VariableDeclaration",
+      "babel_source": "const dropdownName = parent.id.name;",
+      "parentContext": {
+        "functionName": "extractUseDropdown",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5d3fc575",
+      "type": "VariableDeclaration",
+      "babel_source": "const routeArg = path.node.arguments[0];",
+      "parentContext": {
+        "functionName": "extractUseDropdown",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "09952d0a",
+      "type": "VariableDeclaration",
+      "babel_source": "let routeReference = null;",
+      "parentContext": {
+        "functionName": "extractUseDropdown",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "62b95ab7",
+      "type": "IfStatement",
+      "condition": "routeArg && t.isMemberExpression(routeArg)",
+      "babel_source": "if (routeArg && t.isMemberExpression(routeArg)) {\r\n    routeReference = generateCSharpExpression(routeArg);\r\n  }",
+      "parentContext": {
+        "functionName": "extractUseDropdown",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "697bfbea",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "routeArg && t.isMemberExpression(routeArg)",
+      "parentContext": {
+        "functionName": "extractUseDropdown",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3e8a8f28",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(routeArg)",
+      "parentContext": {
+        "functionName": "extractUseDropdown",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0e06aba6",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "routeReference = generateCSharpExpression(routeArg)",
+      "parentContext": {
+        "functionName": "extractUseDropdown",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4c9ef706",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    name: dropdownName,\r\n    route: routeReference\r\n  }",
+      "parentContext": {
+        "functionName": "extractUseDropdown",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/hooks.cjs"
+  ]
+}

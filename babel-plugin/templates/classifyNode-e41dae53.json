@@ -1,0 +1,179 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "classifyNode",
+  "params": [
+    {
+      "name": "deps",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function classifyNode(deps) {\r\n  if (deps.size === 0) {\r\n    return 'static';\r\n  }\r\n\r\n  const types = new Set([...deps].map(d => d.type));\r\n\r\n  if (types.size === 1) {\r\n    return types.has('client') ? 'client' : 'server';\r\n  }\r\n\r\n  return 'hybrid'; // Mixed dependencies\r\n}",
+  "body_templates": [
+    {
+      "hash": "fe96ffe6",
+      "type": "IfStatement",
+      "condition": "deps.size === 0",
+      "babel_source": "if (deps.size === 0) {\r\n    return 'static';\r\n  }",
+      "parentContext": {
+        "functionName": "classifyNode",
+        "functionParams": [
+          "deps"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2c1773ce",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "deps.size === 0",
+      "parentContext": {
+        "functionName": "classifyNode",
+        "functionParams": [
+          "deps"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1393b356",
+      "type": "ReturnStatement",
+      "babel_source": "return 'static';",
+      "parentContext": {
+        "functionName": "classifyNode",
+        "functionParams": [
+          "deps"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a17bd0a9",
+      "type": "VariableDeclaration",
+      "babel_source": "const types = new Set([...deps].map(d => d.type));",
+      "parentContext": {
+        "functionName": "classifyNode",
+        "functionParams": [
+          "deps"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5086b497",
+      "type": "NewExpression",
+      "babel_source": "new Set([...deps].map(d => d.type))",
+      "parentContext": {
+        "functionName": "classifyNode",
+        "functionParams": [
+          "deps"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5ca90e22",
+      "type": "ArrayExpression",
+      "babel_source": "[...deps]",
+      "parentContext": {
+        "functionName": "classifyNode",
+        "functionParams": [
+          "deps"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "184a416c",
+      "type": "SpreadElement",
+      "babel_source": "...deps",
+      "parentContext": {
+        "functionName": "classifyNode",
+        "functionParams": [
+          "deps"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fd3b5ab6",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "d => d.type",
+      "parentContext": {
+        "functionName": "classifyNode",
+        "functionParams": [
+          "deps"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e334f510",
+      "type": "IfStatement",
+      "condition": "types.size === 1",
+      "babel_source": "if (types.size === 1) {\r\n    return types.has('client') ? 'client' : 'server';\r\n  }",
+      "parentContext": {
+        "functionName": "classifyNode",
+        "functionParams": [
+          "deps"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a0c4e5b9",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "types.size === 1",
+      "parentContext": {
+        "functionName": "classifyNode",
+        "functionParams": [
+          "deps"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8a6a6c21",
+      "type": "ReturnStatement",
+      "babel_source": "return types.has('client') ? 'client' : 'server';",
+      "parentContext": {
+        "functionName": "classifyNode",
+        "functionParams": [
+          "deps"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "da61137a",
+      "type": "ConditionalExpression",
+      "babel_source": "types.has('client') ? 'client' : 'server'",
+      "parentContext": {
+        "functionName": "classifyNode",
+        "functionParams": [
+          "deps"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b634e71a",
+      "type": "ReturnStatement",
+      "babel_source": "return 'hybrid';",
+      "parentContext": {
+        "functionName": "classifyNode",
+        "functionParams": [
+          "deps"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/classification.cjs"
+  ]
+}

@@ -1,0 +1,2359 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractEventHandler",
+  "params": [
+    {
+      "name": "value",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractEventHandler(value, component) {\r\n  if (t.isStringLiteral(value)) {\r\n    return value.value;\r\n  }\r\n\r\n  if (t.isJSXExpressionContainer(value)) {\r\n    const expr = value.expression;\r\n\r\n    if (t.isArrowFunctionExpression(expr) || t.isFunctionExpression(expr)) {\r\n      // Inline arrow function - extract to named method\r\n      // Use combined count of both server and client handlers for unique names\r\n      const totalHandlers = component.eventHandlers.length + (component.clientHandlers ? component.clientHandlers.length : 0);\r\n      const handlerName = `Handle${totalHandlers}`;\r\n\r\n      // Check if the function is async\r\n      const isAsync = expr.async || false;\r\n\r\n      // Detect curried functions (functions that return functions)\r\n      // Pattern: (e) => (id) => action(id)\r\n      // This is invalid for event handlers because the returned function is never called\r\n      if (t.isArrowFunctionExpression(expr.body) || t.isFunctionExpression(expr.body)) {\r\n        // Generate a handler that throws a helpful error\r\n        component.eventHandlers.push({\r\n          name: handlerName,\r\n          body: null, // Will be handled specially in component generator\r\n          params: expr.params,\r\n          capturedParams: [],\r\n          isAsync: false,\r\n          isCurriedError: true // Flag to generate error throw\r\n        });\r\n\r\n        return handlerName;\r\n      }\r\n\r\n      // Simplify common pattern: (e) => func(e.target.value)\r\n      // Transform to: (value) => func(value)\r\n      let body = expr.body;\r\n      let params = expr.params;\r\n\r\n      if (t.isCallExpression(body) && params.length === 1 && t.isIdentifier(params[0])) {\r\n        const eventParam = params[0].name; // e.g., \"e\"\r\n        const args = body.arguments;\r\n\r\n        // Check if any argument is e.target.value\r\n        const transformedArgs = args.map(arg => {\r\n          if (t.isMemberExpression(arg) &&\r\n              t.isMemberExpression(arg.object) &&\r\n              t.isIdentifier(arg.object.object, { name: eventParam }) &&\r\n              t.isIdentifier(arg.object.property, { name: 'target' }) &&\r\n              t.isIdentifier(arg.property, { name: 'value' })) {\r\n            // Replace e.target.value with direct value parameter\r\n            return t.identifier('value');\r\n          }\r\n          return arg;\r\n        });\r\n\r\n        // If we transformed any args, update the body and param name\r\n        if (transformedArgs.some((arg, i) => arg !== args[i])) {\r\n          body = t.callExpression(body.callee, transformedArgs);\r\n          params = [t.identifier('value')];\r\n        }\r\n      }\r\n\r\n      // Check if we're inside a .map() context and capture those variables\r\n      const capturedParams = component.currentMapContext ? component.currentMapContext.params : [];\r\n\r\n      // Handle parameter destructuring\r\n      // Convert ({ target: { value } }) => ... into (e) => ... with unpacking in body\r\n      const hasDestructuring = params.some(p => t.isObjectPattern(p));\r\n      let processedBody = body;\r\n      let processedParams = params;\r\n\r\n      if (hasDestructuring && params.length === 1 && t.isObjectPattern(params[0])) {\r\n        // Extract destructured properties\r\n        const destructuringStatements = [];\r\n        const eventParam = t.identifier('e');\r\n\r\n        function extractDestructured(pattern, path = []) {\r\n          if (t.isObjectPattern(pattern)) {\r\n            for (const prop of pattern.properties) {\r\n              if (t.isObjectProperty(prop)) {\r\n                const key = t.isIdentifier(prop.key) ? prop.key.name : null;\r\n                if (key && t.isIdentifier(prop.value)) {\r\n                  // Simple: { value } or { target: { value } }\r\n                  const varName = prop.value.name;\r\n                  const accessPath = [...path, key];\r\n                  destructuringStatements.push({ varName, accessPath });\r\n                } else if (key && t.isObjectPattern(prop.value)) {\r\n                  // Nested: { target: { value } }\r\n                  extractDestructured(prop.value, [...path, key]);\r\n                }\r\n              }\r\n            }\r\n          }\r\n        }\r\n\r\n        extractDestructured(params[0]);\r\n        processedParams = [eventParam];\r\n\r\n        // Prepend destructuring assignments to body\r\n        if (destructuringStatements.length > 0) {\r\n          const assignments = destructuringStatements.map(({ varName, accessPath }) => {\r\n            // Build e.Target.Value access chain\r\n            let access = eventParam;\r\n            for (const key of accessPath) {\r\n              const capitalizedKey = key.charAt(0).toUpperCase() + key.slice(1);\r\n              access = t.memberExpression(access, t.identifier(capitalizedKey));\r\n            }\r\n            return t.variableDeclaration('var', [\r\n              t.variableDeclarator(t.identifier(varName), access)\r\n            ]);\r\n          });\r\n\r\n          // Wrap body in block statement with destructuring\r\n          if (t.isBlockStatement(body)) {\r\n            processedBody = t.blockStatement([...assignments, ...body.body]);\r\n          } else {\r\n            processedBody = t.blockStatement([...assignments, t.expressionStatement(body)]);\r\n          }\r\n        }\r\n      }\r\n\r\n      // Check if this is a client-only handler\r\n      const isClientOnly = isClientOnlyHandler(processedBody);\r\n\r\n      // 🔥 NEW: Import helper functions from hooks.cjs\r\n      const { analyzeHookUsage, transformHandlerFunction } = require('./hooks.cjs');\r\n\r\n      // 🔥 NEW: ALWAYS generate client-side handler\r\n      const hookCalls = analyzeHookUsage(t.arrowFunctionExpression(processedParams, processedBody));\r\n\r\n      // Transform to regular function with hook mappings\r\n      const transformedFunction = transformHandlerFunction(processedBody, processedParams, hookCalls);\r\n      const jsCode = generate(transformedFunction).code;\r\n\r\n      // Add to clientHandlers collection\r\n      if (!component.clientHandlers) {\r\n        component.clientHandlers = [];\r\n      }\r\n      component.clientHandlers.push({\r\n        name: handlerName,\r\n        jsCode: jsCode,\r\n        hookCalls: hookCalls\r\n      });\r\n\r\n      // 🔥 ALSO add to eventHandlers if it modifies state (not client-only)\r\n      if (!isClientOnly) {\r\n        // Server handler - add to eventHandlers collection\r\n        component.eventHandlers.push({\r\n          name: handlerName,\r\n          body: processedBody,\r\n          params: processedParams,\r\n          capturedParams: capturedParams,  // e.g., ['item', 'index']\r\n          isAsync: isAsync  // Track if handler is async\r\n        });\r\n      }\r\n\r\n      // Return handler registration string\r\n      // If there are captured params, append them as colon-separated interpolations\r\n      // Format: \"Handle0:{item}:{index}\" - matches client's existing \"Method:arg1:arg2\" parser\r\n      if (capturedParams.length > 0) {\r\n        const capturedRefs = capturedParams.map(p => `{${p}}`).join(':');\r\n        return `${handlerName}:${capturedRefs}`;\r\n      }\r\n\r\n      return handlerName;\r\n    }\r\n\r\n    if (t.isIdentifier(expr)) {\r\n      return expr.name;\r\n    }\r\n\r\n    if (t.isCallExpression(expr)) {\r\n      // () => someMethod() - extract\r\n      const handlerName = `Handle${component.eventHandlers.length}`;\r\n\r\n      // Check if we're inside a .map() context and capture those variables\r\n      const capturedParams = component.currentMapContext ? component.currentMapContext.params : [];\r\n\r\n      component.eventHandlers.push({\r\n        name: handlerName,\r\n        body: expr,\r\n        capturedParams: capturedParams  // e.g., ['item', 'index']\r\n      });\r\n\r\n      // Return handler registration string\r\n      // If there are captured params, append them as colon-separated interpolations\r\n      // Format: \"Handle0:{item}:{index}\" - matches client's existing \"Method:arg1:arg2\" parser\r\n      if (capturedParams.length > 0) {\r\n        const capturedRefs = capturedParams.map(p => `{${p}}`).join(':');\r\n        return `${handlerName}:${capturedRefs}`;\r\n      }\r\n\r\n      return handlerName;\r\n    }\r\n  }\r\n\r\n  return 'UnknownHandler';\r\n}",
+  "body_templates": [
+    {
+      "hash": "bb7709de",
+      "type": "IfStatement",
+      "condition": "t.isStringLiteral(value)",
+      "babel_source": "if (t.isStringLiteral(value)) {\r\n    return value.value;\r\n  }",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a835f893",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(value)",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4d93185a",
+      "type": "ReturnStatement",
+      "babel_source": "return value.value;",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "80e79cc1",
+      "type": "IfStatement",
+      "condition": "t.isJSXExpressionContainer(value)",
+      "babel_source": "if (t.isJSXExpressionContainer(value)) {\r\n    const expr = value.expression;\r\n\r\n    if (t.isArrowFunctionExpression(expr) || t.isFunctionExpression(expr)) {\r\n      // Inline arrow function - extract to named method\r\n      // Use combined count of both server and client handlers for unique names\r\n      const totalHandlers = component.eventHandlers.length + (component.clientHandlers ? component.clientHandlers.length : 0);\r\n      const handlerName = `Handle${totalHandlers}`;\r\n\r\n      // Check if the function is async\r\n      const isAsync = expr.async || false;\r\n\r\n      // Detect curried functions (functions that return functions)\r\n      // Pattern: (e) => (id) => action(id)\r\n      // This is invalid for event handlers because the returned function is never called\r\n      if (t.isArrowFunctionExpression(expr.body) || t.isFunctionExpression(expr.body)) {\r\n        // Generate a handler that throws a helpful error\r\n        component.eventHandlers.push({\r\n          name: handlerName,\r\n          body: null, // Will be handled specially in component generator\r\n          params: expr.params,\r\n          capturedParams: [],\r\n          isAsync: false,\r\n          isCurriedError: true // Flag to generate error throw\r\n        });\r\n\r\n        return handlerName;\r\n      }\r\n\r\n      // Simplify common pattern: (e) => func(e.target.value)\r\n      // Transform to: (value) => func(value)\r\n      let body = expr.body;\r\n      let params = expr.params;\r\n\r\n      if (t.isCallExpression(body) && params.length === 1 && t.isIdentifier(params[0])) {\r\n        const eventParam = params[0].name; // e.g., \"e\"\r\n        const args = body.arguments;\r\n\r\n        // Check if any argument is e.target.value\r\n        const transformedArgs = args.map(arg => {\r\n          if (t.isMemberExpression(arg) &&\r\n              t.isMemberExpression(arg.object) &&\r\n              t.isIdentifier(arg.object.object, { name: eventParam }) &&\r\n              t.isIdentifier(arg.object.property, { name: 'target' }) &&\r\n              t.isIdentifier(arg.property, { name: 'value' })) {\r\n            // Replace e.target.value with direct value parameter\r\n            return t.identifier('value');\r\n          }\r\n          return arg;\r\n        });\r\n\r\n        // If we transformed any args, update the body and param name\r\n        if (transformedArgs.some((arg, i) => arg !== args[i])) {\r\n          body = t.callExpression(body.callee, transformedArgs);\r\n          params = [t.identifier('value')];\r\n        }\r\n      }\r\n\r\n      // Check if we're inside a .map() context and capture those variables\r\n      const capturedParams = component.currentMapContext ? component.currentMapContext.params : [];\r\n\r\n      // Handle parameter destructuring\r\n      // Convert ({ target: { value } }) => ... into (e) => ... with unpacking in body\r\n      const hasDestructuring = params.some(p => t.isObjectPattern(p));\r\n      let processedBody = body;\r\n      let processedParams = params;\r\n\r\n      if (hasDestructuring && params.length === 1 && t.isObjectPattern(params[0])) {\r\n        // Extract destructured properties\r\n        const destructuringStatements = [];\r\n        const eventParam = t.identifier('e');\r\n\r\n        function extractDestructured(pattern, path = []) {\r\n          if (t.isObjectPattern(pattern)) {\r\n            for (const prop of pattern.properties) {\r\n              if (t.isObjectProperty(prop)) {\r\n                const key = t.isIdentifier(prop.key) ? prop.key.name : null;\r\n                if (key && t.isIdentifier(prop.value)) {\r\n                  // Simple: { value } or { target: { value } }\r\n                  const varName = prop.value.name;\r\n                  const accessPath = [...path, key];\r\n                  destructuringStatements.push({ varName, accessPath });\r\n                } else if (key && t.isObjectPattern(prop.value)) {\r\n                  // Nested: { target: { value } }\r\n                  extractDestructured(prop.value, [...path, key]);\r\n                }\r\n              }\r\n            }\r\n          }\r\n        }\r\n\r\n        extractDestructured(params[0]);\r\n        processedParams = [eventParam];\r\n\r\n        // Prepend destructuring assignments to body\r\n        if (destructuringStatements.length > 0) {\r\n          const assignments = destructuringStatements.map(({ varName, accessPath }) => {\r\n            // Build e.Target.Value access chain\r\n            let access = eventParam;\r\n            for (const key of accessPath) {\r\n              const capitalizedKey = key.charAt(0).toUpperCase() + key.slice(1);\r\n              access = t.memberExpression(access, t.identifier(capitalizedKey));\r\n            }\r\n            return t.variableDeclaration('var', [\r\n              t.variableDeclarator(t.identifier(varName), access)\r\n            ]);\r\n          });\r\n\r\n          // Wrap body in block statement with destructuring\r\n          if (t.isBlockStatement(body)) {\r\n            processedBody = t.blockStatement([...assignments, ...body.body]);\r\n          } else {\r\n            processedBody = t.blockStatement([...assignments, t.expressionStatement(body)]);\r\n          }\r\n        }\r\n      }\r\n\r\n      // Check if this is a client-only handler\r\n      const isClientOnly = isClientOnlyHandler(processedBody);\r\n\r\n      // 🔥 NEW: Import helper functions from hooks.cjs\r\n      const { analyzeHookUsage, transformHandlerFunction } = require('./hooks.cjs');\r\n\r\n      // 🔥 NEW: ALWAYS generate client-side handler\r\n      const hookCalls = analyzeHookUsage(t.arrowFunctionExpression(processedParams, processedBody));\r\n\r\n      // Transform to regular function with hook mappings\r\n      const transformedFunction = transformHandlerFunction(processedBody, processedParams, hookCalls);\r\n      const jsCode = generate(transformedFunction).code;\r\n\r\n      // Add to clientHandlers collection\r\n      if (!component.clientHandlers) {\r\n        component.clientHandlers = [];\r\n      }\r\n      component.clientHandlers.push({\r\n        name: handlerName,\r\n        jsCode: jsCode,\r\n        hookCalls: hookCalls\r\n      });\r\n\r\n      // 🔥 ALSO add to eventHandlers if it modifies state (not client-only)\r\n      if (!isClientOnly) {\r\n        // Server handler - add to eventHandlers collection\r\n        component.eventHandlers.push({\r\n          name: handlerName,\r\n          body: processedBody,\r\n          params: processedParams,\r\n          capturedParams: capturedParams,  // e.g., ['item', 'index']\r\n          isAsync: isAsync  // Track if handler is async\r\n        });\r\n      }\r\n\r\n      // Return handler registration string\r\n      // If there are captured params, append them as colon-separated interpolations\r\n      // Format: \"Handle0:{item}:{index}\" - matches client's existing \"Method:arg1:arg2\" parser\r\n      if (capturedParams.length > 0) {\r\n        const capturedRefs = capturedParams.map(p => `{${p}}`).join(':');\r\n        return `${handlerName}:${capturedRefs}`;\r\n      }\r\n\r\n      return handlerName;\r\n    }\r\n\r\n    if (t.isIdentifier(expr)) {\r\n      return expr.name;\r\n    }\r\n\r\n    if (t.isCallExpression(expr)) {\r\n      // () => someMethod() - extract\r\n      const handlerName = `Handle${component.eventHandlers.length}`;\r\n\r\n      // Check if we're inside a .map() context and capture those variables\r\n      const capturedParams = component.currentMapContext ? component.currentMapContext.params : [];\r\n\r\n      component.eventHandlers.push({\r\n        name: handlerName,\r\n        body: expr,\r\n        capturedParams: capturedParams  // e.g., ['item', 'index']\r\n      });\r\n\r\n      // Return handler registration string\r\n      // If there are captured params, append them as colon-separated interpolations\r\n      // Format: \"Handle0:{item}:{index}\" - matches client's existing \"Method:arg1:arg2\" parser\r\n      if (capturedParams.length > 0) {\r\n        const capturedRefs = capturedParams.map(p => `{${p}}`).join(':');\r\n        return `${handlerName}:${capturedRefs}`;\r\n      }\r\n\r\n      return handlerName;\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "846bea62",
+      "type": "BabelTypeCheck",
+      "method": "isJSXExpressionContainer",
+      "babel_source": "t.isJSXExpressionContainer(value)",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "77208ca7",
+      "type": "VariableDeclaration",
+      "babel_source": "const expr = value.expression;",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e8a3f193",
+      "type": "IfStatement",
+      "condition": "t.isArrowFunctionExpression(expr) || t.isFunctionExpression(expr)",
+      "babel_source": "if (t.isArrowFunctionExpression(expr) || t.isFunctionExpression(expr)) {\r\n      // Inline arrow function - extract to named method\r\n      // Use combined count of both server and client handlers for unique names\r\n      const totalHandlers = component.eventHandlers.length + (component.clientHandlers ? component.clientHandlers.length : 0);\r\n      const handlerName = `Handle${totalHandlers}`;\r\n\r\n      // Check if the function is async\r\n      const isAsync = expr.async || false;\r\n\r\n      // Detect curried functions (functions that return functions)\r\n      // Pattern: (e) => (id) => action(id)\r\n      // This is invalid for event handlers because the returned function is never called\r\n      if (t.isArrowFunctionExpression(expr.body) || t.isFunctionExpression(expr.body)) {\r\n        // Generate a handler that throws a helpful error\r\n        component.eventHandlers.push({\r\n          name: handlerName,\r\n          body: null, // Will be handled specially in component generator\r\n          params: expr.params,\r\n          capturedParams: [],\r\n          isAsync: false,\r\n          isCurriedError: true // Flag to generate error throw\r\n        });\r\n\r\n        return handlerName;\r\n      }\r\n\r\n      // Simplify common pattern: (e) => func(e.target.value)\r\n      // Transform to: (value) => func(value)\r\n      let body = expr.body;\r\n      let params = expr.params;\r\n\r\n      if (t.isCallExpression(body) && params.length === 1 && t.isIdentifier(params[0])) {\r\n        const eventParam = params[0].name; // e.g., \"e\"\r\n        const args = body.arguments;\r\n\r\n        // Check if any argument is e.target.value\r\n        const transformedArgs = args.map(arg => {\r\n          if (t.isMemberExpression(arg) &&\r\n              t.isMemberExpression(arg.object) &&\r\n              t.isIdentifier(arg.object.object, { name: eventParam }) &&\r\n              t.isIdentifier(arg.object.property, { name: 'target' }) &&\r\n              t.isIdentifier(arg.property, { name: 'value' })) {\r\n            // Replace e.target.value with direct value parameter\r\n            return t.identifier('value');\r\n          }\r\n          return arg;\r\n        });\r\n\r\n        // If we transformed any args, update the body and param name\r\n        if (transformedArgs.some((arg, i) => arg !== args[i])) {\r\n          body = t.callExpression(body.callee, transformedArgs);\r\n          params = [t.identifier('value')];\r\n        }\r\n      }\r\n\r\n      // Check if we're inside a .map() context and capture those variables\r\n      const capturedParams = component.currentMapContext ? component.currentMapContext.params : [];\r\n\r\n      // Handle parameter destructuring\r\n      // Convert ({ target: { value } }) => ... into (e) => ... with unpacking in body\r\n      const hasDestructuring = params.some(p => t.isObjectPattern(p));\r\n      let processedBody = body;\r\n      let processedParams = params;\r\n\r\n      if (hasDestructuring && params.length === 1 && t.isObjectPattern(params[0])) {\r\n        // Extract destructured properties\r\n        const destructuringStatements = [];\r\n        const eventParam = t.identifier('e');\r\n\r\n        function extractDestructured(pattern, path = []) {\r\n          if (t.isObjectPattern(pattern)) {\r\n            for (const prop of pattern.properties) {\r\n              if (t.isObjectProperty(prop)) {\r\n                const key = t.isIdentifier(prop.key) ? prop.key.name : null;\r\n                if (key && t.isIdentifier(prop.value)) {\r\n                  // Simple: { value } or { target: { value } }\r\n                  const varName = prop.value.name;\r\n                  const accessPath = [...path, key];\r\n                  destructuringStatements.push({ varName, accessPath });\r\n                } else if (key && t.isObjectPattern(prop.value)) {\r\n                  // Nested: { target: { value } }\r\n                  extractDestructured(prop.value, [...path, key]);\r\n                }\r\n              }\r\n            }\r\n          }\r\n        }\r\n\r\n        extractDestructured(params[0]);\r\n        processedParams = [eventParam];\r\n\r\n        // Prepend destructuring assignments to body\r\n        if (destructuringStatements.length > 0) {\r\n          const assignments = destructuringStatements.map(({ varName, accessPath }) => {\r\n            // Build e.Target.Value access chain\r\n            let access = eventParam;\r\n            for (const key of accessPath) {\r\n              const capitalizedKey = key.charAt(0).toUpperCase() + key.slice(1);\r\n              access = t.memberExpression(access, t.identifier(capitalizedKey));\r\n            }\r\n            return t.variableDeclaration('var', [\r\n              t.variableDeclarator(t.identifier(varName), access)\r\n            ]);\r\n          });\r\n\r\n          // Wrap body in block statement with destructuring\r\n          if (t.isBlockStatement(body)) {\r\n            processedBody = t.blockStatement([...assignments, ...body.body]);\r\n          } else {\r\n            processedBody = t.blockStatement([...assignments, t.expressionStatement(body)]);\r\n          }\r\n        }\r\n      }\r\n\r\n      // Check if this is a client-only handler\r\n      const isClientOnly = isClientOnlyHandler(processedBody);\r\n\r\n      // 🔥 NEW: Import helper functions from hooks.cjs\r\n      const { analyzeHookUsage, transformHandlerFunction } = require('./hooks.cjs');\r\n\r\n      // 🔥 NEW: ALWAYS generate client-side handler\r\n      const hookCalls = analyzeHookUsage(t.arrowFunctionExpression(processedParams, processedBody));\r\n\r\n      // Transform to regular function with hook mappings\r\n      const transformedFunction = transformHandlerFunction(processedBody, processedParams, hookCalls);\r\n      const jsCode = generate(transformedFunction).code;\r\n\r\n      // Add to clientHandlers collection\r\n      if (!component.clientHandlers) {\r\n        component.clientHandlers = [];\r\n      }\r\n      component.clientHandlers.push({\r\n        name: handlerName,\r\n        jsCode: jsCode,\r\n        hookCalls: hookCalls\r\n      });\r\n\r\n      // 🔥 ALSO add to eventHandlers if it modifies state (not client-only)\r\n      if (!isClientOnly) {\r\n        // Server handler - add to eventHandlers collection\r\n        component.eventHandlers.push({\r\n          name: handlerName,\r\n          body: processedBody,\r\n          params: processedParams,\r\n          capturedParams: capturedParams,  // e.g., ['item', 'index']\r\n          isAsync: isAsync  // Track if handler is async\r\n        });\r\n      }\r\n\r\n      // Return handler registration string\r\n      // If there are captured params, append them as colon-separated interpolations\r\n      // Format: \"Handle0:{item}:{index}\" - matches client's existing \"Method:arg1:arg2\" parser\r\n      if (capturedParams.length > 0) {\r\n        const capturedRefs = capturedParams.map(p => `{${p}}`).join(':');\r\n        return `${handlerName}:${capturedRefs}`;\r\n      }\r\n\r\n      return handlerName;\r\n    }",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5ceec9a6",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isArrowFunctionExpression(expr) || t.isFunctionExpression(expr)",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bdd21b2b",
+      "type": "BabelTypeCheck",
+      "method": "isArrowFunctionExpression",
+      "babel_source": "t.isArrowFunctionExpression(expr)",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "857d3805",
+      "type": "BabelTypeCheck",
+      "method": "isFunctionExpression",
+      "babel_source": "t.isFunctionExpression(expr)",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c2a009fb",
+      "type": "VariableDeclaration",
+      "babel_source": "const totalHandlers = component.eventHandlers.length + (component.clientHandlers ? component.clientHandlers.length : 0);",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3941ab72",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "component.eventHandlers.length + (component.clientHandlers ? component.clientHandlers.length : 0)",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "783fbe88",
+      "type": "ConditionalExpression",
+      "babel_source": "component.clientHandlers ? component.clientHandlers.length : 0",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d3e542ae",
+      "type": "VariableDeclaration",
+      "babel_source": "const handlerName = `Handle${totalHandlers}`;",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d5384781",
+      "type": "TemplateLiteral",
+      "babel_source": "`Handle${totalHandlers}`",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "da0a932c",
+      "type": "VariableDeclaration",
+      "babel_source": "const isAsync = expr.async || false;",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "83176106",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "expr.async || false",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "acb5bf4e",
+      "type": "IfStatement",
+      "condition": "t.isArrowFunctionExpression(expr.body) || t.isFunctionExpression(expr.body)",
+      "babel_source": "if (t.isArrowFunctionExpression(expr.body) || t.isFunctionExpression(expr.body)) {\r\n        // Generate a handler that throws a helpful error\r\n        component.eventHandlers.push({\r\n          name: handlerName,\r\n          body: null, // Will be handled specially in component generator\r\n          params: expr.params,\r\n          capturedParams: [],\r\n          isAsync: false,\r\n          isCurriedError: true // Flag to generate error throw\r\n        });\r\n\r\n        return handlerName;\r\n      }",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cc28341d",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isArrowFunctionExpression(expr.body) || t.isFunctionExpression(expr.body)",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c6000458",
+      "type": "BabelTypeCheck",
+      "method": "isArrowFunctionExpression",
+      "babel_source": "t.isArrowFunctionExpression(expr.body)",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ce492be8",
+      "type": "BabelTypeCheck",
+      "method": "isFunctionExpression",
+      "babel_source": "t.isFunctionExpression(expr.body)",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ced57c0c",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n          name: handlerName,\r\n          body: null, // Will be handled specially in component generator\r\n          params: expr.params,\r\n          capturedParams: [],\r\n          isAsync: false,\r\n          isCurriedError: true // Flag to generate error throw\r\n        }",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6564a5fe",
+      "type": "ReturnStatement",
+      "babel_source": "return handlerName;",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "afe34e03",
+      "type": "VariableDeclaration",
+      "babel_source": "let body = expr.body;",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1a1a04b9",
+      "type": "VariableDeclaration",
+      "babel_source": "let params = expr.params;",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d050c823",
+      "type": "IfStatement",
+      "condition": "t.isCallExpression(body) && params.length === 1 && t.isIdentifier(params[0])",
+      "babel_source": "if (t.isCallExpression(body) && params.length === 1 && t.isIdentifier(params[0])) {\r\n        const eventParam = params[0].name; // e.g., \"e\"\r\n        const args = body.arguments;\r\n\r\n        // Check if any argument is e.target.value\r\n        const transformedArgs = args.map(arg => {\r\n          if (t.isMemberExpression(arg) &&\r\n              t.isMemberExpression(arg.object) &&\r\n              t.isIdentifier(arg.object.object, { name: eventParam }) &&\r\n              t.isIdentifier(arg.object.property, { name: 'target' }) &&\r\n              t.isIdentifier(arg.property, { name: 'value' })) {\r\n            // Replace e.target.value with direct value parameter\r\n            return t.identifier('value');\r\n          }\r\n          return arg;\r\n        });\r\n\r\n        // If we transformed any args, update the body and param name\r\n        if (transformedArgs.some((arg, i) => arg !== args[i])) {\r\n          body = t.callExpression(body.callee, transformedArgs);\r\n          params = [t.identifier('value')];\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6a99e323",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isCallExpression(body) && params.length === 1 && t.isIdentifier(params[0])",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4e32a17d",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isCallExpression(body) && params.length === 1",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f64a52a9",
+      "type": "BabelTypeCheck",
+      "method": "isCallExpression",
+      "babel_source": "t.isCallExpression(body)",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ea8ad1ae",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "params.length === 1",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "046b67ec",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(params[0])",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "653812ef",
+      "type": "VariableDeclaration",
+      "babel_source": "const eventParam = params[0].name;",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6df26ee9",
+      "type": "VariableDeclaration",
+      "babel_source": "const args = body.arguments;",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "878f4d1c",
+      "type": "VariableDeclaration",
+      "babel_source": "const transformedArgs = args.map(arg => {\r\n          if (t.isMemberExpression(arg) &&\r\n              t.isMemberExpression(arg.object) &&\r\n              t.isIdentifier(arg.object.object, { name: eventParam }) &&\r\n              t.isIdentifier(arg.object.property, { name: 'target' }) &&\r\n              t.isIdentifier(arg.property, { name: 'value' })) {\r\n            // Replace e.target.value with direct value parameter\r\n            return t.identifier('value');\r\n          }\r\n          return arg;\r\n        });",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "38d45c18",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "arg => {\r\n          if (t.isMemberExpression(arg) &&\r\n              t.isMemberExpression(arg.object) &&\r\n              t.isIdentifier(arg.object.object, { name: eventParam }) &&\r\n              t.isIdentifier(arg.object.property, { name: 'target' }) &&\r\n              t.isIdentifier(arg.property, { name: 'value' })) {\r\n            // Replace e.target.value with direct value parameter\r\n            return t.identifier('value');\r\n          }\r\n          return arg;\r\n        }",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c292db3a",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(arg) &&\r\n              t.isMemberExpression(arg.object) &&\r\n              t.isIdentifier(arg.object.object, { name: eventParam }) &&\r\n              t.isIdentifier(arg.object.property, { name: 'target' }) &&\r\n              t.isIdentifier(arg.property, { name: 'value' })",
+      "babel_source": "if (t.isMemberExpression(arg) &&\r\n              t.isMemberExpression(arg.object) &&\r\n              t.isIdentifier(arg.object.object, { name: eventParam }) &&\r\n              t.isIdentifier(arg.object.property, { name: 'target' }) &&\r\n              t.isIdentifier(arg.property, { name: 'value' })) {\r\n            // Replace e.target.value with direct value parameter\r\n            return t.identifier('value');\r\n          }",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5c036c78",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isMemberExpression(arg) &&\r\n              t.isMemberExpression(arg.object) &&\r\n              t.isIdentifier(arg.object.object, { name: eventParam }) &&\r\n              t.isIdentifier(arg.object.property, { name: 'target' }) &&\r\n              t.isIdentifier(arg.property, { name: 'value' })",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fa12304a",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isMemberExpression(arg) &&\r\n              t.isMemberExpression(arg.object) &&\r\n              t.isIdentifier(arg.object.object, { name: eventParam }) &&\r\n              t.isIdentifier(arg.object.property, { name: 'target' })",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "53cc3e6a",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isMemberExpression(arg) &&\r\n              t.isMemberExpression(arg.object) &&\r\n              t.isIdentifier(arg.object.object, { name: eventParam })",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "141ba6e2",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isMemberExpression(arg) &&\r\n              t.isMemberExpression(arg.object)",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1bb249c8",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(arg)",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f3df1fab",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(arg.object)",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "84ac0904",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(arg.object.object, { name: eventParam })",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c6769091",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: eventParam }",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "63e05d1c",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(arg.object.property, { name: 'target' })",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5d3d6284",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'target' }",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "506f6337",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(arg.property, { name: 'value' })",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2266494b",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'value' }",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6cd0f153",
+      "type": "ReturnStatement",
+      "babel_source": "return t.identifier('value');",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1e159977",
+      "type": "BabelTypeCheck",
+      "method": "identifier",
+      "babel_source": "t.identifier('value')",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b5c0c22b",
+      "type": "ReturnStatement",
+      "babel_source": "return arg;",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ed932b87",
+      "type": "IfStatement",
+      "condition": "transformedArgs.some((arg, i) => arg !== args[i])",
+      "babel_source": "if (transformedArgs.some((arg, i) => arg !== args[i])) {\r\n          body = t.callExpression(body.callee, transformedArgs);\r\n          params = [t.identifier('value')];\r\n        }",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a5cffc71",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "(arg, i) => arg !== args[i]",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bfb1e04f",
+      "type": "BinaryExpression",
+      "operator": "!==",
+      "babel_source": "arg !== args[i]",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "195b97d4",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "body = t.callExpression(body.callee, transformedArgs)",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "962fb188",
+      "type": "BabelTypeCheck",
+      "method": "callExpression",
+      "babel_source": "t.callExpression(body.callee, transformedArgs)",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "402c4283",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "params = [t.identifier('value')]",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b797d944",
+      "type": "ArrayExpression",
+      "babel_source": "[t.identifier('value')]",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1e159977",
+      "type": "BabelTypeCheck",
+      "method": "identifier",
+      "babel_source": "t.identifier('value')",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b69002f2",
+      "type": "VariableDeclaration",
+      "babel_source": "const capturedParams = component.currentMapContext ? component.currentMapContext.params : [];",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "98765851",
+      "type": "ConditionalExpression",
+      "babel_source": "component.currentMapContext ? component.currentMapContext.params : []",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1a6adb77",
+      "type": "VariableDeclaration",
+      "babel_source": "const hasDestructuring = params.some(p => t.isObjectPattern(p));",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8ab76c22",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "p => t.isObjectPattern(p)",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5e1514f1",
+      "type": "BabelTypeCheck",
+      "method": "isObjectPattern",
+      "babel_source": "t.isObjectPattern(p)",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "db1de932",
+      "type": "VariableDeclaration",
+      "babel_source": "let processedBody = body;",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "04374289",
+      "type": "VariableDeclaration",
+      "babel_source": "let processedParams = params;",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "45bf6c3e",
+      "type": "IfStatement",
+      "condition": "hasDestructuring && params.length === 1 && t.isObjectPattern(params[0])",
+      "babel_source": "if (hasDestructuring && params.length === 1 && t.isObjectPattern(params[0])) {\r\n        // Extract destructured properties\r\n        const destructuringStatements = [];\r\n        const eventParam = t.identifier('e');\r\n\r\n        function extractDestructured(pattern, path = []) {\r\n          if (t.isObjectPattern(pattern)) {\r\n            for (const prop of pattern.properties) {\r\n              if (t.isObjectProperty(prop)) {\r\n                const key = t.isIdentifier(prop.key) ? prop.key.name : null;\r\n                if (key && t.isIdentifier(prop.value)) {\r\n                  // Simple: { value } or { target: { value } }\r\n                  const varName = prop.value.name;\r\n                  const accessPath = [...path, key];\r\n                  destructuringStatements.push({ varName, accessPath });\r\n                } else if (key && t.isObjectPattern(prop.value)) {\r\n                  // Nested: { target: { value } }\r\n                  extractDestructured(prop.value, [...path, key]);\r\n                }\r\n              }\r\n            }\r\n          }\r\n        }\r\n\r\n        extractDestructured(params[0]);\r\n        processedParams = [eventParam];\r\n\r\n        // Prepend destructuring assignments to body\r\n        if (destructuringStatements.length > 0) {\r\n          const assignments = destructuringStatements.map(({ varName, accessPath }) => {\r\n            // Build e.Target.Value access chain\r\n            let access = eventParam;\r\n            for (const key of accessPath) {\r\n              const capitalizedKey = key.charAt(0).toUpperCase() + key.slice(1);\r\n              access = t.memberExpression(access, t.identifier(capitalizedKey));\r\n            }\r\n            return t.variableDeclaration('var', [\r\n              t.variableDeclarator(t.identifier(varName), access)\r\n            ]);\r\n          });\r\n\r\n          // Wrap body in block statement with destructuring\r\n          if (t.isBlockStatement(body)) {\r\n            processedBody = t.blockStatement([...assignments, ...body.body]);\r\n          } else {\r\n            processedBody = t.blockStatement([...assignments, t.expressionStatement(body)]);\r\n          }\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "363e30bd",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "hasDestructuring && params.length === 1 && t.isObjectPattern(params[0])",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ad55e5d8",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "hasDestructuring && params.length === 1",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ea8ad1ae",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "params.length === 1",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "96ef4d90",
+      "type": "BabelTypeCheck",
+      "method": "isObjectPattern",
+      "babel_source": "t.isObjectPattern(params[0])",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "af832a40",
+      "type": "VariableDeclaration",
+      "babel_source": "const destructuringStatements = [];",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "aecf45ff",
+      "type": "VariableDeclaration",
+      "babel_source": "const eventParam = t.identifier('e');",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c0610ec3",
+      "type": "BabelTypeCheck",
+      "method": "identifier",
+      "babel_source": "t.identifier('e')",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "50fffda7",
+      "type": "IfStatement",
+      "condition": "t.isObjectPattern(pattern)",
+      "babel_source": "if (t.isObjectPattern(pattern)) {\r\n            for (const prop of pattern.properties) {\r\n              if (t.isObjectProperty(prop)) {\r\n                const key = t.isIdentifier(prop.key) ? prop.key.name : null;\r\n                if (key && t.isIdentifier(prop.value)) {\r\n                  // Simple: { value } or { target: { value } }\r\n                  const varName = prop.value.name;\r\n                  const accessPath = [...path, key];\r\n                  destructuringStatements.push({ varName, accessPath });\r\n                } else if (key && t.isObjectPattern(prop.value)) {\r\n                  // Nested: { target: { value } }\r\n                  extractDestructured(prop.value, [...path, key]);\r\n                }\r\n              }\r\n            }\r\n          }",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ce7cae13",
+      "type": "BabelTypeCheck",
+      "method": "isObjectPattern",
+      "babel_source": "t.isObjectPattern(pattern)",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d28aca2a",
+      "type": "ForOfStatement",
+      "babel_source": "for (const prop of pattern.properties) {\r\n              if (t.isObjectProperty(prop)) {\r\n                const key = t.isIdentifier(prop.key) ? prop.key.name : null;\r\n                if (key && t.isIdentifier(prop.value)) {\r\n                  // Simple: { value } or { target: { value } }\r\n                  const varName = prop.value.name;\r\n                  const accessPath = [...path, key];\r\n                  destructuringStatements.push({ varName, accessPath });\r\n                } else if (key && t.isObjectPattern(prop.value)) {\r\n                  // Nested: { target: { value } }\r\n                  extractDestructured(prop.value, [...path, key]);\r\n                }\r\n              }\r\n            }",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "098a3cb5",
+      "type": "VariableDeclaration",
+      "babel_source": "const prop",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a3957ff8",
+      "type": "IfStatement",
+      "condition": "t.isObjectProperty(prop)",
+      "babel_source": "if (t.isObjectProperty(prop)) {\r\n                const key = t.isIdentifier(prop.key) ? prop.key.name : null;\r\n                if (key && t.isIdentifier(prop.value)) {\r\n                  // Simple: { value } or { target: { value } }\r\n                  const varName = prop.value.name;\r\n                  const accessPath = [...path, key];\r\n                  destructuringStatements.push({ varName, accessPath });\r\n                } else if (key && t.isObjectPattern(prop.value)) {\r\n                  // Nested: { target: { value } }\r\n                  extractDestructured(prop.value, [...path, key]);\r\n                }\r\n              }",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d8cb3d9e",
+      "type": "BabelTypeCheck",
+      "method": "isObjectProperty",
+      "babel_source": "t.isObjectProperty(prop)",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e689c39f",
+      "type": "VariableDeclaration",
+      "babel_source": "const key = t.isIdentifier(prop.key) ? prop.key.name : null;",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a99c1fb2",
+      "type": "ConditionalExpression",
+      "babel_source": "t.isIdentifier(prop.key) ? prop.key.name : null",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f3845e36",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(prop.key)",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e6a6ad9a",
+      "type": "IfStatement",
+      "condition": "key && t.isIdentifier(prop.value)",
+      "babel_source": "if (key && t.isIdentifier(prop.value)) {\r\n                  // Simple: { value } or { target: { value } }\r\n                  const varName = prop.value.name;\r\n                  const accessPath = [...path, key];\r\n                  destructuringStatements.push({ varName, accessPath });\r\n                } else if (key && t.isObjectPattern(prop.value)) {\r\n                  // Nested: { target: { value } }\r\n                  extractDestructured(prop.value, [...path, key]);\r\n                }",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "88949a0e",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "key && t.isIdentifier(prop.value)",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5813d283",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(prop.value)",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c7d921b5",
+      "type": "VariableDeclaration",
+      "babel_source": "const varName = prop.value.name;",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2eda9c08",
+      "type": "VariableDeclaration",
+      "babel_source": "const accessPath = [...path, key];",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c2c98744",
+      "type": "ArrayExpression",
+      "babel_source": "[...path, key]",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1d557abe",
+      "type": "SpreadElement",
+      "babel_source": "...path",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "16f52bfb",
+      "type": "ObjectExpression",
+      "babel_source": "{ varName, accessPath }",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f68be85",
+      "type": "IfStatement",
+      "condition": "key && t.isObjectPattern(prop.value)",
+      "babel_source": "if (key && t.isObjectPattern(prop.value)) {\r\n                  // Nested: { target: { value } }\r\n                  extractDestructured(prop.value, [...path, key]);\r\n                }",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "31031a6d",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "key && t.isObjectPattern(prop.value)",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e362ad73",
+      "type": "BabelTypeCheck",
+      "method": "isObjectPattern",
+      "babel_source": "t.isObjectPattern(prop.value)",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c2c98744",
+      "type": "ArrayExpression",
+      "babel_source": "[...path, key]",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1d557abe",
+      "type": "SpreadElement",
+      "babel_source": "...path",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "80258ac2",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "processedParams = [eventParam]",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4a8d64a5",
+      "type": "ArrayExpression",
+      "babel_source": "[eventParam]",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a5e91253",
+      "type": "IfStatement",
+      "condition": "destructuringStatements.length > 0",
+      "babel_source": "if (destructuringStatements.length > 0) {\r\n          const assignments = destructuringStatements.map(({ varName, accessPath }) => {\r\n            // Build e.Target.Value access chain\r\n            let access = eventParam;\r\n            for (const key of accessPath) {\r\n              const capitalizedKey = key.charAt(0).toUpperCase() + key.slice(1);\r\n              access = t.memberExpression(access, t.identifier(capitalizedKey));\r\n            }\r\n            return t.variableDeclaration('var', [\r\n              t.variableDeclarator(t.identifier(varName), access)\r\n            ]);\r\n          });\r\n\r\n          // Wrap body in block statement with destructuring\r\n          if (t.isBlockStatement(body)) {\r\n            processedBody = t.blockStatement([...assignments, ...body.body]);\r\n          } else {\r\n            processedBody = t.blockStatement([...assignments, t.expressionStatement(body)]);\r\n          }\r\n        }",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "50d4c4c0",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "destructuringStatements.length > 0",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "90f758c9",
+      "type": "VariableDeclaration",
+      "babel_source": "const assignments = destructuringStatements.map(({ varName, accessPath }) => {\r\n            // Build e.Target.Value access chain\r\n            let access = eventParam;\r\n            for (const key of accessPath) {\r\n              const capitalizedKey = key.charAt(0).toUpperCase() + key.slice(1);\r\n              access = t.memberExpression(access, t.identifier(capitalizedKey));\r\n            }\r\n            return t.variableDeclaration('var', [\r\n              t.variableDeclarator(t.identifier(varName), access)\r\n            ]);\r\n          });",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d63d14d8",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "({ varName, accessPath }) => {\r\n            // Build e.Target.Value access chain\r\n            let access = eventParam;\r\n            for (const key of accessPath) {\r\n              const capitalizedKey = key.charAt(0).toUpperCase() + key.slice(1);\r\n              access = t.memberExpression(access, t.identifier(capitalizedKey));\r\n            }\r\n            return t.variableDeclaration('var', [\r\n              t.variableDeclarator(t.identifier(varName), access)\r\n            ]);\r\n          }",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3926a5e4",
+      "type": "VariableDeclaration",
+      "babel_source": "let access = eventParam;",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "727c57cb",
+      "type": "ForOfStatement",
+      "babel_source": "for (const key of accessPath) {\r\n              const capitalizedKey = key.charAt(0).toUpperCase() + key.slice(1);\r\n              access = t.memberExpression(access, t.identifier(capitalizedKey));\r\n            }",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "03672b30",
+      "type": "VariableDeclaration",
+      "babel_source": "const key",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "88535a67",
+      "type": "VariableDeclaration",
+      "babel_source": "const capitalizedKey = key.charAt(0).toUpperCase() + key.slice(1);",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "522215b4",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "key.charAt(0).toUpperCase() + key.slice(1)",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "28a4aa6b",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "access = t.memberExpression(access, t.identifier(capitalizedKey))",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3a20b557",
+      "type": "BabelTypeCheck",
+      "method": "memberExpression",
+      "babel_source": "t.memberExpression(access, t.identifier(capitalizedKey))",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c2751e94",
+      "type": "BabelTypeCheck",
+      "method": "identifier",
+      "babel_source": "t.identifier(capitalizedKey)",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5e1cf700",
+      "type": "ReturnStatement",
+      "babel_source": "return t.variableDeclaration('var', [\r\n              t.variableDeclarator(t.identifier(varName), access)\r\n            ]);",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3ae7f4ac",
+      "type": "BabelTypeCheck",
+      "method": "variableDeclaration",
+      "babel_source": "t.variableDeclaration('var', [\r\n              t.variableDeclarator(t.identifier(varName), access)\r\n            ])",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e9ace109",
+      "type": "ArrayExpression",
+      "babel_source": "[\r\n              t.variableDeclarator(t.identifier(varName), access)\r\n            ]",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3afe8890",
+      "type": "BabelTypeCheck",
+      "method": "variableDeclarator",
+      "babel_source": "t.variableDeclarator(t.identifier(varName), access)",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "74973550",
+      "type": "BabelTypeCheck",
+      "method": "identifier",
+      "babel_source": "t.identifier(varName)",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2e6d6a8c",
+      "type": "IfStatement",
+      "condition": "t.isBlockStatement(body)",
+      "babel_source": "if (t.isBlockStatement(body)) {\r\n            processedBody = t.blockStatement([...assignments, ...body.body]);\r\n          } else {\r\n            processedBody = t.blockStatement([...assignments, t.expressionStatement(body)]);\r\n          }",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8f74e258",
+      "type": "BabelTypeCheck",
+      "method": "isBlockStatement",
+      "babel_source": "t.isBlockStatement(body)",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c97f9594",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "processedBody = t.blockStatement([...assignments, ...body.body])",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9f3506c2",
+      "type": "BabelTypeCheck",
+      "method": "blockStatement",
+      "babel_source": "t.blockStatement([...assignments, ...body.body])",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d152e96b",
+      "type": "ArrayExpression",
+      "babel_source": "[...assignments, ...body.body]",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "14bd7bc2",
+      "type": "SpreadElement",
+      "babel_source": "...assignments",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "357807b7",
+      "type": "SpreadElement",
+      "babel_source": "...body.body",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "14339fdc",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "processedBody = t.blockStatement([...assignments, t.expressionStatement(body)])",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "670b6189",
+      "type": "BabelTypeCheck",
+      "method": "blockStatement",
+      "babel_source": "t.blockStatement([...assignments, t.expressionStatement(body)])",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0f8b8d20",
+      "type": "ArrayExpression",
+      "babel_source": "[...assignments, t.expressionStatement(body)]",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "14bd7bc2",
+      "type": "SpreadElement",
+      "babel_source": "...assignments",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6ad0cfcd",
+      "type": "BabelTypeCheck",
+      "method": "expressionStatement",
+      "babel_source": "t.expressionStatement(body)",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a0324e3a",
+      "type": "VariableDeclaration",
+      "babel_source": "const isClientOnly = isClientOnlyHandler(processedBody);",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "59dee586",
+      "type": "VariableDeclaration",
+      "babel_source": "const { analyzeHookUsage, transformHandlerFunction } = require('./hooks.cjs');",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "57070a2d",
+      "type": "VariableDeclaration",
+      "babel_source": "const hookCalls = analyzeHookUsage(t.arrowFunctionExpression(processedParams, processedBody));",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "478166a4",
+      "type": "BabelTypeCheck",
+      "method": "arrowFunctionExpression",
+      "babel_source": "t.arrowFunctionExpression(processedParams, processedBody)",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "75ee9782",
+      "type": "VariableDeclaration",
+      "babel_source": "const transformedFunction = transformHandlerFunction(processedBody, processedParams, hookCalls);",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fabcfe9b",
+      "type": "VariableDeclaration",
+      "babel_source": "const jsCode = generate(transformedFunction).code;",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c1b3fd6a",
+      "type": "IfStatement",
+      "condition": "!component.clientHandlers",
+      "babel_source": "if (!component.clientHandlers) {\r\n        component.clientHandlers = [];\r\n      }",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b2269e42",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!component.clientHandlers",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5a936c38",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "component.clientHandlers = []",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e4f596a6",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n        name: handlerName,\r\n        jsCode: jsCode,\r\n        hookCalls: hookCalls\r\n      }",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "187a36b1",
+      "type": "IfStatement",
+      "condition": "!isClientOnly",
+      "babel_source": "if (!isClientOnly) {\r\n        // Server handler - add to eventHandlers collection\r\n        component.eventHandlers.push({\r\n          name: handlerName,\r\n          body: processedBody,\r\n          params: processedParams,\r\n          capturedParams: capturedParams,  // e.g., ['item', 'index']\r\n          isAsync: isAsync  // Track if handler is async\r\n        });\r\n      }",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "357b027d",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!isClientOnly",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8b8b8905",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n          name: handlerName,\r\n          body: processedBody,\r\n          params: processedParams,\r\n          capturedParams: capturedParams,  // e.g., ['item', 'index']\r\n          isAsync: isAsync  // Track if handler is async\r\n        }",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c1a706f8",
+      "type": "IfStatement",
+      "condition": "capturedParams.length > 0",
+      "babel_source": "if (capturedParams.length > 0) {\r\n        const capturedRefs = capturedParams.map(p => `{${p}}`).join(':');\r\n        return `${handlerName}:${capturedRefs}`;\r\n      }",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3c584ac2",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "capturedParams.length > 0",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bf580d6c",
+      "type": "VariableDeclaration",
+      "babel_source": "const capturedRefs = capturedParams.map(p => `{${p}}`).join(':');",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6ceae945",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "p => `{${p}}`",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "272a7e22",
+      "type": "TemplateLiteral",
+      "babel_source": "`{${p}}`",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3b00674d",
+      "type": "ReturnStatement",
+      "babel_source": "return `${handlerName}:${capturedRefs}`;",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b25ffabe",
+      "type": "TemplateLiteral",
+      "babel_source": "`${handlerName}:${capturedRefs}`",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6564a5fe",
+      "type": "ReturnStatement",
+      "babel_source": "return handlerName;",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7931f853",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(expr)",
+      "babel_source": "if (t.isIdentifier(expr)) {\r\n      return expr.name;\r\n    }",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42d26fd4",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(expr)",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dc053a27",
+      "type": "ReturnStatement",
+      "babel_source": "return expr.name;",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "49a83dcd",
+      "type": "IfStatement",
+      "condition": "t.isCallExpression(expr)",
+      "babel_source": "if (t.isCallExpression(expr)) {\r\n      // () => someMethod() - extract\r\n      const handlerName = `Handle${component.eventHandlers.length}`;\r\n\r\n      // Check if we're inside a .map() context and capture those variables\r\n      const capturedParams = component.currentMapContext ? component.currentMapContext.params : [];\r\n\r\n      component.eventHandlers.push({\r\n        name: handlerName,\r\n        body: expr,\r\n        capturedParams: capturedParams  // e.g., ['item', 'index']\r\n      });\r\n\r\n      // Return handler registration string\r\n      // If there are captured params, append them as colon-separated interpolations\r\n      // Format: \"Handle0:{item}:{index}\" - matches client's existing \"Method:arg1:arg2\" parser\r\n      if (capturedParams.length > 0) {\r\n        const capturedRefs = capturedParams.map(p => `{${p}}`).join(':');\r\n        return `${handlerName}:${capturedRefs}`;\r\n      }\r\n\r\n      return handlerName;\r\n    }",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "46479f62",
+      "type": "BabelTypeCheck",
+      "method": "isCallExpression",
+      "babel_source": "t.isCallExpression(expr)",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "71dd4724",
+      "type": "VariableDeclaration",
+      "babel_source": "const handlerName = `Handle${component.eventHandlers.length}`;",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "652ad9e2",
+      "type": "TemplateLiteral",
+      "babel_source": "`Handle${component.eventHandlers.length}`",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b69002f2",
+      "type": "VariableDeclaration",
+      "babel_source": "const capturedParams = component.currentMapContext ? component.currentMapContext.params : [];",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "98765851",
+      "type": "ConditionalExpression",
+      "babel_source": "component.currentMapContext ? component.currentMapContext.params : []",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "386d962c",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n        name: handlerName,\r\n        body: expr,\r\n        capturedParams: capturedParams  // e.g., ['item', 'index']\r\n      }",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c1a706f8",
+      "type": "IfStatement",
+      "condition": "capturedParams.length > 0",
+      "babel_source": "if (capturedParams.length > 0) {\r\n        const capturedRefs = capturedParams.map(p => `{${p}}`).join(':');\r\n        return `${handlerName}:${capturedRefs}`;\r\n      }",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3c584ac2",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "capturedParams.length > 0",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bf580d6c",
+      "type": "VariableDeclaration",
+      "babel_source": "const capturedRefs = capturedParams.map(p => `{${p}}`).join(':');",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6ceae945",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "p => `{${p}}`",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "272a7e22",
+      "type": "TemplateLiteral",
+      "babel_source": "`{${p}}`",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3b00674d",
+      "type": "ReturnStatement",
+      "babel_source": "return `${handlerName}:${capturedRefs}`;",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b25ffabe",
+      "type": "TemplateLiteral",
+      "babel_source": "`${handlerName}:${capturedRefs}`",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6564a5fe",
+      "type": "ReturnStatement",
+      "babel_source": "return handlerName;",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "813df649",
+      "type": "ReturnStatement",
+      "babel_source": "return 'UnknownHandler';",
+      "parentContext": {
+        "functionName": "extractEventHandler",
+        "functionParams": [
+          "value",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/eventHandlers.cjs"
+  ]
+}

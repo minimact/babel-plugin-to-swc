@@ -1,0 +1,68 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "mapTypeToCSharp",
+  "params": [
+    {
+      "name": "jsType",
+      "inferredType": "&TsType",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "&'static str",
+  "babel_source": "function mapTypeToCSharp(jsType) {\r\n  const typeMap = {\r\n    'string': 'string',\r\n    'number': 'int',\r\n    'boolean': 'bool',\r\n    'any': 'dynamic',\r\n    'void': 'void',\r\n    'object': 'object',\r\n    'any[]': 'List<dynamic>',\r\n    'string[]': 'List<string>',\r\n    'number[]': 'List<int>',\r\n    'boolean[]': 'List<bool>'\r\n  };\r\n\r\n  return typeMap[jsType] || 'dynamic';\r\n}",
+  "body_templates": [
+    {
+      "hash": "4f691b0f",
+      "type": "VariableDeclaration",
+      "babel_source": "const typeMap = {\r\n    'string': 'string',\r\n    'number': 'int',\r\n    'boolean': 'bool',\r\n    'any': 'dynamic',\r\n    'void': 'void',\r\n    'object': 'object',\r\n    'any[]': 'List<dynamic>',\r\n    'string[]': 'List<string>',\r\n    'number[]': 'List<int>',\r\n    'boolean[]': 'List<bool>'\r\n  };",
+      "parentContext": {
+        "functionName": "mapTypeToCSharp",
+        "functionParams": [
+          "jsType"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "88f5fef9",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    'string': 'string',\r\n    'number': 'int',\r\n    'boolean': 'bool',\r\n    'any': 'dynamic',\r\n    'void': 'void',\r\n    'object': 'object',\r\n    'any[]': 'List<dynamic>',\r\n    'string[]': 'List<string>',\r\n    'number[]': 'List<int>',\r\n    'boolean[]': 'List<bool>'\r\n  }",
+      "parentContext": {
+        "functionName": "mapTypeToCSharp",
+        "functionParams": [
+          "jsType"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f8d93641",
+      "type": "ReturnStatement",
+      "babel_source": "return typeMap[jsType] || 'dynamic';",
+      "parentContext": {
+        "functionName": "mapTypeToCSharp",
+        "functionParams": [
+          "jsType"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "57e1ccad",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "typeMap[jsType] || 'dynamic'",
+      "parentContext": {
+        "functionName": "mapTypeToCSharp",
+        "functionParams": [
+          "jsType"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/hookClassGenerator.cjs"
+  ]
+}

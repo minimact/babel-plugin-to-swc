@@ -1,0 +1,1311 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateCSharpStatement",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateCSharpStatement(node) {\r\n  if (!node) return '';\r\n\r\n  if (t.isExpressionStatement(node)) {\r\n    return generateCSharpExpression(node.expression) + ';';\r\n  }\r\n\r\n  if (t.isReturnStatement(node)) {\r\n    // Handle empty return statement: return; (not return null;)\r\n    if (node.argument === null || node.argument === undefined) {\r\n      return 'return;';\r\n    }\r\n    return `return ${generateCSharpExpression(node.argument)};`;\r\n  }\r\n\r\n  if (t.isThrowStatement(node)) {\r\n    return `throw ${generateCSharpExpression(node.argument)};`;\r\n  }\r\n\r\n  if (t.isVariableDeclaration(node)) {\r\n    const declarations = node.declarations.map(d => {\r\n      const name = d.id.name;\r\n      const value = generateCSharpExpression(d.init);\r\n      return `var ${name} = ${value};`;\r\n    }).join(' ');\r\n    return declarations;\r\n  }\r\n\r\n  if (t.isIfStatement(node)) {\r\n    let test = generateCSharpExpression(node.test);\r\n\r\n    // Convert string truthy checks to proper C# boolean expressions\r\n    test = convertStringToBool(test, node.test);\r\n\r\n    let result = `if (${test}) {\\n`;\r\n\r\n    // Handle consequent (then branch)\r\n    if (t.isBlockStatement(node.consequent)) {\r\n      for (const stmt of node.consequent.body) {\r\n        result += '    ' + generateCSharpStatement(stmt) + '\\n';\r\n      }\r\n    } else {\r\n      result += '    ' + generateCSharpStatement(node.consequent) + '\\n';\r\n    }\r\n\r\n    result += '}';\r\n\r\n    // Handle alternate (else branch) if it exists\r\n    if (node.alternate) {\r\n      result += ' else {\\n';\r\n      if (t.isBlockStatement(node.alternate)) {\r\n        for (const stmt of node.alternate.body) {\r\n          result += '    ' + generateCSharpStatement(stmt) + '\\n';\r\n        }\r\n      } else if (t.isIfStatement(node.alternate)) {\r\n        // else if\r\n        result += '    ' + generateCSharpStatement(node.alternate) + '\\n';\r\n      } else {\r\n        result += '    ' + generateCSharpStatement(node.alternate) + '\\n';\r\n      }\r\n      result += '}';\r\n    }\r\n\r\n    return result;\r\n  }\r\n\r\n  if (t.isTryStatement(node)) {\r\n    let result = 'try {\\n';\r\n\r\n    // Handle try block\r\n    if (t.isBlockStatement(node.block)) {\r\n      for (const stmt of node.block.body) {\r\n        result += '    ' + generateCSharpStatement(stmt) + '\\n';\r\n      }\r\n    }\r\n\r\n    result += '}';\r\n\r\n    // Handle catch clause\r\n    if (node.handler) {\r\n      const catchParam = node.handler.param ? node.handler.param.name : 'ex';\r\n      result += ` catch (Exception ${catchParam}) {\\n`;\r\n\r\n      if (t.isBlockStatement(node.handler.body)) {\r\n        for (const stmt of node.handler.body.body) {\r\n          result += '    ' + generateCSharpStatement(stmt) + '\\n';\r\n        }\r\n      }\r\n\r\n      result += '}';\r\n    }\r\n\r\n    // Handle finally block\r\n    if (node.finalizer) {\r\n      result += ' finally {\\n';\r\n\r\n      if (t.isBlockStatement(node.finalizer)) {\r\n        for (const stmt of node.finalizer.body) {\r\n          result += '    ' + generateCSharpStatement(stmt) + '\\n';\r\n        }\r\n      }\r\n\r\n      result += '}';\r\n    }\r\n\r\n    return result;\r\n  }\r\n\r\n  // Fallback: try to convert as expression\r\n  return generateCSharpExpression(node) + ';';\r\n}",
+  "body_templates": [
+    {
+      "hash": "a39b45eb",
+      "type": "IfStatement",
+      "condition": "!node",
+      "babel_source": "if (!node) return '';",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e10d47ee",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!node",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7be478c8",
+      "type": "ReturnStatement",
+      "babel_source": "return '';",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a5a51369",
+      "type": "IfStatement",
+      "condition": "t.isExpressionStatement(node)",
+      "babel_source": "if (t.isExpressionStatement(node)) {\r\n    return generateCSharpExpression(node.expression) + ';';\r\n  }",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "68148a6d",
+      "type": "BabelTypeCheck",
+      "method": "isExpressionStatement",
+      "babel_source": "t.isExpressionStatement(node)",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0453de41",
+      "type": "ReturnStatement",
+      "babel_source": "return generateCSharpExpression(node.expression) + ';';",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9547406a",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "generateCSharpExpression(node.expression) + ';'",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4a4466f7",
+      "type": "IfStatement",
+      "condition": "t.isReturnStatement(node)",
+      "babel_source": "if (t.isReturnStatement(node)) {\r\n    // Handle empty return statement: return; (not return null;)\r\n    if (node.argument === null || node.argument === undefined) {\r\n      return 'return;';\r\n    }\r\n    return `return ${generateCSharpExpression(node.argument)};`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "515bcc68",
+      "type": "BabelTypeCheck",
+      "method": "isReturnStatement",
+      "babel_source": "t.isReturnStatement(node)",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "188858b8",
+      "type": "IfStatement",
+      "condition": "node.argument === null || node.argument === undefined",
+      "babel_source": "if (node.argument === null || node.argument === undefined) {\r\n      return 'return;';\r\n    }",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "527af037",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "node.argument === null || node.argument === undefined",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e386e5a0",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "node.argument === null",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ff19633f",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "node.argument === undefined",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6e091b58",
+      "type": "ReturnStatement",
+      "babel_source": "return 'return;';",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8c64d1c4",
+      "type": "ReturnStatement",
+      "babel_source": "return `return ${generateCSharpExpression(node.argument)};`;",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5dc75fea",
+      "type": "TemplateLiteral",
+      "babel_source": "`return ${generateCSharpExpression(node.argument)};`",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b71d0386",
+      "type": "IfStatement",
+      "condition": "t.isThrowStatement(node)",
+      "babel_source": "if (t.isThrowStatement(node)) {\r\n    return `throw ${generateCSharpExpression(node.argument)};`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "77569819",
+      "type": "BabelTypeCheck",
+      "method": "isThrowStatement",
+      "babel_source": "t.isThrowStatement(node)",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "35a9eda4",
+      "type": "ReturnStatement",
+      "babel_source": "return `throw ${generateCSharpExpression(node.argument)};`;",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7eec732d",
+      "type": "TemplateLiteral",
+      "babel_source": "`throw ${generateCSharpExpression(node.argument)};`",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c1ffe4ec",
+      "type": "IfStatement",
+      "condition": "t.isVariableDeclaration(node)",
+      "babel_source": "if (t.isVariableDeclaration(node)) {\r\n    const declarations = node.declarations.map(d => {\r\n      const name = d.id.name;\r\n      const value = generateCSharpExpression(d.init);\r\n      return `var ${name} = ${value};`;\r\n    }).join(' ');\r\n    return declarations;\r\n  }",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cc1e84a3",
+      "type": "BabelTypeCheck",
+      "method": "isVariableDeclaration",
+      "babel_source": "t.isVariableDeclaration(node)",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f6361a0e",
+      "type": "VariableDeclaration",
+      "babel_source": "const declarations = node.declarations.map(d => {\r\n      const name = d.id.name;\r\n      const value = generateCSharpExpression(d.init);\r\n      return `var ${name} = ${value};`;\r\n    }).join(' ');",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "53b2f943",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "d => {\r\n      const name = d.id.name;\r\n      const value = generateCSharpExpression(d.init);\r\n      return `var ${name} = ${value};`;\r\n    }",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "47a51d70",
+      "type": "VariableDeclaration",
+      "babel_source": "const name = d.id.name;",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b0065ace",
+      "type": "VariableDeclaration",
+      "babel_source": "const value = generateCSharpExpression(d.init);",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d27b6095",
+      "type": "ReturnStatement",
+      "babel_source": "return `var ${name} = ${value};`;",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f5734f10",
+      "type": "TemplateLiteral",
+      "babel_source": "`var ${name} = ${value};`",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c5ee20e2",
+      "type": "ReturnStatement",
+      "babel_source": "return declarations;",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1440c84a",
+      "type": "IfStatement",
+      "condition": "t.isIfStatement(node)",
+      "babel_source": "if (t.isIfStatement(node)) {\r\n    let test = generateCSharpExpression(node.test);\r\n\r\n    // Convert string truthy checks to proper C# boolean expressions\r\n    test = convertStringToBool(test, node.test);\r\n\r\n    let result = `if (${test}) {\\n`;\r\n\r\n    // Handle consequent (then branch)\r\n    if (t.isBlockStatement(node.consequent)) {\r\n      for (const stmt of node.consequent.body) {\r\n        result += '    ' + generateCSharpStatement(stmt) + '\\n';\r\n      }\r\n    } else {\r\n      result += '    ' + generateCSharpStatement(node.consequent) + '\\n';\r\n    }\r\n\r\n    result += '}';\r\n\r\n    // Handle alternate (else branch) if it exists\r\n    if (node.alternate) {\r\n      result += ' else {\\n';\r\n      if (t.isBlockStatement(node.alternate)) {\r\n        for (const stmt of node.alternate.body) {\r\n          result += '    ' + generateCSharpStatement(stmt) + '\\n';\r\n        }\r\n      } else if (t.isIfStatement(node.alternate)) {\r\n        // else if\r\n        result += '    ' + generateCSharpStatement(node.alternate) + '\\n';\r\n      } else {\r\n        result += '    ' + generateCSharpStatement(node.alternate) + '\\n';\r\n      }\r\n      result += '}';\r\n    }\r\n\r\n    return result;\r\n  }",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "71796b1e",
+      "type": "BabelTypeCheck",
+      "method": "isIfStatement",
+      "babel_source": "t.isIfStatement(node)",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7887bb88",
+      "type": "VariableDeclaration",
+      "babel_source": "let test = generateCSharpExpression(node.test);",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ad5fb8df",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "test = convertStringToBool(test, node.test)",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8bb1b7d5",
+      "type": "VariableDeclaration",
+      "babel_source": "let result = `if (${test}) {\\n`;",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4bf9e0a5",
+      "type": "TemplateLiteral",
+      "babel_source": "`if (${test}) {\\n`",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e8591226",
+      "type": "IfStatement",
+      "condition": "t.isBlockStatement(node.consequent)",
+      "babel_source": "if (t.isBlockStatement(node.consequent)) {\r\n      for (const stmt of node.consequent.body) {\r\n        result += '    ' + generateCSharpStatement(stmt) + '\\n';\r\n      }\r\n    } else {\r\n      result += '    ' + generateCSharpStatement(node.consequent) + '\\n';\r\n    }",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "63f6c442",
+      "type": "BabelTypeCheck",
+      "method": "isBlockStatement",
+      "babel_source": "t.isBlockStatement(node.consequent)",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2de1fc80",
+      "type": "ForOfStatement",
+      "babel_source": "for (const stmt of node.consequent.body) {\r\n        result += '    ' + generateCSharpStatement(stmt) + '\\n';\r\n      }",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2b909e3d",
+      "type": "VariableDeclaration",
+      "babel_source": "const stmt",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a5ff3e03",
+      "type": "AssignmentExpression",
+      "operator": "+=",
+      "babel_source": "result += '    ' + generateCSharpStatement(stmt) + '\\n'",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "61d12581",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "'    ' + generateCSharpStatement(stmt) + '\\n'",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "41f78ff7",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "'    ' + generateCSharpStatement(stmt)",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c9f1b859",
+      "type": "AssignmentExpression",
+      "operator": "+=",
+      "babel_source": "result += '    ' + generateCSharpStatement(node.consequent) + '\\n'",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3aed900d",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "'    ' + generateCSharpStatement(node.consequent) + '\\n'",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b7b1d040",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "'    ' + generateCSharpStatement(node.consequent)",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b578459b",
+      "type": "AssignmentExpression",
+      "operator": "+=",
+      "babel_source": "result += '}'",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9d3cb98a",
+      "type": "IfStatement",
+      "condition": "node.alternate",
+      "babel_source": "if (node.alternate) {\r\n      result += ' else {\\n';\r\n      if (t.isBlockStatement(node.alternate)) {\r\n        for (const stmt of node.alternate.body) {\r\n          result += '    ' + generateCSharpStatement(stmt) + '\\n';\r\n        }\r\n      } else if (t.isIfStatement(node.alternate)) {\r\n        // else if\r\n        result += '    ' + generateCSharpStatement(node.alternate) + '\\n';\r\n      } else {\r\n        result += '    ' + generateCSharpStatement(node.alternate) + '\\n';\r\n      }\r\n      result += '}';\r\n    }",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2f0a20cf",
+      "type": "AssignmentExpression",
+      "operator": "+=",
+      "babel_source": "result += ' else {\\n'",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1c96d396",
+      "type": "IfStatement",
+      "condition": "t.isBlockStatement(node.alternate)",
+      "babel_source": "if (t.isBlockStatement(node.alternate)) {\r\n        for (const stmt of node.alternate.body) {\r\n          result += '    ' + generateCSharpStatement(stmt) + '\\n';\r\n        }\r\n      } else if (t.isIfStatement(node.alternate)) {\r\n        // else if\r\n        result += '    ' + generateCSharpStatement(node.alternate) + '\\n';\r\n      } else {\r\n        result += '    ' + generateCSharpStatement(node.alternate) + '\\n';\r\n      }",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e765e44d",
+      "type": "BabelTypeCheck",
+      "method": "isBlockStatement",
+      "babel_source": "t.isBlockStatement(node.alternate)",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "51378c94",
+      "type": "ForOfStatement",
+      "babel_source": "for (const stmt of node.alternate.body) {\r\n          result += '    ' + generateCSharpStatement(stmt) + '\\n';\r\n        }",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2b909e3d",
+      "type": "VariableDeclaration",
+      "babel_source": "const stmt",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a5ff3e03",
+      "type": "AssignmentExpression",
+      "operator": "+=",
+      "babel_source": "result += '    ' + generateCSharpStatement(stmt) + '\\n'",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "61d12581",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "'    ' + generateCSharpStatement(stmt) + '\\n'",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "41f78ff7",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "'    ' + generateCSharpStatement(stmt)",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "570112c3",
+      "type": "IfStatement",
+      "condition": "t.isIfStatement(node.alternate)",
+      "babel_source": "if (t.isIfStatement(node.alternate)) {\r\n        // else if\r\n        result += '    ' + generateCSharpStatement(node.alternate) + '\\n';\r\n      } else {\r\n        result += '    ' + generateCSharpStatement(node.alternate) + '\\n';\r\n      }",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "edd0d43f",
+      "type": "BabelTypeCheck",
+      "method": "isIfStatement",
+      "babel_source": "t.isIfStatement(node.alternate)",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "82f654c4",
+      "type": "AssignmentExpression",
+      "operator": "+=",
+      "babel_source": "result += '    ' + generateCSharpStatement(node.alternate) + '\\n'",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "47a23da8",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "'    ' + generateCSharpStatement(node.alternate) + '\\n'",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e403e27a",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "'    ' + generateCSharpStatement(node.alternate)",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "82f654c4",
+      "type": "AssignmentExpression",
+      "operator": "+=",
+      "babel_source": "result += '    ' + generateCSharpStatement(node.alternate) + '\\n'",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "47a23da8",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "'    ' + generateCSharpStatement(node.alternate) + '\\n'",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e403e27a",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "'    ' + generateCSharpStatement(node.alternate)",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b578459b",
+      "type": "AssignmentExpression",
+      "operator": "+=",
+      "babel_source": "result += '}'",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "882101dd",
+      "type": "ReturnStatement",
+      "babel_source": "return result;",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8a9627e0",
+      "type": "IfStatement",
+      "condition": "t.isTryStatement(node)",
+      "babel_source": "if (t.isTryStatement(node)) {\r\n    let result = 'try {\\n';\r\n\r\n    // Handle try block\r\n    if (t.isBlockStatement(node.block)) {\r\n      for (const stmt of node.block.body) {\r\n        result += '    ' + generateCSharpStatement(stmt) + '\\n';\r\n      }\r\n    }\r\n\r\n    result += '}';\r\n\r\n    // Handle catch clause\r\n    if (node.handler) {\r\n      const catchParam = node.handler.param ? node.handler.param.name : 'ex';\r\n      result += ` catch (Exception ${catchParam}) {\\n`;\r\n\r\n      if (t.isBlockStatement(node.handler.body)) {\r\n        for (const stmt of node.handler.body.body) {\r\n          result += '    ' + generateCSharpStatement(stmt) + '\\n';\r\n        }\r\n      }\r\n\r\n      result += '}';\r\n    }\r\n\r\n    // Handle finally block\r\n    if (node.finalizer) {\r\n      result += ' finally {\\n';\r\n\r\n      if (t.isBlockStatement(node.finalizer)) {\r\n        for (const stmt of node.finalizer.body) {\r\n          result += '    ' + generateCSharpStatement(stmt) + '\\n';\r\n        }\r\n      }\r\n\r\n      result += '}';\r\n    }\r\n\r\n    return result;\r\n  }",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d18a577a",
+      "type": "BabelTypeCheck",
+      "method": "isTryStatement",
+      "babel_source": "t.isTryStatement(node)",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9d5ed444",
+      "type": "VariableDeclaration",
+      "babel_source": "let result = 'try {\\n';",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a5a71ead",
+      "type": "IfStatement",
+      "condition": "t.isBlockStatement(node.block)",
+      "babel_source": "if (t.isBlockStatement(node.block)) {\r\n      for (const stmt of node.block.body) {\r\n        result += '    ' + generateCSharpStatement(stmt) + '\\n';\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6a5a08cb",
+      "type": "BabelTypeCheck",
+      "method": "isBlockStatement",
+      "babel_source": "t.isBlockStatement(node.block)",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1bcd9b37",
+      "type": "ForOfStatement",
+      "babel_source": "for (const stmt of node.block.body) {\r\n        result += '    ' + generateCSharpStatement(stmt) + '\\n';\r\n      }",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2b909e3d",
+      "type": "VariableDeclaration",
+      "babel_source": "const stmt",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a5ff3e03",
+      "type": "AssignmentExpression",
+      "operator": "+=",
+      "babel_source": "result += '    ' + generateCSharpStatement(stmt) + '\\n'",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "61d12581",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "'    ' + generateCSharpStatement(stmt) + '\\n'",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "41f78ff7",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "'    ' + generateCSharpStatement(stmt)",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b578459b",
+      "type": "AssignmentExpression",
+      "operator": "+=",
+      "babel_source": "result += '}'",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8fe9a6fd",
+      "type": "IfStatement",
+      "condition": "node.handler",
+      "babel_source": "if (node.handler) {\r\n      const catchParam = node.handler.param ? node.handler.param.name : 'ex';\r\n      result += ` catch (Exception ${catchParam}) {\\n`;\r\n\r\n      if (t.isBlockStatement(node.handler.body)) {\r\n        for (const stmt of node.handler.body.body) {\r\n          result += '    ' + generateCSharpStatement(stmt) + '\\n';\r\n        }\r\n      }\r\n\r\n      result += '}';\r\n    }",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6539aece",
+      "type": "VariableDeclaration",
+      "babel_source": "const catchParam = node.handler.param ? node.handler.param.name : 'ex';",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7d5c42ac",
+      "type": "ConditionalExpression",
+      "babel_source": "node.handler.param ? node.handler.param.name : 'ex'",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9f46a5b5",
+      "type": "AssignmentExpression",
+      "operator": "+=",
+      "babel_source": "result += ` catch (Exception ${catchParam}) {\\n`",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2646647e",
+      "type": "TemplateLiteral",
+      "babel_source": "` catch (Exception ${catchParam}) {\\n`",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9be08156",
+      "type": "IfStatement",
+      "condition": "t.isBlockStatement(node.handler.body)",
+      "babel_source": "if (t.isBlockStatement(node.handler.body)) {\r\n        for (const stmt of node.handler.body.body) {\r\n          result += '    ' + generateCSharpStatement(stmt) + '\\n';\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b8bfa06d",
+      "type": "BabelTypeCheck",
+      "method": "isBlockStatement",
+      "babel_source": "t.isBlockStatement(node.handler.body)",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2d2cdd51",
+      "type": "ForOfStatement",
+      "babel_source": "for (const stmt of node.handler.body.body) {\r\n          result += '    ' + generateCSharpStatement(stmt) + '\\n';\r\n        }",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2b909e3d",
+      "type": "VariableDeclaration",
+      "babel_source": "const stmt",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a5ff3e03",
+      "type": "AssignmentExpression",
+      "operator": "+=",
+      "babel_source": "result += '    ' + generateCSharpStatement(stmt) + '\\n'",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "61d12581",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "'    ' + generateCSharpStatement(stmt) + '\\n'",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "41f78ff7",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "'    ' + generateCSharpStatement(stmt)",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b578459b",
+      "type": "AssignmentExpression",
+      "operator": "+=",
+      "babel_source": "result += '}'",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d0414a12",
+      "type": "IfStatement",
+      "condition": "node.finalizer",
+      "babel_source": "if (node.finalizer) {\r\n      result += ' finally {\\n';\r\n\r\n      if (t.isBlockStatement(node.finalizer)) {\r\n        for (const stmt of node.finalizer.body) {\r\n          result += '    ' + generateCSharpStatement(stmt) + '\\n';\r\n        }\r\n      }\r\n\r\n      result += '}';\r\n    }",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0432dcc0",
+      "type": "AssignmentExpression",
+      "operator": "+=",
+      "babel_source": "result += ' finally {\\n'",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "66428878",
+      "type": "IfStatement",
+      "condition": "t.isBlockStatement(node.finalizer)",
+      "babel_source": "if (t.isBlockStatement(node.finalizer)) {\r\n        for (const stmt of node.finalizer.body) {\r\n          result += '    ' + generateCSharpStatement(stmt) + '\\n';\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "057d7168",
+      "type": "BabelTypeCheck",
+      "method": "isBlockStatement",
+      "babel_source": "t.isBlockStatement(node.finalizer)",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bcf514d9",
+      "type": "ForOfStatement",
+      "babel_source": "for (const stmt of node.finalizer.body) {\r\n          result += '    ' + generateCSharpStatement(stmt) + '\\n';\r\n        }",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2b909e3d",
+      "type": "VariableDeclaration",
+      "babel_source": "const stmt",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a5ff3e03",
+      "type": "AssignmentExpression",
+      "operator": "+=",
+      "babel_source": "result += '    ' + generateCSharpStatement(stmt) + '\\n'",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "61d12581",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "'    ' + generateCSharpStatement(stmt) + '\\n'",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "41f78ff7",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "'    ' + generateCSharpStatement(stmt)",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b578459b",
+      "type": "AssignmentExpression",
+      "operator": "+=",
+      "babel_source": "result += '}'",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "882101dd",
+      "type": "ReturnStatement",
+      "babel_source": "return result;",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1851def9",
+      "type": "ReturnStatement",
+      "babel_source": "return generateCSharpExpression(node) + ';';",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "70e38626",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "generateCSharpExpression(node) + ';'",
+      "parentContext": {
+        "functionName": "generateCSharpStatement",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/expressions.cjs"
+  ]
+}

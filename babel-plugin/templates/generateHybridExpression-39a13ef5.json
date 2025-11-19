@@ -1,0 +1,64 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateHybridExpression",
+  "params": [
+    {
+      "name": "expr",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    },
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "deps",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "indent",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateHybridExpression(expr, component, deps, indent) {\r\n  // For now, return a simplified version\r\n  // TODO: Implement full AST splitting logic\r\n  return `new VText(${generateCSharpExpression(expr)})`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "bfbd9f6f",
+      "type": "ReturnStatement",
+      "babel_source": "return `new VText(${generateCSharpExpression(expr)})`;",
+      "parentContext": {
+        "functionName": "generateHybridExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "deps",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1e0120b2",
+      "type": "TemplateLiteral",
+      "babel_source": "`new VText(${generateCSharpExpression(expr)})`",
+      "parentContext": {
+        "functionName": "generateHybridExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "deps",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/expressions.cjs"
+  ]
+}

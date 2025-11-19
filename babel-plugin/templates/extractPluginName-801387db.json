@@ -1,0 +1,157 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractPluginName",
+  "params": [
+    {
+      "name": "nameAttr",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractPluginName(nameAttr) {\r\n  const value = nameAttr.value;\r\n\r\n  // String literal: name=\"Clock\"\r\n  if (t.isStringLiteral(value)) {\r\n    return value.value;\r\n  }\r\n\r\n  // JSX expression: name={\"Clock\"} (also a string literal)\r\n  if (t.isJSXExpressionContainer(value) && t.isStringLiteral(value.expression)) {\r\n    return value.expression.value;\r\n  }\r\n\r\n  throw new Error('Plugin \"name\" attribute must be a string literal (e.g., name=\"Clock\")');\r\n}",
+  "body_templates": [
+    {
+      "hash": "b5c9cd83",
+      "type": "VariableDeclaration",
+      "babel_source": "const value = nameAttr.value;",
+      "parentContext": {
+        "functionName": "extractPluginName",
+        "functionParams": [
+          "nameAttr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bb7709de",
+      "type": "IfStatement",
+      "condition": "t.isStringLiteral(value)",
+      "babel_source": "if (t.isStringLiteral(value)) {\r\n    return value.value;\r\n  }",
+      "parentContext": {
+        "functionName": "extractPluginName",
+        "functionParams": [
+          "nameAttr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a835f893",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(value)",
+      "parentContext": {
+        "functionName": "extractPluginName",
+        "functionParams": [
+          "nameAttr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4d93185a",
+      "type": "ReturnStatement",
+      "babel_source": "return value.value;",
+      "parentContext": {
+        "functionName": "extractPluginName",
+        "functionParams": [
+          "nameAttr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e1ec32ca",
+      "type": "IfStatement",
+      "condition": "t.isJSXExpressionContainer(value) && t.isStringLiteral(value.expression)",
+      "babel_source": "if (t.isJSXExpressionContainer(value) && t.isStringLiteral(value.expression)) {\r\n    return value.expression.value;\r\n  }",
+      "parentContext": {
+        "functionName": "extractPluginName",
+        "functionParams": [
+          "nameAttr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e0096e7a",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isJSXExpressionContainer(value) && t.isStringLiteral(value.expression)",
+      "parentContext": {
+        "functionName": "extractPluginName",
+        "functionParams": [
+          "nameAttr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "846bea62",
+      "type": "BabelTypeCheck",
+      "method": "isJSXExpressionContainer",
+      "babel_source": "t.isJSXExpressionContainer(value)",
+      "parentContext": {
+        "functionName": "extractPluginName",
+        "functionParams": [
+          "nameAttr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "61b18e4f",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(value.expression)",
+      "parentContext": {
+        "functionName": "extractPluginName",
+        "functionParams": [
+          "nameAttr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "52446376",
+      "type": "ReturnStatement",
+      "babel_source": "return value.expression.value;",
+      "parentContext": {
+        "functionName": "extractPluginName",
+        "functionParams": [
+          "nameAttr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9f83cc80",
+      "type": "ThrowStatement",
+      "babel_source": "throw new Error('Plugin \"name\" attribute must be a string literal (e.g., name=\"Clock\")');",
+      "parentContext": {
+        "functionName": "extractPluginName",
+        "functionParams": [
+          "nameAttr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c301054f",
+      "type": "NewExpression",
+      "babel_source": "new Error('Plugin \"name\" attribute must be a string literal (e.g., name=\"Clock\")')",
+      "parentContext": {
+        "functionName": "extractPluginName",
+        "functionParams": [
+          "nameAttr"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/analyzePluginUsage.cjs"
+  ]
+}

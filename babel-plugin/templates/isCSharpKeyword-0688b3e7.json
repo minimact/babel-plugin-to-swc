@@ -1,0 +1,55 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "isCSharpKeyword",
+  "params": [
+    {
+      "name": "identifier",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "bool",
+  "babel_source": "function isCSharpKeyword(identifier) {\r\n  const keywords = [\r\n    'abstract', 'as', 'base', 'bool', 'break', 'byte', 'case', 'catch', 'char',\r\n    'checked', 'class', 'const', 'continue', 'decimal', 'default', 'delegate',\r\n    'do', 'double', 'else', 'enum', 'event', 'explicit', 'extern', 'false',\r\n    'finally', 'fixed', 'float', 'for', 'foreach', 'goto', 'if', 'implicit',\r\n    'in', 'int', 'interface', 'internal', 'is', 'lock', 'long', 'namespace',\r\n    'new', 'null', 'object', 'operator', 'out', 'override', 'params', 'private',\r\n    'protected', 'public', 'readonly', 'ref', 'return', 'sbyte', 'sealed',\r\n    'short', 'sizeof', 'stackalloc', 'static', 'string', 'struct', 'switch',\r\n    'this', 'throw', 'true', 'try', 'typeof', 'uint', 'ulong', 'unchecked',\r\n    'unsafe', 'ushort', 'using', 'virtual', 'void', 'volatile', 'while',\r\n    // C# contextual keywords\r\n    'add', 'and', 'alias', 'ascending', 'async', 'await', 'by', 'descending',\r\n    'dynamic', 'equals', 'from', 'get', 'global', 'group', 'into', 'join',\r\n    'let', 'nameof', 'not', 'notnull', 'on', 'or', 'orderby', 'partial',\r\n    'record', 'remove', 'select', 'set', 'unmanaged', 'value', 'var', 'when',\r\n    'where', 'with', 'yield'\r\n  ];\r\n\r\n  return keywords.includes(identifier);\r\n}",
+  "body_templates": [
+    {
+      "hash": "471252dc",
+      "type": "VariableDeclaration",
+      "babel_source": "const keywords = [\r\n    'abstract', 'as', 'base', 'bool', 'break', 'byte', 'case', 'catch', 'char',\r\n    'checked', 'class', 'const', 'continue', 'decimal', 'default', 'delegate',\r\n    'do', 'double', 'else', 'enum', 'event', 'explicit', 'extern', 'false',\r\n    'finally', 'fixed', 'float', 'for', 'foreach', 'goto', 'if', 'implicit',\r\n    'in', 'int', 'interface', 'internal', 'is', 'lock', 'long', 'namespace',\r\n    'new', 'null', 'object', 'operator', 'out', 'override', 'params', 'private',\r\n    'protected', 'public', 'readonly', 'ref', 'return', 'sbyte', 'sealed',\r\n    'short', 'sizeof', 'stackalloc', 'static', 'string', 'struct', 'switch',\r\n    'this', 'throw', 'true', 'try', 'typeof', 'uint', 'ulong', 'unchecked',\r\n    'unsafe', 'ushort', 'using', 'virtual', 'void', 'volatile', 'while',\r\n    // C# contextual keywords\r\n    'add', 'and', 'alias', 'ascending', 'async', 'await', 'by', 'descending',\r\n    'dynamic', 'equals', 'from', 'get', 'global', 'group', 'into', 'join',\r\n    'let', 'nameof', 'not', 'notnull', 'on', 'or', 'orderby', 'partial',\r\n    'record', 'remove', 'select', 'set', 'unmanaged', 'value', 'var', 'when',\r\n    'where', 'with', 'yield'\r\n  ];",
+      "parentContext": {
+        "functionName": "isCSharpKeyword",
+        "functionParams": [
+          "identifier"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ad2e6f34",
+      "type": "ArrayExpression",
+      "babel_source": "[\r\n    'abstract', 'as', 'base', 'bool', 'break', 'byte', 'case', 'catch', 'char',\r\n    'checked', 'class', 'const', 'continue', 'decimal', 'default', 'delegate',\r\n    'do', 'double', 'else', 'enum', 'event', 'explicit', 'extern', 'false',\r\n    'finally', 'fixed', 'float', 'for', 'foreach', 'goto', 'if', 'implicit',\r\n    'in', 'int', 'interface', 'internal', 'is', 'lock', 'long', 'namespace',\r\n    'new', 'null', 'object', 'operator', 'out', 'override', 'params', 'private',\r\n    'protected', 'public', 'readonly', 'ref', 'return', 'sbyte', 'sealed',\r\n    'short', 'sizeof', 'stackalloc', 'static', 'string', 'struct', 'switch',\r\n    'this', 'throw', 'true', 'try', 'typeof', 'uint', 'ulong', 'unchecked',\r\n    'unsafe', 'ushort', 'using', 'virtual', 'void', 'volatile', 'while',\r\n    // C# contextual keywords\r\n    'add', 'and', 'alias', 'ascending', 'async', 'await', 'by', 'descending',\r\n    'dynamic', 'equals', 'from', 'get', 'global', 'group', 'into', 'join',\r\n    'let', 'nameof', 'not', 'notnull', 'on', 'or', 'orderby', 'partial',\r\n    'record', 'remove', 'select', 'set', 'unmanaged', 'value', 'var', 'when',\r\n    'where', 'with', 'yield'\r\n  ]",
+      "parentContext": {
+        "functionName": "isCSharpKeyword",
+        "functionParams": [
+          "identifier"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fbdc486a",
+      "type": "ReturnStatement",
+      "babel_source": "return keywords.includes(identifier);",
+      "parentContext": {
+        "functionName": "isCSharpKeyword",
+        "functionParams": [
+          "identifier"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/razorDetection.cjs"
+  ]
+}

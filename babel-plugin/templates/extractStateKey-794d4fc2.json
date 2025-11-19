@@ -1,0 +1,242 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractStateKey",
+  "params": [
+    {
+      "name": "expr",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    },
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractStateKey(expr, component) {\r\n    if (t.isIdentifier(expr)) {\r\n      return expr.name;\r\n    } else if (t.isMemberExpression(expr)) {\r\n      // Get root object: user.isLoggedIn → \"user\"\r\n      let current = expr;\r\n      while (t.isMemberExpression(current)) {\r\n        current = current.object;\r\n      }\r\n      if (t.isIdentifier(current)) {\r\n        return current.name;\r\n      }\r\n    } else if (t.isUnaryExpression(expr)) {\r\n      return extractStateKey(expr.argument, component);\r\n    }\r\n    return null;\r\n  }",
+  "body_templates": [
+    {
+      "hash": "5d9f0c45",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(expr)",
+      "babel_source": "if (t.isIdentifier(expr)) {\r\n      return expr.name;\r\n    } else if (t.isMemberExpression(expr)) {\r\n      // Get root object: user.isLoggedIn → \"user\"\r\n      let current = expr;\r\n      while (t.isMemberExpression(current)) {\r\n        current = current.object;\r\n      }\r\n      if (t.isIdentifier(current)) {\r\n        return current.name;\r\n      }\r\n    } else if (t.isUnaryExpression(expr)) {\r\n      return extractStateKey(expr.argument, component);\r\n    }",
+      "parentContext": {
+        "functionName": "extractStateKey",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42d26fd4",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(expr)",
+      "parentContext": {
+        "functionName": "extractStateKey",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dc053a27",
+      "type": "ReturnStatement",
+      "babel_source": "return expr.name;",
+      "parentContext": {
+        "functionName": "extractStateKey",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e797e66a",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(expr)",
+      "babel_source": "if (t.isMemberExpression(expr)) {\r\n      // Get root object: user.isLoggedIn → \"user\"\r\n      let current = expr;\r\n      while (t.isMemberExpression(current)) {\r\n        current = current.object;\r\n      }\r\n      if (t.isIdentifier(current)) {\r\n        return current.name;\r\n      }\r\n    } else if (t.isUnaryExpression(expr)) {\r\n      return extractStateKey(expr.argument, component);\r\n    }",
+      "parentContext": {
+        "functionName": "extractStateKey",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c8858c63",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(expr)",
+      "parentContext": {
+        "functionName": "extractStateKey",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b74a5e61",
+      "type": "VariableDeclaration",
+      "babel_source": "let current = expr;",
+      "parentContext": {
+        "functionName": "extractStateKey",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "847810c1",
+      "type": "WhileStatement",
+      "babel_source": "while (t.isMemberExpression(current)) {\r\n        current = current.object;\r\n      }",
+      "parentContext": {
+        "functionName": "extractStateKey",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "99ac970d",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(current)",
+      "parentContext": {
+        "functionName": "extractStateKey",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "05723cfe",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "current = current.object",
+      "parentContext": {
+        "functionName": "extractStateKey",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "17c54bb7",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(current)",
+      "babel_source": "if (t.isIdentifier(current)) {\r\n        return current.name;\r\n      }",
+      "parentContext": {
+        "functionName": "extractStateKey",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f41cdd7f",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(current)",
+      "parentContext": {
+        "functionName": "extractStateKey",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8eb838fb",
+      "type": "ReturnStatement",
+      "babel_source": "return current.name;",
+      "parentContext": {
+        "functionName": "extractStateKey",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f2b62151",
+      "type": "IfStatement",
+      "condition": "t.isUnaryExpression(expr)",
+      "babel_source": "if (t.isUnaryExpression(expr)) {\r\n      return extractStateKey(expr.argument, component);\r\n    }",
+      "parentContext": {
+        "functionName": "extractStateKey",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4b2e045a",
+      "type": "BabelTypeCheck",
+      "method": "isUnaryExpression",
+      "babel_source": "t.isUnaryExpression(expr)",
+      "parentContext": {
+        "functionName": "extractStateKey",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9323bdcf",
+      "type": "ReturnStatement",
+      "babel_source": "return extractStateKey(expr.argument, component);",
+      "parentContext": {
+        "functionName": "extractStateKey",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractStateKey",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/structuralTemplates.cjs"
+  ]
+}

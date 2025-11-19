@@ -1,0 +1,141 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "writeHookSignature",
+  "params": [
+    {
+      "name": "componentName",
+      "inferredType": "&str",
+      "defaultValue": null
+    },
+    {
+      "name": "hooks",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "inputFilePath",
+      "inferredType": "&Path",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function writeHookSignature(componentName, hooks, inputFilePath) {\r\n  const signature = {\r\n    componentName: componentName,\r\n    timestamp: new Date().toISOString(),\r\n    hooks: hooks\r\n  };\r\n\r\n  const outputDir = path.dirname(inputFilePath);\r\n  const signatureFilePath = path.join(outputDir, `${componentName}.hooks.json`);\r\n\r\n  try {\r\n    fs.writeFileSync(signatureFilePath, JSON.stringify(signature, null, 2));\r\n    console.log(`[Hook Signature] ✅ Wrote ${path.basename(signatureFilePath)} with ${hooks.length} hooks`);\r\n  } catch (error) {\r\n    console.error(`[Hook Signature] Failed to write ${signatureFilePath}:`, error);\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "7de14112",
+      "type": "VariableDeclaration",
+      "babel_source": "const signature = {\r\n    componentName: componentName,\r\n    timestamp: new Date().toISOString(),\r\n    hooks: hooks\r\n  };",
+      "parentContext": {
+        "functionName": "writeHookSignature",
+        "functionParams": [
+          "componentName",
+          "hooks",
+          "inputFilePath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "492eb7a1",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    componentName: componentName,\r\n    timestamp: new Date().toISOString(),\r\n    hooks: hooks\r\n  }",
+      "parentContext": {
+        "functionName": "writeHookSignature",
+        "functionParams": [
+          "componentName",
+          "hooks",
+          "inputFilePath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "21184a97",
+      "type": "NewExpression",
+      "babel_source": "new Date()",
+      "parentContext": {
+        "functionName": "writeHookSignature",
+        "functionParams": [
+          "componentName",
+          "hooks",
+          "inputFilePath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f394b2f1",
+      "type": "VariableDeclaration",
+      "babel_source": "const outputDir = path.dirname(inputFilePath);",
+      "parentContext": {
+        "functionName": "writeHookSignature",
+        "functionParams": [
+          "componentName",
+          "hooks",
+          "inputFilePath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a1f5265d",
+      "type": "VariableDeclaration",
+      "babel_source": "const signatureFilePath = path.join(outputDir, `${componentName}.hooks.json`);",
+      "parentContext": {
+        "functionName": "writeHookSignature",
+        "functionParams": [
+          "componentName",
+          "hooks",
+          "inputFilePath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "60df46e8",
+      "type": "TemplateLiteral",
+      "babel_source": "`${componentName}.hooks.json`",
+      "parentContext": {
+        "functionName": "writeHookSignature",
+        "functionParams": [
+          "componentName",
+          "hooks",
+          "inputFilePath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9e03d10e",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Hook Signature] ✅ Wrote ${path.basename(signatureFilePath)} with ${hooks.length} hooks`",
+      "parentContext": {
+        "functionName": "writeHookSignature",
+        "functionParams": [
+          "componentName",
+          "hooks",
+          "inputFilePath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5c496b8c",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Hook Signature] Failed to write ${signatureFilePath}:`",
+      "parentContext": {
+        "functionName": "writeHookSignature",
+        "functionParams": [
+          "componentName",
+          "hooks",
+          "inputFilePath"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/hookSignature.cjs"
+  ]
+}

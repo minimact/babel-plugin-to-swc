@@ -1,0 +1,2101 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "inferPropTypes",
+  "params": [
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "body",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "&'static str",
+  "babel_source": "function inferPropTypes(component, body) {\r\n  const propUsage = {};\r\n\r\n  // Initialize tracking for each prop\r\n  for (const prop of component.props) {\r\n    propUsage[prop.name] = {\r\n      usedAsBoolean: false,\r\n      usedAsNumber: false,\r\n      usedAsString: false,\r\n      usedAsArray: false,\r\n      usedAsObject: false,\r\n      hasArrayMethods: false,\r\n      hasNumberOperations: false\r\n    };\r\n  }\r\n\r\n  // Traverse the body to analyze prop usage\r\n  function analyzePropUsage(node) {\r\n    if (!node) return;\r\n\r\n    // Handle BlockStatement (function body)\r\n    if (t.isBlockStatement(node)) {\r\n      for (const statement of node.body) {\r\n        analyzePropUsage(statement);\r\n      }\r\n      return;\r\n    }\r\n\r\n    // Handle VariableDeclaration\r\n    if (t.isVariableDeclaration(node)) {\r\n      for (const declarator of node.declarations) {\r\n        if (declarator.init) {\r\n          analyzePropUsage(declarator.init);\r\n        }\r\n      }\r\n      return;\r\n    }\r\n\r\n    // Handle ReturnStatement\r\n    if (t.isReturnStatement(node)) {\r\n      analyzePropUsage(node.argument);\r\n      return;\r\n    }\r\n\r\n    // Handle ExpressionStatement\r\n    if (t.isExpressionStatement(node)) {\r\n      analyzePropUsage(node.expression);\r\n      return;\r\n    }\r\n\r\n    // Check if prop is used in conditional context (implies boolean)\r\n    if (t.isConditionalExpression(node)) {\r\n      const testName = extractPropName(node.test);\r\n      if (testName && propUsage[testName]) {\r\n        propUsage[testName].usedAsBoolean = true;\r\n      }\r\n      analyzePropUsage(node.consequent);\r\n      analyzePropUsage(node.alternate);\r\n    }\r\n\r\n    // Check if prop is used in logical expression (implies boolean)\r\n    if (t.isLogicalExpression(node)) {\r\n      const leftName = extractPropName(node.left);\r\n      if (leftName && propUsage[leftName]) {\r\n        propUsage[leftName].usedAsBoolean = true;\r\n      }\r\n      analyzePropUsage(node.right);\r\n    }\r\n\r\n    // Check if prop is used with .map(), .filter(), etc (implies array)\r\n    if (t.isCallExpression(node) && t.isMemberExpression(node.callee)) {\r\n      const objectName = extractPropName(node.callee.object);\r\n      const methodName = t.isIdentifier(node.callee.property) ? node.callee.property.name : null;\r\n\r\n      if (objectName && propUsage[objectName]) {\r\n        if (methodName === 'map' || methodName === 'filter' || methodName === 'forEach' ||\r\n            methodName === 'find' || methodName === 'some' || methodName === 'every' ||\r\n            methodName === 'reduce' || methodName === 'sort' || methodName === 'slice') {\r\n          propUsage[objectName].usedAsArray = true;\r\n          propUsage[objectName].hasArrayMethods = true;\r\n        }\r\n      }\r\n\r\n      // Recurse into arguments\r\n      for (const arg of node.arguments) {\r\n        analyzePropUsage(arg);\r\n      }\r\n    }\r\n\r\n    // Check if prop is used in arithmetic operations (implies number)\r\n    if (t.isBinaryExpression(node)) {\r\n      if (['+', '-', '*', '/', '%', '>', '<', '>=', '<='].includes(node.operator)) {\r\n        const leftName = extractPropName(node.left);\r\n        const rightName = extractPropName(node.right);\r\n\r\n        if (leftName && propUsage[leftName]) {\r\n          propUsage[leftName].usedAsNumber = true;\r\n          propUsage[leftName].hasNumberOperations = true;\r\n        }\r\n        if (rightName && propUsage[rightName]) {\r\n          propUsage[rightName].usedAsNumber = true;\r\n          propUsage[rightName].hasNumberOperations = true;\r\n        }\r\n      }\r\n\r\n      analyzePropUsage(node.left);\r\n      analyzePropUsage(node.right);\r\n    }\r\n\r\n    // Check member access for .length (could be array or string)\r\n    if (t.isMemberExpression(node)) {\r\n      const objectName = extractPropName(node.object);\r\n      const propertyName = t.isIdentifier(node.property) ? node.property.name : null;\r\n\r\n      if (objectName && propUsage[objectName]) {\r\n        if (propertyName === 'length') {\r\n          // Could be array or string, mark both\r\n          propUsage[objectName].usedAsArray = true;\r\n          propUsage[objectName].usedAsString = true;\r\n        } else if (propertyName) {\r\n          // Accessing a property implies object\r\n          propUsage[objectName].usedAsObject = true;\r\n        }\r\n      }\r\n\r\n      analyzePropUsage(node.object);\r\n      if (node.computed) {\r\n        analyzePropUsage(node.property);\r\n      }\r\n    }\r\n\r\n    // Recurse into JSX elements\r\n    if (t.isJSXElement(node)) {\r\n      for (const child of node.children) {\r\n        analyzePropUsage(child);\r\n      }\r\n      for (const attr of node.openingElement.attributes) {\r\n        if (t.isJSXAttribute(attr) && t.isJSXExpressionContainer(attr.value)) {\r\n          analyzePropUsage(attr.value.expression);\r\n        }\r\n      }\r\n    }\r\n\r\n    if (t.isJSXExpressionContainer(node)) {\r\n      analyzePropUsage(node.expression);\r\n    }\r\n\r\n    // Recurse into arrow functions\r\n    if (t.isArrowFunctionExpression(node)) {\r\n      analyzePropUsage(node.body);\r\n    }\r\n\r\n    // Recurse into arrays\r\n    if (Array.isArray(node)) {\r\n      for (const item of node) {\r\n        analyzePropUsage(item);\r\n      }\r\n    }\r\n  }\r\n\r\n  analyzePropUsage(body);\r\n\r\n  // Now infer types based on usage patterns\r\n  for (const prop of component.props) {\r\n    if (prop.type !== 'dynamic') {\r\n      // Already has explicit type from TypeScript, don't override\r\n      continue;\r\n    }\r\n\r\n    const usage = propUsage[prop.name];\r\n\r\n    if (usage.hasArrayMethods) {\r\n      // Definitely an array if array methods are called\r\n      prop.type = 'List<dynamic>';\r\n    } else if (usage.usedAsArray && !usage.hasNumberOperations) {\r\n      // Used as array (e.g., .length on array)\r\n      prop.type = 'List<dynamic>';\r\n    } else if (usage.usedAsBoolean && !usage.usedAsNumber && !usage.usedAsString && !usage.usedAsObject && !usage.usedAsArray) {\r\n      // Used only as boolean\r\n      prop.type = 'bool';\r\n    } else if (usage.hasNumberOperations && !usage.usedAsBoolean && !usage.usedAsArray) {\r\n      // Used in arithmetic operations\r\n      prop.type = 'double';\r\n    } else if (usage.usedAsObject && !usage.usedAsArray && !usage.usedAsBoolean) {\r\n      // Used as object with property access\r\n      prop.type = 'dynamic';\r\n    } else {\r\n      // Keep as dynamic for complex cases\r\n      prop.type = 'dynamic';\r\n    }\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "085dc867",
+      "type": "VariableDeclaration",
+      "babel_source": "const propUsage = {};",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "44136fa3",
+      "type": "ObjectExpression",
+      "babel_source": "{}",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8575b4c2",
+      "type": "ForOfStatement",
+      "babel_source": "for (const prop of component.props) {\r\n    propUsage[prop.name] = {\r\n      usedAsBoolean: false,\r\n      usedAsNumber: false,\r\n      usedAsString: false,\r\n      usedAsArray: false,\r\n      usedAsObject: false,\r\n      hasArrayMethods: false,\r\n      hasNumberOperations: false\r\n    };\r\n  }",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "098a3cb5",
+      "type": "VariableDeclaration",
+      "babel_source": "const prop",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "14f02a37",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "propUsage[prop.name] = {\r\n      usedAsBoolean: false,\r\n      usedAsNumber: false,\r\n      usedAsString: false,\r\n      usedAsArray: false,\r\n      usedAsObject: false,\r\n      hasArrayMethods: false,\r\n      hasNumberOperations: false\r\n    }",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d06e4b2f",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n      usedAsBoolean: false,\r\n      usedAsNumber: false,\r\n      usedAsString: false,\r\n      usedAsArray: false,\r\n      usedAsObject: false,\r\n      hasArrayMethods: false,\r\n      hasNumberOperations: false\r\n    }",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "38309af2",
+      "type": "IfStatement",
+      "condition": "!node",
+      "babel_source": "if (!node) return;",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e10d47ee",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!node",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8beaabe2",
+      "type": "ReturnStatement",
+      "babel_source": "return;",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "eb55e386",
+      "type": "IfStatement",
+      "condition": "t.isBlockStatement(node)",
+      "babel_source": "if (t.isBlockStatement(node)) {\r\n      for (const statement of node.body) {\r\n        analyzePropUsage(statement);\r\n      }\r\n      return;\r\n    }",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c0ed7533",
+      "type": "BabelTypeCheck",
+      "method": "isBlockStatement",
+      "babel_source": "t.isBlockStatement(node)",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "75cc7146",
+      "type": "ForOfStatement",
+      "babel_source": "for (const statement of node.body) {\r\n        analyzePropUsage(statement);\r\n      }",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f397d33c",
+      "type": "VariableDeclaration",
+      "babel_source": "const statement",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8beaabe2",
+      "type": "ReturnStatement",
+      "babel_source": "return;",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c0790996",
+      "type": "IfStatement",
+      "condition": "t.isVariableDeclaration(node)",
+      "babel_source": "if (t.isVariableDeclaration(node)) {\r\n      for (const declarator of node.declarations) {\r\n        if (declarator.init) {\r\n          analyzePropUsage(declarator.init);\r\n        }\r\n      }\r\n      return;\r\n    }",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cc1e84a3",
+      "type": "BabelTypeCheck",
+      "method": "isVariableDeclaration",
+      "babel_source": "t.isVariableDeclaration(node)",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "616bacae",
+      "type": "ForOfStatement",
+      "babel_source": "for (const declarator of node.declarations) {\r\n        if (declarator.init) {\r\n          analyzePropUsage(declarator.init);\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42c4f561",
+      "type": "VariableDeclaration",
+      "babel_source": "const declarator",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f4fb4b90",
+      "type": "IfStatement",
+      "condition": "declarator.init",
+      "babel_source": "if (declarator.init) {\r\n          analyzePropUsage(declarator.init);\r\n        }",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8beaabe2",
+      "type": "ReturnStatement",
+      "babel_source": "return;",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e7a775c3",
+      "type": "IfStatement",
+      "condition": "t.isReturnStatement(node)",
+      "babel_source": "if (t.isReturnStatement(node)) {\r\n      analyzePropUsage(node.argument);\r\n      return;\r\n    }",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "515bcc68",
+      "type": "BabelTypeCheck",
+      "method": "isReturnStatement",
+      "babel_source": "t.isReturnStatement(node)",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8beaabe2",
+      "type": "ReturnStatement",
+      "babel_source": "return;",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b65157df",
+      "type": "IfStatement",
+      "condition": "t.isExpressionStatement(node)",
+      "babel_source": "if (t.isExpressionStatement(node)) {\r\n      analyzePropUsage(node.expression);\r\n      return;\r\n    }",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "68148a6d",
+      "type": "BabelTypeCheck",
+      "method": "isExpressionStatement",
+      "babel_source": "t.isExpressionStatement(node)",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8beaabe2",
+      "type": "ReturnStatement",
+      "babel_source": "return;",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6e31eab0",
+      "type": "IfStatement",
+      "condition": "t.isConditionalExpression(node)",
+      "babel_source": "if (t.isConditionalExpression(node)) {\r\n      const testName = extractPropName(node.test);\r\n      if (testName && propUsage[testName]) {\r\n        propUsage[testName].usedAsBoolean = true;\r\n      }\r\n      analyzePropUsage(node.consequent);\r\n      analyzePropUsage(node.alternate);\r\n    }",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1459577d",
+      "type": "BabelTypeCheck",
+      "method": "isConditionalExpression",
+      "babel_source": "t.isConditionalExpression(node)",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6818eb14",
+      "type": "VariableDeclaration",
+      "babel_source": "const testName = extractPropName(node.test);",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bb25cb32",
+      "type": "IfStatement",
+      "condition": "testName && propUsage[testName]",
+      "babel_source": "if (testName && propUsage[testName]) {\r\n        propUsage[testName].usedAsBoolean = true;\r\n      }",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4a20c0b0",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "testName && propUsage[testName]",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "933b8630",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "propUsage[testName].usedAsBoolean = true",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "538dd25e",
+      "type": "IfStatement",
+      "condition": "t.isLogicalExpression(node)",
+      "babel_source": "if (t.isLogicalExpression(node)) {\r\n      const leftName = extractPropName(node.left);\r\n      if (leftName && propUsage[leftName]) {\r\n        propUsage[leftName].usedAsBoolean = true;\r\n      }\r\n      analyzePropUsage(node.right);\r\n    }",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "00fb4fd3",
+      "type": "BabelTypeCheck",
+      "method": "isLogicalExpression",
+      "babel_source": "t.isLogicalExpression(node)",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "25466e5b",
+      "type": "VariableDeclaration",
+      "babel_source": "const leftName = extractPropName(node.left);",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5dc9bb68",
+      "type": "IfStatement",
+      "condition": "leftName && propUsage[leftName]",
+      "babel_source": "if (leftName && propUsage[leftName]) {\r\n        propUsage[leftName].usedAsBoolean = true;\r\n      }",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "93a78418",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "leftName && propUsage[leftName]",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f1a9c542",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "propUsage[leftName].usedAsBoolean = true",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0ee428e3",
+      "type": "IfStatement",
+      "condition": "t.isCallExpression(node) && t.isMemberExpression(node.callee)",
+      "babel_source": "if (t.isCallExpression(node) && t.isMemberExpression(node.callee)) {\r\n      const objectName = extractPropName(node.callee.object);\r\n      const methodName = t.isIdentifier(node.callee.property) ? node.callee.property.name : null;\r\n\r\n      if (objectName && propUsage[objectName]) {\r\n        if (methodName === 'map' || methodName === 'filter' || methodName === 'forEach' ||\r\n            methodName === 'find' || methodName === 'some' || methodName === 'every' ||\r\n            methodName === 'reduce' || methodName === 'sort' || methodName === 'slice') {\r\n          propUsage[objectName].usedAsArray = true;\r\n          propUsage[objectName].hasArrayMethods = true;\r\n        }\r\n      }\r\n\r\n      // Recurse into arguments\r\n      for (const arg of node.arguments) {\r\n        analyzePropUsage(arg);\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ba57e01c",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isCallExpression(node) && t.isMemberExpression(node.callee)",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1088dc62",
+      "type": "BabelTypeCheck",
+      "method": "isCallExpression",
+      "babel_source": "t.isCallExpression(node)",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ec7eca4e",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(node.callee)",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f4a70c97",
+      "type": "VariableDeclaration",
+      "babel_source": "const objectName = extractPropName(node.callee.object);",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e04e97e5",
+      "type": "VariableDeclaration",
+      "babel_source": "const methodName = t.isIdentifier(node.callee.property) ? node.callee.property.name : null;",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e1b2bac3",
+      "type": "ConditionalExpression",
+      "babel_source": "t.isIdentifier(node.callee.property) ? node.callee.property.name : null",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "07a4402f",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee.property)",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5f1134d5",
+      "type": "IfStatement",
+      "condition": "objectName && propUsage[objectName]",
+      "babel_source": "if (objectName && propUsage[objectName]) {\r\n        if (methodName === 'map' || methodName === 'filter' || methodName === 'forEach' ||\r\n            methodName === 'find' || methodName === 'some' || methodName === 'every' ||\r\n            methodName === 'reduce' || methodName === 'sort' || methodName === 'slice') {\r\n          propUsage[objectName].usedAsArray = true;\r\n          propUsage[objectName].hasArrayMethods = true;\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8c608d15",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "objectName && propUsage[objectName]",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f50be8dd",
+      "type": "IfStatement",
+      "condition": "methodName === 'map' || methodName === 'filter' || methodName === 'forEach' ||\r\n            methodName === 'find' || methodName === 'some' || methodName === 'every' ||\r\n            methodName === 'reduce' || methodName === 'sort' || methodName === 'slice'",
+      "babel_source": "if (methodName === 'map' || methodName === 'filter' || methodName === 'forEach' ||\r\n            methodName === 'find' || methodName === 'some' || methodName === 'every' ||\r\n            methodName === 'reduce' || methodName === 'sort' || methodName === 'slice') {\r\n          propUsage[objectName].usedAsArray = true;\r\n          propUsage[objectName].hasArrayMethods = true;\r\n        }",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "69c63b9b",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "methodName === 'map' || methodName === 'filter' || methodName === 'forEach' ||\r\n            methodName === 'find' || methodName === 'some' || methodName === 'every' ||\r\n            methodName === 'reduce' || methodName === 'sort' || methodName === 'slice'",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4bacd82c",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "methodName === 'map' || methodName === 'filter' || methodName === 'forEach' ||\r\n            methodName === 'find' || methodName === 'some' || methodName === 'every' ||\r\n            methodName === 'reduce' || methodName === 'sort'",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c66f9028",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "methodName === 'map' || methodName === 'filter' || methodName === 'forEach' ||\r\n            methodName === 'find' || methodName === 'some' || methodName === 'every' ||\r\n            methodName === 'reduce'",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b955d3fe",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "methodName === 'map' || methodName === 'filter' || methodName === 'forEach' ||\r\n            methodName === 'find' || methodName === 'some' || methodName === 'every'",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "eec643ad",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "methodName === 'map' || methodName === 'filter' || methodName === 'forEach' ||\r\n            methodName === 'find' || methodName === 'some'",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bc55868d",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "methodName === 'map' || methodName === 'filter' || methodName === 'forEach' ||\r\n            methodName === 'find'",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8fde0c4f",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "methodName === 'map' || methodName === 'filter' || methodName === 'forEach'",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "de435436",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "methodName === 'map' || methodName === 'filter'",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "db05e52b",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "methodName === 'map'",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "53e58485",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "methodName === 'filter'",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "15fb7be4",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "methodName === 'forEach'",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c85011b8",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "methodName === 'find'",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b12baf7b",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "methodName === 'some'",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "131bf6e9",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "methodName === 'every'",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2605cde0",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "methodName === 'reduce'",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2f02d352",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "methodName === 'sort'",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "afa293ab",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "methodName === 'slice'",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8309aa5a",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "propUsage[objectName].usedAsArray = true",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f2d7f4f2",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "propUsage[objectName].hasArrayMethods = true",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "924ad6f8",
+      "type": "ForOfStatement",
+      "babel_source": "for (const arg of node.arguments) {\r\n        analyzePropUsage(arg);\r\n      }",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "51d6a03f",
+      "type": "VariableDeclaration",
+      "babel_source": "const arg",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8dc05aeb",
+      "type": "IfStatement",
+      "condition": "t.isBinaryExpression(node)",
+      "babel_source": "if (t.isBinaryExpression(node)) {\r\n      if (['+', '-', '*', '/', '%', '>', '<', '>=', '<='].includes(node.operator)) {\r\n        const leftName = extractPropName(node.left);\r\n        const rightName = extractPropName(node.right);\r\n\r\n        if (leftName && propUsage[leftName]) {\r\n          propUsage[leftName].usedAsNumber = true;\r\n          propUsage[leftName].hasNumberOperations = true;\r\n        }\r\n        if (rightName && propUsage[rightName]) {\r\n          propUsage[rightName].usedAsNumber = true;\r\n          propUsage[rightName].hasNumberOperations = true;\r\n        }\r\n      }\r\n\r\n      analyzePropUsage(node.left);\r\n      analyzePropUsage(node.right);\r\n    }",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ae0955e9",
+      "type": "BabelTypeCheck",
+      "method": "isBinaryExpression",
+      "babel_source": "t.isBinaryExpression(node)",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e18f9136",
+      "type": "IfStatement",
+      "condition": "['+', '-', '*', '/', '%', '>', '<', '>=', '<='].includes(node.operator)",
+      "babel_source": "if (['+', '-', '*', '/', '%', '>', '<', '>=', '<='].includes(node.operator)) {\r\n        const leftName = extractPropName(node.left);\r\n        const rightName = extractPropName(node.right);\r\n\r\n        if (leftName && propUsage[leftName]) {\r\n          propUsage[leftName].usedAsNumber = true;\r\n          propUsage[leftName].hasNumberOperations = true;\r\n        }\r\n        if (rightName && propUsage[rightName]) {\r\n          propUsage[rightName].usedAsNumber = true;\r\n          propUsage[rightName].hasNumberOperations = true;\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "092a7f3f",
+      "type": "ArrayExpression",
+      "babel_source": "['+', '-', '*', '/', '%', '>', '<', '>=', '<=']",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "25466e5b",
+      "type": "VariableDeclaration",
+      "babel_source": "const leftName = extractPropName(node.left);",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "71cada08",
+      "type": "VariableDeclaration",
+      "babel_source": "const rightName = extractPropName(node.right);",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3251b66c",
+      "type": "IfStatement",
+      "condition": "leftName && propUsage[leftName]",
+      "babel_source": "if (leftName && propUsage[leftName]) {\r\n          propUsage[leftName].usedAsNumber = true;\r\n          propUsage[leftName].hasNumberOperations = true;\r\n        }",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "93a78418",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "leftName && propUsage[leftName]",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "eb11e3cd",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "propUsage[leftName].usedAsNumber = true",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "05839ad5",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "propUsage[leftName].hasNumberOperations = true",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a7595a6b",
+      "type": "IfStatement",
+      "condition": "rightName && propUsage[rightName]",
+      "babel_source": "if (rightName && propUsage[rightName]) {\r\n          propUsage[rightName].usedAsNumber = true;\r\n          propUsage[rightName].hasNumberOperations = true;\r\n        }",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3bf37cd5",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "rightName && propUsage[rightName]",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "48889a78",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "propUsage[rightName].usedAsNumber = true",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bfa1ad8e",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "propUsage[rightName].hasNumberOperations = true",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b3e3cc9e",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(node)",
+      "babel_source": "if (t.isMemberExpression(node)) {\r\n      const objectName = extractPropName(node.object);\r\n      const propertyName = t.isIdentifier(node.property) ? node.property.name : null;\r\n\r\n      if (objectName && propUsage[objectName]) {\r\n        if (propertyName === 'length') {\r\n          // Could be array or string, mark both\r\n          propUsage[objectName].usedAsArray = true;\r\n          propUsage[objectName].usedAsString = true;\r\n        } else if (propertyName) {\r\n          // Accessing a property implies object\r\n          propUsage[objectName].usedAsObject = true;\r\n        }\r\n      }\r\n\r\n      analyzePropUsage(node.object);\r\n      if (node.computed) {\r\n        analyzePropUsage(node.property);\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e4025d71",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(node)",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7990c47e",
+      "type": "VariableDeclaration",
+      "babel_source": "const objectName = extractPropName(node.object);",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e37f6b6e",
+      "type": "VariableDeclaration",
+      "babel_source": "const propertyName = t.isIdentifier(node.property) ? node.property.name : null;",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9d2fd11c",
+      "type": "ConditionalExpression",
+      "babel_source": "t.isIdentifier(node.property) ? node.property.name : null",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a42af9c4",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.property)",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "44dec6e4",
+      "type": "IfStatement",
+      "condition": "objectName && propUsage[objectName]",
+      "babel_source": "if (objectName && propUsage[objectName]) {\r\n        if (propertyName === 'length') {\r\n          // Could be array or string, mark both\r\n          propUsage[objectName].usedAsArray = true;\r\n          propUsage[objectName].usedAsString = true;\r\n        } else if (propertyName) {\r\n          // Accessing a property implies object\r\n          propUsage[objectName].usedAsObject = true;\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8c608d15",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "objectName && propUsage[objectName]",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "858badaf",
+      "type": "IfStatement",
+      "condition": "propertyName === 'length'",
+      "babel_source": "if (propertyName === 'length') {\r\n          // Could be array or string, mark both\r\n          propUsage[objectName].usedAsArray = true;\r\n          propUsage[objectName].usedAsString = true;\r\n        } else if (propertyName) {\r\n          // Accessing a property implies object\r\n          propUsage[objectName].usedAsObject = true;\r\n        }",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6fbf3ec5",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "propertyName === 'length'",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8309aa5a",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "propUsage[objectName].usedAsArray = true",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8777dcae",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "propUsage[objectName].usedAsString = true",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "26fad0f1",
+      "type": "IfStatement",
+      "condition": "propertyName",
+      "babel_source": "if (propertyName) {\r\n          // Accessing a property implies object\r\n          propUsage[objectName].usedAsObject = true;\r\n        }",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fc332f01",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "propUsage[objectName].usedAsObject = true",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8275993f",
+      "type": "IfStatement",
+      "condition": "node.computed",
+      "babel_source": "if (node.computed) {\r\n        analyzePropUsage(node.property);\r\n      }",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1b9c08ad",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(node)",
+      "babel_source": "if (t.isJSXElement(node)) {\r\n      for (const child of node.children) {\r\n        analyzePropUsage(child);\r\n      }\r\n      for (const attr of node.openingElement.attributes) {\r\n        if (t.isJSXAttribute(attr) && t.isJSXExpressionContainer(attr.value)) {\r\n          analyzePropUsage(attr.value.expression);\r\n        }\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "606ccdc5",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(node)",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ef851b08",
+      "type": "ForOfStatement",
+      "babel_source": "for (const child of node.children) {\r\n        analyzePropUsage(child);\r\n      }",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "efdd3930",
+      "type": "VariableDeclaration",
+      "babel_source": "const child",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2ae50eb4",
+      "type": "ForOfStatement",
+      "babel_source": "for (const attr of node.openingElement.attributes) {\r\n        if (t.isJSXAttribute(attr) && t.isJSXExpressionContainer(attr.value)) {\r\n          analyzePropUsage(attr.value.expression);\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "02ca2e7f",
+      "type": "VariableDeclaration",
+      "babel_source": "const attr",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a39cf273",
+      "type": "IfStatement",
+      "condition": "t.isJSXAttribute(attr) && t.isJSXExpressionContainer(attr.value)",
+      "babel_source": "if (t.isJSXAttribute(attr) && t.isJSXExpressionContainer(attr.value)) {\r\n          analyzePropUsage(attr.value.expression);\r\n        }",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4e918ac0",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isJSXAttribute(attr) && t.isJSXExpressionContainer(attr.value)",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7468026c",
+      "type": "BabelTypeCheck",
+      "method": "isJSXAttribute",
+      "babel_source": "t.isJSXAttribute(attr)",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7bbf8e47",
+      "type": "BabelTypeCheck",
+      "method": "isJSXExpressionContainer",
+      "babel_source": "t.isJSXExpressionContainer(attr.value)",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "426ece66",
+      "type": "IfStatement",
+      "condition": "t.isJSXExpressionContainer(node)",
+      "babel_source": "if (t.isJSXExpressionContainer(node)) {\r\n      analyzePropUsage(node.expression);\r\n    }",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "aa27a02e",
+      "type": "BabelTypeCheck",
+      "method": "isJSXExpressionContainer",
+      "babel_source": "t.isJSXExpressionContainer(node)",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "44ca2d2c",
+      "type": "IfStatement",
+      "condition": "t.isArrowFunctionExpression(node)",
+      "babel_source": "if (t.isArrowFunctionExpression(node)) {\r\n      analyzePropUsage(node.body);\r\n    }",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4d2a5749",
+      "type": "BabelTypeCheck",
+      "method": "isArrowFunctionExpression",
+      "babel_source": "t.isArrowFunctionExpression(node)",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b1186f37",
+      "type": "IfStatement",
+      "condition": "Array.isArray(node)",
+      "babel_source": "if (Array.isArray(node)) {\r\n      for (const item of node) {\r\n        analyzePropUsage(item);\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6236693a",
+      "type": "ForOfStatement",
+      "babel_source": "for (const item of node) {\r\n        analyzePropUsage(item);\r\n      }",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b0d0d947",
+      "type": "VariableDeclaration",
+      "babel_source": "const item",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "83ad2148",
+      "type": "ForOfStatement",
+      "babel_source": "for (const prop of component.props) {\r\n    if (prop.type !== 'dynamic') {\r\n      // Already has explicit type from TypeScript, don't override\r\n      continue;\r\n    }\r\n\r\n    const usage = propUsage[prop.name];\r\n\r\n    if (usage.hasArrayMethods) {\r\n      // Definitely an array if array methods are called\r\n      prop.type = 'List<dynamic>';\r\n    } else if (usage.usedAsArray && !usage.hasNumberOperations) {\r\n      // Used as array (e.g., .length on array)\r\n      prop.type = 'List<dynamic>';\r\n    } else if (usage.usedAsBoolean && !usage.usedAsNumber && !usage.usedAsString && !usage.usedAsObject && !usage.usedAsArray) {\r\n      // Used only as boolean\r\n      prop.type = 'bool';\r\n    } else if (usage.hasNumberOperations && !usage.usedAsBoolean && !usage.usedAsArray) {\r\n      // Used in arithmetic operations\r\n      prop.type = 'double';\r\n    } else if (usage.usedAsObject && !usage.usedAsArray && !usage.usedAsBoolean) {\r\n      // Used as object with property access\r\n      prop.type = 'dynamic';\r\n    } else {\r\n      // Keep as dynamic for complex cases\r\n      prop.type = 'dynamic';\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "098a3cb5",
+      "type": "VariableDeclaration",
+      "babel_source": "const prop",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b7e08e6c",
+      "type": "IfStatement",
+      "condition": "prop.type !== 'dynamic'",
+      "babel_source": "if (prop.type !== 'dynamic') {\r\n      // Already has explicit type from TypeScript, don't override\r\n      continue;\r\n    }",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5355f672",
+      "type": "BinaryExpression",
+      "operator": "!==",
+      "babel_source": "prop.type !== 'dynamic'",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0bf37874",
+      "type": "ContinueStatement",
+      "babel_source": "continue;",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6109d161",
+      "type": "VariableDeclaration",
+      "babel_source": "const usage = propUsage[prop.name];",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9edb2225",
+      "type": "IfStatement",
+      "condition": "usage.hasArrayMethods",
+      "babel_source": "if (usage.hasArrayMethods) {\r\n      // Definitely an array if array methods are called\r\n      prop.type = 'List<dynamic>';\r\n    } else if (usage.usedAsArray && !usage.hasNumberOperations) {\r\n      // Used as array (e.g., .length on array)\r\n      prop.type = 'List<dynamic>';\r\n    } else if (usage.usedAsBoolean && !usage.usedAsNumber && !usage.usedAsString && !usage.usedAsObject && !usage.usedAsArray) {\r\n      // Used only as boolean\r\n      prop.type = 'bool';\r\n    } else if (usage.hasNumberOperations && !usage.usedAsBoolean && !usage.usedAsArray) {\r\n      // Used in arithmetic operations\r\n      prop.type = 'double';\r\n    } else if (usage.usedAsObject && !usage.usedAsArray && !usage.usedAsBoolean) {\r\n      // Used as object with property access\r\n      prop.type = 'dynamic';\r\n    } else {\r\n      // Keep as dynamic for complex cases\r\n      prop.type = 'dynamic';\r\n    }",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "37e53212",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "prop.type = 'List<dynamic>'",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7bb1a1ab",
+      "type": "IfStatement",
+      "condition": "usage.usedAsArray && !usage.hasNumberOperations",
+      "babel_source": "if (usage.usedAsArray && !usage.hasNumberOperations) {\r\n      // Used as array (e.g., .length on array)\r\n      prop.type = 'List<dynamic>';\r\n    } else if (usage.usedAsBoolean && !usage.usedAsNumber && !usage.usedAsString && !usage.usedAsObject && !usage.usedAsArray) {\r\n      // Used only as boolean\r\n      prop.type = 'bool';\r\n    } else if (usage.hasNumberOperations && !usage.usedAsBoolean && !usage.usedAsArray) {\r\n      // Used in arithmetic operations\r\n      prop.type = 'double';\r\n    } else if (usage.usedAsObject && !usage.usedAsArray && !usage.usedAsBoolean) {\r\n      // Used as object with property access\r\n      prop.type = 'dynamic';\r\n    } else {\r\n      // Keep as dynamic for complex cases\r\n      prop.type = 'dynamic';\r\n    }",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "187bf6ae",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "usage.usedAsArray && !usage.hasNumberOperations",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1435b130",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!usage.hasNumberOperations",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "37e53212",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "prop.type = 'List<dynamic>'",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ad6890fb",
+      "type": "IfStatement",
+      "condition": "usage.usedAsBoolean && !usage.usedAsNumber && !usage.usedAsString && !usage.usedAsObject && !usage.usedAsArray",
+      "babel_source": "if (usage.usedAsBoolean && !usage.usedAsNumber && !usage.usedAsString && !usage.usedAsObject && !usage.usedAsArray) {\r\n      // Used only as boolean\r\n      prop.type = 'bool';\r\n    } else if (usage.hasNumberOperations && !usage.usedAsBoolean && !usage.usedAsArray) {\r\n      // Used in arithmetic operations\r\n      prop.type = 'double';\r\n    } else if (usage.usedAsObject && !usage.usedAsArray && !usage.usedAsBoolean) {\r\n      // Used as object with property access\r\n      prop.type = 'dynamic';\r\n    } else {\r\n      // Keep as dynamic for complex cases\r\n      prop.type = 'dynamic';\r\n    }",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "74b33062",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "usage.usedAsBoolean && !usage.usedAsNumber && !usage.usedAsString && !usage.usedAsObject && !usage.usedAsArray",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a239eb83",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "usage.usedAsBoolean && !usage.usedAsNumber && !usage.usedAsString && !usage.usedAsObject",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c6bf7c19",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "usage.usedAsBoolean && !usage.usedAsNumber && !usage.usedAsString",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6ee670b3",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "usage.usedAsBoolean && !usage.usedAsNumber",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6da6edc0",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!usage.usedAsNumber",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9ea20930",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!usage.usedAsString",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "39175246",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!usage.usedAsObject",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "82323e88",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!usage.usedAsArray",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e3039b01",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "prop.type = 'bool'",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cd2fee98",
+      "type": "IfStatement",
+      "condition": "usage.hasNumberOperations && !usage.usedAsBoolean && !usage.usedAsArray",
+      "babel_source": "if (usage.hasNumberOperations && !usage.usedAsBoolean && !usage.usedAsArray) {\r\n      // Used in arithmetic operations\r\n      prop.type = 'double';\r\n    } else if (usage.usedAsObject && !usage.usedAsArray && !usage.usedAsBoolean) {\r\n      // Used as object with property access\r\n      prop.type = 'dynamic';\r\n    } else {\r\n      // Keep as dynamic for complex cases\r\n      prop.type = 'dynamic';\r\n    }",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "05e5a786",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "usage.hasNumberOperations && !usage.usedAsBoolean && !usage.usedAsArray",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c13426b3",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "usage.hasNumberOperations && !usage.usedAsBoolean",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "75e8c53f",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!usage.usedAsBoolean",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "82323e88",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!usage.usedAsArray",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f0029dbd",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "prop.type = 'double'",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "acba9bae",
+      "type": "IfStatement",
+      "condition": "usage.usedAsObject && !usage.usedAsArray && !usage.usedAsBoolean",
+      "babel_source": "if (usage.usedAsObject && !usage.usedAsArray && !usage.usedAsBoolean) {\r\n      // Used as object with property access\r\n      prop.type = 'dynamic';\r\n    } else {\r\n      // Keep as dynamic for complex cases\r\n      prop.type = 'dynamic';\r\n    }",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a9c4da88",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "usage.usedAsObject && !usage.usedAsArray && !usage.usedAsBoolean",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3d233d03",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "usage.usedAsObject && !usage.usedAsArray",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "82323e88",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!usage.usedAsArray",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "75e8c53f",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!usage.usedAsBoolean",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "21c1d44f",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "prop.type = 'dynamic'",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "21c1d44f",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "prop.type = 'dynamic'",
+      "parentContext": {
+        "functionName": "inferPropTypes",
+        "functionParams": [
+          "component",
+          "body"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/propTypeInference.cjs"
+  ]
+}

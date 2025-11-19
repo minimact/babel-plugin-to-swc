@@ -1,0 +1,474 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "transpileMethodCall",
+  "params": [
+    {
+      "name": "callee",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "args",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function transpileMethodCall(callee, args) {\r\n  // Array methods: .map → .Select, .filter → .Where, etc.\r\n  const mappings = {\r\n    '.map': '.Select',\r\n    '.filter': '.Where',\r\n    '.reduce': '.Aggregate',\r\n    '.find': '.FirstOrDefault',\r\n    '.findIndex': '.FindIndex',\r\n    '.some': '.Any',\r\n    '.every': '.All',\r\n    '.includes': '.Contains',\r\n    '.sort': '.OrderBy',\r\n    '.reverse': '.Reverse',\r\n    '.slice': '.Skip',\r\n    '.concat': '.Concat',\r\n    '.join': '.Join',\r\n    'console.log': 'Console.WriteLine',\r\n    'console.error': 'Console.Error.WriteLine',\r\n    'console.warn': 'Console.WriteLine',\r\n    'Math.floor': 'Math.Floor',\r\n    'Math.ceil': 'Math.Ceiling',\r\n    'Math.round': 'Math.Round',\r\n    'Math.abs': 'Math.Abs',\r\n    'Math.max': 'Math.Max',\r\n    'Math.min': 'Math.Min',\r\n    'Math.sqrt': 'Math.Sqrt',\r\n    'Math.pow': 'Math.Pow',\r\n    'JSON.stringify': 'JsonSerializer.Serialize',\r\n    'JSON.parse': 'JsonSerializer.Deserialize'\r\n  };\r\n\r\n  for (const [ts, csharp] of Object.entries(mappings)) {\r\n    if (callee.includes(ts)) {\r\n      const transpiledCallee = callee.replace(ts, csharp);\r\n      return `${transpiledCallee}(${args})`;\r\n    }\r\n  }\r\n\r\n  // Special handling for .toFixed()\r\n  if (callee.endsWith('.toFixed')) {\r\n    const obj = callee.replace('.toFixed', '');\r\n    return `${obj}.ToString(\"F\" + ${args})`;\r\n  }\r\n\r\n  // Special handling for .split()\r\n  if (callee.endsWith('.split')) {\r\n    const obj = callee.replace('.split', '');\r\n    return `${obj}.Split(${args})`;\r\n  }\r\n\r\n  // Special handling for .trim() → .Trim()\r\n  if (callee.endsWith('.trim')) {\r\n    const obj = callee.replace('.trim', '');\r\n    return `${obj}.Trim(${args})`;\r\n  }\r\n\r\n  // Special handling for .toLowerCase() → .ToLower()\r\n  if (callee.endsWith('.toLowerCase')) {\r\n    const obj = callee.replace('.toLowerCase', '');\r\n    return `${obj}.ToLower(${args})`;\r\n  }\r\n\r\n  // Special handling for .toUpperCase() → .ToUpper()\r\n  if (callee.endsWith('.toUpperCase')) {\r\n    const obj = callee.replace('.toUpperCase', '');\r\n    return `${obj}.ToUpper(${args})`;\r\n  }\r\n\r\n  // Special handling for fetch (convert to HttpClient call)\r\n  if (callee === 'fetch') {\r\n    return `await _httpClient.GetStringAsync(${args})`;\r\n  }\r\n\r\n  return `${callee}(${args})`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "ac79d175",
+      "type": "VariableDeclaration",
+      "babel_source": "const mappings = {\r\n    '.map': '.Select',\r\n    '.filter': '.Where',\r\n    '.reduce': '.Aggregate',\r\n    '.find': '.FirstOrDefault',\r\n    '.findIndex': '.FindIndex',\r\n    '.some': '.Any',\r\n    '.every': '.All',\r\n    '.includes': '.Contains',\r\n    '.sort': '.OrderBy',\r\n    '.reverse': '.Reverse',\r\n    '.slice': '.Skip',\r\n    '.concat': '.Concat',\r\n    '.join': '.Join',\r\n    'console.log': 'Console.WriteLine',\r\n    'console.error': 'Console.Error.WriteLine',\r\n    'console.warn': 'Console.WriteLine',\r\n    'Math.floor': 'Math.Floor',\r\n    'Math.ceil': 'Math.Ceiling',\r\n    'Math.round': 'Math.Round',\r\n    'Math.abs': 'Math.Abs',\r\n    'Math.max': 'Math.Max',\r\n    'Math.min': 'Math.Min',\r\n    'Math.sqrt': 'Math.Sqrt',\r\n    'Math.pow': 'Math.Pow',\r\n    'JSON.stringify': 'JsonSerializer.Serialize',\r\n    'JSON.parse': 'JsonSerializer.Deserialize'\r\n  };",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "50522770",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    '.map': '.Select',\r\n    '.filter': '.Where',\r\n    '.reduce': '.Aggregate',\r\n    '.find': '.FirstOrDefault',\r\n    '.findIndex': '.FindIndex',\r\n    '.some': '.Any',\r\n    '.every': '.All',\r\n    '.includes': '.Contains',\r\n    '.sort': '.OrderBy',\r\n    '.reverse': '.Reverse',\r\n    '.slice': '.Skip',\r\n    '.concat': '.Concat',\r\n    '.join': '.Join',\r\n    'console.log': 'Console.WriteLine',\r\n    'console.error': 'Console.Error.WriteLine',\r\n    'console.warn': 'Console.WriteLine',\r\n    'Math.floor': 'Math.Floor',\r\n    'Math.ceil': 'Math.Ceiling',\r\n    'Math.round': 'Math.Round',\r\n    'Math.abs': 'Math.Abs',\r\n    'Math.max': 'Math.Max',\r\n    'Math.min': 'Math.Min',\r\n    'Math.sqrt': 'Math.Sqrt',\r\n    'Math.pow': 'Math.Pow',\r\n    'JSON.stringify': 'JsonSerializer.Serialize',\r\n    'JSON.parse': 'JsonSerializer.Deserialize'\r\n  }",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "187edaa7",
+      "type": "ForOfStatement",
+      "babel_source": "for (const [ts, csharp] of Object.entries(mappings)) {\r\n    if (callee.includes(ts)) {\r\n      const transpiledCallee = callee.replace(ts, csharp);\r\n      return `${transpiledCallee}(${args})`;\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f9f0fd68",
+      "type": "VariableDeclaration",
+      "babel_source": "const [ts, csharp]",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "704fe16f",
+      "type": "IfStatement",
+      "condition": "callee.includes(ts)",
+      "babel_source": "if (callee.includes(ts)) {\r\n      const transpiledCallee = callee.replace(ts, csharp);\r\n      return `${transpiledCallee}(${args})`;\r\n    }",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fa672c32",
+      "type": "VariableDeclaration",
+      "babel_source": "const transpiledCallee = callee.replace(ts, csharp);",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f29abc20",
+      "type": "ReturnStatement",
+      "babel_source": "return `${transpiledCallee}(${args})`;",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c18e8e7f",
+      "type": "TemplateLiteral",
+      "babel_source": "`${transpiledCallee}(${args})`",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "be98fb2b",
+      "type": "IfStatement",
+      "condition": "callee.endsWith('.toFixed')",
+      "babel_source": "if (callee.endsWith('.toFixed')) {\r\n    const obj = callee.replace('.toFixed', '');\r\n    return `${obj}.ToString(\"F\" + ${args})`;\r\n  }",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7621c03c",
+      "type": "VariableDeclaration",
+      "babel_source": "const obj = callee.replace('.toFixed', '');",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cc911848",
+      "type": "ReturnStatement",
+      "babel_source": "return `${obj}.ToString(\"F\" + ${args})`;",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bf2ba340",
+      "type": "TemplateLiteral",
+      "babel_source": "`${obj}.ToString(\"F\" + ${args})`",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d428666c",
+      "type": "IfStatement",
+      "condition": "callee.endsWith('.split')",
+      "babel_source": "if (callee.endsWith('.split')) {\r\n    const obj = callee.replace('.split', '');\r\n    return `${obj}.Split(${args})`;\r\n  }",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6797f349",
+      "type": "VariableDeclaration",
+      "babel_source": "const obj = callee.replace('.split', '');",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8ed1e54e",
+      "type": "ReturnStatement",
+      "babel_source": "return `${obj}.Split(${args})`;",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "62ca26f6",
+      "type": "TemplateLiteral",
+      "babel_source": "`${obj}.Split(${args})`",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5d21d328",
+      "type": "IfStatement",
+      "condition": "callee.endsWith('.trim')",
+      "babel_source": "if (callee.endsWith('.trim')) {\r\n    const obj = callee.replace('.trim', '');\r\n    return `${obj}.Trim(${args})`;\r\n  }",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "74b869b4",
+      "type": "VariableDeclaration",
+      "babel_source": "const obj = callee.replace('.trim', '');",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "39daadb9",
+      "type": "ReturnStatement",
+      "babel_source": "return `${obj}.Trim(${args})`;",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1db3ac7e",
+      "type": "TemplateLiteral",
+      "babel_source": "`${obj}.Trim(${args})`",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d53851be",
+      "type": "IfStatement",
+      "condition": "callee.endsWith('.toLowerCase')",
+      "babel_source": "if (callee.endsWith('.toLowerCase')) {\r\n    const obj = callee.replace('.toLowerCase', '');\r\n    return `${obj}.ToLower(${args})`;\r\n  }",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "273982d1",
+      "type": "VariableDeclaration",
+      "babel_source": "const obj = callee.replace('.toLowerCase', '');",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "93d0433c",
+      "type": "ReturnStatement",
+      "babel_source": "return `${obj}.ToLower(${args})`;",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2aea09cb",
+      "type": "TemplateLiteral",
+      "babel_source": "`${obj}.ToLower(${args})`",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ba98396b",
+      "type": "IfStatement",
+      "condition": "callee.endsWith('.toUpperCase')",
+      "babel_source": "if (callee.endsWith('.toUpperCase')) {\r\n    const obj = callee.replace('.toUpperCase', '');\r\n    return `${obj}.ToUpper(${args})`;\r\n  }",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0aac48eb",
+      "type": "VariableDeclaration",
+      "babel_source": "const obj = callee.replace('.toUpperCase', '');",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bf438ed9",
+      "type": "ReturnStatement",
+      "babel_source": "return `${obj}.ToUpper(${args})`;",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7feddc82",
+      "type": "TemplateLiteral",
+      "babel_source": "`${obj}.ToUpper(${args})`",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "657e1e71",
+      "type": "IfStatement",
+      "condition": "callee === 'fetch'",
+      "babel_source": "if (callee === 'fetch') {\r\n    return `await _httpClient.GetStringAsync(${args})`;\r\n  }",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "361e5dfc",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "callee === 'fetch'",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "48d4796c",
+      "type": "ReturnStatement",
+      "babel_source": "return `await _httpClient.GetStringAsync(${args})`;",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "25ef7f38",
+      "type": "TemplateLiteral",
+      "babel_source": "`await _httpClient.GetStringAsync(${args})`",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0b87ae87",
+      "type": "ReturnStatement",
+      "babel_source": "return `${callee}(${args})`;",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0653ee57",
+      "type": "TemplateLiteral",
+      "babel_source": "`${callee}(${args})`",
+      "parentContext": {
+        "functionName": "transpileMethodCall",
+        "functionParams": [
+          "callee",
+          "args"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "transpilers/typescriptToCSharp.cjs"
+  ]
+}

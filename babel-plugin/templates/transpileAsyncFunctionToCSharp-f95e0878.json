@@ -1,0 +1,131 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "transpileAsyncFunctionToCSharp",
+  "params": [
+    {
+      "name": "asyncFunction",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function transpileAsyncFunctionToCSharp(asyncFunction) {\r\n  const body = asyncFunction.body;\r\n  const params = asyncFunction.params;\r\n\r\n  let csharpCode = '';\r\n\r\n  // Transpile body\r\n  if (t.isBlockStatement(body)) {\r\n    csharpCode = transpileBlockStatement(body);\r\n  } else {\r\n    // Arrow function with expression body: () => expr\r\n    csharpCode = `return ${transpileExpression(body)};`;\r\n  }\r\n\r\n  return csharpCode;\r\n}",
+  "body_templates": [
+    {
+      "hash": "04a9204b",
+      "type": "VariableDeclaration",
+      "babel_source": "const body = asyncFunction.body;",
+      "parentContext": {
+        "functionName": "transpileAsyncFunctionToCSharp",
+        "functionParams": [
+          "asyncFunction"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "672533ec",
+      "type": "VariableDeclaration",
+      "babel_source": "const params = asyncFunction.params;",
+      "parentContext": {
+        "functionName": "transpileAsyncFunctionToCSharp",
+        "functionParams": [
+          "asyncFunction"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cee56429",
+      "type": "VariableDeclaration",
+      "babel_source": "let csharpCode = '';",
+      "parentContext": {
+        "functionName": "transpileAsyncFunctionToCSharp",
+        "functionParams": [
+          "asyncFunction"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e91832fb",
+      "type": "IfStatement",
+      "condition": "t.isBlockStatement(body)",
+      "babel_source": "if (t.isBlockStatement(body)) {\r\n    csharpCode = transpileBlockStatement(body);\r\n  } else {\r\n    // Arrow function with expression body: () => expr\r\n    csharpCode = `return ${transpileExpression(body)};`;\r\n  }",
+      "parentContext": {
+        "functionName": "transpileAsyncFunctionToCSharp",
+        "functionParams": [
+          "asyncFunction"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8f74e258",
+      "type": "BabelTypeCheck",
+      "method": "isBlockStatement",
+      "babel_source": "t.isBlockStatement(body)",
+      "parentContext": {
+        "functionName": "transpileAsyncFunctionToCSharp",
+        "functionParams": [
+          "asyncFunction"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "01c9596f",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "csharpCode = transpileBlockStatement(body)",
+      "parentContext": {
+        "functionName": "transpileAsyncFunctionToCSharp",
+        "functionParams": [
+          "asyncFunction"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ab5290e",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "csharpCode = `return ${transpileExpression(body)};`",
+      "parentContext": {
+        "functionName": "transpileAsyncFunctionToCSharp",
+        "functionParams": [
+          "asyncFunction"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0148c3a5",
+      "type": "TemplateLiteral",
+      "babel_source": "`return ${transpileExpression(body)};`",
+      "parentContext": {
+        "functionName": "transpileAsyncFunctionToCSharp",
+        "functionParams": [
+          "asyncFunction"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "aba135f8",
+      "type": "ReturnStatement",
+      "babel_source": "return csharpCode;",
+      "parentContext": {
+        "functionName": "transpileAsyncFunctionToCSharp",
+        "functionParams": [
+          "asyncFunction"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "transpilers/typescriptToCSharp.cjs"
+  ]
+}

@@ -1,0 +1,403 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "parseStateObject",
+  "params": [
+    {
+      "name": "obj",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function parseStateObject(obj) {\r\n  const state = {};\r\n\r\n  obj.properties.forEach(prop => {\r\n    if (t.isObjectProperty(prop) && t.isIdentifier(prop.key)) {\r\n      const key = prop.key.name;\r\n      const value = prop.value;\r\n\r\n      // Extract literal values\r\n      if (t.isNumericLiteral(value)) {\r\n        state[key] = value.value;\r\n      } else if (t.isStringLiteral(value)) {\r\n        state[key] = value.value;\r\n      } else if (t.isBooleanLiteral(value)) {\r\n        state[key] = value.value;\r\n      } else if (t.isNullLiteral(value)) {\r\n        state[key] = null;\r\n      } else if (t.isUnaryExpression(value) && value.operator === '-' && t.isNumericLiteral(value.argument)) {\r\n        // Handle negative numbers\r\n        state[key] = -value.argument.value;\r\n      }\r\n    }\r\n  });\r\n\r\n  return state;\r\n}",
+  "body_templates": [
+    {
+      "hash": "21237ccc",
+      "type": "VariableDeclaration",
+      "babel_source": "const state = {};",
+      "parentContext": {
+        "functionName": "parseStateObject",
+        "functionParams": [
+          "obj"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "44136fa3",
+      "type": "ObjectExpression",
+      "babel_source": "{}",
+      "parentContext": {
+        "functionName": "parseStateObject",
+        "functionParams": [
+          "obj"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "239d8f92",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "prop => {\r\n    if (t.isObjectProperty(prop) && t.isIdentifier(prop.key)) {\r\n      const key = prop.key.name;\r\n      const value = prop.value;\r\n\r\n      // Extract literal values\r\n      if (t.isNumericLiteral(value)) {\r\n        state[key] = value.value;\r\n      } else if (t.isStringLiteral(value)) {\r\n        state[key] = value.value;\r\n      } else if (t.isBooleanLiteral(value)) {\r\n        state[key] = value.value;\r\n      } else if (t.isNullLiteral(value)) {\r\n        state[key] = null;\r\n      } else if (t.isUnaryExpression(value) && value.operator === '-' && t.isNumericLiteral(value.argument)) {\r\n        // Handle negative numbers\r\n        state[key] = -value.argument.value;\r\n      }\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "parseStateObject",
+        "functionParams": [
+          "obj"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3b144c7c",
+      "type": "IfStatement",
+      "condition": "t.isObjectProperty(prop) && t.isIdentifier(prop.key)",
+      "babel_source": "if (t.isObjectProperty(prop) && t.isIdentifier(prop.key)) {\r\n      const key = prop.key.name;\r\n      const value = prop.value;\r\n\r\n      // Extract literal values\r\n      if (t.isNumericLiteral(value)) {\r\n        state[key] = value.value;\r\n      } else if (t.isStringLiteral(value)) {\r\n        state[key] = value.value;\r\n      } else if (t.isBooleanLiteral(value)) {\r\n        state[key] = value.value;\r\n      } else if (t.isNullLiteral(value)) {\r\n        state[key] = null;\r\n      } else if (t.isUnaryExpression(value) && value.operator === '-' && t.isNumericLiteral(value.argument)) {\r\n        // Handle negative numbers\r\n        state[key] = -value.argument.value;\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "parseStateObject",
+        "functionParams": [
+          "obj"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "192fdbdf",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isObjectProperty(prop) && t.isIdentifier(prop.key)",
+      "parentContext": {
+        "functionName": "parseStateObject",
+        "functionParams": [
+          "obj"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d8cb3d9e",
+      "type": "BabelTypeCheck",
+      "method": "isObjectProperty",
+      "babel_source": "t.isObjectProperty(prop)",
+      "parentContext": {
+        "functionName": "parseStateObject",
+        "functionParams": [
+          "obj"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f3845e36",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(prop.key)",
+      "parentContext": {
+        "functionName": "parseStateObject",
+        "functionParams": [
+          "obj"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "128479e3",
+      "type": "VariableDeclaration",
+      "babel_source": "const key = prop.key.name;",
+      "parentContext": {
+        "functionName": "parseStateObject",
+        "functionParams": [
+          "obj"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "040303a0",
+      "type": "VariableDeclaration",
+      "babel_source": "const value = prop.value;",
+      "parentContext": {
+        "functionName": "parseStateObject",
+        "functionParams": [
+          "obj"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0ccc6878",
+      "type": "IfStatement",
+      "condition": "t.isNumericLiteral(value)",
+      "babel_source": "if (t.isNumericLiteral(value)) {\r\n        state[key] = value.value;\r\n      } else if (t.isStringLiteral(value)) {\r\n        state[key] = value.value;\r\n      } else if (t.isBooleanLiteral(value)) {\r\n        state[key] = value.value;\r\n      } else if (t.isNullLiteral(value)) {\r\n        state[key] = null;\r\n      } else if (t.isUnaryExpression(value) && value.operator === '-' && t.isNumericLiteral(value.argument)) {\r\n        // Handle negative numbers\r\n        state[key] = -value.argument.value;\r\n      }",
+      "parentContext": {
+        "functionName": "parseStateObject",
+        "functionParams": [
+          "obj"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8f200b14",
+      "type": "BabelTypeCheck",
+      "method": "isNumericLiteral",
+      "babel_source": "t.isNumericLiteral(value)",
+      "parentContext": {
+        "functionName": "parseStateObject",
+        "functionParams": [
+          "obj"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "807fb69b",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "state[key] = value.value",
+      "parentContext": {
+        "functionName": "parseStateObject",
+        "functionParams": [
+          "obj"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3bfe80df",
+      "type": "IfStatement",
+      "condition": "t.isStringLiteral(value)",
+      "babel_source": "if (t.isStringLiteral(value)) {\r\n        state[key] = value.value;\r\n      } else if (t.isBooleanLiteral(value)) {\r\n        state[key] = value.value;\r\n      } else if (t.isNullLiteral(value)) {\r\n        state[key] = null;\r\n      } else if (t.isUnaryExpression(value) && value.operator === '-' && t.isNumericLiteral(value.argument)) {\r\n        // Handle negative numbers\r\n        state[key] = -value.argument.value;\r\n      }",
+      "parentContext": {
+        "functionName": "parseStateObject",
+        "functionParams": [
+          "obj"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a835f893",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(value)",
+      "parentContext": {
+        "functionName": "parseStateObject",
+        "functionParams": [
+          "obj"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "807fb69b",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "state[key] = value.value",
+      "parentContext": {
+        "functionName": "parseStateObject",
+        "functionParams": [
+          "obj"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6c176219",
+      "type": "IfStatement",
+      "condition": "t.isBooleanLiteral(value)",
+      "babel_source": "if (t.isBooleanLiteral(value)) {\r\n        state[key] = value.value;\r\n      } else if (t.isNullLiteral(value)) {\r\n        state[key] = null;\r\n      } else if (t.isUnaryExpression(value) && value.operator === '-' && t.isNumericLiteral(value.argument)) {\r\n        // Handle negative numbers\r\n        state[key] = -value.argument.value;\r\n      }",
+      "parentContext": {
+        "functionName": "parseStateObject",
+        "functionParams": [
+          "obj"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ff83db7c",
+      "type": "BabelTypeCheck",
+      "method": "isBooleanLiteral",
+      "babel_source": "t.isBooleanLiteral(value)",
+      "parentContext": {
+        "functionName": "parseStateObject",
+        "functionParams": [
+          "obj"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "807fb69b",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "state[key] = value.value",
+      "parentContext": {
+        "functionName": "parseStateObject",
+        "functionParams": [
+          "obj"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6236ed4a",
+      "type": "IfStatement",
+      "condition": "t.isNullLiteral(value)",
+      "babel_source": "if (t.isNullLiteral(value)) {\r\n        state[key] = null;\r\n      } else if (t.isUnaryExpression(value) && value.operator === '-' && t.isNumericLiteral(value.argument)) {\r\n        // Handle negative numbers\r\n        state[key] = -value.argument.value;\r\n      }",
+      "parentContext": {
+        "functionName": "parseStateObject",
+        "functionParams": [
+          "obj"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5f860cae",
+      "type": "BabelTypeCheck",
+      "method": "isNullLiteral",
+      "babel_source": "t.isNullLiteral(value)",
+      "parentContext": {
+        "functionName": "parseStateObject",
+        "functionParams": [
+          "obj"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42a45e96",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "state[key] = null",
+      "parentContext": {
+        "functionName": "parseStateObject",
+        "functionParams": [
+          "obj"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2fb8fa50",
+      "type": "IfStatement",
+      "condition": "t.isUnaryExpression(value) && value.operator === '-' && t.isNumericLiteral(value.argument)",
+      "babel_source": "if (t.isUnaryExpression(value) && value.operator === '-' && t.isNumericLiteral(value.argument)) {\r\n        // Handle negative numbers\r\n        state[key] = -value.argument.value;\r\n      }",
+      "parentContext": {
+        "functionName": "parseStateObject",
+        "functionParams": [
+          "obj"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a1b18009",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isUnaryExpression(value) && value.operator === '-' && t.isNumericLiteral(value.argument)",
+      "parentContext": {
+        "functionName": "parseStateObject",
+        "functionParams": [
+          "obj"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b1808a7e",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isUnaryExpression(value) && value.operator === '-'",
+      "parentContext": {
+        "functionName": "parseStateObject",
+        "functionParams": [
+          "obj"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5d7fb449",
+      "type": "BabelTypeCheck",
+      "method": "isUnaryExpression",
+      "babel_source": "t.isUnaryExpression(value)",
+      "parentContext": {
+        "functionName": "parseStateObject",
+        "functionParams": [
+          "obj"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5848713d",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "value.operator === '-'",
+      "parentContext": {
+        "functionName": "parseStateObject",
+        "functionParams": [
+          "obj"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "493bf915",
+      "type": "BabelTypeCheck",
+      "method": "isNumericLiteral",
+      "babel_source": "t.isNumericLiteral(value.argument)",
+      "parentContext": {
+        "functionName": "parseStateObject",
+        "functionParams": [
+          "obj"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "833a0031",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "state[key] = -value.argument.value",
+      "parentContext": {
+        "functionName": "parseStateObject",
+        "functionParams": [
+          "obj"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0790683f",
+      "type": "UnaryExpression",
+      "operator": "-",
+      "babel_source": "-value.argument.value",
+      "parentContext": {
+        "functionName": "parseStateObject",
+        "functionParams": [
+          "obj"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bf99d592",
+      "type": "ReturnStatement",
+      "babel_source": "return state;",
+      "parentContext": {
+        "functionName": "parseStateObject",
+        "functionParams": [
+          "obj"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/timelineAnalyzer.cjs"
+  ]
+}

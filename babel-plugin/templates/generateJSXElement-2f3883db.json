@@ -1,0 +1,2230 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateJSXElement",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "indent",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateJSXElement(node, component, indent) {\r\n  // Lazy load to avoid circular dependencies\r\n  const { generateCSharpExpression: _generateCSharpExpression } = require('./expressions.cjs');\r\n\r\n  const indentStr = '    '.repeat(indent);\r\n\r\n  if (t.isJSXFragment(node)) {\r\n    return generateFragment(node, component, indent);\r\n  }\r\n\r\n  // Validate that this is actually a JSXElement\r\n  if (!t.isJSXElement(node)) {\r\n    console.error('[jsx.cjs] generateJSXElement called with non-JSX node:', node?.type || 'undefined');\r\n    throw new Error(`generateJSXElement expects JSXElement or JSXFragment, received: ${node?.type || 'undefined'}`);\r\n  }\r\n\r\n  const tagName = node.openingElement.name.name;\r\n  const attributes = node.openingElement.attributes;\r\n  const children = node.children;\r\n\r\n  // Get hex path from AST node (assigned by pathAssignment.cjs)\r\n  const hexPath = node.__minimactPath || '';\r\n\r\n  // Check if this is a Plugin element\r\n  if (tagName === 'Plugin') {\r\n    const { generatePluginNode } = require('./plugin.cjs');\r\n\r\n    // Find the matching plugin metadata from component.pluginUsages\r\n    // Use the plugin index tracker to match plugins in order\r\n    if (!component._pluginRenderIndex) {\r\n      component._pluginRenderIndex = 0;\r\n    }\r\n\r\n    const pluginMetadata = component.pluginUsages[component._pluginRenderIndex];\r\n    component._pluginRenderIndex++;\r\n\r\n    if (pluginMetadata) {\r\n      return generatePluginNode(pluginMetadata, component);\r\n    } else {\r\n      // Fallback if plugin metadata not found (shouldn't happen)\r\n      console.warn(`[jsx.cjs] Plugin metadata not found for <Plugin> element`);\r\n      return 'new VText(\"<!-- Plugin not found -->\")'\r\n    }\r\n  }\r\n\r\n  // Check if this is a Component element (Lifted State Pattern)\r\n  if (tagName === 'Component') {\r\n    return generateComponentWrapper(node, component, indent);\r\n  }\r\n\r\n  // Check if this element has markdown attribute and markdown content\r\n  const hasMarkdownAttr = attributes.some(attr =>\r\n    t.isJSXAttribute(attr) && attr.name.name === 'markdown'\r\n  );\r\n\r\n  if (hasMarkdownAttr) {\r\n    // Check if child is a markdown state variable\r\n    if (children.length === 1 && t.isJSXExpressionContainer(children[0])) {\r\n      const expr = children[0].expression;\r\n      if (t.isIdentifier(expr)) {\r\n        const varName = expr.name;\r\n        // Check if this is a markdown state variable\r\n        if (component.stateTypes.get(varName) === 'markdown') {\r\n          // Return DivRawHtml with MarkdownHelper.ToHtml()\r\n          return `new DivRawHtml(MarkdownHelper.ToHtml(${varName}))`;\r\n        }\r\n      }\r\n    }\r\n  }\r\n\r\n  // Detect if this needs runtime helpers (hybrid approach)\r\n  const needsRuntimeHelper = hasSpreadProps(attributes) ||\r\n                              hasDynamicChildren(children) ||\r\n                              hasComplexProps(attributes);\r\n\r\n  if (needsRuntimeHelper) {\r\n    // Lazy load to avoid circular dependency\r\n    const { generateRuntimeHelperCall } = require('./runtimeHelpers.cjs');\r\n    return generateRuntimeHelperCall(tagName, attributes, children, component, indent);\r\n  }\r\n\r\n  // Direct VNode construction (compile-time approach)\r\n  // Extract props and event handlers\r\n  const props = [];\r\n  const eventHandlers = [];\r\n  let dataMinimactAttrs = [];\r\n\r\n  for (const attr of attributes) {\r\n    if (t.isJSXAttribute(attr)) {\r\n      const name = attr.name.name;\r\n      const value = attr.value;\r\n\r\n      // Skip 'key' attribute - it's only for hot reload detection in .tsx.keys files\r\n      if (name === 'key') {\r\n        continue;\r\n      }\r\n\r\n      // Convert className to class for HTML compatibility\r\n      const htmlAttrName = name === 'className' ? 'class' : name;\r\n\r\n      if (name.startsWith('on')) {\r\n        // Event handler\r\n        const handlerName = extractEventHandler(value, component);\r\n        eventHandlers.push(`[\"${name.toLowerCase()}\"] = \"${handlerName}\"`);\r\n      } else if (name.startsWith('data-minimact-')) {\r\n        // Keep minimact attributes as-is\r\n        const val = t.isStringLiteral(value) ? value.value : _generateCSharpExpression(value.expression);\r\n        dataMinimactAttrs.push(`[\"${htmlAttrName}\"] = \"${val}\"`);\r\n      } else {\r\n        // Regular prop\r\n        if (t.isStringLiteral(value)) {\r\n          // String literal - use as-is with quotes\r\n          props.push(`[\"${htmlAttrName}\"] = \"${escapeCSharpString(value.value)}\"`);\r\n        } else if (t.isJSXExpressionContainer(value)) {\r\n          // Special handling for style attribute with object expression\r\n          if (name === 'style' && t.isObjectExpression(value.expression)) {\r\n            const { convertStyleObjectToCss } = require('../utils/styleConverter.cjs');\r\n            const cssString = convertStyleObjectToCss(value.expression);\r\n            props.push(`[\"style\"] = \"${cssString}\"`);\r\n          } else if (name === 'ref' && t.isIdentifier(value.expression)) {\r\n            // ref attribute - just use the identifier name as a string, no interpolation\r\n            const refName = value.expression.name;\r\n            props.push(`[\"ref\"] = \"${refName}\"`);\r\n          } else {\r\n            // Expression - wrap in string interpolation\r\n            const expr = _generateCSharpExpression(value.expression);\r\n            props.push(`[\"${htmlAttrName}\"] = $\"{${expr}}\"`);\r\n          }\r\n        } else {\r\n          // Fallback\r\n          props.push(`[\"${htmlAttrName}\"] = \"\"`);\r\n        }\r\n      }\r\n    }\r\n  }\r\n\r\n  // Build props dictionary\r\n  const allProps = [...props, ...eventHandlers, ...dataMinimactAttrs];\r\n  const propsStr = allProps.length > 0\r\n    ? `new Dictionary<string, string> { ${allProps.join(', ')} }`\r\n    : 'new Dictionary<string, string>()';\r\n\r\n  // Generate children\r\n  const childrenCode = generateChildren(children, component, indent);\r\n\r\n  // Build VElement construction with hex path\r\n  if (childrenCode.length === 0) {\r\n    return `new VElement(\"${tagName}\", \"${hexPath}\", ${propsStr})`;\r\n  } else if (childrenCode.length === 1 && (childrenCode[0].type === 'text' || childrenCode[0].type === 'mixed')) {\r\n    return `new VElement(\"${tagName}\", \"${hexPath}\", ${propsStr}, ${childrenCode[0].code})`;\r\n  } else {\r\n    // Wrap children appropriately for VNode array\r\n    const childrenArray = childrenCode.map(c => {\r\n      if (c.type === 'text') {\r\n        // Text already has quotes, wrap in VText with path from node\r\n        const textPath = c.node.__minimactPath || '';\r\n        return `new VText(${c.code}, \"${textPath}\")`;\r\n      } else if (c.type === 'expression') {\r\n        // Expression needs string interpolation wrapper with extra parentheses for complex expressions\r\n        const exprPath = c.node.__minimactPath || '';\r\n        return `new VText($\"{(${c.code})}\", \"${exprPath}\")`;\r\n      } else if (c.type === 'mixed') {\r\n        // Mixed content is already an interpolated string, wrap in VText\r\n        // Use path from first child node\r\n        const mixedPath = c.node ? (c.node.__minimactPath || '') : '';\r\n        return `new VText(${c.code}, \"${mixedPath}\")`;\r\n      } else {\r\n        // Element is already a VNode\r\n        return c.code;\r\n      }\r\n    }).join(',\\n' + indentStr + '    ');\r\n    return `new VElement(\"${tagName}\", \"${hexPath}\", ${propsStr}, new VNode[]\\n${indentStr}{\\n${indentStr}    ${childrenArray}\\n${indentStr}})`;\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "dc352334",
+      "type": "VariableDeclaration",
+      "babel_source": "const { generateCSharpExpression: _generateCSharpExpression } = require('./expressions.cjs');",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9929f4d7",
+      "type": "VariableDeclaration",
+      "babel_source": "const indentStr = '    '.repeat(indent);",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "63dc122d",
+      "type": "IfStatement",
+      "condition": "t.isJSXFragment(node)",
+      "babel_source": "if (t.isJSXFragment(node)) {\r\n    return generateFragment(node, component, indent);\r\n  }",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "00ed8bb0",
+      "type": "BabelTypeCheck",
+      "method": "isJSXFragment",
+      "babel_source": "t.isJSXFragment(node)",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "550c2e83",
+      "type": "ReturnStatement",
+      "babel_source": "return generateFragment(node, component, indent);",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f52a4e43",
+      "type": "IfStatement",
+      "condition": "!t.isJSXElement(node)",
+      "babel_source": "if (!t.isJSXElement(node)) {\r\n    console.error('[jsx.cjs] generateJSXElement called with non-JSX node:', node?.type || 'undefined');\r\n    throw new Error(`generateJSXElement expects JSXElement or JSXFragment, received: ${node?.type || 'undefined'}`);\r\n  }",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "590c5219",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isJSXElement(node)",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "606ccdc5",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(node)",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "815c9755",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "node?.type || 'undefined'",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d6beebeb",
+      "type": "ThrowStatement",
+      "babel_source": "throw new Error(`generateJSXElement expects JSXElement or JSXFragment, received: ${node?.type || 'undefined'}`);",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d665e516",
+      "type": "NewExpression",
+      "babel_source": "new Error(`generateJSXElement expects JSXElement or JSXFragment, received: ${node?.type || 'undefined'}`)",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "35fec943",
+      "type": "TemplateLiteral",
+      "babel_source": "`generateJSXElement expects JSXElement or JSXFragment, received: ${node?.type || 'undefined'}`",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "815c9755",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "node?.type || 'undefined'",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c1132faa",
+      "type": "VariableDeclaration",
+      "babel_source": "const tagName = node.openingElement.name.name;",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b2f3dc2a",
+      "type": "VariableDeclaration",
+      "babel_source": "const attributes = node.openingElement.attributes;",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cebd77be",
+      "type": "VariableDeclaration",
+      "babel_source": "const children = node.children;",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6545e565",
+      "type": "VariableDeclaration",
+      "babel_source": "const hexPath = node.__minimactPath || '';",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e3e86ef1",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "node.__minimactPath || ''",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "24d264b1",
+      "type": "IfStatement",
+      "condition": "tagName === 'Plugin'",
+      "babel_source": "if (tagName === 'Plugin') {\r\n    const { generatePluginNode } = require('./plugin.cjs');\r\n\r\n    // Find the matching plugin metadata from component.pluginUsages\r\n    // Use the plugin index tracker to match plugins in order\r\n    if (!component._pluginRenderIndex) {\r\n      component._pluginRenderIndex = 0;\r\n    }\r\n\r\n    const pluginMetadata = component.pluginUsages[component._pluginRenderIndex];\r\n    component._pluginRenderIndex++;\r\n\r\n    if (pluginMetadata) {\r\n      return generatePluginNode(pluginMetadata, component);\r\n    } else {\r\n      // Fallback if plugin metadata not found (shouldn't happen)\r\n      console.warn(`[jsx.cjs] Plugin metadata not found for <Plugin> element`);\r\n      return 'new VText(\"<!-- Plugin not found -->\")'\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "881998a9",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "tagName === 'Plugin'",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "35b4a7b7",
+      "type": "VariableDeclaration",
+      "babel_source": "const { generatePluginNode } = require('./plugin.cjs');",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "613955ef",
+      "type": "IfStatement",
+      "condition": "!component._pluginRenderIndex",
+      "babel_source": "if (!component._pluginRenderIndex) {\r\n      component._pluginRenderIndex = 0;\r\n    }",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7f0180d7",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!component._pluginRenderIndex",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "08e40b43",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "component._pluginRenderIndex = 0",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "737aa2ba",
+      "type": "VariableDeclaration",
+      "babel_source": "const pluginMetadata = component.pluginUsages[component._pluginRenderIndex];",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "87d24a43",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "component._pluginRenderIndex++",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e163d0ed",
+      "type": "IfStatement",
+      "condition": "pluginMetadata",
+      "babel_source": "if (pluginMetadata) {\r\n      return generatePluginNode(pluginMetadata, component);\r\n    } else {\r\n      // Fallback if plugin metadata not found (shouldn't happen)\r\n      console.warn(`[jsx.cjs] Plugin metadata not found for <Plugin> element`);\r\n      return 'new VText(\"<!-- Plugin not found -->\")'\r\n    }",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "38aa4c8e",
+      "type": "ReturnStatement",
+      "babel_source": "return generatePluginNode(pluginMetadata, component);",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c655f80e",
+      "type": "TemplateLiteral",
+      "babel_source": "`[jsx.cjs] Plugin metadata not found for <Plugin> element`",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b70cf0b3",
+      "type": "ReturnStatement",
+      "babel_source": "return 'new VText(\"<!-- Plugin not found -->\")'",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "494d0118",
+      "type": "IfStatement",
+      "condition": "tagName === 'Component'",
+      "babel_source": "if (tagName === 'Component') {\r\n    return generateComponentWrapper(node, component, indent);\r\n  }",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "093ffab6",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "tagName === 'Component'",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "43e2d043",
+      "type": "ReturnStatement",
+      "babel_source": "return generateComponentWrapper(node, component, indent);",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "113dd022",
+      "type": "VariableDeclaration",
+      "babel_source": "const hasMarkdownAttr = attributes.some(attr =>\r\n    t.isJSXAttribute(attr) && attr.name.name === 'markdown'\r\n  );",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2036c135",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "attr =>\r\n    t.isJSXAttribute(attr) && attr.name.name === 'markdown'",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f993cd1d",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isJSXAttribute(attr) && attr.name.name === 'markdown'",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7468026c",
+      "type": "BabelTypeCheck",
+      "method": "isJSXAttribute",
+      "babel_source": "t.isJSXAttribute(attr)",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8f87095d",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "attr.name.name === 'markdown'",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d904a6b3",
+      "type": "IfStatement",
+      "condition": "hasMarkdownAttr",
+      "babel_source": "if (hasMarkdownAttr) {\r\n    // Check if child is a markdown state variable\r\n    if (children.length === 1 && t.isJSXExpressionContainer(children[0])) {\r\n      const expr = children[0].expression;\r\n      if (t.isIdentifier(expr)) {\r\n        const varName = expr.name;\r\n        // Check if this is a markdown state variable\r\n        if (component.stateTypes.get(varName) === 'markdown') {\r\n          // Return DivRawHtml with MarkdownHelper.ToHtml()\r\n          return `new DivRawHtml(MarkdownHelper.ToHtml(${varName}))`;\r\n        }\r\n      }\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4e58dbfe",
+      "type": "IfStatement",
+      "condition": "children.length === 1 && t.isJSXExpressionContainer(children[0])",
+      "babel_source": "if (children.length === 1 && t.isJSXExpressionContainer(children[0])) {\r\n      const expr = children[0].expression;\r\n      if (t.isIdentifier(expr)) {\r\n        const varName = expr.name;\r\n        // Check if this is a markdown state variable\r\n        if (component.stateTypes.get(varName) === 'markdown') {\r\n          // Return DivRawHtml with MarkdownHelper.ToHtml()\r\n          return `new DivRawHtml(MarkdownHelper.ToHtml(${varName}))`;\r\n        }\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d2433fb0",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "children.length === 1 && t.isJSXExpressionContainer(children[0])",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cbaded75",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "children.length === 1",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "83f91fcb",
+      "type": "BabelTypeCheck",
+      "method": "isJSXExpressionContainer",
+      "babel_source": "t.isJSXExpressionContainer(children[0])",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7cc35417",
+      "type": "VariableDeclaration",
+      "babel_source": "const expr = children[0].expression;",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "03648006",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(expr)",
+      "babel_source": "if (t.isIdentifier(expr)) {\r\n        const varName = expr.name;\r\n        // Check if this is a markdown state variable\r\n        if (component.stateTypes.get(varName) === 'markdown') {\r\n          // Return DivRawHtml with MarkdownHelper.ToHtml()\r\n          return `new DivRawHtml(MarkdownHelper.ToHtml(${varName}))`;\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42d26fd4",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(expr)",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1ca040f3",
+      "type": "VariableDeclaration",
+      "babel_source": "const varName = expr.name;",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8484880f",
+      "type": "IfStatement",
+      "condition": "component.stateTypes.get(varName) === 'markdown'",
+      "babel_source": "if (component.stateTypes.get(varName) === 'markdown') {\r\n          // Return DivRawHtml with MarkdownHelper.ToHtml()\r\n          return `new DivRawHtml(MarkdownHelper.ToHtml(${varName}))`;\r\n        }",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ed0c2d08",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "component.stateTypes.get(varName) === 'markdown'",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "08a2d579",
+      "type": "ReturnStatement",
+      "babel_source": "return `new DivRawHtml(MarkdownHelper.ToHtml(${varName}))`;",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "57624c37",
+      "type": "TemplateLiteral",
+      "babel_source": "`new DivRawHtml(MarkdownHelper.ToHtml(${varName}))`",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f4ef7120",
+      "type": "VariableDeclaration",
+      "babel_source": "const needsRuntimeHelper = hasSpreadProps(attributes) ||\r\n                              hasDynamicChildren(children) ||\r\n                              hasComplexProps(attributes);",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8e890876",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "hasSpreadProps(attributes) ||\r\n                              hasDynamicChildren(children) ||\r\n                              hasComplexProps(attributes)",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "44e96226",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "hasSpreadProps(attributes) ||\r\n                              hasDynamicChildren(children)",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2a8723c1",
+      "type": "IfStatement",
+      "condition": "needsRuntimeHelper",
+      "babel_source": "if (needsRuntimeHelper) {\r\n    // Lazy load to avoid circular dependency\r\n    const { generateRuntimeHelperCall } = require('./runtimeHelpers.cjs');\r\n    return generateRuntimeHelperCall(tagName, attributes, children, component, indent);\r\n  }",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "33761c4c",
+      "type": "VariableDeclaration",
+      "babel_source": "const { generateRuntimeHelperCall } = require('./runtimeHelpers.cjs');",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dfb9f654",
+      "type": "ReturnStatement",
+      "babel_source": "return generateRuntimeHelperCall(tagName, attributes, children, component, indent);",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "62f5b2e8",
+      "type": "VariableDeclaration",
+      "babel_source": "const props = [];",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ea025ca0",
+      "type": "VariableDeclaration",
+      "babel_source": "const eventHandlers = [];",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f16d3d77",
+      "type": "VariableDeclaration",
+      "babel_source": "let dataMinimactAttrs = [];",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6c1bc861",
+      "type": "ForOfStatement",
+      "babel_source": "for (const attr of attributes) {\r\n    if (t.isJSXAttribute(attr)) {\r\n      const name = attr.name.name;\r\n      const value = attr.value;\r\n\r\n      // Skip 'key' attribute - it's only for hot reload detection in .tsx.keys files\r\n      if (name === 'key') {\r\n        continue;\r\n      }\r\n\r\n      // Convert className to class for HTML compatibility\r\n      const htmlAttrName = name === 'className' ? 'class' : name;\r\n\r\n      if (name.startsWith('on')) {\r\n        // Event handler\r\n        const handlerName = extractEventHandler(value, component);\r\n        eventHandlers.push(`[\"${name.toLowerCase()}\"] = \"${handlerName}\"`);\r\n      } else if (name.startsWith('data-minimact-')) {\r\n        // Keep minimact attributes as-is\r\n        const val = t.isStringLiteral(value) ? value.value : _generateCSharpExpression(value.expression);\r\n        dataMinimactAttrs.push(`[\"${htmlAttrName}\"] = \"${val}\"`);\r\n      } else {\r\n        // Regular prop\r\n        if (t.isStringLiteral(value)) {\r\n          // String literal - use as-is with quotes\r\n          props.push(`[\"${htmlAttrName}\"] = \"${escapeCSharpString(value.value)}\"`);\r\n        } else if (t.isJSXExpressionContainer(value)) {\r\n          // Special handling for style attribute with object expression\r\n          if (name === 'style' && t.isObjectExpression(value.expression)) {\r\n            const { convertStyleObjectToCss } = require('../utils/styleConverter.cjs');\r\n            const cssString = convertStyleObjectToCss(value.expression);\r\n            props.push(`[\"style\"] = \"${cssString}\"`);\r\n          } else if (name === 'ref' && t.isIdentifier(value.expression)) {\r\n            // ref attribute - just use the identifier name as a string, no interpolation\r\n            const refName = value.expression.name;\r\n            props.push(`[\"ref\"] = \"${refName}\"`);\r\n          } else {\r\n            // Expression - wrap in string interpolation\r\n            const expr = _generateCSharpExpression(value.expression);\r\n            props.push(`[\"${htmlAttrName}\"] = $\"{${expr}}\"`);\r\n          }\r\n        } else {\r\n          // Fallback\r\n          props.push(`[\"${htmlAttrName}\"] = \"\"`);\r\n        }\r\n      }\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "02ca2e7f",
+      "type": "VariableDeclaration",
+      "babel_source": "const attr",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4b2c5071",
+      "type": "IfStatement",
+      "condition": "t.isJSXAttribute(attr)",
+      "babel_source": "if (t.isJSXAttribute(attr)) {\r\n      const name = attr.name.name;\r\n      const value = attr.value;\r\n\r\n      // Skip 'key' attribute - it's only for hot reload detection in .tsx.keys files\r\n      if (name === 'key') {\r\n        continue;\r\n      }\r\n\r\n      // Convert className to class for HTML compatibility\r\n      const htmlAttrName = name === 'className' ? 'class' : name;\r\n\r\n      if (name.startsWith('on')) {\r\n        // Event handler\r\n        const handlerName = extractEventHandler(value, component);\r\n        eventHandlers.push(`[\"${name.toLowerCase()}\"] = \"${handlerName}\"`);\r\n      } else if (name.startsWith('data-minimact-')) {\r\n        // Keep minimact attributes as-is\r\n        const val = t.isStringLiteral(value) ? value.value : _generateCSharpExpression(value.expression);\r\n        dataMinimactAttrs.push(`[\"${htmlAttrName}\"] = \"${val}\"`);\r\n      } else {\r\n        // Regular prop\r\n        if (t.isStringLiteral(value)) {\r\n          // String literal - use as-is with quotes\r\n          props.push(`[\"${htmlAttrName}\"] = \"${escapeCSharpString(value.value)}\"`);\r\n        } else if (t.isJSXExpressionContainer(value)) {\r\n          // Special handling for style attribute with object expression\r\n          if (name === 'style' && t.isObjectExpression(value.expression)) {\r\n            const { convertStyleObjectToCss } = require('../utils/styleConverter.cjs');\r\n            const cssString = convertStyleObjectToCss(value.expression);\r\n            props.push(`[\"style\"] = \"${cssString}\"`);\r\n          } else if (name === 'ref' && t.isIdentifier(value.expression)) {\r\n            // ref attribute - just use the identifier name as a string, no interpolation\r\n            const refName = value.expression.name;\r\n            props.push(`[\"ref\"] = \"${refName}\"`);\r\n          } else {\r\n            // Expression - wrap in string interpolation\r\n            const expr = _generateCSharpExpression(value.expression);\r\n            props.push(`[\"${htmlAttrName}\"] = $\"{${expr}}\"`);\r\n          }\r\n        } else {\r\n          // Fallback\r\n          props.push(`[\"${htmlAttrName}\"] = \"\"`);\r\n        }\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7468026c",
+      "type": "BabelTypeCheck",
+      "method": "isJSXAttribute",
+      "babel_source": "t.isJSXAttribute(attr)",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1c2ec3d1",
+      "type": "VariableDeclaration",
+      "babel_source": "const name = attr.name.name;",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a2fae401",
+      "type": "VariableDeclaration",
+      "babel_source": "const value = attr.value;",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2617cd53",
+      "type": "IfStatement",
+      "condition": "name === 'key'",
+      "babel_source": "if (name === 'key') {\r\n        continue;\r\n      }",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ebbf68cb",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "name === 'key'",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0bf37874",
+      "type": "ContinueStatement",
+      "babel_source": "continue;",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c05364e3",
+      "type": "VariableDeclaration",
+      "babel_source": "const htmlAttrName = name === 'className' ? 'class' : name;",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2dc7dfb0",
+      "type": "ConditionalExpression",
+      "babel_source": "name === 'className' ? 'class' : name",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e4d3e5fd",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "name === 'className'",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c4df9b7d",
+      "type": "IfStatement",
+      "condition": "name.startsWith('on')",
+      "babel_source": "if (name.startsWith('on')) {\r\n        // Event handler\r\n        const handlerName = extractEventHandler(value, component);\r\n        eventHandlers.push(`[\"${name.toLowerCase()}\"] = \"${handlerName}\"`);\r\n      } else if (name.startsWith('data-minimact-')) {\r\n        // Keep minimact attributes as-is\r\n        const val = t.isStringLiteral(value) ? value.value : _generateCSharpExpression(value.expression);\r\n        dataMinimactAttrs.push(`[\"${htmlAttrName}\"] = \"${val}\"`);\r\n      } else {\r\n        // Regular prop\r\n        if (t.isStringLiteral(value)) {\r\n          // String literal - use as-is with quotes\r\n          props.push(`[\"${htmlAttrName}\"] = \"${escapeCSharpString(value.value)}\"`);\r\n        } else if (t.isJSXExpressionContainer(value)) {\r\n          // Special handling for style attribute with object expression\r\n          if (name === 'style' && t.isObjectExpression(value.expression)) {\r\n            const { convertStyleObjectToCss } = require('../utils/styleConverter.cjs');\r\n            const cssString = convertStyleObjectToCss(value.expression);\r\n            props.push(`[\"style\"] = \"${cssString}\"`);\r\n          } else if (name === 'ref' && t.isIdentifier(value.expression)) {\r\n            // ref attribute - just use the identifier name as a string, no interpolation\r\n            const refName = value.expression.name;\r\n            props.push(`[\"ref\"] = \"${refName}\"`);\r\n          } else {\r\n            // Expression - wrap in string interpolation\r\n            const expr = _generateCSharpExpression(value.expression);\r\n            props.push(`[\"${htmlAttrName}\"] = $\"{${expr}}\"`);\r\n          }\r\n        } else {\r\n          // Fallback\r\n          props.push(`[\"${htmlAttrName}\"] = \"\"`);\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f1aa1dc5",
+      "type": "VariableDeclaration",
+      "babel_source": "const handlerName = extractEventHandler(value, component);",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ad31d4c7",
+      "type": "TemplateLiteral",
+      "babel_source": "`[\"${name.toLowerCase()}\"] = \"${handlerName}\"`",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5f07da48",
+      "type": "IfStatement",
+      "condition": "name.startsWith('data-minimact-')",
+      "babel_source": "if (name.startsWith('data-minimact-')) {\r\n        // Keep minimact attributes as-is\r\n        const val = t.isStringLiteral(value) ? value.value : _generateCSharpExpression(value.expression);\r\n        dataMinimactAttrs.push(`[\"${htmlAttrName}\"] = \"${val}\"`);\r\n      } else {\r\n        // Regular prop\r\n        if (t.isStringLiteral(value)) {\r\n          // String literal - use as-is with quotes\r\n          props.push(`[\"${htmlAttrName}\"] = \"${escapeCSharpString(value.value)}\"`);\r\n        } else if (t.isJSXExpressionContainer(value)) {\r\n          // Special handling for style attribute with object expression\r\n          if (name === 'style' && t.isObjectExpression(value.expression)) {\r\n            const { convertStyleObjectToCss } = require('../utils/styleConverter.cjs');\r\n            const cssString = convertStyleObjectToCss(value.expression);\r\n            props.push(`[\"style\"] = \"${cssString}\"`);\r\n          } else if (name === 'ref' && t.isIdentifier(value.expression)) {\r\n            // ref attribute - just use the identifier name as a string, no interpolation\r\n            const refName = value.expression.name;\r\n            props.push(`[\"ref\"] = \"${refName}\"`);\r\n          } else {\r\n            // Expression - wrap in string interpolation\r\n            const expr = _generateCSharpExpression(value.expression);\r\n            props.push(`[\"${htmlAttrName}\"] = $\"{${expr}}\"`);\r\n          }\r\n        } else {\r\n          // Fallback\r\n          props.push(`[\"${htmlAttrName}\"] = \"\"`);\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "be5c3132",
+      "type": "VariableDeclaration",
+      "babel_source": "const val = t.isStringLiteral(value) ? value.value : _generateCSharpExpression(value.expression);",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4cfac5ad",
+      "type": "ConditionalExpression",
+      "babel_source": "t.isStringLiteral(value) ? value.value : _generateCSharpExpression(value.expression)",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a835f893",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(value)",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f4019aa",
+      "type": "TemplateLiteral",
+      "babel_source": "`[\"${htmlAttrName}\"] = \"${val}\"`",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "216127be",
+      "type": "IfStatement",
+      "condition": "t.isStringLiteral(value)",
+      "babel_source": "if (t.isStringLiteral(value)) {\r\n          // String literal - use as-is with quotes\r\n          props.push(`[\"${htmlAttrName}\"] = \"${escapeCSharpString(value.value)}\"`);\r\n        } else if (t.isJSXExpressionContainer(value)) {\r\n          // Special handling for style attribute with object expression\r\n          if (name === 'style' && t.isObjectExpression(value.expression)) {\r\n            const { convertStyleObjectToCss } = require('../utils/styleConverter.cjs');\r\n            const cssString = convertStyleObjectToCss(value.expression);\r\n            props.push(`[\"style\"] = \"${cssString}\"`);\r\n          } else if (name === 'ref' && t.isIdentifier(value.expression)) {\r\n            // ref attribute - just use the identifier name as a string, no interpolation\r\n            const refName = value.expression.name;\r\n            props.push(`[\"ref\"] = \"${refName}\"`);\r\n          } else {\r\n            // Expression - wrap in string interpolation\r\n            const expr = _generateCSharpExpression(value.expression);\r\n            props.push(`[\"${htmlAttrName}\"] = $\"{${expr}}\"`);\r\n          }\r\n        } else {\r\n          // Fallback\r\n          props.push(`[\"${htmlAttrName}\"] = \"\"`);\r\n        }",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a835f893",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(value)",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "85a53e41",
+      "type": "TemplateLiteral",
+      "babel_source": "`[\"${htmlAttrName}\"] = \"${escapeCSharpString(value.value)}\"`",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "28abfa7f",
+      "type": "IfStatement",
+      "condition": "t.isJSXExpressionContainer(value)",
+      "babel_source": "if (t.isJSXExpressionContainer(value)) {\r\n          // Special handling for style attribute with object expression\r\n          if (name === 'style' && t.isObjectExpression(value.expression)) {\r\n            const { convertStyleObjectToCss } = require('../utils/styleConverter.cjs');\r\n            const cssString = convertStyleObjectToCss(value.expression);\r\n            props.push(`[\"style\"] = \"${cssString}\"`);\r\n          } else if (name === 'ref' && t.isIdentifier(value.expression)) {\r\n            // ref attribute - just use the identifier name as a string, no interpolation\r\n            const refName = value.expression.name;\r\n            props.push(`[\"ref\"] = \"${refName}\"`);\r\n          } else {\r\n            // Expression - wrap in string interpolation\r\n            const expr = _generateCSharpExpression(value.expression);\r\n            props.push(`[\"${htmlAttrName}\"] = $\"{${expr}}\"`);\r\n          }\r\n        } else {\r\n          // Fallback\r\n          props.push(`[\"${htmlAttrName}\"] = \"\"`);\r\n        }",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "846bea62",
+      "type": "BabelTypeCheck",
+      "method": "isJSXExpressionContainer",
+      "babel_source": "t.isJSXExpressionContainer(value)",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "11c5b9d9",
+      "type": "IfStatement",
+      "condition": "name === 'style' && t.isObjectExpression(value.expression)",
+      "babel_source": "if (name === 'style' && t.isObjectExpression(value.expression)) {\r\n            const { convertStyleObjectToCss } = require('../utils/styleConverter.cjs');\r\n            const cssString = convertStyleObjectToCss(value.expression);\r\n            props.push(`[\"style\"] = \"${cssString}\"`);\r\n          } else if (name === 'ref' && t.isIdentifier(value.expression)) {\r\n            // ref attribute - just use the identifier name as a string, no interpolation\r\n            const refName = value.expression.name;\r\n            props.push(`[\"ref\"] = \"${refName}\"`);\r\n          } else {\r\n            // Expression - wrap in string interpolation\r\n            const expr = _generateCSharpExpression(value.expression);\r\n            props.push(`[\"${htmlAttrName}\"] = $\"{${expr}}\"`);\r\n          }",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b7d186a0",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "name === 'style' && t.isObjectExpression(value.expression)",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a563e553",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "name === 'style'",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6db5f4de",
+      "type": "BabelTypeCheck",
+      "method": "isObjectExpression",
+      "babel_source": "t.isObjectExpression(value.expression)",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6f5ab305",
+      "type": "VariableDeclaration",
+      "babel_source": "const { convertStyleObjectToCss } = require('../utils/styleConverter.cjs');",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "926ed54c",
+      "type": "VariableDeclaration",
+      "babel_source": "const cssString = convertStyleObjectToCss(value.expression);",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "82e492b2",
+      "type": "TemplateLiteral",
+      "babel_source": "`[\"style\"] = \"${cssString}\"`",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "da4b73b1",
+      "type": "IfStatement",
+      "condition": "name === 'ref' && t.isIdentifier(value.expression)",
+      "babel_source": "if (name === 'ref' && t.isIdentifier(value.expression)) {\r\n            // ref attribute - just use the identifier name as a string, no interpolation\r\n            const refName = value.expression.name;\r\n            props.push(`[\"ref\"] = \"${refName}\"`);\r\n          } else {\r\n            // Expression - wrap in string interpolation\r\n            const expr = _generateCSharpExpression(value.expression);\r\n            props.push(`[\"${htmlAttrName}\"] = $\"{${expr}}\"`);\r\n          }",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0f7cabd1",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "name === 'ref' && t.isIdentifier(value.expression)",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b43527c2",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "name === 'ref'",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "653c5fe2",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(value.expression)",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "51469e2b",
+      "type": "VariableDeclaration",
+      "babel_source": "const refName = value.expression.name;",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a1131ff4",
+      "type": "TemplateLiteral",
+      "babel_source": "`[\"ref\"] = \"${refName}\"`",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e0750a19",
+      "type": "VariableDeclaration",
+      "babel_source": "const expr = _generateCSharpExpression(value.expression);",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9f0e38cd",
+      "type": "TemplateLiteral",
+      "babel_source": "`[\"${htmlAttrName}\"] = $\"{${expr}}\"`",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7f28a164",
+      "type": "TemplateLiteral",
+      "babel_source": "`[\"${htmlAttrName}\"] = \"\"`",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d2b41e67",
+      "type": "VariableDeclaration",
+      "babel_source": "const allProps = [...props, ...eventHandlers, ...dataMinimactAttrs];",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "333f670a",
+      "type": "ArrayExpression",
+      "babel_source": "[...props, ...eventHandlers, ...dataMinimactAttrs]",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e9f06226",
+      "type": "SpreadElement",
+      "babel_source": "...props",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "64068487",
+      "type": "SpreadElement",
+      "babel_source": "...eventHandlers",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9ea3ae0c",
+      "type": "SpreadElement",
+      "babel_source": "...dataMinimactAttrs",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3d9e9f59",
+      "type": "VariableDeclaration",
+      "babel_source": "const propsStr = allProps.length > 0\r\n    ? `new Dictionary<string, string> { ${allProps.join(', ')} }`\r\n    : 'new Dictionary<string, string>()';",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8821f005",
+      "type": "ConditionalExpression",
+      "babel_source": "allProps.length > 0\r\n    ? `new Dictionary<string, string> { ${allProps.join(', ')} }`\r\n    : 'new Dictionary<string, string>()'",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ac0ec8cb",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "allProps.length > 0",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "15d924f5",
+      "type": "TemplateLiteral",
+      "babel_source": "`new Dictionary<string, string> { ${allProps.join(', ')} }`",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "19aaa95f",
+      "type": "VariableDeclaration",
+      "babel_source": "const childrenCode = generateChildren(children, component, indent);",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ea37343b",
+      "type": "IfStatement",
+      "condition": "childrenCode.length === 0",
+      "babel_source": "if (childrenCode.length === 0) {\r\n    return `new VElement(\"${tagName}\", \"${hexPath}\", ${propsStr})`;\r\n  } else if (childrenCode.length === 1 && (childrenCode[0].type === 'text' || childrenCode[0].type === 'mixed')) {\r\n    return `new VElement(\"${tagName}\", \"${hexPath}\", ${propsStr}, ${childrenCode[0].code})`;\r\n  } else {\r\n    // Wrap children appropriately for VNode array\r\n    const childrenArray = childrenCode.map(c => {\r\n      if (c.type === 'text') {\r\n        // Text already has quotes, wrap in VText with path from node\r\n        const textPath = c.node.__minimactPath || '';\r\n        return `new VText(${c.code}, \"${textPath}\")`;\r\n      } else if (c.type === 'expression') {\r\n        // Expression needs string interpolation wrapper with extra parentheses for complex expressions\r\n        const exprPath = c.node.__minimactPath || '';\r\n        return `new VText($\"{(${c.code})}\", \"${exprPath}\")`;\r\n      } else if (c.type === 'mixed') {\r\n        // Mixed content is already an interpolated string, wrap in VText\r\n        // Use path from first child node\r\n        const mixedPath = c.node ? (c.node.__minimactPath || '') : '';\r\n        return `new VText(${c.code}, \"${mixedPath}\")`;\r\n      } else {\r\n        // Element is already a VNode\r\n        return c.code;\r\n      }\r\n    }).join(',\\n' + indentStr + '    ');\r\n    return `new VElement(\"${tagName}\", \"${hexPath}\", ${propsStr}, new VNode[]\\n${indentStr}{\\n${indentStr}    ${childrenArray}\\n${indentStr}})`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0fba6f06",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "childrenCode.length === 0",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2740e034",
+      "type": "ReturnStatement",
+      "babel_source": "return `new VElement(\"${tagName}\", \"${hexPath}\", ${propsStr})`;",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9fbb9401",
+      "type": "TemplateLiteral",
+      "babel_source": "`new VElement(\"${tagName}\", \"${hexPath}\", ${propsStr})`",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "64af8e92",
+      "type": "IfStatement",
+      "condition": "childrenCode.length === 1 && (childrenCode[0].type === 'text' || childrenCode[0].type === 'mixed')",
+      "babel_source": "if (childrenCode.length === 1 && (childrenCode[0].type === 'text' || childrenCode[0].type === 'mixed')) {\r\n    return `new VElement(\"${tagName}\", \"${hexPath}\", ${propsStr}, ${childrenCode[0].code})`;\r\n  } else {\r\n    // Wrap children appropriately for VNode array\r\n    const childrenArray = childrenCode.map(c => {\r\n      if (c.type === 'text') {\r\n        // Text already has quotes, wrap in VText with path from node\r\n        const textPath = c.node.__minimactPath || '';\r\n        return `new VText(${c.code}, \"${textPath}\")`;\r\n      } else if (c.type === 'expression') {\r\n        // Expression needs string interpolation wrapper with extra parentheses for complex expressions\r\n        const exprPath = c.node.__minimactPath || '';\r\n        return `new VText($\"{(${c.code})}\", \"${exprPath}\")`;\r\n      } else if (c.type === 'mixed') {\r\n        // Mixed content is already an interpolated string, wrap in VText\r\n        // Use path from first child node\r\n        const mixedPath = c.node ? (c.node.__minimactPath || '') : '';\r\n        return `new VText(${c.code}, \"${mixedPath}\")`;\r\n      } else {\r\n        // Element is already a VNode\r\n        return c.code;\r\n      }\r\n    }).join(',\\n' + indentStr + '    ');\r\n    return `new VElement(\"${tagName}\", \"${hexPath}\", ${propsStr}, new VNode[]\\n${indentStr}{\\n${indentStr}    ${childrenArray}\\n${indentStr}})`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bce6716b",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "childrenCode.length === 1 && (childrenCode[0].type === 'text' || childrenCode[0].type === 'mixed')",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1e41b603",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "childrenCode.length === 1",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "08ee81d3",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "childrenCode[0].type === 'text' || childrenCode[0].type === 'mixed'",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2289437e",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "childrenCode[0].type === 'text'",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4c453c25",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "childrenCode[0].type === 'mixed'",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2a8303b7",
+      "type": "ReturnStatement",
+      "babel_source": "return `new VElement(\"${tagName}\", \"${hexPath}\", ${propsStr}, ${childrenCode[0].code})`;",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c7e4a3a5",
+      "type": "TemplateLiteral",
+      "babel_source": "`new VElement(\"${tagName}\", \"${hexPath}\", ${propsStr}, ${childrenCode[0].code})`",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a0b83a59",
+      "type": "VariableDeclaration",
+      "babel_source": "const childrenArray = childrenCode.map(c => {\r\n      if (c.type === 'text') {\r\n        // Text already has quotes, wrap in VText with path from node\r\n        const textPath = c.node.__minimactPath || '';\r\n        return `new VText(${c.code}, \"${textPath}\")`;\r\n      } else if (c.type === 'expression') {\r\n        // Expression needs string interpolation wrapper with extra parentheses for complex expressions\r\n        const exprPath = c.node.__minimactPath || '';\r\n        return `new VText($\"{(${c.code})}\", \"${exprPath}\")`;\r\n      } else if (c.type === 'mixed') {\r\n        // Mixed content is already an interpolated string, wrap in VText\r\n        // Use path from first child node\r\n        const mixedPath = c.node ? (c.node.__minimactPath || '') : '';\r\n        return `new VText(${c.code}, \"${mixedPath}\")`;\r\n      } else {\r\n        // Element is already a VNode\r\n        return c.code;\r\n      }\r\n    }).join(',\\n' + indentStr + '    ');",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6acfb1fe",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "c => {\r\n      if (c.type === 'text') {\r\n        // Text already has quotes, wrap in VText with path from node\r\n        const textPath = c.node.__minimactPath || '';\r\n        return `new VText(${c.code}, \"${textPath}\")`;\r\n      } else if (c.type === 'expression') {\r\n        // Expression needs string interpolation wrapper with extra parentheses for complex expressions\r\n        const exprPath = c.node.__minimactPath || '';\r\n        return `new VText($\"{(${c.code})}\", \"${exprPath}\")`;\r\n      } else if (c.type === 'mixed') {\r\n        // Mixed content is already an interpolated string, wrap in VText\r\n        // Use path from first child node\r\n        const mixedPath = c.node ? (c.node.__minimactPath || '') : '';\r\n        return `new VText(${c.code}, \"${mixedPath}\")`;\r\n      } else {\r\n        // Element is already a VNode\r\n        return c.code;\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8fb926c3",
+      "type": "IfStatement",
+      "condition": "c.type === 'text'",
+      "babel_source": "if (c.type === 'text') {\r\n        // Text already has quotes, wrap in VText with path from node\r\n        const textPath = c.node.__minimactPath || '';\r\n        return `new VText(${c.code}, \"${textPath}\")`;\r\n      } else if (c.type === 'expression') {\r\n        // Expression needs string interpolation wrapper with extra parentheses for complex expressions\r\n        const exprPath = c.node.__minimactPath || '';\r\n        return `new VText($\"{(${c.code})}\", \"${exprPath}\")`;\r\n      } else if (c.type === 'mixed') {\r\n        // Mixed content is already an interpolated string, wrap in VText\r\n        // Use path from first child node\r\n        const mixedPath = c.node ? (c.node.__minimactPath || '') : '';\r\n        return `new VText(${c.code}, \"${mixedPath}\")`;\r\n      } else {\r\n        // Element is already a VNode\r\n        return c.code;\r\n      }",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2df3fbc3",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "c.type === 'text'",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "546ca181",
+      "type": "VariableDeclaration",
+      "babel_source": "const textPath = c.node.__minimactPath || '';",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "76a7bcee",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "c.node.__minimactPath || ''",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cddc0ce0",
+      "type": "ReturnStatement",
+      "babel_source": "return `new VText(${c.code}, \"${textPath}\")`;",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cc9860f4",
+      "type": "TemplateLiteral",
+      "babel_source": "`new VText(${c.code}, \"${textPath}\")`",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fbd0744e",
+      "type": "IfStatement",
+      "condition": "c.type === 'expression'",
+      "babel_source": "if (c.type === 'expression') {\r\n        // Expression needs string interpolation wrapper with extra parentheses for complex expressions\r\n        const exprPath = c.node.__minimactPath || '';\r\n        return `new VText($\"{(${c.code})}\", \"${exprPath}\")`;\r\n      } else if (c.type === 'mixed') {\r\n        // Mixed content is already an interpolated string, wrap in VText\r\n        // Use path from first child node\r\n        const mixedPath = c.node ? (c.node.__minimactPath || '') : '';\r\n        return `new VText(${c.code}, \"${mixedPath}\")`;\r\n      } else {\r\n        // Element is already a VNode\r\n        return c.code;\r\n      }",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "566ccc93",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "c.type === 'expression'",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "30aa4e74",
+      "type": "VariableDeclaration",
+      "babel_source": "const exprPath = c.node.__minimactPath || '';",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "76a7bcee",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "c.node.__minimactPath || ''",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cc93d3ff",
+      "type": "ReturnStatement",
+      "babel_source": "return `new VText($\"{(${c.code})}\", \"${exprPath}\")`;",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a62c89b3",
+      "type": "TemplateLiteral",
+      "babel_source": "`new VText($\"{(${c.code})}\", \"${exprPath}\")`",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "467d3d42",
+      "type": "IfStatement",
+      "condition": "c.type === 'mixed'",
+      "babel_source": "if (c.type === 'mixed') {\r\n        // Mixed content is already an interpolated string, wrap in VText\r\n        // Use path from first child node\r\n        const mixedPath = c.node ? (c.node.__minimactPath || '') : '';\r\n        return `new VText(${c.code}, \"${mixedPath}\")`;\r\n      } else {\r\n        // Element is already a VNode\r\n        return c.code;\r\n      }",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "219775aa",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "c.type === 'mixed'",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bf16a733",
+      "type": "VariableDeclaration",
+      "babel_source": "const mixedPath = c.node ? (c.node.__minimactPath || '') : '';",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fef48b15",
+      "type": "ConditionalExpression",
+      "babel_source": "c.node ? (c.node.__minimactPath || '') : ''",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "76a7bcee",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "c.node.__minimactPath || ''",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "12d80a16",
+      "type": "ReturnStatement",
+      "babel_source": "return `new VText(${c.code}, \"${mixedPath}\")`;",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "853c4d4b",
+      "type": "TemplateLiteral",
+      "babel_source": "`new VText(${c.code}, \"${mixedPath}\")`",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cd0e64c1",
+      "type": "ReturnStatement",
+      "babel_source": "return c.code;",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "318d9488",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "',\\n' + indentStr + '    '",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "781e6868",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "',\\n' + indentStr",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0f37e983",
+      "type": "ReturnStatement",
+      "babel_source": "return `new VElement(\"${tagName}\", \"${hexPath}\", ${propsStr}, new VNode[]\\n${indentStr}{\\n${indentStr}    ${childrenArray}\\n${indentStr}})`;",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "06d4fe04",
+      "type": "TemplateLiteral",
+      "babel_source": "`new VElement(\"${tagName}\", \"${hexPath}\", ${propsStr}, new VNode[]\\n${indentStr}{\\n${indentStr}    ${childrenArray}\\n${indentStr}})`",
+      "parentContext": {
+        "functionName": "generateJSXElement",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/jsx.cjs"
+  ]
+}

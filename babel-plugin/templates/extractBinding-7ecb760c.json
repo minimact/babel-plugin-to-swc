@@ -1,0 +1,107 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractBinding",
+  "params": [
+    {
+      "name": "expr",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractBinding(expr) {\r\n    if (t.isIdentifier(expr)) {\r\n      return expr.name;\r\n    } else if (t.isMemberExpression(expr)) {\r\n      return buildMemberPath(expr);\r\n    }\r\n    return null;\r\n  }",
+  "body_templates": [
+    {
+      "hash": "332810e3",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(expr)",
+      "babel_source": "if (t.isIdentifier(expr)) {\r\n      return expr.name;\r\n    } else if (t.isMemberExpression(expr)) {\r\n      return buildMemberPath(expr);\r\n    }",
+      "parentContext": {
+        "functionName": "extractBinding",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42d26fd4",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(expr)",
+      "parentContext": {
+        "functionName": "extractBinding",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dc053a27",
+      "type": "ReturnStatement",
+      "babel_source": "return expr.name;",
+      "parentContext": {
+        "functionName": "extractBinding",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2081d490",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(expr)",
+      "babel_source": "if (t.isMemberExpression(expr)) {\r\n      return buildMemberPath(expr);\r\n    }",
+      "parentContext": {
+        "functionName": "extractBinding",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c8858c63",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(expr)",
+      "parentContext": {
+        "functionName": "extractBinding",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "555e4b1f",
+      "type": "ReturnStatement",
+      "babel_source": "return buildMemberPath(expr);",
+      "parentContext": {
+        "functionName": "extractBinding",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractBinding",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/expressionTemplates.cjs"
+  ]
+}

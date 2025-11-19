@@ -1,0 +1,319 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateExpressionCode",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateExpressionCode(node) {\r\n  if (t.isNumericLiteral(node)) return node.value.toString();\r\n  if (t.isStringLiteral(node)) return `\"${node.value}\"`;\r\n  if (t.isBooleanLiteral(node)) return node.value ? 'true' : 'false';\r\n  if (t.isNullLiteral(node)) return 'null';\r\n  if (t.isIdentifier(node)) return node.name;\r\n  if (t.isArrayExpression(node)) {\r\n    const elements = node.elements.map(e => generateExpressionCode(e)).join(', ');\r\n    return `new[] { ${elements} }`;\r\n  }\r\n  // TODO: Handle more complex expressions\r\n  return 'null';\r\n}",
+  "body_templates": [
+    {
+      "hash": "04d07da7",
+      "type": "IfStatement",
+      "condition": "t.isNumericLiteral(node)",
+      "babel_source": "if (t.isNumericLiteral(node)) return node.value.toString();",
+      "parentContext": {
+        "functionName": "generateExpressionCode",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ae0f901d",
+      "type": "BabelTypeCheck",
+      "method": "isNumericLiteral",
+      "babel_source": "t.isNumericLiteral(node)",
+      "parentContext": {
+        "functionName": "generateExpressionCode",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ad7485b9",
+      "type": "ReturnStatement",
+      "babel_source": "return node.value.toString();",
+      "parentContext": {
+        "functionName": "generateExpressionCode",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "63897b13",
+      "type": "IfStatement",
+      "condition": "t.isStringLiteral(node)",
+      "babel_source": "if (t.isStringLiteral(node)) return `\"${node.value}\"`;",
+      "parentContext": {
+        "functionName": "generateExpressionCode",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7173d8cd",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(node)",
+      "parentContext": {
+        "functionName": "generateExpressionCode",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c9ba7f5b",
+      "type": "ReturnStatement",
+      "babel_source": "return `\"${node.value}\"`;",
+      "parentContext": {
+        "functionName": "generateExpressionCode",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d2861ea2",
+      "type": "TemplateLiteral",
+      "babel_source": "`\"${node.value}\"`",
+      "parentContext": {
+        "functionName": "generateExpressionCode",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5782d2b0",
+      "type": "IfStatement",
+      "condition": "t.isBooleanLiteral(node)",
+      "babel_source": "if (t.isBooleanLiteral(node)) return node.value ? 'true' : 'false';",
+      "parentContext": {
+        "functionName": "generateExpressionCode",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e92ed5e3",
+      "type": "BabelTypeCheck",
+      "method": "isBooleanLiteral",
+      "babel_source": "t.isBooleanLiteral(node)",
+      "parentContext": {
+        "functionName": "generateExpressionCode",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4eb918a1",
+      "type": "ReturnStatement",
+      "babel_source": "return node.value ? 'true' : 'false';",
+      "parentContext": {
+        "functionName": "generateExpressionCode",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a78b0428",
+      "type": "ConditionalExpression",
+      "babel_source": "node.value ? 'true' : 'false'",
+      "parentContext": {
+        "functionName": "generateExpressionCode",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7c5b0a33",
+      "type": "IfStatement",
+      "condition": "t.isNullLiteral(node)",
+      "babel_source": "if (t.isNullLiteral(node)) return 'null';",
+      "parentContext": {
+        "functionName": "generateExpressionCode",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b7f91226",
+      "type": "BabelTypeCheck",
+      "method": "isNullLiteral",
+      "babel_source": "t.isNullLiteral(node)",
+      "parentContext": {
+        "functionName": "generateExpressionCode",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e6caf818",
+      "type": "ReturnStatement",
+      "babel_source": "return 'null';",
+      "parentContext": {
+        "functionName": "generateExpressionCode",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7721a88e",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(node)",
+      "babel_source": "if (t.isIdentifier(node)) return node.name;",
+      "parentContext": {
+        "functionName": "generateExpressionCode",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "458e4c81",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node)",
+      "parentContext": {
+        "functionName": "generateExpressionCode",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1d251b6e",
+      "type": "ReturnStatement",
+      "babel_source": "return node.name;",
+      "parentContext": {
+        "functionName": "generateExpressionCode",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "61320291",
+      "type": "IfStatement",
+      "condition": "t.isArrayExpression(node)",
+      "babel_source": "if (t.isArrayExpression(node)) {\r\n    const elements = node.elements.map(e => generateExpressionCode(e)).join(', ');\r\n    return `new[] { ${elements} }`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateExpressionCode",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "df02b329",
+      "type": "BabelTypeCheck",
+      "method": "isArrayExpression",
+      "babel_source": "t.isArrayExpression(node)",
+      "parentContext": {
+        "functionName": "generateExpressionCode",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f449d0ed",
+      "type": "VariableDeclaration",
+      "babel_source": "const elements = node.elements.map(e => generateExpressionCode(e)).join(', ');",
+      "parentContext": {
+        "functionName": "generateExpressionCode",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a7398d0b",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "e => generateExpressionCode(e)",
+      "parentContext": {
+        "functionName": "generateExpressionCode",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "53b34d4e",
+      "type": "ReturnStatement",
+      "babel_source": "return `new[] { ${elements} }`;",
+      "parentContext": {
+        "functionName": "generateExpressionCode",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0a4ccf87",
+      "type": "TemplateLiteral",
+      "babel_source": "`new[] { ${elements} }`",
+      "parentContext": {
+        "functionName": "generateExpressionCode",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e6caf818",
+      "type": "ReturnStatement",
+      "babel_source": "return 'null';",
+      "parentContext": {
+        "functionName": "generateExpressionCode",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/hookAnalyzer.cjs"
+  ]
+}

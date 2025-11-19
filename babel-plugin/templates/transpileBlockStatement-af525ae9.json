@@ -1,0 +1,93 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "transpileBlockStatement",
+  "params": [
+    {
+      "name": "block",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function transpileBlockStatement(block) {\r\n  let code = '';\r\n\r\n  for (const statement of block.body) {\r\n    code += transpileStatement(statement) + '\\n';\r\n  }\r\n\r\n  return code;\r\n}",
+  "body_templates": [
+    {
+      "hash": "f42e2303",
+      "type": "VariableDeclaration",
+      "babel_source": "let code = '';",
+      "parentContext": {
+        "functionName": "transpileBlockStatement",
+        "functionParams": [
+          "block"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9f7718e2",
+      "type": "ForOfStatement",
+      "babel_source": "for (const statement of block.body) {\r\n    code += transpileStatement(statement) + '\\n';\r\n  }",
+      "parentContext": {
+        "functionName": "transpileBlockStatement",
+        "functionParams": [
+          "block"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f397d33c",
+      "type": "VariableDeclaration",
+      "babel_source": "const statement",
+      "parentContext": {
+        "functionName": "transpileBlockStatement",
+        "functionParams": [
+          "block"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "413aabb0",
+      "type": "AssignmentExpression",
+      "operator": "+=",
+      "babel_source": "code += transpileStatement(statement) + '\\n'",
+      "parentContext": {
+        "functionName": "transpileBlockStatement",
+        "functionParams": [
+          "block"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "48a98ef5",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "transpileStatement(statement) + '\\n'",
+      "parentContext": {
+        "functionName": "transpileBlockStatement",
+        "functionParams": [
+          "block"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f27c6cd",
+      "type": "ReturnStatement",
+      "babel_source": "return code;",
+      "parentContext": {
+        "functionName": "transpileBlockStatement",
+        "functionParams": [
+          "block"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "transpilers/typescriptToCSharp.cjs"
+  ]
+}

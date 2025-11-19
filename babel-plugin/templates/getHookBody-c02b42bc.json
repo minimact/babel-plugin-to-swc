@@ -1,0 +1,171 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "getHookBody",
+  "params": [
+    {
+      "name": "path",
+      "inferredType": "&Path",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function getHookBody(path) {\r\n  if (t.isFunctionDeclaration(path.node)) {\r\n    return path.node.body;\r\n  }\r\n  if (t.isVariableDeclarator(path.node)) {\r\n    const init = path.node.init;\r\n    if (t.isArrowFunctionExpression(init) || t.isFunctionExpression(init)) {\r\n      return init.body;\r\n    }\r\n  }\r\n  return null;\r\n}",
+  "body_templates": [
+    {
+      "hash": "c3332053",
+      "type": "IfStatement",
+      "condition": "t.isFunctionDeclaration(path.node)",
+      "babel_source": "if (t.isFunctionDeclaration(path.node)) {\r\n    return path.node.body;\r\n  }",
+      "parentContext": {
+        "functionName": "getHookBody",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3633f955",
+      "type": "BabelTypeCheck",
+      "method": "isFunctionDeclaration",
+      "babel_source": "t.isFunctionDeclaration(path.node)",
+      "parentContext": {
+        "functionName": "getHookBody",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42dc47ee",
+      "type": "ReturnStatement",
+      "babel_source": "return path.node.body;",
+      "parentContext": {
+        "functionName": "getHookBody",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "871b59f2",
+      "type": "IfStatement",
+      "condition": "t.isVariableDeclarator(path.node)",
+      "babel_source": "if (t.isVariableDeclarator(path.node)) {\r\n    const init = path.node.init;\r\n    if (t.isArrowFunctionExpression(init) || t.isFunctionExpression(init)) {\r\n      return init.body;\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "getHookBody",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d06bdb04",
+      "type": "BabelTypeCheck",
+      "method": "isVariableDeclarator",
+      "babel_source": "t.isVariableDeclarator(path.node)",
+      "parentContext": {
+        "functionName": "getHookBody",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d97ea1ee",
+      "type": "VariableDeclaration",
+      "babel_source": "const init = path.node.init;",
+      "parentContext": {
+        "functionName": "getHookBody",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ddc00e85",
+      "type": "IfStatement",
+      "condition": "t.isArrowFunctionExpression(init) || t.isFunctionExpression(init)",
+      "babel_source": "if (t.isArrowFunctionExpression(init) || t.isFunctionExpression(init)) {\r\n      return init.body;\r\n    }",
+      "parentContext": {
+        "functionName": "getHookBody",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "28364cae",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isArrowFunctionExpression(init) || t.isFunctionExpression(init)",
+      "parentContext": {
+        "functionName": "getHookBody",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "55a4b373",
+      "type": "BabelTypeCheck",
+      "method": "isArrowFunctionExpression",
+      "babel_source": "t.isArrowFunctionExpression(init)",
+      "parentContext": {
+        "functionName": "getHookBody",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0f3cacc8",
+      "type": "BabelTypeCheck",
+      "method": "isFunctionExpression",
+      "babel_source": "t.isFunctionExpression(init)",
+      "parentContext": {
+        "functionName": "getHookBody",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d0e164ad",
+      "type": "ReturnStatement",
+      "babel_source": "return init.body;",
+      "parentContext": {
+        "functionName": "getHookBody",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "getHookBody",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/hookDetector.cjs"
+  ]
+}

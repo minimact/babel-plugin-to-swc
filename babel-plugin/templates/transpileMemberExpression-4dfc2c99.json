@@ -1,0 +1,443 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "transpileMemberExpression",
+  "params": [
+    {
+      "name": "fullExpr",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    },
+    {
+      "name": "object",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "property",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "objectNode",
+      "inferredType": "&Node",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function transpileMemberExpression(fullExpr, object, property, objectNode) {\r\n  // progress.report() → progress sender\r\n  if (object === 'progress' && property === '.report') {\r\n    return 'progress.send';\r\n  }\r\n\r\n  // Handle iterator method chaining\r\n  // Only add .iter() if the object is NOT already an iterator method call\r\n  const iteratorMethods = ['.map', '.filter', '.reduce', '.find', '.some', '.every'];\r\n\r\n  if (iteratorMethods.includes(property)) {\r\n    // Check if object already ends with an iterator method\r\n    const needsIter = !object.includes('.iter()') &&\r\n                      !object.endsWith('.map') &&\r\n                      !object.endsWith('.filter') &&\r\n                      !object.endsWith('.reduce') &&\r\n                      !object.endsWith('.find') &&\r\n                      !object.endsWith('.some') &&\r\n                      !object.endsWith('.every');\r\n\r\n    if (needsIter) {\r\n      return `${object}.iter()${property}`;\r\n    }\r\n  }\r\n\r\n  return fullExpr;\r\n}",
+  "body_templates": [
+    {
+      "hash": "49f71134",
+      "type": "IfStatement",
+      "condition": "object === 'progress' && property === '.report'",
+      "babel_source": "if (object === 'progress' && property === '.report') {\r\n    return 'progress.send';\r\n  }",
+      "parentContext": {
+        "functionName": "transpileMemberExpression",
+        "functionParams": [
+          "fullExpr",
+          "object",
+          "property",
+          "objectNode"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2107954b",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "object === 'progress' && property === '.report'",
+      "parentContext": {
+        "functionName": "transpileMemberExpression",
+        "functionParams": [
+          "fullExpr",
+          "object",
+          "property",
+          "objectNode"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e428baf3",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "object === 'progress'",
+      "parentContext": {
+        "functionName": "transpileMemberExpression",
+        "functionParams": [
+          "fullExpr",
+          "object",
+          "property",
+          "objectNode"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1be3e0a8",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "property === '.report'",
+      "parentContext": {
+        "functionName": "transpileMemberExpression",
+        "functionParams": [
+          "fullExpr",
+          "object",
+          "property",
+          "objectNode"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0c94e707",
+      "type": "ReturnStatement",
+      "babel_source": "return 'progress.send';",
+      "parentContext": {
+        "functionName": "transpileMemberExpression",
+        "functionParams": [
+          "fullExpr",
+          "object",
+          "property",
+          "objectNode"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "59b81bd9",
+      "type": "VariableDeclaration",
+      "babel_source": "const iteratorMethods = ['.map', '.filter', '.reduce', '.find', '.some', '.every'];",
+      "parentContext": {
+        "functionName": "transpileMemberExpression",
+        "functionParams": [
+          "fullExpr",
+          "object",
+          "property",
+          "objectNode"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1ebdffbd",
+      "type": "ArrayExpression",
+      "babel_source": "['.map', '.filter', '.reduce', '.find', '.some', '.every']",
+      "parentContext": {
+        "functionName": "transpileMemberExpression",
+        "functionParams": [
+          "fullExpr",
+          "object",
+          "property",
+          "objectNode"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2401ba5b",
+      "type": "IfStatement",
+      "condition": "iteratorMethods.includes(property)",
+      "babel_source": "if (iteratorMethods.includes(property)) {\r\n    // Check if object already ends with an iterator method\r\n    const needsIter = !object.includes('.iter()') &&\r\n                      !object.endsWith('.map') &&\r\n                      !object.endsWith('.filter') &&\r\n                      !object.endsWith('.reduce') &&\r\n                      !object.endsWith('.find') &&\r\n                      !object.endsWith('.some') &&\r\n                      !object.endsWith('.every');\r\n\r\n    if (needsIter) {\r\n      return `${object}.iter()${property}`;\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "transpileMemberExpression",
+        "functionParams": [
+          "fullExpr",
+          "object",
+          "property",
+          "objectNode"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2054c6ea",
+      "type": "VariableDeclaration",
+      "babel_source": "const needsIter = !object.includes('.iter()') &&\r\n                      !object.endsWith('.map') &&\r\n                      !object.endsWith('.filter') &&\r\n                      !object.endsWith('.reduce') &&\r\n                      !object.endsWith('.find') &&\r\n                      !object.endsWith('.some') &&\r\n                      !object.endsWith('.every');",
+      "parentContext": {
+        "functionName": "transpileMemberExpression",
+        "functionParams": [
+          "fullExpr",
+          "object",
+          "property",
+          "objectNode"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2fde0119",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "!object.includes('.iter()') &&\r\n                      !object.endsWith('.map') &&\r\n                      !object.endsWith('.filter') &&\r\n                      !object.endsWith('.reduce') &&\r\n                      !object.endsWith('.find') &&\r\n                      !object.endsWith('.some') &&\r\n                      !object.endsWith('.every')",
+      "parentContext": {
+        "functionName": "transpileMemberExpression",
+        "functionParams": [
+          "fullExpr",
+          "object",
+          "property",
+          "objectNode"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7f15aa0b",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "!object.includes('.iter()') &&\r\n                      !object.endsWith('.map') &&\r\n                      !object.endsWith('.filter') &&\r\n                      !object.endsWith('.reduce') &&\r\n                      !object.endsWith('.find') &&\r\n                      !object.endsWith('.some')",
+      "parentContext": {
+        "functionName": "transpileMemberExpression",
+        "functionParams": [
+          "fullExpr",
+          "object",
+          "property",
+          "objectNode"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f97996f3",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "!object.includes('.iter()') &&\r\n                      !object.endsWith('.map') &&\r\n                      !object.endsWith('.filter') &&\r\n                      !object.endsWith('.reduce') &&\r\n                      !object.endsWith('.find')",
+      "parentContext": {
+        "functionName": "transpileMemberExpression",
+        "functionParams": [
+          "fullExpr",
+          "object",
+          "property",
+          "objectNode"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c1629701",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "!object.includes('.iter()') &&\r\n                      !object.endsWith('.map') &&\r\n                      !object.endsWith('.filter') &&\r\n                      !object.endsWith('.reduce')",
+      "parentContext": {
+        "functionName": "transpileMemberExpression",
+        "functionParams": [
+          "fullExpr",
+          "object",
+          "property",
+          "objectNode"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5c130585",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "!object.includes('.iter()') &&\r\n                      !object.endsWith('.map') &&\r\n                      !object.endsWith('.filter')",
+      "parentContext": {
+        "functionName": "transpileMemberExpression",
+        "functionParams": [
+          "fullExpr",
+          "object",
+          "property",
+          "objectNode"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0c8f50af",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "!object.includes('.iter()') &&\r\n                      !object.endsWith('.map')",
+      "parentContext": {
+        "functionName": "transpileMemberExpression",
+        "functionParams": [
+          "fullExpr",
+          "object",
+          "property",
+          "objectNode"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e5c427a2",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!object.includes('.iter()')",
+      "parentContext": {
+        "functionName": "transpileMemberExpression",
+        "functionParams": [
+          "fullExpr",
+          "object",
+          "property",
+          "objectNode"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ca36a32e",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!object.endsWith('.map')",
+      "parentContext": {
+        "functionName": "transpileMemberExpression",
+        "functionParams": [
+          "fullExpr",
+          "object",
+          "property",
+          "objectNode"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c5f429c7",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!object.endsWith('.filter')",
+      "parentContext": {
+        "functionName": "transpileMemberExpression",
+        "functionParams": [
+          "fullExpr",
+          "object",
+          "property",
+          "objectNode"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b5d82d21",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!object.endsWith('.reduce')",
+      "parentContext": {
+        "functionName": "transpileMemberExpression",
+        "functionParams": [
+          "fullExpr",
+          "object",
+          "property",
+          "objectNode"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "218e5885",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!object.endsWith('.find')",
+      "parentContext": {
+        "functionName": "transpileMemberExpression",
+        "functionParams": [
+          "fullExpr",
+          "object",
+          "property",
+          "objectNode"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c9c38a6b",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!object.endsWith('.some')",
+      "parentContext": {
+        "functionName": "transpileMemberExpression",
+        "functionParams": [
+          "fullExpr",
+          "object",
+          "property",
+          "objectNode"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "251220be",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!object.endsWith('.every')",
+      "parentContext": {
+        "functionName": "transpileMemberExpression",
+        "functionParams": [
+          "fullExpr",
+          "object",
+          "property",
+          "objectNode"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cfef0c4e",
+      "type": "IfStatement",
+      "condition": "needsIter",
+      "babel_source": "if (needsIter) {\r\n      return `${object}.iter()${property}`;\r\n    }",
+      "parentContext": {
+        "functionName": "transpileMemberExpression",
+        "functionParams": [
+          "fullExpr",
+          "object",
+          "property",
+          "objectNode"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8cf655b8",
+      "type": "ReturnStatement",
+      "babel_source": "return `${object}.iter()${property}`;",
+      "parentContext": {
+        "functionName": "transpileMemberExpression",
+        "functionParams": [
+          "fullExpr",
+          "object",
+          "property",
+          "objectNode"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7861d190",
+      "type": "TemplateLiteral",
+      "babel_source": "`${object}.iter()${property}`",
+      "parentContext": {
+        "functionName": "transpileMemberExpression",
+        "functionParams": [
+          "fullExpr",
+          "object",
+          "property",
+          "objectNode"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fe625a65",
+      "type": "ReturnStatement",
+      "babel_source": "return fullExpr;",
+      "parentContext": {
+        "functionName": "transpileMemberExpression",
+        "functionParams": [
+          "fullExpr",
+          "object",
+          "property",
+          "objectNode"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "transpilers/typescriptToRust.cjs"
+  ]
+}

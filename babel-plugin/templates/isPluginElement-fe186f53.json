@@ -1,0 +1,145 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "isPluginElement",
+  "params": [
+    {
+      "name": "openingElement",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "bool",
+  "babel_source": "function isPluginElement(openingElement) {\r\n  // Check for <Plugin> or <Plugin.Something>\r\n  const name = openingElement.name;\r\n\r\n  if (t.isJSXIdentifier(name)) {\r\n    return name.name === 'Plugin';\r\n  }\r\n\r\n  if (t.isJSXMemberExpression(name)) {\r\n    return name.object.name === 'Plugin';\r\n  }\r\n\r\n  return false;\r\n}",
+  "body_templates": [
+    {
+      "hash": "7eaeb692",
+      "type": "VariableDeclaration",
+      "babel_source": "const name = openingElement.name;",
+      "parentContext": {
+        "functionName": "isPluginElement",
+        "functionParams": [
+          "openingElement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "97f0406a",
+      "type": "IfStatement",
+      "condition": "t.isJSXIdentifier(name)",
+      "babel_source": "if (t.isJSXIdentifier(name)) {\r\n    return name.name === 'Plugin';\r\n  }",
+      "parentContext": {
+        "functionName": "isPluginElement",
+        "functionParams": [
+          "openingElement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6713e0fe",
+      "type": "BabelTypeCheck",
+      "method": "isJSXIdentifier",
+      "babel_source": "t.isJSXIdentifier(name)",
+      "parentContext": {
+        "functionName": "isPluginElement",
+        "functionParams": [
+          "openingElement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "38c94f58",
+      "type": "ReturnStatement",
+      "babel_source": "return name.name === 'Plugin';",
+      "parentContext": {
+        "functionName": "isPluginElement",
+        "functionParams": [
+          "openingElement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2170c6be",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "name.name === 'Plugin'",
+      "parentContext": {
+        "functionName": "isPluginElement",
+        "functionParams": [
+          "openingElement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e57ace29",
+      "type": "IfStatement",
+      "condition": "t.isJSXMemberExpression(name)",
+      "babel_source": "if (t.isJSXMemberExpression(name)) {\r\n    return name.object.name === 'Plugin';\r\n  }",
+      "parentContext": {
+        "functionName": "isPluginElement",
+        "functionParams": [
+          "openingElement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "549e51c9",
+      "type": "BabelTypeCheck",
+      "method": "isJSXMemberExpression",
+      "babel_source": "t.isJSXMemberExpression(name)",
+      "parentContext": {
+        "functionName": "isPluginElement",
+        "functionParams": [
+          "openingElement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "379ff801",
+      "type": "ReturnStatement",
+      "babel_source": "return name.object.name === 'Plugin';",
+      "parentContext": {
+        "functionName": "isPluginElement",
+        "functionParams": [
+          "openingElement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "de43a439",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "name.object.name === 'Plugin'",
+      "parentContext": {
+        "functionName": "isPluginElement",
+        "functionParams": [
+          "openingElement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dabbdf16",
+      "type": "ReturnStatement",
+      "babel_source": "return false;",
+      "parentContext": {
+        "functionName": "isPluginElement",
+        "functionParams": [
+          "openingElement"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/analyzePluginUsage.cjs"
+  ]
+}

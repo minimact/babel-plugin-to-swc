@@ -1,0 +1,253 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "getHookDescription",
+  "params": [
+    {
+      "name": "hook",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function getHookDescription(hook) {\r\n  if (hook.varName) {\r\n    return `${hook.type} (${hook.varName})`;\r\n  }\r\n  if (hook.templateName) {\r\n    return `${hook.type} (${hook.templateName})`;\r\n  }\r\n  if (hook.hintId) {\r\n    return `${hook.type} (${hook.hintId})`;\r\n  }\r\n  if (hook.fieldKey) {\r\n    return `${hook.type} (${hook.fieldKey})`;\r\n  }\r\n  if (hook.propertyName) {\r\n    return `${hook.type} (${hook.propertyName})`;\r\n  }\r\n  if (hook.channel) {\r\n    return `${hook.type} (${hook.channel})`;\r\n  }\r\n  return hook.type;\r\n}",
+  "body_templates": [
+    {
+      "hash": "d04d15da",
+      "type": "IfStatement",
+      "condition": "hook.varName",
+      "babel_source": "if (hook.varName) {\r\n    return `${hook.type} (${hook.varName})`;\r\n  }",
+      "parentContext": {
+        "functionName": "getHookDescription",
+        "functionParams": [
+          "hook"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "02f5d26b",
+      "type": "ReturnStatement",
+      "babel_source": "return `${hook.type} (${hook.varName})`;",
+      "parentContext": {
+        "functionName": "getHookDescription",
+        "functionParams": [
+          "hook"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a11db93a",
+      "type": "TemplateLiteral",
+      "babel_source": "`${hook.type} (${hook.varName})`",
+      "parentContext": {
+        "functionName": "getHookDescription",
+        "functionParams": [
+          "hook"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "18152390",
+      "type": "IfStatement",
+      "condition": "hook.templateName",
+      "babel_source": "if (hook.templateName) {\r\n    return `${hook.type} (${hook.templateName})`;\r\n  }",
+      "parentContext": {
+        "functionName": "getHookDescription",
+        "functionParams": [
+          "hook"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "742b9935",
+      "type": "ReturnStatement",
+      "babel_source": "return `${hook.type} (${hook.templateName})`;",
+      "parentContext": {
+        "functionName": "getHookDescription",
+        "functionParams": [
+          "hook"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "07142f38",
+      "type": "TemplateLiteral",
+      "babel_source": "`${hook.type} (${hook.templateName})`",
+      "parentContext": {
+        "functionName": "getHookDescription",
+        "functionParams": [
+          "hook"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7363cc09",
+      "type": "IfStatement",
+      "condition": "hook.hintId",
+      "babel_source": "if (hook.hintId) {\r\n    return `${hook.type} (${hook.hintId})`;\r\n  }",
+      "parentContext": {
+        "functionName": "getHookDescription",
+        "functionParams": [
+          "hook"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a592191b",
+      "type": "ReturnStatement",
+      "babel_source": "return `${hook.type} (${hook.hintId})`;",
+      "parentContext": {
+        "functionName": "getHookDescription",
+        "functionParams": [
+          "hook"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c569f9ec",
+      "type": "TemplateLiteral",
+      "babel_source": "`${hook.type} (${hook.hintId})`",
+      "parentContext": {
+        "functionName": "getHookDescription",
+        "functionParams": [
+          "hook"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ea96f53d",
+      "type": "IfStatement",
+      "condition": "hook.fieldKey",
+      "babel_source": "if (hook.fieldKey) {\r\n    return `${hook.type} (${hook.fieldKey})`;\r\n  }",
+      "parentContext": {
+        "functionName": "getHookDescription",
+        "functionParams": [
+          "hook"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "38194eb9",
+      "type": "ReturnStatement",
+      "babel_source": "return `${hook.type} (${hook.fieldKey})`;",
+      "parentContext": {
+        "functionName": "getHookDescription",
+        "functionParams": [
+          "hook"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "11da3209",
+      "type": "TemplateLiteral",
+      "babel_source": "`${hook.type} (${hook.fieldKey})`",
+      "parentContext": {
+        "functionName": "getHookDescription",
+        "functionParams": [
+          "hook"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3fe791f4",
+      "type": "IfStatement",
+      "condition": "hook.propertyName",
+      "babel_source": "if (hook.propertyName) {\r\n    return `${hook.type} (${hook.propertyName})`;\r\n  }",
+      "parentContext": {
+        "functionName": "getHookDescription",
+        "functionParams": [
+          "hook"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "99c9f4a5",
+      "type": "ReturnStatement",
+      "babel_source": "return `${hook.type} (${hook.propertyName})`;",
+      "parentContext": {
+        "functionName": "getHookDescription",
+        "functionParams": [
+          "hook"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5527e4d2",
+      "type": "TemplateLiteral",
+      "babel_source": "`${hook.type} (${hook.propertyName})`",
+      "parentContext": {
+        "functionName": "getHookDescription",
+        "functionParams": [
+          "hook"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a902827b",
+      "type": "IfStatement",
+      "condition": "hook.channel",
+      "babel_source": "if (hook.channel) {\r\n    return `${hook.type} (${hook.channel})`;\r\n  }",
+      "parentContext": {
+        "functionName": "getHookDescription",
+        "functionParams": [
+          "hook"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fd50f339",
+      "type": "ReturnStatement",
+      "babel_source": "return `${hook.type} (${hook.channel})`;",
+      "parentContext": {
+        "functionName": "getHookDescription",
+        "functionParams": [
+          "hook"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a2d1186c",
+      "type": "TemplateLiteral",
+      "babel_source": "`${hook.type} (${hook.channel})`",
+      "parentContext": {
+        "functionName": "getHookDescription",
+        "functionParams": [
+          "hook"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "867cb127",
+      "type": "ReturnStatement",
+      "babel_source": "return hook.type;",
+      "parentContext": {
+        "functionName": "getHookDescription",
+        "functionParams": [
+          "hook"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/hookSignature.cjs"
+  ]
+}

@@ -1,0 +1,328 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "walk",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function walk(node) {\r\n    if (!node) return;\r\n\r\n    // Check if this is an identifier that's a state variable\r\n    if (t.isIdentifier(node)) {\r\n      const name = node.name;\r\n      if (component.stateTypes.has(name)) {\r\n        deps.add({\r\n          name: name,\r\n          type: component.stateTypes.get(name) // 'client' or 'server'\r\n        });\r\n      }\r\n    }\r\n\r\n    // Recursively walk the tree\r\n    if (t.isConditionalExpression(node)) {\r\n      walk(node.test);\r\n      walk(node.consequent);\r\n      walk(node.alternate);\r\n    } else if (t.isLogicalExpression(node)) {\r\n      walk(node.left);\r\n      walk(node.right);\r\n    } else if (t.isMemberExpression(node)) {\r\n      walk(node.object);\r\n      walk(node.property);\r\n    } else if (t.isCallExpression(node)) {\r\n      walk(node.callee);\r\n      node.arguments.forEach(walk);\r\n    } else if (t.isBinaryExpression(node)) {\r\n      walk(node.left);\r\n      walk(node.right);\r\n    } else if (t.isUnaryExpression(node)) {\r\n      walk(node.argument);\r\n    } else if (t.isArrowFunctionExpression(node) || t.isFunctionExpression(node)) {\r\n      walk(node.body);\r\n    }\r\n  }",
+  "body_templates": [
+    {
+      "hash": "38309af2",
+      "type": "IfStatement",
+      "condition": "!node",
+      "babel_source": "if (!node) return;",
+      "parentContext": {
+        "functionName": "walk",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e10d47ee",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!node",
+      "parentContext": {
+        "functionName": "walk",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8beaabe2",
+      "type": "ReturnStatement",
+      "babel_source": "return;",
+      "parentContext": {
+        "functionName": "walk",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c69e169b",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(node)",
+      "babel_source": "if (t.isIdentifier(node)) {\r\n      const name = node.name;\r\n      if (component.stateTypes.has(name)) {\r\n        deps.add({\r\n          name: name,\r\n          type: component.stateTypes.get(name) // 'client' or 'server'\r\n        });\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "walk",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "458e4c81",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node)",
+      "parentContext": {
+        "functionName": "walk",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "47e9392c",
+      "type": "VariableDeclaration",
+      "babel_source": "const name = node.name;",
+      "parentContext": {
+        "functionName": "walk",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ecc27495",
+      "type": "IfStatement",
+      "condition": "component.stateTypes.has(name)",
+      "babel_source": "if (component.stateTypes.has(name)) {\r\n        deps.add({\r\n          name: name,\r\n          type: component.stateTypes.get(name) // 'client' or 'server'\r\n        });\r\n      }",
+      "parentContext": {
+        "functionName": "walk",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d2f89b9a",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n          name: name,\r\n          type: component.stateTypes.get(name) // 'client' or 'server'\r\n        }",
+      "parentContext": {
+        "functionName": "walk",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "74b945db",
+      "type": "IfStatement",
+      "condition": "t.isConditionalExpression(node)",
+      "babel_source": "if (t.isConditionalExpression(node)) {\r\n      walk(node.test);\r\n      walk(node.consequent);\r\n      walk(node.alternate);\r\n    } else if (t.isLogicalExpression(node)) {\r\n      walk(node.left);\r\n      walk(node.right);\r\n    } else if (t.isMemberExpression(node)) {\r\n      walk(node.object);\r\n      walk(node.property);\r\n    } else if (t.isCallExpression(node)) {\r\n      walk(node.callee);\r\n      node.arguments.forEach(walk);\r\n    } else if (t.isBinaryExpression(node)) {\r\n      walk(node.left);\r\n      walk(node.right);\r\n    } else if (t.isUnaryExpression(node)) {\r\n      walk(node.argument);\r\n    } else if (t.isArrowFunctionExpression(node) || t.isFunctionExpression(node)) {\r\n      walk(node.body);\r\n    }",
+      "parentContext": {
+        "functionName": "walk",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1459577d",
+      "type": "BabelTypeCheck",
+      "method": "isConditionalExpression",
+      "babel_source": "t.isConditionalExpression(node)",
+      "parentContext": {
+        "functionName": "walk",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1eee5164",
+      "type": "IfStatement",
+      "condition": "t.isLogicalExpression(node)",
+      "babel_source": "if (t.isLogicalExpression(node)) {\r\n      walk(node.left);\r\n      walk(node.right);\r\n    } else if (t.isMemberExpression(node)) {\r\n      walk(node.object);\r\n      walk(node.property);\r\n    } else if (t.isCallExpression(node)) {\r\n      walk(node.callee);\r\n      node.arguments.forEach(walk);\r\n    } else if (t.isBinaryExpression(node)) {\r\n      walk(node.left);\r\n      walk(node.right);\r\n    } else if (t.isUnaryExpression(node)) {\r\n      walk(node.argument);\r\n    } else if (t.isArrowFunctionExpression(node) || t.isFunctionExpression(node)) {\r\n      walk(node.body);\r\n    }",
+      "parentContext": {
+        "functionName": "walk",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "00fb4fd3",
+      "type": "BabelTypeCheck",
+      "method": "isLogicalExpression",
+      "babel_source": "t.isLogicalExpression(node)",
+      "parentContext": {
+        "functionName": "walk",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cbb363f4",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(node)",
+      "babel_source": "if (t.isMemberExpression(node)) {\r\n      walk(node.object);\r\n      walk(node.property);\r\n    } else if (t.isCallExpression(node)) {\r\n      walk(node.callee);\r\n      node.arguments.forEach(walk);\r\n    } else if (t.isBinaryExpression(node)) {\r\n      walk(node.left);\r\n      walk(node.right);\r\n    } else if (t.isUnaryExpression(node)) {\r\n      walk(node.argument);\r\n    } else if (t.isArrowFunctionExpression(node) || t.isFunctionExpression(node)) {\r\n      walk(node.body);\r\n    }",
+      "parentContext": {
+        "functionName": "walk",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e4025d71",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(node)",
+      "parentContext": {
+        "functionName": "walk",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fe85050b",
+      "type": "IfStatement",
+      "condition": "t.isCallExpression(node)",
+      "babel_source": "if (t.isCallExpression(node)) {\r\n      walk(node.callee);\r\n      node.arguments.forEach(walk);\r\n    } else if (t.isBinaryExpression(node)) {\r\n      walk(node.left);\r\n      walk(node.right);\r\n    } else if (t.isUnaryExpression(node)) {\r\n      walk(node.argument);\r\n    } else if (t.isArrowFunctionExpression(node) || t.isFunctionExpression(node)) {\r\n      walk(node.body);\r\n    }",
+      "parentContext": {
+        "functionName": "walk",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1088dc62",
+      "type": "BabelTypeCheck",
+      "method": "isCallExpression",
+      "babel_source": "t.isCallExpression(node)",
+      "parentContext": {
+        "functionName": "walk",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c584786c",
+      "type": "IfStatement",
+      "condition": "t.isBinaryExpression(node)",
+      "babel_source": "if (t.isBinaryExpression(node)) {\r\n      walk(node.left);\r\n      walk(node.right);\r\n    } else if (t.isUnaryExpression(node)) {\r\n      walk(node.argument);\r\n    } else if (t.isArrowFunctionExpression(node) || t.isFunctionExpression(node)) {\r\n      walk(node.body);\r\n    }",
+      "parentContext": {
+        "functionName": "walk",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ae0955e9",
+      "type": "BabelTypeCheck",
+      "method": "isBinaryExpression",
+      "babel_source": "t.isBinaryExpression(node)",
+      "parentContext": {
+        "functionName": "walk",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "eff5f781",
+      "type": "IfStatement",
+      "condition": "t.isUnaryExpression(node)",
+      "babel_source": "if (t.isUnaryExpression(node)) {\r\n      walk(node.argument);\r\n    } else if (t.isArrowFunctionExpression(node) || t.isFunctionExpression(node)) {\r\n      walk(node.body);\r\n    }",
+      "parentContext": {
+        "functionName": "walk",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "27f27257",
+      "type": "BabelTypeCheck",
+      "method": "isUnaryExpression",
+      "babel_source": "t.isUnaryExpression(node)",
+      "parentContext": {
+        "functionName": "walk",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "58b5c305",
+      "type": "IfStatement",
+      "condition": "t.isArrowFunctionExpression(node) || t.isFunctionExpression(node)",
+      "babel_source": "if (t.isArrowFunctionExpression(node) || t.isFunctionExpression(node)) {\r\n      walk(node.body);\r\n    }",
+      "parentContext": {
+        "functionName": "walk",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0909c72d",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isArrowFunctionExpression(node) || t.isFunctionExpression(node)",
+      "parentContext": {
+        "functionName": "walk",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4d2a5749",
+      "type": "BabelTypeCheck",
+      "method": "isArrowFunctionExpression",
+      "babel_source": "t.isArrowFunctionExpression(node)",
+      "parentContext": {
+        "functionName": "walk",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "630f2645",
+      "type": "BabelTypeCheck",
+      "method": "isFunctionExpression",
+      "babel_source": "t.isFunctionExpression(node)",
+      "parentContext": {
+        "functionName": "walk",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/dependencies.cjs"
+  ]
+}

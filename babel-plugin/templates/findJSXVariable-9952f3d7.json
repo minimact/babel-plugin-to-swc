@@ -1,0 +1,680 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "findJSXVariable",
+  "params": [
+    {
+      "name": "varName",
+      "inferredType": "&str",
+      "defaultValue": null
+    },
+    {
+      "name": "hookPath",
+      "inferredType": "&Path",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function findJSXVariable(varName, hookPath) {\r\n  let foundNode = null;\r\n\r\n  const body = hookPath.node.body;\r\n  if (!t.isBlockStatement(body)) return null;\r\n\r\n  // Traverse the hook body to find: const varName = <JSX>;\r\n  for (const statement of body.body) {\r\n    if (t.isVariableDeclaration(statement)) {\r\n      for (const declarator of statement.declarations) {\r\n        if (t.isIdentifier(declarator.id) && declarator.id.name === varName) {\r\n          const init = declarator.init;\r\n          if (t.isJSXElement(init) || t.isJSXFragment(init)) {\r\n            foundNode = init;\r\n            break;\r\n          }\r\n          // Conditional: const ui = loading && <div>;\r\n          if (t.isLogicalExpression(init)) {\r\n            const right = init.right;\r\n            if (t.isJSXElement(right) || t.isJSXFragment(right)) {\r\n              foundNode = init; // Return the whole logical expression\r\n              break;\r\n            }\r\n          }\r\n          // Parenthesized expression\r\n          if (t.isParenthesizedExpression(init)) {\r\n            const inner = init.expression;\r\n            if (t.isJSXElement(inner) || t.isJSXFragment(inner)) {\r\n              foundNode = inner;\r\n              break;\r\n            }\r\n            if (t.isLogicalExpression(inner)) {\r\n              foundNode = inner;\r\n              break;\r\n            }\r\n          }\r\n        }\r\n      }\r\n    }\r\n    if (foundNode) break;\r\n  }\r\n\r\n  return foundNode;\r\n}",
+  "body_templates": [
+    {
+      "hash": "3351cde2",
+      "type": "VariableDeclaration",
+      "babel_source": "let foundNode = null;",
+      "parentContext": {
+        "functionName": "findJSXVariable",
+        "functionParams": [
+          "varName",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "03ede5f6",
+      "type": "VariableDeclaration",
+      "babel_source": "const body = hookPath.node.body;",
+      "parentContext": {
+        "functionName": "findJSXVariable",
+        "functionParams": [
+          "varName",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d4563ecb",
+      "type": "IfStatement",
+      "condition": "!t.isBlockStatement(body)",
+      "babel_source": "if (!t.isBlockStatement(body)) return null;",
+      "parentContext": {
+        "functionName": "findJSXVariable",
+        "functionParams": [
+          "varName",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cfa5d892",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isBlockStatement(body)",
+      "parentContext": {
+        "functionName": "findJSXVariable",
+        "functionParams": [
+          "varName",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8f74e258",
+      "type": "BabelTypeCheck",
+      "method": "isBlockStatement",
+      "babel_source": "t.isBlockStatement(body)",
+      "parentContext": {
+        "functionName": "findJSXVariable",
+        "functionParams": [
+          "varName",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "findJSXVariable",
+        "functionParams": [
+          "varName",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "adf7fcd4",
+      "type": "ForOfStatement",
+      "babel_source": "for (const statement of body.body) {\r\n    if (t.isVariableDeclaration(statement)) {\r\n      for (const declarator of statement.declarations) {\r\n        if (t.isIdentifier(declarator.id) && declarator.id.name === varName) {\r\n          const init = declarator.init;\r\n          if (t.isJSXElement(init) || t.isJSXFragment(init)) {\r\n            foundNode = init;\r\n            break;\r\n          }\r\n          // Conditional: const ui = loading && <div>;\r\n          if (t.isLogicalExpression(init)) {\r\n            const right = init.right;\r\n            if (t.isJSXElement(right) || t.isJSXFragment(right)) {\r\n              foundNode = init; // Return the whole logical expression\r\n              break;\r\n            }\r\n          }\r\n          // Parenthesized expression\r\n          if (t.isParenthesizedExpression(init)) {\r\n            const inner = init.expression;\r\n            if (t.isJSXElement(inner) || t.isJSXFragment(inner)) {\r\n              foundNode = inner;\r\n              break;\r\n            }\r\n            if (t.isLogicalExpression(inner)) {\r\n              foundNode = inner;\r\n              break;\r\n            }\r\n          }\r\n        }\r\n      }\r\n    }\r\n    if (foundNode) break;\r\n  }",
+      "parentContext": {
+        "functionName": "findJSXVariable",
+        "functionParams": [
+          "varName",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f397d33c",
+      "type": "VariableDeclaration",
+      "babel_source": "const statement",
+      "parentContext": {
+        "functionName": "findJSXVariable",
+        "functionParams": [
+          "varName",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "45bf6e6d",
+      "type": "IfStatement",
+      "condition": "t.isVariableDeclaration(statement)",
+      "babel_source": "if (t.isVariableDeclaration(statement)) {\r\n      for (const declarator of statement.declarations) {\r\n        if (t.isIdentifier(declarator.id) && declarator.id.name === varName) {\r\n          const init = declarator.init;\r\n          if (t.isJSXElement(init) || t.isJSXFragment(init)) {\r\n            foundNode = init;\r\n            break;\r\n          }\r\n          // Conditional: const ui = loading && <div>;\r\n          if (t.isLogicalExpression(init)) {\r\n            const right = init.right;\r\n            if (t.isJSXElement(right) || t.isJSXFragment(right)) {\r\n              foundNode = init; // Return the whole logical expression\r\n              break;\r\n            }\r\n          }\r\n          // Parenthesized expression\r\n          if (t.isParenthesizedExpression(init)) {\r\n            const inner = init.expression;\r\n            if (t.isJSXElement(inner) || t.isJSXFragment(inner)) {\r\n              foundNode = inner;\r\n              break;\r\n            }\r\n            if (t.isLogicalExpression(inner)) {\r\n              foundNode = inner;\r\n              break;\r\n            }\r\n          }\r\n        }\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "findJSXVariable",
+        "functionParams": [
+          "varName",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "80813906",
+      "type": "BabelTypeCheck",
+      "method": "isVariableDeclaration",
+      "babel_source": "t.isVariableDeclaration(statement)",
+      "parentContext": {
+        "functionName": "findJSXVariable",
+        "functionParams": [
+          "varName",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "752381eb",
+      "type": "ForOfStatement",
+      "babel_source": "for (const declarator of statement.declarations) {\r\n        if (t.isIdentifier(declarator.id) && declarator.id.name === varName) {\r\n          const init = declarator.init;\r\n          if (t.isJSXElement(init) || t.isJSXFragment(init)) {\r\n            foundNode = init;\r\n            break;\r\n          }\r\n          // Conditional: const ui = loading && <div>;\r\n          if (t.isLogicalExpression(init)) {\r\n            const right = init.right;\r\n            if (t.isJSXElement(right) || t.isJSXFragment(right)) {\r\n              foundNode = init; // Return the whole logical expression\r\n              break;\r\n            }\r\n          }\r\n          // Parenthesized expression\r\n          if (t.isParenthesizedExpression(init)) {\r\n            const inner = init.expression;\r\n            if (t.isJSXElement(inner) || t.isJSXFragment(inner)) {\r\n              foundNode = inner;\r\n              break;\r\n            }\r\n            if (t.isLogicalExpression(inner)) {\r\n              foundNode = inner;\r\n              break;\r\n            }\r\n          }\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "findJSXVariable",
+        "functionParams": [
+          "varName",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42c4f561",
+      "type": "VariableDeclaration",
+      "babel_source": "const declarator",
+      "parentContext": {
+        "functionName": "findJSXVariable",
+        "functionParams": [
+          "varName",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7b03ef48",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(declarator.id) && declarator.id.name === varName",
+      "babel_source": "if (t.isIdentifier(declarator.id) && declarator.id.name === varName) {\r\n          const init = declarator.init;\r\n          if (t.isJSXElement(init) || t.isJSXFragment(init)) {\r\n            foundNode = init;\r\n            break;\r\n          }\r\n          // Conditional: const ui = loading && <div>;\r\n          if (t.isLogicalExpression(init)) {\r\n            const right = init.right;\r\n            if (t.isJSXElement(right) || t.isJSXFragment(right)) {\r\n              foundNode = init; // Return the whole logical expression\r\n              break;\r\n            }\r\n          }\r\n          // Parenthesized expression\r\n          if (t.isParenthesizedExpression(init)) {\r\n            const inner = init.expression;\r\n            if (t.isJSXElement(inner) || t.isJSXFragment(inner)) {\r\n              foundNode = inner;\r\n              break;\r\n            }\r\n            if (t.isLogicalExpression(inner)) {\r\n              foundNode = inner;\r\n              break;\r\n            }\r\n          }\r\n        }",
+      "parentContext": {
+        "functionName": "findJSXVariable",
+        "functionParams": [
+          "varName",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a8ad0e34",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isIdentifier(declarator.id) && declarator.id.name === varName",
+      "parentContext": {
+        "functionName": "findJSXVariable",
+        "functionParams": [
+          "varName",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d3ad7621",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(declarator.id)",
+      "parentContext": {
+        "functionName": "findJSXVariable",
+        "functionParams": [
+          "varName",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3642bada",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "declarator.id.name === varName",
+      "parentContext": {
+        "functionName": "findJSXVariable",
+        "functionParams": [
+          "varName",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c0c81141",
+      "type": "VariableDeclaration",
+      "babel_source": "const init = declarator.init;",
+      "parentContext": {
+        "functionName": "findJSXVariable",
+        "functionParams": [
+          "varName",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a9aa4004",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(init) || t.isJSXFragment(init)",
+      "babel_source": "if (t.isJSXElement(init) || t.isJSXFragment(init)) {\r\n            foundNode = init;\r\n            break;\r\n          }",
+      "parentContext": {
+        "functionName": "findJSXVariable",
+        "functionParams": [
+          "varName",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "795fdaf6",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isJSXElement(init) || t.isJSXFragment(init)",
+      "parentContext": {
+        "functionName": "findJSXVariable",
+        "functionParams": [
+          "varName",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0df997aa",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(init)",
+      "parentContext": {
+        "functionName": "findJSXVariable",
+        "functionParams": [
+          "varName",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a28732bb",
+      "type": "BabelTypeCheck",
+      "method": "isJSXFragment",
+      "babel_source": "t.isJSXFragment(init)",
+      "parentContext": {
+        "functionName": "findJSXVariable",
+        "functionParams": [
+          "varName",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1304b77d",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "foundNode = init",
+      "parentContext": {
+        "functionName": "findJSXVariable",
+        "functionParams": [
+          "varName",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42af036c",
+      "type": "BreakStatement",
+      "babel_source": "break;",
+      "parentContext": {
+        "functionName": "findJSXVariable",
+        "functionParams": [
+          "varName",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9e861abf",
+      "type": "IfStatement",
+      "condition": "t.isLogicalExpression(init)",
+      "babel_source": "if (t.isLogicalExpression(init)) {\r\n            const right = init.right;\r\n            if (t.isJSXElement(right) || t.isJSXFragment(right)) {\r\n              foundNode = init; // Return the whole logical expression\r\n              break;\r\n            }\r\n          }",
+      "parentContext": {
+        "functionName": "findJSXVariable",
+        "functionParams": [
+          "varName",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1aea69ca",
+      "type": "BabelTypeCheck",
+      "method": "isLogicalExpression",
+      "babel_source": "t.isLogicalExpression(init)",
+      "parentContext": {
+        "functionName": "findJSXVariable",
+        "functionParams": [
+          "varName",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3f885ad4",
+      "type": "VariableDeclaration",
+      "babel_source": "const right = init.right;",
+      "parentContext": {
+        "functionName": "findJSXVariable",
+        "functionParams": [
+          "varName",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b9773b2b",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(right) || t.isJSXFragment(right)",
+      "babel_source": "if (t.isJSXElement(right) || t.isJSXFragment(right)) {\r\n              foundNode = init; // Return the whole logical expression\r\n              break;\r\n            }",
+      "parentContext": {
+        "functionName": "findJSXVariable",
+        "functionParams": [
+          "varName",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cc438cb5",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isJSXElement(right) || t.isJSXFragment(right)",
+      "parentContext": {
+        "functionName": "findJSXVariable",
+        "functionParams": [
+          "varName",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ea961854",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(right)",
+      "parentContext": {
+        "functionName": "findJSXVariable",
+        "functionParams": [
+          "varName",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e9149293",
+      "type": "BabelTypeCheck",
+      "method": "isJSXFragment",
+      "babel_source": "t.isJSXFragment(right)",
+      "parentContext": {
+        "functionName": "findJSXVariable",
+        "functionParams": [
+          "varName",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1304b77d",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "foundNode = init",
+      "parentContext": {
+        "functionName": "findJSXVariable",
+        "functionParams": [
+          "varName",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42af036c",
+      "type": "BreakStatement",
+      "babel_source": "break;",
+      "parentContext": {
+        "functionName": "findJSXVariable",
+        "functionParams": [
+          "varName",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4a6e436e",
+      "type": "IfStatement",
+      "condition": "t.isParenthesizedExpression(init)",
+      "babel_source": "if (t.isParenthesizedExpression(init)) {\r\n            const inner = init.expression;\r\n            if (t.isJSXElement(inner) || t.isJSXFragment(inner)) {\r\n              foundNode = inner;\r\n              break;\r\n            }\r\n            if (t.isLogicalExpression(inner)) {\r\n              foundNode = inner;\r\n              break;\r\n            }\r\n          }",
+      "parentContext": {
+        "functionName": "findJSXVariable",
+        "functionParams": [
+          "varName",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8ae29286",
+      "type": "BabelTypeCheck",
+      "method": "isParenthesizedExpression",
+      "babel_source": "t.isParenthesizedExpression(init)",
+      "parentContext": {
+        "functionName": "findJSXVariable",
+        "functionParams": [
+          "varName",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c8549c78",
+      "type": "VariableDeclaration",
+      "babel_source": "const inner = init.expression;",
+      "parentContext": {
+        "functionName": "findJSXVariable",
+        "functionParams": [
+          "varName",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "30cdc947",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(inner) || t.isJSXFragment(inner)",
+      "babel_source": "if (t.isJSXElement(inner) || t.isJSXFragment(inner)) {\r\n              foundNode = inner;\r\n              break;\r\n            }",
+      "parentContext": {
+        "functionName": "findJSXVariable",
+        "functionParams": [
+          "varName",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "deb966bd",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isJSXElement(inner) || t.isJSXFragment(inner)",
+      "parentContext": {
+        "functionName": "findJSXVariable",
+        "functionParams": [
+          "varName",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0ec7bd78",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(inner)",
+      "parentContext": {
+        "functionName": "findJSXVariable",
+        "functionParams": [
+          "varName",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "29ea4c07",
+      "type": "BabelTypeCheck",
+      "method": "isJSXFragment",
+      "babel_source": "t.isJSXFragment(inner)",
+      "parentContext": {
+        "functionName": "findJSXVariable",
+        "functionParams": [
+          "varName",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c2d5c4f3",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "foundNode = inner",
+      "parentContext": {
+        "functionName": "findJSXVariable",
+        "functionParams": [
+          "varName",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42af036c",
+      "type": "BreakStatement",
+      "babel_source": "break;",
+      "parentContext": {
+        "functionName": "findJSXVariable",
+        "functionParams": [
+          "varName",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9f9c4912",
+      "type": "IfStatement",
+      "condition": "t.isLogicalExpression(inner)",
+      "babel_source": "if (t.isLogicalExpression(inner)) {\r\n              foundNode = inner;\r\n              break;\r\n            }",
+      "parentContext": {
+        "functionName": "findJSXVariable",
+        "functionParams": [
+          "varName",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f580b480",
+      "type": "BabelTypeCheck",
+      "method": "isLogicalExpression",
+      "babel_source": "t.isLogicalExpression(inner)",
+      "parentContext": {
+        "functionName": "findJSXVariable",
+        "functionParams": [
+          "varName",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c2d5c4f3",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "foundNode = inner",
+      "parentContext": {
+        "functionName": "findJSXVariable",
+        "functionParams": [
+          "varName",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42af036c",
+      "type": "BreakStatement",
+      "babel_source": "break;",
+      "parentContext": {
+        "functionName": "findJSXVariable",
+        "functionParams": [
+          "varName",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ad82240b",
+      "type": "IfStatement",
+      "condition": "foundNode",
+      "babel_source": "if (foundNode) break;",
+      "parentContext": {
+        "functionName": "findJSXVariable",
+        "functionParams": [
+          "varName",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42af036c",
+      "type": "BreakStatement",
+      "babel_source": "break;",
+      "parentContext": {
+        "functionName": "findJSXVariable",
+        "functionParams": [
+          "varName",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "29a90ca6",
+      "type": "ReturnStatement",
+      "babel_source": "return foundNode;",
+      "parentContext": {
+        "functionName": "findJSXVariable",
+        "functionParams": [
+          "varName",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/hookAnalyzer.cjs"
+  ]
+}

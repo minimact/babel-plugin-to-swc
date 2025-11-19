@@ -1,0 +1,32 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "setCurrentComponent",
+  "params": [
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function setCurrentComponent(component) {\r\n  currentComponent = component;\r\n}",
+  "body_templates": [
+    {
+      "hash": "84fc1b05",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "currentComponent = component",
+      "parentContext": {
+        "functionName": "setCurrentComponent",
+        "functionParams": [
+          "component"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/expressions.cjs"
+  ]
+}

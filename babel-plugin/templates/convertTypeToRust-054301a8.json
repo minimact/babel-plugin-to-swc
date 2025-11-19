@@ -1,0 +1,292 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "convertTypeToRust",
+  "params": [
+    {
+      "name": "tsType",
+      "inferredType": "&TsType",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "&'static str",
+  "babel_source": "function convertTypeToRust(tsType) {\r\n  const mappings = {\r\n    'string': 'String',\r\n    'number': 'f64',\r\n    'double': 'f64',\r\n    'boolean': 'bool',\r\n    'bool': 'bool',\r\n    'object': 'serde_json::Value',\r\n    'any': 'serde_json::Value',\r\n    'void': '()',\r\n    'null': 'Option<serde_json::Value>',\r\n    'undefined': 'Option<serde_json::Value>'\r\n  };\r\n\r\n  // Handle array types: number[] → Vec<f64>\r\n  if (tsType.endsWith('[]')) {\r\n    const elementType = tsType.slice(0, -2);\r\n    const rustElementType = convertTypeToRust(elementType);\r\n    return `Vec<${rustElementType}>`;\r\n  }\r\n\r\n  // Handle List<T> types\r\n  if (tsType.startsWith('List<') && tsType.endsWith('>')) {\r\n    const innerType = tsType.slice(5, -1);\r\n    const rustInnerType = convertTypeToRust(innerType);\r\n    return `Vec<${rustInnerType}>`;\r\n  }\r\n\r\n  // Handle Promise<T> → T (async fn already returns Future)\r\n  if (tsType.startsWith('Promise<') && tsType.endsWith('>')) {\r\n    const innerType = tsType.slice(8, -1);\r\n    return convertTypeToRust(innerType);\r\n  }\r\n\r\n  return mappings[tsType] || 'serde_json::Value';\r\n}",
+  "body_templates": [
+    {
+      "hash": "725adc0b",
+      "type": "VariableDeclaration",
+      "babel_source": "const mappings = {\r\n    'string': 'String',\r\n    'number': 'f64',\r\n    'double': 'f64',\r\n    'boolean': 'bool',\r\n    'bool': 'bool',\r\n    'object': 'serde_json::Value',\r\n    'any': 'serde_json::Value',\r\n    'void': '()',\r\n    'null': 'Option<serde_json::Value>',\r\n    'undefined': 'Option<serde_json::Value>'\r\n  };",
+      "parentContext": {
+        "functionName": "convertTypeToRust",
+        "functionParams": [
+          "tsType"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "29251af6",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    'string': 'String',\r\n    'number': 'f64',\r\n    'double': 'f64',\r\n    'boolean': 'bool',\r\n    'bool': 'bool',\r\n    'object': 'serde_json::Value',\r\n    'any': 'serde_json::Value',\r\n    'void': '()',\r\n    'null': 'Option<serde_json::Value>',\r\n    'undefined': 'Option<serde_json::Value>'\r\n  }",
+      "parentContext": {
+        "functionName": "convertTypeToRust",
+        "functionParams": [
+          "tsType"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a6beb31f",
+      "type": "IfStatement",
+      "condition": "tsType.endsWith('[]')",
+      "babel_source": "if (tsType.endsWith('[]')) {\r\n    const elementType = tsType.slice(0, -2);\r\n    const rustElementType = convertTypeToRust(elementType);\r\n    return `Vec<${rustElementType}>`;\r\n  }",
+      "parentContext": {
+        "functionName": "convertTypeToRust",
+        "functionParams": [
+          "tsType"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "834ddf19",
+      "type": "VariableDeclaration",
+      "babel_source": "const elementType = tsType.slice(0, -2);",
+      "parentContext": {
+        "functionName": "convertTypeToRust",
+        "functionParams": [
+          "tsType"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cf3bae39",
+      "type": "UnaryExpression",
+      "operator": "-",
+      "babel_source": "-2",
+      "parentContext": {
+        "functionName": "convertTypeToRust",
+        "functionParams": [
+          "tsType"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "93bd5c77",
+      "type": "VariableDeclaration",
+      "babel_source": "const rustElementType = convertTypeToRust(elementType);",
+      "parentContext": {
+        "functionName": "convertTypeToRust",
+        "functionParams": [
+          "tsType"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1b962cda",
+      "type": "ReturnStatement",
+      "babel_source": "return `Vec<${rustElementType}>`;",
+      "parentContext": {
+        "functionName": "convertTypeToRust",
+        "functionParams": [
+          "tsType"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "881db436",
+      "type": "TemplateLiteral",
+      "babel_source": "`Vec<${rustElementType}>`",
+      "parentContext": {
+        "functionName": "convertTypeToRust",
+        "functionParams": [
+          "tsType"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1c210f54",
+      "type": "IfStatement",
+      "condition": "tsType.startsWith('List<') && tsType.endsWith('>')",
+      "babel_source": "if (tsType.startsWith('List<') && tsType.endsWith('>')) {\r\n    const innerType = tsType.slice(5, -1);\r\n    const rustInnerType = convertTypeToRust(innerType);\r\n    return `Vec<${rustInnerType}>`;\r\n  }",
+      "parentContext": {
+        "functionName": "convertTypeToRust",
+        "functionParams": [
+          "tsType"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a8cda274",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "tsType.startsWith('List<') && tsType.endsWith('>')",
+      "parentContext": {
+        "functionName": "convertTypeToRust",
+        "functionParams": [
+          "tsType"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "35339d34",
+      "type": "VariableDeclaration",
+      "babel_source": "const innerType = tsType.slice(5, -1);",
+      "parentContext": {
+        "functionName": "convertTypeToRust",
+        "functionParams": [
+          "tsType"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1bad6b8c",
+      "type": "UnaryExpression",
+      "operator": "-",
+      "babel_source": "-1",
+      "parentContext": {
+        "functionName": "convertTypeToRust",
+        "functionParams": [
+          "tsType"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "270eb39d",
+      "type": "VariableDeclaration",
+      "babel_source": "const rustInnerType = convertTypeToRust(innerType);",
+      "parentContext": {
+        "functionName": "convertTypeToRust",
+        "functionParams": [
+          "tsType"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "425991f6",
+      "type": "ReturnStatement",
+      "babel_source": "return `Vec<${rustInnerType}>`;",
+      "parentContext": {
+        "functionName": "convertTypeToRust",
+        "functionParams": [
+          "tsType"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1d27da1e",
+      "type": "TemplateLiteral",
+      "babel_source": "`Vec<${rustInnerType}>`",
+      "parentContext": {
+        "functionName": "convertTypeToRust",
+        "functionParams": [
+          "tsType"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "055eb089",
+      "type": "IfStatement",
+      "condition": "tsType.startsWith('Promise<') && tsType.endsWith('>')",
+      "babel_source": "if (tsType.startsWith('Promise<') && tsType.endsWith('>')) {\r\n    const innerType = tsType.slice(8, -1);\r\n    return convertTypeToRust(innerType);\r\n  }",
+      "parentContext": {
+        "functionName": "convertTypeToRust",
+        "functionParams": [
+          "tsType"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cdaf16d2",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "tsType.startsWith('Promise<') && tsType.endsWith('>')",
+      "parentContext": {
+        "functionName": "convertTypeToRust",
+        "functionParams": [
+          "tsType"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "062472a5",
+      "type": "VariableDeclaration",
+      "babel_source": "const innerType = tsType.slice(8, -1);",
+      "parentContext": {
+        "functionName": "convertTypeToRust",
+        "functionParams": [
+          "tsType"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1bad6b8c",
+      "type": "UnaryExpression",
+      "operator": "-",
+      "babel_source": "-1",
+      "parentContext": {
+        "functionName": "convertTypeToRust",
+        "functionParams": [
+          "tsType"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3bf25fa7",
+      "type": "ReturnStatement",
+      "babel_source": "return convertTypeToRust(innerType);",
+      "parentContext": {
+        "functionName": "convertTypeToRust",
+        "functionParams": [
+          "tsType"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "285a1db3",
+      "type": "ReturnStatement",
+      "babel_source": "return mappings[tsType] || 'serde_json::Value';",
+      "parentContext": {
+        "functionName": "convertTypeToRust",
+        "functionParams": [
+          "tsType"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c89b9e9a",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "mappings[tsType] || 'serde_json::Value'",
+      "parentContext": {
+        "functionName": "convertTypeToRust",
+        "functionParams": [
+          "tsType"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/rustTask.cjs"
+  ]
+}

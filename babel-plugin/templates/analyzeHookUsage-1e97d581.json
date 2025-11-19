@@ -1,0 +1,208 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "analyzeHookUsage",
+  "params": [
+    {
+      "name": "callback",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "AnalysisResult",
+  "babel_source": "function analyzeHookUsage(callback) {\r\n  const hooks = new Set();\r\n\r\n  // Create a minimal program wrapper to provide proper scope\r\n  const program = t.file(t.program([t.expressionStatement(callback)]));\r\n\r\n  // Traverse the program (which provides proper scope)\r\n  traverse(program, {\r\n    CallExpression(path) {\r\n      const callee = path.node.callee;\r\n\r\n      // Check for direct hook calls: useState(), useRef(), etc.\r\n      if (t.isIdentifier(callee)) {\r\n        if (callee.name.startsWith('use') && /^use[A-Z]/.test(callee.name)) {\r\n          hooks.add(callee.name);\r\n        }\r\n      }\r\n    }\r\n  });\r\n\r\n  return Array.from(hooks);\r\n}",
+  "body_templates": [
+    {
+      "hash": "088058a6",
+      "type": "VariableDeclaration",
+      "babel_source": "const hooks = new Set();",
+      "parentContext": {
+        "functionName": "analyzeHookUsage",
+        "functionParams": [
+          "callback"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1ae36cea",
+      "type": "NewExpression",
+      "babel_source": "new Set()",
+      "parentContext": {
+        "functionName": "analyzeHookUsage",
+        "functionParams": [
+          "callback"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1c4383a4",
+      "type": "VariableDeclaration",
+      "babel_source": "const program = t.file(t.program([t.expressionStatement(callback)]));",
+      "parentContext": {
+        "functionName": "analyzeHookUsage",
+        "functionParams": [
+          "callback"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9d2fb29b",
+      "type": "BabelTypeCheck",
+      "method": "file",
+      "babel_source": "t.file(t.program([t.expressionStatement(callback)]))",
+      "parentContext": {
+        "functionName": "analyzeHookUsage",
+        "functionParams": [
+          "callback"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2ca15144",
+      "type": "BabelTypeCheck",
+      "method": "program",
+      "babel_source": "t.program([t.expressionStatement(callback)])",
+      "parentContext": {
+        "functionName": "analyzeHookUsage",
+        "functionParams": [
+          "callback"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f1ddb9f5",
+      "type": "ArrayExpression",
+      "babel_source": "[t.expressionStatement(callback)]",
+      "parentContext": {
+        "functionName": "analyzeHookUsage",
+        "functionParams": [
+          "callback"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "291cca37",
+      "type": "BabelTypeCheck",
+      "method": "expressionStatement",
+      "babel_source": "t.expressionStatement(callback)",
+      "parentContext": {
+        "functionName": "analyzeHookUsage",
+        "functionParams": [
+          "callback"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c03cd0af",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    CallExpression(path) {\r\n      const callee = path.node.callee;\r\n\r\n      // Check for direct hook calls: useState(), useRef(), etc.\r\n      if (t.isIdentifier(callee)) {\r\n        if (callee.name.startsWith('use') && /^use[A-Z]/.test(callee.name)) {\r\n          hooks.add(callee.name);\r\n        }\r\n      }\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "analyzeHookUsage",
+        "functionParams": [
+          "callback"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cc7bd85b",
+      "type": "VariableDeclaration",
+      "babel_source": "const callee = path.node.callee;",
+      "parentContext": {
+        "functionName": "analyzeHookUsage",
+        "functionParams": [
+          "callback"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a5c9770f",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(callee)",
+      "babel_source": "if (t.isIdentifier(callee)) {\r\n        if (callee.name.startsWith('use') && /^use[A-Z]/.test(callee.name)) {\r\n          hooks.add(callee.name);\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "analyzeHookUsage",
+        "functionParams": [
+          "callback"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a65c4b09",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(callee)",
+      "parentContext": {
+        "functionName": "analyzeHookUsage",
+        "functionParams": [
+          "callback"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "49be7061",
+      "type": "IfStatement",
+      "condition": "callee.name.startsWith('use') && /^use[A-Z]/.test(callee.name)",
+      "babel_source": "if (callee.name.startsWith('use') && /^use[A-Z]/.test(callee.name)) {\r\n          hooks.add(callee.name);\r\n        }",
+      "parentContext": {
+        "functionName": "analyzeHookUsage",
+        "functionParams": [
+          "callback"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f806ca3",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "callee.name.startsWith('use') && /^use[A-Z]/.test(callee.name)",
+      "parentContext": {
+        "functionName": "analyzeHookUsage",
+        "functionParams": [
+          "callback"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4c5e98ab",
+      "type": "RegExpLiteral",
+      "pattern": "^use[A-Z]",
+      "flags": "",
+      "babel_source": "/^use[A-Z]/",
+      "parentContext": {
+        "functionName": "analyzeHookUsage",
+        "functionParams": [
+          "callback"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "032dac10",
+      "type": "ReturnStatement",
+      "babel_source": "return Array.from(hooks);",
+      "parentContext": {
+        "functionName": "analyzeHookUsage",
+        "functionParams": [
+          "callback"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/hooks.cjs"
+  ]
+}

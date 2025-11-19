@@ -1,0 +1,420 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractTimelineConfig",
+  "params": [
+    {
+      "name": "config",
+      "inferredType": "&Options",
+      "defaultValue": null
+    },
+    {
+      "name": "timeline",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractTimelineConfig(config, timeline) {\r\n  config.properties.forEach(prop => {\r\n    if (t.isObjectProperty(prop) && t.isIdentifier(prop.key)) {\r\n      const key = prop.key.name;\r\n      const value = prop.value;\r\n\r\n      switch (key) {\r\n        case 'duration':\r\n          if (t.isNumericLiteral(value)) {\r\n            timeline.duration = value.value;\r\n          }\r\n          break;\r\n        case 'repeat':\r\n          if (t.isBooleanLiteral(value)) {\r\n            timeline.repeat = value.value;\r\n          }\r\n          break;\r\n        case 'repeatCount':\r\n          if (t.isNumericLiteral(value)) {\r\n            timeline.repeatCount = value.value;\r\n          }\r\n          break;\r\n        case 'easing':\r\n          if (t.isStringLiteral(value)) {\r\n            timeline.easing = value.value;\r\n          }\r\n          break;\r\n        case 'autoPlay':\r\n          if (t.isBooleanLiteral(value)) {\r\n            timeline.autoPlay = value.value;\r\n          }\r\n          break;\r\n      }\r\n    }\r\n  });\r\n\r\n  console.log(`[Timeline] Config: duration=${timeline.duration}ms, repeat=${timeline.repeat}, easing=${timeline.easing}`);\r\n}",
+  "body_templates": [
+    {
+      "hash": "325c397d",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "prop => {\r\n    if (t.isObjectProperty(prop) && t.isIdentifier(prop.key)) {\r\n      const key = prop.key.name;\r\n      const value = prop.value;\r\n\r\n      switch (key) {\r\n        case 'duration':\r\n          if (t.isNumericLiteral(value)) {\r\n            timeline.duration = value.value;\r\n          }\r\n          break;\r\n        case 'repeat':\r\n          if (t.isBooleanLiteral(value)) {\r\n            timeline.repeat = value.value;\r\n          }\r\n          break;\r\n        case 'repeatCount':\r\n          if (t.isNumericLiteral(value)) {\r\n            timeline.repeatCount = value.value;\r\n          }\r\n          break;\r\n        case 'easing':\r\n          if (t.isStringLiteral(value)) {\r\n            timeline.easing = value.value;\r\n          }\r\n          break;\r\n        case 'autoPlay':\r\n          if (t.isBooleanLiteral(value)) {\r\n            timeline.autoPlay = value.value;\r\n          }\r\n          break;\r\n      }\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "extractTimelineConfig",
+        "functionParams": [
+          "config",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1915c78e",
+      "type": "IfStatement",
+      "condition": "t.isObjectProperty(prop) && t.isIdentifier(prop.key)",
+      "babel_source": "if (t.isObjectProperty(prop) && t.isIdentifier(prop.key)) {\r\n      const key = prop.key.name;\r\n      const value = prop.value;\r\n\r\n      switch (key) {\r\n        case 'duration':\r\n          if (t.isNumericLiteral(value)) {\r\n            timeline.duration = value.value;\r\n          }\r\n          break;\r\n        case 'repeat':\r\n          if (t.isBooleanLiteral(value)) {\r\n            timeline.repeat = value.value;\r\n          }\r\n          break;\r\n        case 'repeatCount':\r\n          if (t.isNumericLiteral(value)) {\r\n            timeline.repeatCount = value.value;\r\n          }\r\n          break;\r\n        case 'easing':\r\n          if (t.isStringLiteral(value)) {\r\n            timeline.easing = value.value;\r\n          }\r\n          break;\r\n        case 'autoPlay':\r\n          if (t.isBooleanLiteral(value)) {\r\n            timeline.autoPlay = value.value;\r\n          }\r\n          break;\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "extractTimelineConfig",
+        "functionParams": [
+          "config",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "192fdbdf",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isObjectProperty(prop) && t.isIdentifier(prop.key)",
+      "parentContext": {
+        "functionName": "extractTimelineConfig",
+        "functionParams": [
+          "config",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d8cb3d9e",
+      "type": "BabelTypeCheck",
+      "method": "isObjectProperty",
+      "babel_source": "t.isObjectProperty(prop)",
+      "parentContext": {
+        "functionName": "extractTimelineConfig",
+        "functionParams": [
+          "config",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f3845e36",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(prop.key)",
+      "parentContext": {
+        "functionName": "extractTimelineConfig",
+        "functionParams": [
+          "config",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "128479e3",
+      "type": "VariableDeclaration",
+      "babel_source": "const key = prop.key.name;",
+      "parentContext": {
+        "functionName": "extractTimelineConfig",
+        "functionParams": [
+          "config",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "040303a0",
+      "type": "VariableDeclaration",
+      "babel_source": "const value = prop.value;",
+      "parentContext": {
+        "functionName": "extractTimelineConfig",
+        "functionParams": [
+          "config",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e08f27fb",
+      "type": "SwitchStatement",
+      "babel_source": "switch (key) {\r\n        case 'duration':\r\n          if (t.isNumericLiteral(value)) {\r\n            timeline.duration = value.value;\r\n          }\r\n          break;\r\n        case 'repeat':\r\n          if (t.isBooleanLiteral(value)) {\r\n            timeline.repeat = value.value;\r\n          }\r\n          break;\r\n        case 'repeatCount':\r\n          if (t.isNumericLiteral(value)) {\r\n            timeline.repeatCount = value.value;\r\n          }\r\n          break;\r\n        case 'easing':\r\n          if (t.isStringLiteral(value)) {\r\n            timeline.easing = value.value;\r\n          }\r\n          break;\r\n        case 'autoPlay':\r\n          if (t.isBooleanLiteral(value)) {\r\n            timeline.autoPlay = value.value;\r\n          }\r\n          break;\r\n      }",
+      "parentContext": {
+        "functionName": "extractTimelineConfig",
+        "functionParams": [
+          "config",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f0db203d",
+      "type": "IfStatement",
+      "condition": "t.isNumericLiteral(value)",
+      "babel_source": "if (t.isNumericLiteral(value)) {\r\n            timeline.duration = value.value;\r\n          }",
+      "parentContext": {
+        "functionName": "extractTimelineConfig",
+        "functionParams": [
+          "config",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8f200b14",
+      "type": "BabelTypeCheck",
+      "method": "isNumericLiteral",
+      "babel_source": "t.isNumericLiteral(value)",
+      "parentContext": {
+        "functionName": "extractTimelineConfig",
+        "functionParams": [
+          "config",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7090be41",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "timeline.duration = value.value",
+      "parentContext": {
+        "functionName": "extractTimelineConfig",
+        "functionParams": [
+          "config",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42af036c",
+      "type": "BreakStatement",
+      "babel_source": "break;",
+      "parentContext": {
+        "functionName": "extractTimelineConfig",
+        "functionParams": [
+          "config",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7886ee74",
+      "type": "IfStatement",
+      "condition": "t.isBooleanLiteral(value)",
+      "babel_source": "if (t.isBooleanLiteral(value)) {\r\n            timeline.repeat = value.value;\r\n          }",
+      "parentContext": {
+        "functionName": "extractTimelineConfig",
+        "functionParams": [
+          "config",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ff83db7c",
+      "type": "BabelTypeCheck",
+      "method": "isBooleanLiteral",
+      "babel_source": "t.isBooleanLiteral(value)",
+      "parentContext": {
+        "functionName": "extractTimelineConfig",
+        "functionParams": [
+          "config",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fb61c6f4",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "timeline.repeat = value.value",
+      "parentContext": {
+        "functionName": "extractTimelineConfig",
+        "functionParams": [
+          "config",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42af036c",
+      "type": "BreakStatement",
+      "babel_source": "break;",
+      "parentContext": {
+        "functionName": "extractTimelineConfig",
+        "functionParams": [
+          "config",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dad32175",
+      "type": "IfStatement",
+      "condition": "t.isNumericLiteral(value)",
+      "babel_source": "if (t.isNumericLiteral(value)) {\r\n            timeline.repeatCount = value.value;\r\n          }",
+      "parentContext": {
+        "functionName": "extractTimelineConfig",
+        "functionParams": [
+          "config",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8f200b14",
+      "type": "BabelTypeCheck",
+      "method": "isNumericLiteral",
+      "babel_source": "t.isNumericLiteral(value)",
+      "parentContext": {
+        "functionName": "extractTimelineConfig",
+        "functionParams": [
+          "config",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2b2a57b5",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "timeline.repeatCount = value.value",
+      "parentContext": {
+        "functionName": "extractTimelineConfig",
+        "functionParams": [
+          "config",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42af036c",
+      "type": "BreakStatement",
+      "babel_source": "break;",
+      "parentContext": {
+        "functionName": "extractTimelineConfig",
+        "functionParams": [
+          "config",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5db9c783",
+      "type": "IfStatement",
+      "condition": "t.isStringLiteral(value)",
+      "babel_source": "if (t.isStringLiteral(value)) {\r\n            timeline.easing = value.value;\r\n          }",
+      "parentContext": {
+        "functionName": "extractTimelineConfig",
+        "functionParams": [
+          "config",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a835f893",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(value)",
+      "parentContext": {
+        "functionName": "extractTimelineConfig",
+        "functionParams": [
+          "config",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4acd3216",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "timeline.easing = value.value",
+      "parentContext": {
+        "functionName": "extractTimelineConfig",
+        "functionParams": [
+          "config",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42af036c",
+      "type": "BreakStatement",
+      "babel_source": "break;",
+      "parentContext": {
+        "functionName": "extractTimelineConfig",
+        "functionParams": [
+          "config",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "905dd13e",
+      "type": "IfStatement",
+      "condition": "t.isBooleanLiteral(value)",
+      "babel_source": "if (t.isBooleanLiteral(value)) {\r\n            timeline.autoPlay = value.value;\r\n          }",
+      "parentContext": {
+        "functionName": "extractTimelineConfig",
+        "functionParams": [
+          "config",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ff83db7c",
+      "type": "BabelTypeCheck",
+      "method": "isBooleanLiteral",
+      "babel_source": "t.isBooleanLiteral(value)",
+      "parentContext": {
+        "functionName": "extractTimelineConfig",
+        "functionParams": [
+          "config",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "be342c34",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "timeline.autoPlay = value.value",
+      "parentContext": {
+        "functionName": "extractTimelineConfig",
+        "functionParams": [
+          "config",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42af036c",
+      "type": "BreakStatement",
+      "babel_source": "break;",
+      "parentContext": {
+        "functionName": "extractTimelineConfig",
+        "functionParams": [
+          "config",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7bfeea60",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Timeline] Config: duration=${timeline.duration}ms, repeat=${timeline.repeat}, easing=${timeline.easing}`",
+      "parentContext": {
+        "functionName": "extractTimelineConfig",
+        "functionParams": [
+          "config",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/timelineAnalyzer.cjs"
+  ]
+}

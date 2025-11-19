@@ -1,0 +1,393 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "transformHandlerFunction",
+  "params": [
+    {
+      "name": "body",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "params",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "hookCalls",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function transformHandlerFunction(body, params, hookCalls) {\r\n  let functionBody = body;\r\n\r\n  // If body is expression, wrap in block\r\n  if (!t.isBlockStatement(functionBody)) {\r\n    functionBody = t.blockStatement([\r\n      t.expressionStatement(functionBody)\r\n    ]);\r\n  }\r\n\r\n  // Build hook mappings\r\n  const hookMappings = hookCalls.map(hookName => {\r\n    return t.variableDeclaration('const', [\r\n      t.variableDeclarator(\r\n        t.identifier(hookName),\r\n        t.memberExpression(t.thisExpression(), t.identifier(hookName))\r\n      )\r\n    ]);\r\n  });\r\n\r\n  // Prepend hook mappings\r\n  const newBody = t.blockStatement([\r\n    ...hookMappings,\r\n    ...functionBody.body\r\n  ]);\r\n\r\n  // Return regular function\r\n  return t.functionExpression(\r\n    null,\r\n    params,        // Keep event parameter: (e) => ...\r\n    newBody,\r\n    false,\r\n    false          // Handlers are typically not async (unless await inside)\r\n  );\r\n}",
+  "body_templates": [
+    {
+      "hash": "30cd7884",
+      "type": "VariableDeclaration",
+      "babel_source": "let functionBody = body;",
+      "parentContext": {
+        "functionName": "transformHandlerFunction",
+        "functionParams": [
+          "body",
+          "params",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "06f74ed1",
+      "type": "IfStatement",
+      "condition": "!t.isBlockStatement(functionBody)",
+      "babel_source": "if (!t.isBlockStatement(functionBody)) {\r\n    functionBody = t.blockStatement([\r\n      t.expressionStatement(functionBody)\r\n    ]);\r\n  }",
+      "parentContext": {
+        "functionName": "transformHandlerFunction",
+        "functionParams": [
+          "body",
+          "params",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ba29171",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isBlockStatement(functionBody)",
+      "parentContext": {
+        "functionName": "transformHandlerFunction",
+        "functionParams": [
+          "body",
+          "params",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "66a1929c",
+      "type": "BabelTypeCheck",
+      "method": "isBlockStatement",
+      "babel_source": "t.isBlockStatement(functionBody)",
+      "parentContext": {
+        "functionName": "transformHandlerFunction",
+        "functionParams": [
+          "body",
+          "params",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "02749e39",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "functionBody = t.blockStatement([\r\n      t.expressionStatement(functionBody)\r\n    ])",
+      "parentContext": {
+        "functionName": "transformHandlerFunction",
+        "functionParams": [
+          "body",
+          "params",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f48e4266",
+      "type": "BabelTypeCheck",
+      "method": "blockStatement",
+      "babel_source": "t.blockStatement([\r\n      t.expressionStatement(functionBody)\r\n    ])",
+      "parentContext": {
+        "functionName": "transformHandlerFunction",
+        "functionParams": [
+          "body",
+          "params",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0d79b470",
+      "type": "ArrayExpression",
+      "babel_source": "[\r\n      t.expressionStatement(functionBody)\r\n    ]",
+      "parentContext": {
+        "functionName": "transformHandlerFunction",
+        "functionParams": [
+          "body",
+          "params",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5c81f972",
+      "type": "BabelTypeCheck",
+      "method": "expressionStatement",
+      "babel_source": "t.expressionStatement(functionBody)",
+      "parentContext": {
+        "functionName": "transformHandlerFunction",
+        "functionParams": [
+          "body",
+          "params",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5a2d29eb",
+      "type": "VariableDeclaration",
+      "babel_source": "const hookMappings = hookCalls.map(hookName => {\r\n    return t.variableDeclaration('const', [\r\n      t.variableDeclarator(\r\n        t.identifier(hookName),\r\n        t.memberExpression(t.thisExpression(), t.identifier(hookName))\r\n      )\r\n    ]);\r\n  });",
+      "parentContext": {
+        "functionName": "transformHandlerFunction",
+        "functionParams": [
+          "body",
+          "params",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f35e2527",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "hookName => {\r\n    return t.variableDeclaration('const', [\r\n      t.variableDeclarator(\r\n        t.identifier(hookName),\r\n        t.memberExpression(t.thisExpression(), t.identifier(hookName))\r\n      )\r\n    ]);\r\n  }",
+      "parentContext": {
+        "functionName": "transformHandlerFunction",
+        "functionParams": [
+          "body",
+          "params",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "608d25b0",
+      "type": "ReturnStatement",
+      "babel_source": "return t.variableDeclaration('const', [\r\n      t.variableDeclarator(\r\n        t.identifier(hookName),\r\n        t.memberExpression(t.thisExpression(), t.identifier(hookName))\r\n      )\r\n    ]);",
+      "parentContext": {
+        "functionName": "transformHandlerFunction",
+        "functionParams": [
+          "body",
+          "params",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "17f95cf8",
+      "type": "BabelTypeCheck",
+      "method": "variableDeclaration",
+      "babel_source": "t.variableDeclaration('const', [\r\n      t.variableDeclarator(\r\n        t.identifier(hookName),\r\n        t.memberExpression(t.thisExpression(), t.identifier(hookName))\r\n      )\r\n    ])",
+      "parentContext": {
+        "functionName": "transformHandlerFunction",
+        "functionParams": [
+          "body",
+          "params",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "96f1ebeb",
+      "type": "ArrayExpression",
+      "babel_source": "[\r\n      t.variableDeclarator(\r\n        t.identifier(hookName),\r\n        t.memberExpression(t.thisExpression(), t.identifier(hookName))\r\n      )\r\n    ]",
+      "parentContext": {
+        "functionName": "transformHandlerFunction",
+        "functionParams": [
+          "body",
+          "params",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dd9ead5f",
+      "type": "BabelTypeCheck",
+      "method": "variableDeclarator",
+      "babel_source": "t.variableDeclarator(\r\n        t.identifier(hookName),\r\n        t.memberExpression(t.thisExpression(), t.identifier(hookName))\r\n      )",
+      "parentContext": {
+        "functionName": "transformHandlerFunction",
+        "functionParams": [
+          "body",
+          "params",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1f78693c",
+      "type": "BabelTypeCheck",
+      "method": "identifier",
+      "babel_source": "t.identifier(hookName)",
+      "parentContext": {
+        "functionName": "transformHandlerFunction",
+        "functionParams": [
+          "body",
+          "params",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d11bca97",
+      "type": "BabelTypeCheck",
+      "method": "memberExpression",
+      "babel_source": "t.memberExpression(t.thisExpression(), t.identifier(hookName))",
+      "parentContext": {
+        "functionName": "transformHandlerFunction",
+        "functionParams": [
+          "body",
+          "params",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "806a12f3",
+      "type": "BabelTypeCheck",
+      "method": "thisExpression",
+      "babel_source": "t.thisExpression()",
+      "parentContext": {
+        "functionName": "transformHandlerFunction",
+        "functionParams": [
+          "body",
+          "params",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1f78693c",
+      "type": "BabelTypeCheck",
+      "method": "identifier",
+      "babel_source": "t.identifier(hookName)",
+      "parentContext": {
+        "functionName": "transformHandlerFunction",
+        "functionParams": [
+          "body",
+          "params",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f07fcc7c",
+      "type": "VariableDeclaration",
+      "babel_source": "const newBody = t.blockStatement([\r\n    ...hookMappings,\r\n    ...functionBody.body\r\n  ]);",
+      "parentContext": {
+        "functionName": "transformHandlerFunction",
+        "functionParams": [
+          "body",
+          "params",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "06194362",
+      "type": "BabelTypeCheck",
+      "method": "blockStatement",
+      "babel_source": "t.blockStatement([\r\n    ...hookMappings,\r\n    ...functionBody.body\r\n  ])",
+      "parentContext": {
+        "functionName": "transformHandlerFunction",
+        "functionParams": [
+          "body",
+          "params",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f6b68c9",
+      "type": "ArrayExpression",
+      "babel_source": "[\r\n    ...hookMappings,\r\n    ...functionBody.body\r\n  ]",
+      "parentContext": {
+        "functionName": "transformHandlerFunction",
+        "functionParams": [
+          "body",
+          "params",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "89180852",
+      "type": "SpreadElement",
+      "babel_source": "...hookMappings",
+      "parentContext": {
+        "functionName": "transformHandlerFunction",
+        "functionParams": [
+          "body",
+          "params",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "384f6d70",
+      "type": "SpreadElement",
+      "babel_source": "...functionBody.body",
+      "parentContext": {
+        "functionName": "transformHandlerFunction",
+        "functionParams": [
+          "body",
+          "params",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "58ed7ef0",
+      "type": "ReturnStatement",
+      "babel_source": "return t.functionExpression(\r\n    null,\r\n    params,        // Keep event parameter: (e) => ...\r\n    newBody,\r\n    false,\r\n    false          // Handlers are typically not async (unless await inside)\r\n  );",
+      "parentContext": {
+        "functionName": "transformHandlerFunction",
+        "functionParams": [
+          "body",
+          "params",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a86bf27c",
+      "type": "BabelTypeCheck",
+      "method": "functionExpression",
+      "babel_source": "t.functionExpression(\r\n    null,\r\n    params,        // Keep event parameter: (e) => ...\r\n    newBody,\r\n    false,\r\n    false          // Handlers are typically not async (unless await inside)\r\n  )",
+      "parentContext": {
+        "functionName": "transformHandlerFunction",
+        "functionParams": [
+          "body",
+          "params",
+          "hookCalls"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/hooks.cjs"
+  ]
+}

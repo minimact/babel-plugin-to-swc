@@ -1,0 +1,144 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "getComponentName",
+  "params": [
+    {
+      "name": "path",
+      "inferredType": "visitor_method",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<String>",
+  "babel_source": "function getComponentName(path) {\r\n  if (path.node.id) {\r\n    return path.node.id.name;\r\n  }\r\n\r\n  if (path.parent.type === 'VariableDeclarator') {\r\n    return path.parent.id.name;\r\n  }\r\n\r\n  if (path.parent.type === 'ExportNamedDeclaration') {\r\n    return path.node.id ? path.node.id.name : null;\r\n  }\r\n\r\n  return null;\r\n}",
+  "body_templates": [
+    {
+      "hash": "d39de6f3",
+      "type": "IfStatement",
+      "condition": "path.node.id",
+      "babel_source": "if (path.node.id) {\r\n    return path.node.id.name;\r\n  }",
+      "parentContext": {
+        "functionName": "getComponentName",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": "if node_has_id {\n    if let Some(name) = node_id_name {\n        return Some(name.to_string());\n    }\n}"
+    },
+    {
+      "hash": "6785c387",
+      "type": "ReturnStatement",
+      "babel_source": "return path.node.id.name;",
+      "parentContext": {
+        "functionName": "getComponentName",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": "return Some(name.to_string());"
+    },
+    {
+      "hash": "9982f16c",
+      "type": "IfStatement",
+      "condition": "path.parent.type === 'VariableDeclarator'",
+      "babel_source": "if (path.parent.type === 'VariableDeclarator') {\r\n    return path.parent.id.name;\r\n  }",
+      "parentContext": {
+        "functionName": "getComponentName",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": "if let Some(parent) = self.get_parent() {\n    match parent {\n        ParentContext::VarDeclarator(name) => return Some(name.clone()),\n        _ => {}\n    }\n}"
+    },
+    {
+      "hash": "8ec49dc7",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "path.parent.type === 'VariableDeclarator'",
+      "parentContext": {
+        "functionName": "getComponentName",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": "matches!(parent, ParentContext::VarDeclarator(_))"
+    },
+    {
+      "hash": "88fd7cae",
+      "type": "ReturnStatement",
+      "babel_source": "return path.parent.id.name;",
+      "parentContext": {
+        "functionName": "getComponentName",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": "return Some(name.clone());"
+    },
+    {
+      "hash": "596b3750",
+      "type": "IfStatement",
+      "condition": "path.parent.type === 'ExportNamedDeclaration'",
+      "babel_source": "if (path.parent.type === 'ExportNamedDeclaration') {\r\n    return path.node.id ? path.node.id.name : null;\r\n  }",
+      "parentContext": {
+        "functionName": "getComponentName",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": "ParentContext::ExportNamed(_) => {\n    if node_has_id && node_id_name.is_some() {\n        return node_id_name.map(|s| s.to_string());\n    }\n    return None;\n}"
+    },
+    {
+      "hash": "d298e4e0",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "path.parent.type === 'ExportNamedDeclaration'",
+      "parentContext": {
+        "functionName": "getComponentName",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": "matches!(parent, ParentContext::ExportNamed(_))"
+    },
+    {
+      "hash": "a6f34bb7",
+      "type": "ReturnStatement",
+      "babel_source": "return path.node.id ? path.node.id.name : null;",
+      "parentContext": {
+        "functionName": "getComponentName",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": "return node_id_name.map(|s| s.to_string());"
+    },
+    {
+      "hash": "c3b3ba22",
+      "type": "ConditionalExpression",
+      "babel_source": "path.node.id ? path.node.id.name : null",
+      "parentContext": {
+        "functionName": "getComponentName",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": "node_id_name.map(|s| s.to_string())"
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "getComponentName",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": "None"
+    }
+  ],
+  "rust_translation": "fn get_component_name_from_context(&self, node_has_id: bool, node_id_name: Option<&str>) -> Option<String> {\n    // If current node has an id, use it\n    if node_has_id {\n        if let Some(name) = node_id_name {\n            return Some(name.to_string());\n        }\n    }\n\n    // Check parent context\n    if let Some(parent) = self.get_parent() {\n        match parent {\n            ParentContext::VarDeclarator(name) => return Some(name.clone()),\n            ParentContext::ExportNamed(_) => {\n                if node_has_id && node_id_name.is_some() {\n                    return node_id_name.map(|s| s.to_string());\n                }\n                return None;\n            }\n            _ => {}\n        }\n    }\n\n    None\n}",
+  "found_in": [
+    "utils/helpers.cjs"
+  ]
+}

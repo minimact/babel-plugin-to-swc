@@ -1,0 +1,608 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractUseStateX",
+  "params": [
+    {
+      "name": "path",
+      "inferredType": "&Path",
+      "defaultValue": null
+    },
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractUseStateX(path, component) {\r\n  const node = path.node;\r\n\r\n  // Get the variable declarator (const [price, setPrice] = ...)\r\n  const parent = path.parentPath.node;\r\n  if (!t.isVariableDeclarator(parent) || !t.isArrayPattern(parent.id)) {\r\n    console.warn('[useStateX] Expected array pattern destructuring');\r\n    return;\r\n  }\r\n\r\n  const [valueBinding, setterBinding] = parent.id.elements;\r\n  if (!t.isIdentifier(valueBinding)) {\r\n    console.warn('[useStateX] Expected identifier for value binding');\r\n    return;\r\n  }\r\n\r\n  const varName = valueBinding.name;\r\n  const setterName = setterBinding ? setterBinding.name : `set${varName[0].toUpperCase()}${varName.slice(1)}`;\r\n\r\n  // Get initial value and config\r\n  const [initialValueArg, configArg] = node.arguments;\r\n\r\n  if (!configArg || !t.isObjectExpression(configArg)) {\r\n    console.warn('[useStateX] Expected config object as second argument');\r\n    return;\r\n  }\r\n\r\n  // Extract initial value\r\n  let initialValue = null;\r\n  let initialValueType = 'dynamic';\r\n\r\n  if (initialValueArg) {\r\n    if (t.isLiteral(initialValueArg)) {\r\n      initialValue = initialValueArg.value;\r\n      initialValueType = inferType(initialValueArg);\r\n    } else {\r\n      initialValue = generateCSharpExpression(initialValueArg);\r\n      initialValueType = 'dynamic';\r\n    }\r\n  }\r\n\r\n  // Extract target projections\r\n  const targets = extractTargets(configArg);\r\n\r\n  // Extract sync strategy\r\n  const sync = extractSyncStrategy(configArg);\r\n\r\n  // Store useStateX metadata\r\n  component.useStateX = component.useStateX || [];\r\n  component.useStateX.push({\r\n    varName,\r\n    setterName,\r\n    initialValue,\r\n    initialValueType,\r\n    targets,\r\n    sync\r\n  });\r\n\r\n  // Track state type\r\n  component.stateTypes = component.stateTypes || new Map();\r\n  component.stateTypes.set(varName, 'useStateX');\r\n}",
+  "body_templates": [
+    {
+      "hash": "15f6e120",
+      "type": "VariableDeclaration",
+      "babel_source": "const node = path.node;",
+      "parentContext": {
+        "functionName": "extractUseStateX",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9943a4a7",
+      "type": "VariableDeclaration",
+      "babel_source": "const parent = path.parentPath.node;",
+      "parentContext": {
+        "functionName": "extractUseStateX",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "412bf89e",
+      "type": "IfStatement",
+      "condition": "!t.isVariableDeclarator(parent) || !t.isArrayPattern(parent.id)",
+      "babel_source": "if (!t.isVariableDeclarator(parent) || !t.isArrayPattern(parent.id)) {\r\n    console.warn('[useStateX] Expected array pattern destructuring');\r\n    return;\r\n  }",
+      "parentContext": {
+        "functionName": "extractUseStateX",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5976467c",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "!t.isVariableDeclarator(parent) || !t.isArrayPattern(parent.id)",
+      "parentContext": {
+        "functionName": "extractUseStateX",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dc772752",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isVariableDeclarator(parent)",
+      "parentContext": {
+        "functionName": "extractUseStateX",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "27a39ea7",
+      "type": "BabelTypeCheck",
+      "method": "isVariableDeclarator",
+      "babel_source": "t.isVariableDeclarator(parent)",
+      "parentContext": {
+        "functionName": "extractUseStateX",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8b6a1332",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isArrayPattern(parent.id)",
+      "parentContext": {
+        "functionName": "extractUseStateX",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ac18b505",
+      "type": "BabelTypeCheck",
+      "method": "isArrayPattern",
+      "babel_source": "t.isArrayPattern(parent.id)",
+      "parentContext": {
+        "functionName": "extractUseStateX",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8beaabe2",
+      "type": "ReturnStatement",
+      "babel_source": "return;",
+      "parentContext": {
+        "functionName": "extractUseStateX",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "32ee504a",
+      "type": "VariableDeclaration",
+      "babel_source": "const [valueBinding, setterBinding] = parent.id.elements;",
+      "parentContext": {
+        "functionName": "extractUseStateX",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1dc29e75",
+      "type": "IfStatement",
+      "condition": "!t.isIdentifier(valueBinding)",
+      "babel_source": "if (!t.isIdentifier(valueBinding)) {\r\n    console.warn('[useStateX] Expected identifier for value binding');\r\n    return;\r\n  }",
+      "parentContext": {
+        "functionName": "extractUseStateX",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0f515636",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isIdentifier(valueBinding)",
+      "parentContext": {
+        "functionName": "extractUseStateX",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6d5d63f0",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(valueBinding)",
+      "parentContext": {
+        "functionName": "extractUseStateX",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8beaabe2",
+      "type": "ReturnStatement",
+      "babel_source": "return;",
+      "parentContext": {
+        "functionName": "extractUseStateX",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ebf3afa6",
+      "type": "VariableDeclaration",
+      "babel_source": "const varName = valueBinding.name;",
+      "parentContext": {
+        "functionName": "extractUseStateX",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "df99a922",
+      "type": "VariableDeclaration",
+      "babel_source": "const setterName = setterBinding ? setterBinding.name : `set${varName[0].toUpperCase()}${varName.slice(1)}`;",
+      "parentContext": {
+        "functionName": "extractUseStateX",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "63c9bf8e",
+      "type": "ConditionalExpression",
+      "babel_source": "setterBinding ? setterBinding.name : `set${varName[0].toUpperCase()}${varName.slice(1)}`",
+      "parentContext": {
+        "functionName": "extractUseStateX",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2cc826fe",
+      "type": "TemplateLiteral",
+      "babel_source": "`set${varName[0].toUpperCase()}${varName.slice(1)}`",
+      "parentContext": {
+        "functionName": "extractUseStateX",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a3c9fd7d",
+      "type": "VariableDeclaration",
+      "babel_source": "const [initialValueArg, configArg] = node.arguments;",
+      "parentContext": {
+        "functionName": "extractUseStateX",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ca05a91e",
+      "type": "IfStatement",
+      "condition": "!configArg || !t.isObjectExpression(configArg)",
+      "babel_source": "if (!configArg || !t.isObjectExpression(configArg)) {\r\n    console.warn('[useStateX] Expected config object as second argument');\r\n    return;\r\n  }",
+      "parentContext": {
+        "functionName": "extractUseStateX",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "77fa4c6a",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "!configArg || !t.isObjectExpression(configArg)",
+      "parentContext": {
+        "functionName": "extractUseStateX",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6bbfacbc",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!configArg",
+      "parentContext": {
+        "functionName": "extractUseStateX",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e66dd813",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isObjectExpression(configArg)",
+      "parentContext": {
+        "functionName": "extractUseStateX",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "733acff0",
+      "type": "BabelTypeCheck",
+      "method": "isObjectExpression",
+      "babel_source": "t.isObjectExpression(configArg)",
+      "parentContext": {
+        "functionName": "extractUseStateX",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8beaabe2",
+      "type": "ReturnStatement",
+      "babel_source": "return;",
+      "parentContext": {
+        "functionName": "extractUseStateX",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5d9dde59",
+      "type": "VariableDeclaration",
+      "babel_source": "let initialValue = null;",
+      "parentContext": {
+        "functionName": "extractUseStateX",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "59afa108",
+      "type": "VariableDeclaration",
+      "babel_source": "let initialValueType = 'dynamic';",
+      "parentContext": {
+        "functionName": "extractUseStateX",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d85a040d",
+      "type": "IfStatement",
+      "condition": "initialValueArg",
+      "babel_source": "if (initialValueArg) {\r\n    if (t.isLiteral(initialValueArg)) {\r\n      initialValue = initialValueArg.value;\r\n      initialValueType = inferType(initialValueArg);\r\n    } else {\r\n      initialValue = generateCSharpExpression(initialValueArg);\r\n      initialValueType = 'dynamic';\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "extractUseStateX",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2a0f2511",
+      "type": "IfStatement",
+      "condition": "t.isLiteral(initialValueArg)",
+      "babel_source": "if (t.isLiteral(initialValueArg)) {\r\n      initialValue = initialValueArg.value;\r\n      initialValueType = inferType(initialValueArg);\r\n    } else {\r\n      initialValue = generateCSharpExpression(initialValueArg);\r\n      initialValueType = 'dynamic';\r\n    }",
+      "parentContext": {
+        "functionName": "extractUseStateX",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e6d4a40b",
+      "type": "BabelTypeCheck",
+      "method": "isLiteral",
+      "babel_source": "t.isLiteral(initialValueArg)",
+      "parentContext": {
+        "functionName": "extractUseStateX",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "67f9c5ab",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "initialValue = initialValueArg.value",
+      "parentContext": {
+        "functionName": "extractUseStateX",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "17264437",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "initialValueType = inferType(initialValueArg)",
+      "parentContext": {
+        "functionName": "extractUseStateX",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "633301e0",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "initialValue = generateCSharpExpression(initialValueArg)",
+      "parentContext": {
+        "functionName": "extractUseStateX",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b299a7cb",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "initialValueType = 'dynamic'",
+      "parentContext": {
+        "functionName": "extractUseStateX",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "efffd962",
+      "type": "VariableDeclaration",
+      "babel_source": "const targets = extractTargets(configArg);",
+      "parentContext": {
+        "functionName": "extractUseStateX",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6cd40183",
+      "type": "VariableDeclaration",
+      "babel_source": "const sync = extractSyncStrategy(configArg);",
+      "parentContext": {
+        "functionName": "extractUseStateX",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3c310536",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "component.useStateX = component.useStateX || []",
+      "parentContext": {
+        "functionName": "extractUseStateX",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7ade6c30",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "component.useStateX || []",
+      "parentContext": {
+        "functionName": "extractUseStateX",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractUseStateX",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7d83974e",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    varName,\r\n    setterName,\r\n    initialValue,\r\n    initialValueType,\r\n    targets,\r\n    sync\r\n  }",
+      "parentContext": {
+        "functionName": "extractUseStateX",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "88835452",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "component.stateTypes = component.stateTypes || new Map()",
+      "parentContext": {
+        "functionName": "extractUseStateX",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "606d5137",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "component.stateTypes || new Map()",
+      "parentContext": {
+        "functionName": "extractUseStateX",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cc227fdc",
+      "type": "NewExpression",
+      "babel_source": "new Map()",
+      "parentContext": {
+        "functionName": "extractUseStateX",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/useStateX.cjs"
+  ]
+}

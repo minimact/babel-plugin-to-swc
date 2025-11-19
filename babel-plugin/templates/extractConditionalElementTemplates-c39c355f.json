@@ -1,0 +1,3605 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractConditionalElementTemplates",
+  "params": [
+    {
+      "name": "renderBody",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractConditionalElementTemplates(renderBody, component) {\r\n  if (!renderBody) return {};\r\n\r\n  const conditionalTemplates = {};\r\n\r\n  // Build mapping from variable name → state key\r\n  const stateKeyMap = new Map();\r\n\r\n  // Map useState variables to state_N keys\r\n  if (component.useState) {\r\n    component.useState.forEach((state, index) => {\r\n      stateKeyMap.set(state.name, `state_${index}`);\r\n    });\r\n  }\r\n\r\n  // Map useRef variables to ref_N keys\r\n  if (component.useRef) {\r\n    component.useRef.forEach((ref, index) => {\r\n      stateKeyMap.set(ref.name, `ref_${index}`);\r\n    });\r\n  }\r\n\r\n  // Map props (they use the prop name as-is)\r\n  if (component.props) {\r\n    component.props.forEach((prop) => {\r\n      stateKeyMap.set(prop.name, prop.name);\r\n    });\r\n  }\r\n\r\n  /**\r\n   * Traverse JSX tree to find conditional expressions\r\n   * @param {*} node - JSX node to traverse\r\n   * @param {string|null} parentPath - Hex path of parent conditional (for nesting)\r\n   */\r\n  function traverseJSX(node, parentPath = null) {\r\n    if (t.isJSXElement(node)) {\r\n      // Process children\r\n      for (const child of node.children) {\r\n        if (t.isJSXExpressionContainer(child)) {\r\n          const expr = child.expression;\r\n\r\n          // Logical AND: {condition && <Element />}\r\n          if (t.isLogicalExpression(expr) && expr.operator === '&&') {\r\n            const template = extractLogicalAndElementTemplate(expr, child, parentPath);\r\n            if (template) {\r\n              const path = child.__minimactPath;\r\n              if (path) {\r\n                conditionalTemplates[path] = template;\r\n                // Recursively find nested conditionals inside this template\r\n                traverseJSX(expr.right, path);\r\n              }\r\n            }\r\n          }\r\n\r\n          // Ternary: {condition ? <A /> : <B />}\r\n          if (t.isConditionalExpression(expr)) {\r\n            const template = extractTernaryElementTemplate(expr, child, parentPath);\r\n            if (template) {\r\n              const path = child.__minimactPath;\r\n              if (path) {\r\n                conditionalTemplates[path] = template;\r\n                // Recursively find nested conditionals in both branches\r\n                if (expr.consequent) {\r\n                  traverseJSX(expr.consequent, path);\r\n                }\r\n                if (expr.alternate) {\r\n                  traverseJSX(expr.alternate, path);\r\n                }\r\n              }\r\n            }\r\n          }\r\n        } else if (t.isJSXElement(child)) {\r\n          traverseJSX(child, parentPath);\r\n        }\r\n      }\r\n    }\r\n  }\r\n\r\n  /**\r\n   * Extract template from logical AND expression\r\n   * Example: {myState1 && !myState2 && <div>{myState3}</div>}\r\n   * @param {*} parentPath - Hex path of parent conditional template (for nesting)\r\n   */\r\n  function extractLogicalAndElementTemplate(expr, containerNode, parentPath) {\r\n    const right = expr.right;\r\n\r\n    // Check if right side is JSX element (structural)\r\n    if (!t.isJSXElement(right) && !t.isJSXFragment(right)) {\r\n      return null;\r\n    }\r\n\r\n    // Extract full condition expression\r\n    const condition = extractLeftSideOfAnd(expr);\r\n    const conditionCode = generate(condition).code;\r\n\r\n    // Extract bindings from condition (variable names)\r\n    const variableNames = extractBindingsFromCondition(condition);\r\n\r\n    // Build mapping from variable names to state keys\r\n    const conditionMapping = {};\r\n    const stateKeys = [];\r\n\r\n    for (const varName of variableNames) {\r\n      const stateKey = stateKeyMap.get(varName) || varName;\r\n      conditionMapping[varName] = stateKey;\r\n      stateKeys.push(stateKey);\r\n    }\r\n\r\n    // Can we evaluate this condition client-side?\r\n    const isEvaluable = isConditionEvaluableClientSide(condition, variableNames);\r\n\r\n    // Extract element structure\r\n    const elementStructure = extractElementStructure(right);\r\n\r\n    if (!elementStructure) {\r\n      return null;\r\n    }\r\n\r\n    const template = {\r\n      type: \"conditional-element\",\r\n      conditionExpression: conditionCode,\r\n      conditionBindings: stateKeys, // [\"state_0\", \"state_1\"]\r\n      conditionMapping: conditionMapping, // { \"myState1\": \"state_0\", \"myState2\": \"state_1\" }\r\n      evaluable: isEvaluable,\r\n      branches: {\r\n        true: elementStructure,\r\n        false: null\r\n      },\r\n      operator: \"&&\"\r\n    };\r\n\r\n    // Add parent reference if nested\r\n    if (parentPath) {\r\n      template.parentTemplate = parentPath;\r\n    }\r\n\r\n    return template;\r\n  }\r\n\r\n  /**\r\n   * Extract template from ternary expression\r\n   * Example: {myState1 ? <div>Active</div> : <div>Inactive</div>}\r\n   * @param {*} parentPath - Hex path of parent conditional template (for nesting)\r\n   */\r\n  function extractTernaryElementTemplate(expr, containerNode, parentPath) {\r\n    const test = expr.test;\r\n    const consequent = expr.consequent;\r\n    const alternate = expr.alternate;\r\n\r\n    // Check if branches are JSX elements\r\n    const hasConsequent = t.isJSXElement(consequent) || t.isJSXFragment(consequent);\r\n    const hasAlternate = t.isJSXElement(alternate) || t.isJSXFragment(alternate) || t.isNullLiteral(alternate);\r\n\r\n    if (!hasConsequent && !hasAlternate) {\r\n      return null; // Not a structural template\r\n    }\r\n\r\n    // Extract condition\r\n    const conditionCode = generate(test).code;\r\n    const variableNames = extractBindingsFromCondition(test);\r\n\r\n    // Build mapping from variable names to state keys\r\n    const conditionMapping = {};\r\n    const stateKeys = [];\r\n\r\n    for (const varName of variableNames) {\r\n      const stateKey = stateKeyMap.get(varName) || varName;\r\n      conditionMapping[varName] = stateKey;\r\n      stateKeys.push(stateKey);\r\n    }\r\n\r\n    const isEvaluable = isConditionEvaluableClientSide(test, variableNames);\r\n\r\n    // Extract both branches\r\n    const branches = {};\r\n\r\n    if (hasConsequent) {\r\n      branches.true = extractElementStructure(consequent);\r\n    }\r\n\r\n    if (hasAlternate) {\r\n      if (t.isNullLiteral(alternate)) {\r\n        branches.false = null;\r\n      } else {\r\n        branches.false = extractElementStructure(alternate);\r\n      }\r\n    }\r\n\r\n    const template = {\r\n      type: \"conditional-element\",\r\n      conditionExpression: conditionCode,\r\n      conditionBindings: stateKeys, // [\"state_0\", \"state_1\"]\r\n      conditionMapping: conditionMapping, // { \"myState1\": \"state_0\", \"myState2\": \"state_1\" }\r\n      evaluable: isEvaluable,\r\n      branches,\r\n      operator: \"?\"\r\n    };\r\n\r\n    // Add parent reference if nested\r\n    if (parentPath) {\r\n      template.parentTemplate = parentPath;\r\n    }\r\n\r\n    return template;\r\n  }\r\n\r\n  /**\r\n   * Extract the left side of a chained AND expression\r\n   * Example: myState1 && !myState2 && <div /> → returns myState1 && !myState2\r\n   */\r\n  function extractLeftSideOfAnd(expr) {\r\n    if (!t.isLogicalExpression(expr) || expr.operator !== '&&') {\r\n      return expr;\r\n    }\r\n\r\n    const right = expr.right;\r\n\r\n    // If right is JSX, left is the condition\r\n    if (t.isJSXElement(right) || t.isJSXFragment(right)) {\r\n      return expr.left;\r\n    }\r\n\r\n    // Otherwise, keep recursing\r\n    return expr;\r\n  }\r\n\r\n  /**\r\n   * Extract all state bindings from a condition expression\r\n   * Example: myState1 && !myState2 → [\"myState1\", \"myState2\"]\r\n   */\r\n  function extractBindingsFromCondition(expr) {\r\n    const bindings = new Set();\r\n\r\n    function traverse(node) {\r\n      if (t.isIdentifier(node)) {\r\n        bindings.add(node.name);\r\n      } else if (t.isLogicalExpression(node)) {\r\n        traverse(node.left);\r\n        traverse(node.right);\r\n      } else if (t.isUnaryExpression(node)) {\r\n        traverse(node.argument);\r\n      } else if (t.isBinaryExpression(node)) {\r\n        traverse(node.left);\r\n        traverse(node.right);\r\n      } else if (t.isMemberExpression(node)) {\r\n        const path = buildMemberPath(node);\r\n        if (path) bindings.add(path);\r\n      }\r\n    }\r\n\r\n    traverse(expr);\r\n    return Array.from(bindings);\r\n  }\r\n\r\n  /**\r\n   * Check if condition can be evaluated client-side\r\n   * Only simple boolean logic is supported (&&, ||, !, comparisons)\r\n   */\r\n  function isConditionEvaluableClientSide(expr, bindings) {\r\n    // Simple identifier: myState1\r\n    if (t.isIdentifier(expr)) {\r\n      return true;\r\n    }\r\n\r\n    // Unary: !myState1\r\n    if (t.isUnaryExpression(expr) && expr.operator === '!') {\r\n      return isConditionEvaluableClientSide(expr.argument, bindings);\r\n    }\r\n\r\n    // Logical: myState1 && myState2, myState1 || myState2\r\n    if (t.isLogicalExpression(expr)) {\r\n      return isConditionEvaluableClientSide(expr.left, bindings) &&\r\n             isConditionEvaluableClientSide(expr.right, bindings);\r\n    }\r\n\r\n    // Binary comparisons: count > 0, name === \"admin\"\r\n    if (t.isBinaryExpression(expr)) {\r\n      // Simple comparisons are evaluable\r\n      const operators = ['==', '===', '!=', '!==', '<', '>', '<=', '>='];\r\n      if (operators.includes(expr.operator)) {\r\n        return isSimpleExpression(expr.left) && isSimpleExpression(expr.right);\r\n      }\r\n    }\r\n\r\n    // Member expressions: user.isAdmin\r\n    if (t.isMemberExpression(expr)) {\r\n      return true;\r\n    }\r\n\r\n    // Complex expressions require server evaluation\r\n    return false;\r\n  }\r\n\r\n  /**\r\n   * Check if expression is simple (identifier, member, literal)\r\n   */\r\n  function isSimpleExpression(expr) {\r\n    return t.isIdentifier(expr) ||\r\n           t.isMemberExpression(expr) ||\r\n           t.isStringLiteral(expr) ||\r\n           t.isNumericLiteral(expr) ||\r\n           t.isBooleanLiteral(expr) ||\r\n           t.isNullLiteral(expr);\r\n  }\r\n\r\n  /**\r\n   * Extract complete element structure including dynamic content\r\n   */\r\n  function extractElementStructure(node) {\r\n    if (t.isJSXElement(node)) {\r\n      const tagName = node.openingElement.name.name;\r\n      const hexPath = node.__minimactPath;\r\n\r\n      // Extract attributes\r\n      const attributes = {};\r\n      for (const attr of node.openingElement.attributes) {\r\n        if (t.isJSXAttribute(attr)) {\r\n          const attrName = attr.name.name;\r\n          const attrValue = attr.value;\r\n\r\n          if (!attrValue) {\r\n            attributes[attrName] = true; // Boolean attribute\r\n          } else if (t.isStringLiteral(attrValue)) {\r\n            attributes[attrName] = attrValue.value;\r\n          } else if (t.isJSXExpressionContainer(attrValue)) {\r\n            // Dynamic attribute\r\n            const expr = attrValue.expression;\r\n            if (t.isIdentifier(expr)) {\r\n              attributes[attrName] = { binding: expr.name };\r\n            } else if (t.isMemberExpression(expr)) {\r\n              attributes[attrName] = { binding: buildMemberPath(expr) };\r\n            } else {\r\n              attributes[attrName] = { expression: generate(expr).code };\r\n            }\r\n          }\r\n        }\r\n      }\r\n\r\n      // Extract children\r\n      const children = [];\r\n      for (const child of node.children) {\r\n        if (t.isJSXText(child)) {\r\n          const text = child.value.trim();\r\n          if (text) {\r\n            children.push({\r\n              type: \"text\",\r\n              value: text,\r\n              hexPath: child.__minimactPath\r\n            });\r\n          }\r\n        } else if (t.isJSXElement(child)) {\r\n          const childStructure = extractElementStructure(child);\r\n          if (childStructure) {\r\n            children.push(childStructure);\r\n          }\r\n        } else if (t.isJSXExpressionContainer(child)) {\r\n          // Dynamic text content\r\n          const expr = child.expression;\r\n          if (t.isIdentifier(expr)) {\r\n            children.push({\r\n              type: \"text\",\r\n              binding: expr.name,\r\n              hexPath: child.__minimactPath\r\n            });\r\n          } else if (t.isMemberExpression(expr)) {\r\n            children.push({\r\n              type: \"text\",\r\n              binding: buildMemberPath(expr),\r\n              hexPath: child.__minimactPath\r\n            });\r\n          } else {\r\n            // Complex expression\r\n            children.push({\r\n              type: \"text\",\r\n              expression: generate(expr).code,\r\n              hexPath: child.__minimactPath\r\n            });\r\n          }\r\n        }\r\n      }\r\n\r\n      return {\r\n        type: \"element\",\r\n        tag: tagName,\r\n        hexPath,\r\n        attributes,\r\n        children\r\n      };\r\n    } else if (t.isJSXFragment(node)) {\r\n      const children = [];\r\n      for (const child of node.children) {\r\n        if (t.isJSXElement(child)) {\r\n          const childStructure = extractElementStructure(child);\r\n          if (childStructure) {\r\n            children.push(childStructure);\r\n          }\r\n        }\r\n      }\r\n\r\n      return {\r\n        type: \"fragment\",\r\n        children\r\n      };\r\n    }\r\n\r\n    return null;\r\n  }\r\n\r\n  /**\r\n   * Build member expression path (user.profile.name → \"user.profile.name\")\r\n   */\r\n  function buildMemberPath(expr) {\r\n    const parts = [];\r\n    let current = expr;\r\n\r\n    while (t.isMemberExpression(current)) {\r\n      if (t.isIdentifier(current.property)) {\r\n        parts.unshift(current.property.name);\r\n      }\r\n      current = current.object;\r\n    }\r\n\r\n    if (t.isIdentifier(current)) {\r\n      parts.unshift(current.name);\r\n    }\r\n\r\n    return parts.length > 0 ? parts.join('.') : null;\r\n  }\r\n\r\n  // Start traversal\r\n  traverseJSX(renderBody);\r\n\r\n  return conditionalTemplates;\r\n}",
+  "body_templates": [
+    {
+      "hash": "43f557ed",
+      "type": "IfStatement",
+      "condition": "!renderBody",
+      "babel_source": "if (!renderBody) return {};",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bc65e16e",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!renderBody",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e4b08665",
+      "type": "ReturnStatement",
+      "babel_source": "return {};",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "44136fa3",
+      "type": "ObjectExpression",
+      "babel_source": "{}",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e5ba7e8d",
+      "type": "VariableDeclaration",
+      "babel_source": "const conditionalTemplates = {};",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "44136fa3",
+      "type": "ObjectExpression",
+      "babel_source": "{}",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "228ed2c8",
+      "type": "VariableDeclaration",
+      "babel_source": "const stateKeyMap = new Map();",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cc227fdc",
+      "type": "NewExpression",
+      "babel_source": "new Map()",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b5e50e02",
+      "type": "IfStatement",
+      "condition": "component.useState",
+      "babel_source": "if (component.useState) {\r\n    component.useState.forEach((state, index) => {\r\n      stateKeyMap.set(state.name, `state_${index}`);\r\n    });\r\n  }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d6d168e3",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "(state, index) => {\r\n      stateKeyMap.set(state.name, `state_${index}`);\r\n    }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8e6920e6",
+      "type": "TemplateLiteral",
+      "babel_source": "`state_${index}`",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "00034afb",
+      "type": "IfStatement",
+      "condition": "component.useRef",
+      "babel_source": "if (component.useRef) {\r\n    component.useRef.forEach((ref, index) => {\r\n      stateKeyMap.set(ref.name, `ref_${index}`);\r\n    });\r\n  }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fe72e758",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "(ref, index) => {\r\n      stateKeyMap.set(ref.name, `ref_${index}`);\r\n    }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "738dc397",
+      "type": "TemplateLiteral",
+      "babel_source": "`ref_${index}`",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "018e32d6",
+      "type": "IfStatement",
+      "condition": "component.props",
+      "babel_source": "if (component.props) {\r\n    component.props.forEach((prop) => {\r\n      stateKeyMap.set(prop.name, prop.name);\r\n    });\r\n  }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "47a790e2",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "(prop) => {\r\n      stateKeyMap.set(prop.name, prop.name);\r\n    }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "129cbbfe",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(node)",
+      "babel_source": "if (t.isJSXElement(node)) {\r\n      // Process children\r\n      for (const child of node.children) {\r\n        if (t.isJSXExpressionContainer(child)) {\r\n          const expr = child.expression;\r\n\r\n          // Logical AND: {condition && <Element />}\r\n          if (t.isLogicalExpression(expr) && expr.operator === '&&') {\r\n            const template = extractLogicalAndElementTemplate(expr, child, parentPath);\r\n            if (template) {\r\n              const path = child.__minimactPath;\r\n              if (path) {\r\n                conditionalTemplates[path] = template;\r\n                // Recursively find nested conditionals inside this template\r\n                traverseJSX(expr.right, path);\r\n              }\r\n            }\r\n          }\r\n\r\n          // Ternary: {condition ? <A /> : <B />}\r\n          if (t.isConditionalExpression(expr)) {\r\n            const template = extractTernaryElementTemplate(expr, child, parentPath);\r\n            if (template) {\r\n              const path = child.__minimactPath;\r\n              if (path) {\r\n                conditionalTemplates[path] = template;\r\n                // Recursively find nested conditionals in both branches\r\n                if (expr.consequent) {\r\n                  traverseJSX(expr.consequent, path);\r\n                }\r\n                if (expr.alternate) {\r\n                  traverseJSX(expr.alternate, path);\r\n                }\r\n              }\r\n            }\r\n          }\r\n        } else if (t.isJSXElement(child)) {\r\n          traverseJSX(child, parentPath);\r\n        }\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "606ccdc5",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(node)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8156650b",
+      "type": "ForOfStatement",
+      "babel_source": "for (const child of node.children) {\r\n        if (t.isJSXExpressionContainer(child)) {\r\n          const expr = child.expression;\r\n\r\n          // Logical AND: {condition && <Element />}\r\n          if (t.isLogicalExpression(expr) && expr.operator === '&&') {\r\n            const template = extractLogicalAndElementTemplate(expr, child, parentPath);\r\n            if (template) {\r\n              const path = child.__minimactPath;\r\n              if (path) {\r\n                conditionalTemplates[path] = template;\r\n                // Recursively find nested conditionals inside this template\r\n                traverseJSX(expr.right, path);\r\n              }\r\n            }\r\n          }\r\n\r\n          // Ternary: {condition ? <A /> : <B />}\r\n          if (t.isConditionalExpression(expr)) {\r\n            const template = extractTernaryElementTemplate(expr, child, parentPath);\r\n            if (template) {\r\n              const path = child.__minimactPath;\r\n              if (path) {\r\n                conditionalTemplates[path] = template;\r\n                // Recursively find nested conditionals in both branches\r\n                if (expr.consequent) {\r\n                  traverseJSX(expr.consequent, path);\r\n                }\r\n                if (expr.alternate) {\r\n                  traverseJSX(expr.alternate, path);\r\n                }\r\n              }\r\n            }\r\n          }\r\n        } else if (t.isJSXElement(child)) {\r\n          traverseJSX(child, parentPath);\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "efdd3930",
+      "type": "VariableDeclaration",
+      "babel_source": "const child",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bfbdd59d",
+      "type": "IfStatement",
+      "condition": "t.isJSXExpressionContainer(child)",
+      "babel_source": "if (t.isJSXExpressionContainer(child)) {\r\n          const expr = child.expression;\r\n\r\n          // Logical AND: {condition && <Element />}\r\n          if (t.isLogicalExpression(expr) && expr.operator === '&&') {\r\n            const template = extractLogicalAndElementTemplate(expr, child, parentPath);\r\n            if (template) {\r\n              const path = child.__minimactPath;\r\n              if (path) {\r\n                conditionalTemplates[path] = template;\r\n                // Recursively find nested conditionals inside this template\r\n                traverseJSX(expr.right, path);\r\n              }\r\n            }\r\n          }\r\n\r\n          // Ternary: {condition ? <A /> : <B />}\r\n          if (t.isConditionalExpression(expr)) {\r\n            const template = extractTernaryElementTemplate(expr, child, parentPath);\r\n            if (template) {\r\n              const path = child.__minimactPath;\r\n              if (path) {\r\n                conditionalTemplates[path] = template;\r\n                // Recursively find nested conditionals in both branches\r\n                if (expr.consequent) {\r\n                  traverseJSX(expr.consequent, path);\r\n                }\r\n                if (expr.alternate) {\r\n                  traverseJSX(expr.alternate, path);\r\n                }\r\n              }\r\n            }\r\n          }\r\n        } else if (t.isJSXElement(child)) {\r\n          traverseJSX(child, parentPath);\r\n        }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c53c8d32",
+      "type": "BabelTypeCheck",
+      "method": "isJSXExpressionContainer",
+      "babel_source": "t.isJSXExpressionContainer(child)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9e5f0b19",
+      "type": "VariableDeclaration",
+      "babel_source": "const expr = child.expression;",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "da67dc73",
+      "type": "IfStatement",
+      "condition": "t.isLogicalExpression(expr) && expr.operator === '&&'",
+      "babel_source": "if (t.isLogicalExpression(expr) && expr.operator === '&&') {\r\n            const template = extractLogicalAndElementTemplate(expr, child, parentPath);\r\n            if (template) {\r\n              const path = child.__minimactPath;\r\n              if (path) {\r\n                conditionalTemplates[path] = template;\r\n                // Recursively find nested conditionals inside this template\r\n                traverseJSX(expr.right, path);\r\n              }\r\n            }\r\n          }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "295b4c4d",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isLogicalExpression(expr) && expr.operator === '&&'",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c20dd732",
+      "type": "BabelTypeCheck",
+      "method": "isLogicalExpression",
+      "babel_source": "t.isLogicalExpression(expr)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "312ae3e2",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "expr.operator === '&&'",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d373ec9b",
+      "type": "VariableDeclaration",
+      "babel_source": "const template = extractLogicalAndElementTemplate(expr, child, parentPath);",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "10ace4ac",
+      "type": "IfStatement",
+      "condition": "template",
+      "babel_source": "if (template) {\r\n              const path = child.__minimactPath;\r\n              if (path) {\r\n                conditionalTemplates[path] = template;\r\n                // Recursively find nested conditionals inside this template\r\n                traverseJSX(expr.right, path);\r\n              }\r\n            }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f994acf6",
+      "type": "VariableDeclaration",
+      "babel_source": "const path = child.__minimactPath;",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fb607229",
+      "type": "IfStatement",
+      "condition": "path",
+      "babel_source": "if (path) {\r\n                conditionalTemplates[path] = template;\r\n                // Recursively find nested conditionals inside this template\r\n                traverseJSX(expr.right, path);\r\n              }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "afdb900b",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "conditionalTemplates[path] = template",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3d4cff7f",
+      "type": "IfStatement",
+      "condition": "t.isConditionalExpression(expr)",
+      "babel_source": "if (t.isConditionalExpression(expr)) {\r\n            const template = extractTernaryElementTemplate(expr, child, parentPath);\r\n            if (template) {\r\n              const path = child.__minimactPath;\r\n              if (path) {\r\n                conditionalTemplates[path] = template;\r\n                // Recursively find nested conditionals in both branches\r\n                if (expr.consequent) {\r\n                  traverseJSX(expr.consequent, path);\r\n                }\r\n                if (expr.alternate) {\r\n                  traverseJSX(expr.alternate, path);\r\n                }\r\n              }\r\n            }\r\n          }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5574ecc1",
+      "type": "BabelTypeCheck",
+      "method": "isConditionalExpression",
+      "babel_source": "t.isConditionalExpression(expr)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e03255a9",
+      "type": "VariableDeclaration",
+      "babel_source": "const template = extractTernaryElementTemplate(expr, child, parentPath);",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8c4cc0f5",
+      "type": "IfStatement",
+      "condition": "template",
+      "babel_source": "if (template) {\r\n              const path = child.__minimactPath;\r\n              if (path) {\r\n                conditionalTemplates[path] = template;\r\n                // Recursively find nested conditionals in both branches\r\n                if (expr.consequent) {\r\n                  traverseJSX(expr.consequent, path);\r\n                }\r\n                if (expr.alternate) {\r\n                  traverseJSX(expr.alternate, path);\r\n                }\r\n              }\r\n            }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f994acf6",
+      "type": "VariableDeclaration",
+      "babel_source": "const path = child.__minimactPath;",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ed64655a",
+      "type": "IfStatement",
+      "condition": "path",
+      "babel_source": "if (path) {\r\n                conditionalTemplates[path] = template;\r\n                // Recursively find nested conditionals in both branches\r\n                if (expr.consequent) {\r\n                  traverseJSX(expr.consequent, path);\r\n                }\r\n                if (expr.alternate) {\r\n                  traverseJSX(expr.alternate, path);\r\n                }\r\n              }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "afdb900b",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "conditionalTemplates[path] = template",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a9a5cc09",
+      "type": "IfStatement",
+      "condition": "expr.consequent",
+      "babel_source": "if (expr.consequent) {\r\n                  traverseJSX(expr.consequent, path);\r\n                }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "16ea0827",
+      "type": "IfStatement",
+      "condition": "expr.alternate",
+      "babel_source": "if (expr.alternate) {\r\n                  traverseJSX(expr.alternate, path);\r\n                }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c34bc1c2",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(child)",
+      "babel_source": "if (t.isJSXElement(child)) {\r\n          traverseJSX(child, parentPath);\r\n        }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d44bd174",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(child)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6ee5d651",
+      "type": "VariableDeclaration",
+      "babel_source": "const right = expr.right;",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dee51964",
+      "type": "IfStatement",
+      "condition": "!t.isJSXElement(right) && !t.isJSXFragment(right)",
+      "babel_source": "if (!t.isJSXElement(right) && !t.isJSXFragment(right)) {\r\n      return null;\r\n    }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e246a628",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "!t.isJSXElement(right) && !t.isJSXFragment(right)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c2be9785",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isJSXElement(right)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ea961854",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(right)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c96bdf4f",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isJSXFragment(right)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e9149293",
+      "type": "BabelTypeCheck",
+      "method": "isJSXFragment",
+      "babel_source": "t.isJSXFragment(right)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "45e04e28",
+      "type": "VariableDeclaration",
+      "babel_source": "const condition = extractLeftSideOfAnd(expr);",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2960d3ab",
+      "type": "VariableDeclaration",
+      "babel_source": "const conditionCode = generate(condition).code;",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0934037a",
+      "type": "VariableDeclaration",
+      "babel_source": "const variableNames = extractBindingsFromCondition(condition);",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c27089ac",
+      "type": "VariableDeclaration",
+      "babel_source": "const conditionMapping = {};",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "44136fa3",
+      "type": "ObjectExpression",
+      "babel_source": "{}",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c0e20026",
+      "type": "VariableDeclaration",
+      "babel_source": "const stateKeys = [];",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ff91e9ab",
+      "type": "ForOfStatement",
+      "babel_source": "for (const varName of variableNames) {\r\n      const stateKey = stateKeyMap.get(varName) || varName;\r\n      conditionMapping[varName] = stateKey;\r\n      stateKeys.push(stateKey);\r\n    }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "15fc1236",
+      "type": "VariableDeclaration",
+      "babel_source": "const varName",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "348b0016",
+      "type": "VariableDeclaration",
+      "babel_source": "const stateKey = stateKeyMap.get(varName) || varName;",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ae9c5046",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "stateKeyMap.get(varName) || varName",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bd309258",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "conditionMapping[varName] = stateKey",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5215f976",
+      "type": "VariableDeclaration",
+      "babel_source": "const isEvaluable = isConditionEvaluableClientSide(condition, variableNames);",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "27bd301f",
+      "type": "VariableDeclaration",
+      "babel_source": "const elementStructure = extractElementStructure(right);",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "92f83dc5",
+      "type": "IfStatement",
+      "condition": "!elementStructure",
+      "babel_source": "if (!elementStructure) {\r\n      return null;\r\n    }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "90abdcb8",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!elementStructure",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bc3e19c5",
+      "type": "VariableDeclaration",
+      "babel_source": "const template = {\r\n      type: \"conditional-element\",\r\n      conditionExpression: conditionCode,\r\n      conditionBindings: stateKeys, // [\"state_0\", \"state_1\"]\r\n      conditionMapping: conditionMapping, // { \"myState1\": \"state_0\", \"myState2\": \"state_1\" }\r\n      evaluable: isEvaluable,\r\n      branches: {\r\n        true: elementStructure,\r\n        false: null\r\n      },\r\n      operator: \"&&\"\r\n    };",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a33dcf27",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n      type: \"conditional-element\",\r\n      conditionExpression: conditionCode,\r\n      conditionBindings: stateKeys, // [\"state_0\", \"state_1\"]\r\n      conditionMapping: conditionMapping, // { \"myState1\": \"state_0\", \"myState2\": \"state_1\" }\r\n      evaluable: isEvaluable,\r\n      branches: {\r\n        true: elementStructure,\r\n        false: null\r\n      },\r\n      operator: \"&&\"\r\n    }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bb91d8ed",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n        true: elementStructure,\r\n        false: null\r\n      }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "91f8bcb8",
+      "type": "IfStatement",
+      "condition": "parentPath",
+      "babel_source": "if (parentPath) {\r\n      template.parentTemplate = parentPath;\r\n    }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "92eb2035",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "template.parentTemplate = parentPath",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ce5ef868",
+      "type": "ReturnStatement",
+      "babel_source": "return template;",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a9289657",
+      "type": "VariableDeclaration",
+      "babel_source": "const test = expr.test;",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "07505016",
+      "type": "VariableDeclaration",
+      "babel_source": "const consequent = expr.consequent;",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0b6775ef",
+      "type": "VariableDeclaration",
+      "babel_source": "const alternate = expr.alternate;",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c3f92bdf",
+      "type": "VariableDeclaration",
+      "babel_source": "const hasConsequent = t.isJSXElement(consequent) || t.isJSXFragment(consequent);",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "206afb41",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isJSXElement(consequent) || t.isJSXFragment(consequent)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5395efda",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(consequent)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c9fb974c",
+      "type": "BabelTypeCheck",
+      "method": "isJSXFragment",
+      "babel_source": "t.isJSXFragment(consequent)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "119fad27",
+      "type": "VariableDeclaration",
+      "babel_source": "const hasAlternate = t.isJSXElement(alternate) || t.isJSXFragment(alternate) || t.isNullLiteral(alternate);",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "227d184c",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isJSXElement(alternate) || t.isJSXFragment(alternate) || t.isNullLiteral(alternate)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8faa9a16",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isJSXElement(alternate) || t.isJSXFragment(alternate)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e91dca1c",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(alternate)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b8b8dabd",
+      "type": "BabelTypeCheck",
+      "method": "isJSXFragment",
+      "babel_source": "t.isJSXFragment(alternate)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "10e00a9e",
+      "type": "BabelTypeCheck",
+      "method": "isNullLiteral",
+      "babel_source": "t.isNullLiteral(alternate)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "158d9040",
+      "type": "IfStatement",
+      "condition": "!hasConsequent && !hasAlternate",
+      "babel_source": "if (!hasConsequent && !hasAlternate) {\r\n      return null; // Not a structural template\r\n    }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fc358580",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "!hasConsequent && !hasAlternate",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "371e381f",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!hasConsequent",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "801af7e3",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!hasAlternate",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "034e8ea8",
+      "type": "VariableDeclaration",
+      "babel_source": "const conditionCode = generate(test).code;",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "efc8d638",
+      "type": "VariableDeclaration",
+      "babel_source": "const variableNames = extractBindingsFromCondition(test);",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c27089ac",
+      "type": "VariableDeclaration",
+      "babel_source": "const conditionMapping = {};",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "44136fa3",
+      "type": "ObjectExpression",
+      "babel_source": "{}",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c0e20026",
+      "type": "VariableDeclaration",
+      "babel_source": "const stateKeys = [];",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ff91e9ab",
+      "type": "ForOfStatement",
+      "babel_source": "for (const varName of variableNames) {\r\n      const stateKey = stateKeyMap.get(varName) || varName;\r\n      conditionMapping[varName] = stateKey;\r\n      stateKeys.push(stateKey);\r\n    }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "15fc1236",
+      "type": "VariableDeclaration",
+      "babel_source": "const varName",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "348b0016",
+      "type": "VariableDeclaration",
+      "babel_source": "const stateKey = stateKeyMap.get(varName) || varName;",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ae9c5046",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "stateKeyMap.get(varName) || varName",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bd309258",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "conditionMapping[varName] = stateKey",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0237fe9f",
+      "type": "VariableDeclaration",
+      "babel_source": "const isEvaluable = isConditionEvaluableClientSide(test, variableNames);",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ad2f493f",
+      "type": "VariableDeclaration",
+      "babel_source": "const branches = {};",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "44136fa3",
+      "type": "ObjectExpression",
+      "babel_source": "{}",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6d45b16a",
+      "type": "IfStatement",
+      "condition": "hasConsequent",
+      "babel_source": "if (hasConsequent) {\r\n      branches.true = extractElementStructure(consequent);\r\n    }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8e34362d",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "branches.true = extractElementStructure(consequent)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4127bdbe",
+      "type": "IfStatement",
+      "condition": "hasAlternate",
+      "babel_source": "if (hasAlternate) {\r\n      if (t.isNullLiteral(alternate)) {\r\n        branches.false = null;\r\n      } else {\r\n        branches.false = extractElementStructure(alternate);\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8d12ed4a",
+      "type": "IfStatement",
+      "condition": "t.isNullLiteral(alternate)",
+      "babel_source": "if (t.isNullLiteral(alternate)) {\r\n        branches.false = null;\r\n      } else {\r\n        branches.false = extractElementStructure(alternate);\r\n      }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "10e00a9e",
+      "type": "BabelTypeCheck",
+      "method": "isNullLiteral",
+      "babel_source": "t.isNullLiteral(alternate)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab7605fc",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "branches.false = null",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e1844583",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "branches.false = extractElementStructure(alternate)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "329bd2ad",
+      "type": "VariableDeclaration",
+      "babel_source": "const template = {\r\n      type: \"conditional-element\",\r\n      conditionExpression: conditionCode,\r\n      conditionBindings: stateKeys, // [\"state_0\", \"state_1\"]\r\n      conditionMapping: conditionMapping, // { \"myState1\": \"state_0\", \"myState2\": \"state_1\" }\r\n      evaluable: isEvaluable,\r\n      branches,\r\n      operator: \"?\"\r\n    };",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "19157662",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n      type: \"conditional-element\",\r\n      conditionExpression: conditionCode,\r\n      conditionBindings: stateKeys, // [\"state_0\", \"state_1\"]\r\n      conditionMapping: conditionMapping, // { \"myState1\": \"state_0\", \"myState2\": \"state_1\" }\r\n      evaluable: isEvaluable,\r\n      branches,\r\n      operator: \"?\"\r\n    }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "91f8bcb8",
+      "type": "IfStatement",
+      "condition": "parentPath",
+      "babel_source": "if (parentPath) {\r\n      template.parentTemplate = parentPath;\r\n    }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "92eb2035",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "template.parentTemplate = parentPath",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ce5ef868",
+      "type": "ReturnStatement",
+      "babel_source": "return template;",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "eeb89ce8",
+      "type": "IfStatement",
+      "condition": "!t.isLogicalExpression(expr) || expr.operator !== '&&'",
+      "babel_source": "if (!t.isLogicalExpression(expr) || expr.operator !== '&&') {\r\n      return expr;\r\n    }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "525d1a89",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "!t.isLogicalExpression(expr) || expr.operator !== '&&'",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "572db5f9",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isLogicalExpression(expr)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c20dd732",
+      "type": "BabelTypeCheck",
+      "method": "isLogicalExpression",
+      "babel_source": "t.isLogicalExpression(expr)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a61e13f9",
+      "type": "BinaryExpression",
+      "operator": "!==",
+      "babel_source": "expr.operator !== '&&'",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6e7ad6d5",
+      "type": "ReturnStatement",
+      "babel_source": "return expr;",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6ee5d651",
+      "type": "VariableDeclaration",
+      "babel_source": "const right = expr.right;",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bc4eee01",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(right) || t.isJSXFragment(right)",
+      "babel_source": "if (t.isJSXElement(right) || t.isJSXFragment(right)) {\r\n      return expr.left;\r\n    }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cc438cb5",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isJSXElement(right) || t.isJSXFragment(right)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ea961854",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(right)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e9149293",
+      "type": "BabelTypeCheck",
+      "method": "isJSXFragment",
+      "babel_source": "t.isJSXFragment(right)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e860394e",
+      "type": "ReturnStatement",
+      "babel_source": "return expr.left;",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6e7ad6d5",
+      "type": "ReturnStatement",
+      "babel_source": "return expr;",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "07fb0976",
+      "type": "VariableDeclaration",
+      "babel_source": "const bindings = new Set();",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1ae36cea",
+      "type": "NewExpression",
+      "babel_source": "new Set()",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "617fca03",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(node)",
+      "babel_source": "if (t.isIdentifier(node)) {\r\n        bindings.add(node.name);\r\n      } else if (t.isLogicalExpression(node)) {\r\n        traverse(node.left);\r\n        traverse(node.right);\r\n      } else if (t.isUnaryExpression(node)) {\r\n        traverse(node.argument);\r\n      } else if (t.isBinaryExpression(node)) {\r\n        traverse(node.left);\r\n        traverse(node.right);\r\n      } else if (t.isMemberExpression(node)) {\r\n        const path = buildMemberPath(node);\r\n        if (path) bindings.add(path);\r\n      }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "458e4c81",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ecf832ef",
+      "type": "IfStatement",
+      "condition": "t.isLogicalExpression(node)",
+      "babel_source": "if (t.isLogicalExpression(node)) {\r\n        traverse(node.left);\r\n        traverse(node.right);\r\n      } else if (t.isUnaryExpression(node)) {\r\n        traverse(node.argument);\r\n      } else if (t.isBinaryExpression(node)) {\r\n        traverse(node.left);\r\n        traverse(node.right);\r\n      } else if (t.isMemberExpression(node)) {\r\n        const path = buildMemberPath(node);\r\n        if (path) bindings.add(path);\r\n      }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "00fb4fd3",
+      "type": "BabelTypeCheck",
+      "method": "isLogicalExpression",
+      "babel_source": "t.isLogicalExpression(node)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "40ece1b7",
+      "type": "IfStatement",
+      "condition": "t.isUnaryExpression(node)",
+      "babel_source": "if (t.isUnaryExpression(node)) {\r\n        traverse(node.argument);\r\n      } else if (t.isBinaryExpression(node)) {\r\n        traverse(node.left);\r\n        traverse(node.right);\r\n      } else if (t.isMemberExpression(node)) {\r\n        const path = buildMemberPath(node);\r\n        if (path) bindings.add(path);\r\n      }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "27f27257",
+      "type": "BabelTypeCheck",
+      "method": "isUnaryExpression",
+      "babel_source": "t.isUnaryExpression(node)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a44feedf",
+      "type": "IfStatement",
+      "condition": "t.isBinaryExpression(node)",
+      "babel_source": "if (t.isBinaryExpression(node)) {\r\n        traverse(node.left);\r\n        traverse(node.right);\r\n      } else if (t.isMemberExpression(node)) {\r\n        const path = buildMemberPath(node);\r\n        if (path) bindings.add(path);\r\n      }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ae0955e9",
+      "type": "BabelTypeCheck",
+      "method": "isBinaryExpression",
+      "babel_source": "t.isBinaryExpression(node)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f8c92a49",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(node)",
+      "babel_source": "if (t.isMemberExpression(node)) {\r\n        const path = buildMemberPath(node);\r\n        if (path) bindings.add(path);\r\n      }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e4025d71",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(node)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e730e75b",
+      "type": "VariableDeclaration",
+      "babel_source": "const path = buildMemberPath(node);",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6fceff98",
+      "type": "IfStatement",
+      "condition": "path",
+      "babel_source": "if (path) bindings.add(path);",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "aa94413a",
+      "type": "ReturnStatement",
+      "babel_source": "return Array.from(bindings);",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ae259f0c",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(expr)",
+      "babel_source": "if (t.isIdentifier(expr)) {\r\n      return true;\r\n    }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42d26fd4",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(expr)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "10e0fa08",
+      "type": "ReturnStatement",
+      "babel_source": "return true;",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9845aee4",
+      "type": "IfStatement",
+      "condition": "t.isUnaryExpression(expr) && expr.operator === '!'",
+      "babel_source": "if (t.isUnaryExpression(expr) && expr.operator === '!') {\r\n      return isConditionEvaluableClientSide(expr.argument, bindings);\r\n    }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f7ca2c2f",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isUnaryExpression(expr) && expr.operator === '!'",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4b2e045a",
+      "type": "BabelTypeCheck",
+      "method": "isUnaryExpression",
+      "babel_source": "t.isUnaryExpression(expr)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9893e520",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "expr.operator === '!'",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "094a19ab",
+      "type": "ReturnStatement",
+      "babel_source": "return isConditionEvaluableClientSide(expr.argument, bindings);",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4b44aba7",
+      "type": "IfStatement",
+      "condition": "t.isLogicalExpression(expr)",
+      "babel_source": "if (t.isLogicalExpression(expr)) {\r\n      return isConditionEvaluableClientSide(expr.left, bindings) &&\r\n             isConditionEvaluableClientSide(expr.right, bindings);\r\n    }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c20dd732",
+      "type": "BabelTypeCheck",
+      "method": "isLogicalExpression",
+      "babel_source": "t.isLogicalExpression(expr)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c17d81e7",
+      "type": "ReturnStatement",
+      "babel_source": "return isConditionEvaluableClientSide(expr.left, bindings) &&\r\n             isConditionEvaluableClientSide(expr.right, bindings);",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42ef9fa9",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "isConditionEvaluableClientSide(expr.left, bindings) &&\r\n             isConditionEvaluableClientSide(expr.right, bindings)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e5e62994",
+      "type": "IfStatement",
+      "condition": "t.isBinaryExpression(expr)",
+      "babel_source": "if (t.isBinaryExpression(expr)) {\r\n      // Simple comparisons are evaluable\r\n      const operators = ['==', '===', '!=', '!==', '<', '>', '<=', '>='];\r\n      if (operators.includes(expr.operator)) {\r\n        return isSimpleExpression(expr.left) && isSimpleExpression(expr.right);\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8db0ee56",
+      "type": "BabelTypeCheck",
+      "method": "isBinaryExpression",
+      "babel_source": "t.isBinaryExpression(expr)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b918cba5",
+      "type": "VariableDeclaration",
+      "babel_source": "const operators = ['==', '===', '!=', '!==', '<', '>', '<=', '>='];",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8d074ad2",
+      "type": "ArrayExpression",
+      "babel_source": "['==', '===', '!=', '!==', '<', '>', '<=', '>=']",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a480c650",
+      "type": "IfStatement",
+      "condition": "operators.includes(expr.operator)",
+      "babel_source": "if (operators.includes(expr.operator)) {\r\n        return isSimpleExpression(expr.left) && isSimpleExpression(expr.right);\r\n      }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a8363c1f",
+      "type": "ReturnStatement",
+      "babel_source": "return isSimpleExpression(expr.left) && isSimpleExpression(expr.right);",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7407a07c",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "isSimpleExpression(expr.left) && isSimpleExpression(expr.right)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ac0bc0f9",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(expr)",
+      "babel_source": "if (t.isMemberExpression(expr)) {\r\n      return true;\r\n    }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c8858c63",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(expr)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "10e0fa08",
+      "type": "ReturnStatement",
+      "babel_source": "return true;",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dabbdf16",
+      "type": "ReturnStatement",
+      "babel_source": "return false;",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0fe24131",
+      "type": "ReturnStatement",
+      "babel_source": "return t.isIdentifier(expr) ||\r\n           t.isMemberExpression(expr) ||\r\n           t.isStringLiteral(expr) ||\r\n           t.isNumericLiteral(expr) ||\r\n           t.isBooleanLiteral(expr) ||\r\n           t.isNullLiteral(expr);",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "286da32b",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isIdentifier(expr) ||\r\n           t.isMemberExpression(expr) ||\r\n           t.isStringLiteral(expr) ||\r\n           t.isNumericLiteral(expr) ||\r\n           t.isBooleanLiteral(expr) ||\r\n           t.isNullLiteral(expr)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d7e13eae",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isIdentifier(expr) ||\r\n           t.isMemberExpression(expr) ||\r\n           t.isStringLiteral(expr) ||\r\n           t.isNumericLiteral(expr) ||\r\n           t.isBooleanLiteral(expr)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "77ab84c4",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isIdentifier(expr) ||\r\n           t.isMemberExpression(expr) ||\r\n           t.isStringLiteral(expr) ||\r\n           t.isNumericLiteral(expr)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b78fb5b0",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isIdentifier(expr) ||\r\n           t.isMemberExpression(expr) ||\r\n           t.isStringLiteral(expr)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "085af53c",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isIdentifier(expr) ||\r\n           t.isMemberExpression(expr)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42d26fd4",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(expr)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c8858c63",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(expr)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "81d695ea",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(expr)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bed165a3",
+      "type": "BabelTypeCheck",
+      "method": "isNumericLiteral",
+      "babel_source": "t.isNumericLiteral(expr)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b9190750",
+      "type": "BabelTypeCheck",
+      "method": "isBooleanLiteral",
+      "babel_source": "t.isBooleanLiteral(expr)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "65e02bf2",
+      "type": "BabelTypeCheck",
+      "method": "isNullLiteral",
+      "babel_source": "t.isNullLiteral(expr)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cc85e778",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(node)",
+      "babel_source": "if (t.isJSXElement(node)) {\r\n      const tagName = node.openingElement.name.name;\r\n      const hexPath = node.__minimactPath;\r\n\r\n      // Extract attributes\r\n      const attributes = {};\r\n      for (const attr of node.openingElement.attributes) {\r\n        if (t.isJSXAttribute(attr)) {\r\n          const attrName = attr.name.name;\r\n          const attrValue = attr.value;\r\n\r\n          if (!attrValue) {\r\n            attributes[attrName] = true; // Boolean attribute\r\n          } else if (t.isStringLiteral(attrValue)) {\r\n            attributes[attrName] = attrValue.value;\r\n          } else if (t.isJSXExpressionContainer(attrValue)) {\r\n            // Dynamic attribute\r\n            const expr = attrValue.expression;\r\n            if (t.isIdentifier(expr)) {\r\n              attributes[attrName] = { binding: expr.name };\r\n            } else if (t.isMemberExpression(expr)) {\r\n              attributes[attrName] = { binding: buildMemberPath(expr) };\r\n            } else {\r\n              attributes[attrName] = { expression: generate(expr).code };\r\n            }\r\n          }\r\n        }\r\n      }\r\n\r\n      // Extract children\r\n      const children = [];\r\n      for (const child of node.children) {\r\n        if (t.isJSXText(child)) {\r\n          const text = child.value.trim();\r\n          if (text) {\r\n            children.push({\r\n              type: \"text\",\r\n              value: text,\r\n              hexPath: child.__minimactPath\r\n            });\r\n          }\r\n        } else if (t.isJSXElement(child)) {\r\n          const childStructure = extractElementStructure(child);\r\n          if (childStructure) {\r\n            children.push(childStructure);\r\n          }\r\n        } else if (t.isJSXExpressionContainer(child)) {\r\n          // Dynamic text content\r\n          const expr = child.expression;\r\n          if (t.isIdentifier(expr)) {\r\n            children.push({\r\n              type: \"text\",\r\n              binding: expr.name,\r\n              hexPath: child.__minimactPath\r\n            });\r\n          } else if (t.isMemberExpression(expr)) {\r\n            children.push({\r\n              type: \"text\",\r\n              binding: buildMemberPath(expr),\r\n              hexPath: child.__minimactPath\r\n            });\r\n          } else {\r\n            // Complex expression\r\n            children.push({\r\n              type: \"text\",\r\n              expression: generate(expr).code,\r\n              hexPath: child.__minimactPath\r\n            });\r\n          }\r\n        }\r\n      }\r\n\r\n      return {\r\n        type: \"element\",\r\n        tag: tagName,\r\n        hexPath,\r\n        attributes,\r\n        children\r\n      };\r\n    } else if (t.isJSXFragment(node)) {\r\n      const children = [];\r\n      for (const child of node.children) {\r\n        if (t.isJSXElement(child)) {\r\n          const childStructure = extractElementStructure(child);\r\n          if (childStructure) {\r\n            children.push(childStructure);\r\n          }\r\n        }\r\n      }\r\n\r\n      return {\r\n        type: \"fragment\",\r\n        children\r\n      };\r\n    }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "606ccdc5",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(node)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c1132faa",
+      "type": "VariableDeclaration",
+      "babel_source": "const tagName = node.openingElement.name.name;",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "350fe6d1",
+      "type": "VariableDeclaration",
+      "babel_source": "const hexPath = node.__minimactPath;",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f1b7a0f6",
+      "type": "VariableDeclaration",
+      "babel_source": "const attributes = {};",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "44136fa3",
+      "type": "ObjectExpression",
+      "babel_source": "{}",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8c9aad49",
+      "type": "ForOfStatement",
+      "babel_source": "for (const attr of node.openingElement.attributes) {\r\n        if (t.isJSXAttribute(attr)) {\r\n          const attrName = attr.name.name;\r\n          const attrValue = attr.value;\r\n\r\n          if (!attrValue) {\r\n            attributes[attrName] = true; // Boolean attribute\r\n          } else if (t.isStringLiteral(attrValue)) {\r\n            attributes[attrName] = attrValue.value;\r\n          } else if (t.isJSXExpressionContainer(attrValue)) {\r\n            // Dynamic attribute\r\n            const expr = attrValue.expression;\r\n            if (t.isIdentifier(expr)) {\r\n              attributes[attrName] = { binding: expr.name };\r\n            } else if (t.isMemberExpression(expr)) {\r\n              attributes[attrName] = { binding: buildMemberPath(expr) };\r\n            } else {\r\n              attributes[attrName] = { expression: generate(expr).code };\r\n            }\r\n          }\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "02ca2e7f",
+      "type": "VariableDeclaration",
+      "babel_source": "const attr",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a9548e5d",
+      "type": "IfStatement",
+      "condition": "t.isJSXAttribute(attr)",
+      "babel_source": "if (t.isJSXAttribute(attr)) {\r\n          const attrName = attr.name.name;\r\n          const attrValue = attr.value;\r\n\r\n          if (!attrValue) {\r\n            attributes[attrName] = true; // Boolean attribute\r\n          } else if (t.isStringLiteral(attrValue)) {\r\n            attributes[attrName] = attrValue.value;\r\n          } else if (t.isJSXExpressionContainer(attrValue)) {\r\n            // Dynamic attribute\r\n            const expr = attrValue.expression;\r\n            if (t.isIdentifier(expr)) {\r\n              attributes[attrName] = { binding: expr.name };\r\n            } else if (t.isMemberExpression(expr)) {\r\n              attributes[attrName] = { binding: buildMemberPath(expr) };\r\n            } else {\r\n              attributes[attrName] = { expression: generate(expr).code };\r\n            }\r\n          }\r\n        }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7468026c",
+      "type": "BabelTypeCheck",
+      "method": "isJSXAttribute",
+      "babel_source": "t.isJSXAttribute(attr)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e30061cb",
+      "type": "VariableDeclaration",
+      "babel_source": "const attrName = attr.name.name;",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "39552c3a",
+      "type": "VariableDeclaration",
+      "babel_source": "const attrValue = attr.value;",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b217f0b5",
+      "type": "IfStatement",
+      "condition": "!attrValue",
+      "babel_source": "if (!attrValue) {\r\n            attributes[attrName] = true; // Boolean attribute\r\n          } else if (t.isStringLiteral(attrValue)) {\r\n            attributes[attrName] = attrValue.value;\r\n          } else if (t.isJSXExpressionContainer(attrValue)) {\r\n            // Dynamic attribute\r\n            const expr = attrValue.expression;\r\n            if (t.isIdentifier(expr)) {\r\n              attributes[attrName] = { binding: expr.name };\r\n            } else if (t.isMemberExpression(expr)) {\r\n              attributes[attrName] = { binding: buildMemberPath(expr) };\r\n            } else {\r\n              attributes[attrName] = { expression: generate(expr).code };\r\n            }\r\n          }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "da75e26c",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!attrValue",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8e90dffa",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "attributes[attrName] = true",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7cedbc0c",
+      "type": "IfStatement",
+      "condition": "t.isStringLiteral(attrValue)",
+      "babel_source": "if (t.isStringLiteral(attrValue)) {\r\n            attributes[attrName] = attrValue.value;\r\n          } else if (t.isJSXExpressionContainer(attrValue)) {\r\n            // Dynamic attribute\r\n            const expr = attrValue.expression;\r\n            if (t.isIdentifier(expr)) {\r\n              attributes[attrName] = { binding: expr.name };\r\n            } else if (t.isMemberExpression(expr)) {\r\n              attributes[attrName] = { binding: buildMemberPath(expr) };\r\n            } else {\r\n              attributes[attrName] = { expression: generate(expr).code };\r\n            }\r\n          }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ce7e866f",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(attrValue)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e39c11ff",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "attributes[attrName] = attrValue.value",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b549e774",
+      "type": "IfStatement",
+      "condition": "t.isJSXExpressionContainer(attrValue)",
+      "babel_source": "if (t.isJSXExpressionContainer(attrValue)) {\r\n            // Dynamic attribute\r\n            const expr = attrValue.expression;\r\n            if (t.isIdentifier(expr)) {\r\n              attributes[attrName] = { binding: expr.name };\r\n            } else if (t.isMemberExpression(expr)) {\r\n              attributes[attrName] = { binding: buildMemberPath(expr) };\r\n            } else {\r\n              attributes[attrName] = { expression: generate(expr).code };\r\n            }\r\n          }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "aa0980fb",
+      "type": "BabelTypeCheck",
+      "method": "isJSXExpressionContainer",
+      "babel_source": "t.isJSXExpressionContainer(attrValue)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "da29c6d3",
+      "type": "VariableDeclaration",
+      "babel_source": "const expr = attrValue.expression;",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "914415ac",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(expr)",
+      "babel_source": "if (t.isIdentifier(expr)) {\r\n              attributes[attrName] = { binding: expr.name };\r\n            } else if (t.isMemberExpression(expr)) {\r\n              attributes[attrName] = { binding: buildMemberPath(expr) };\r\n            } else {\r\n              attributes[attrName] = { expression: generate(expr).code };\r\n            }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42d26fd4",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(expr)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ff711321",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "attributes[attrName] = { binding: expr.name }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ef0fafa",
+      "type": "ObjectExpression",
+      "babel_source": "{ binding: expr.name }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a5f08056",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(expr)",
+      "babel_source": "if (t.isMemberExpression(expr)) {\r\n              attributes[attrName] = { binding: buildMemberPath(expr) };\r\n            } else {\r\n              attributes[attrName] = { expression: generate(expr).code };\r\n            }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c8858c63",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(expr)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d68c5e0d",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "attributes[attrName] = { binding: buildMemberPath(expr) }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d0e9a73c",
+      "type": "ObjectExpression",
+      "babel_source": "{ binding: buildMemberPath(expr) }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "11ee2a18",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "attributes[attrName] = { expression: generate(expr).code }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "465d2340",
+      "type": "ObjectExpression",
+      "babel_source": "{ expression: generate(expr).code }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "57c7254a",
+      "type": "VariableDeclaration",
+      "babel_source": "const children = [];",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "18f6c4c0",
+      "type": "ForOfStatement",
+      "babel_source": "for (const child of node.children) {\r\n        if (t.isJSXText(child)) {\r\n          const text = child.value.trim();\r\n          if (text) {\r\n            children.push({\r\n              type: \"text\",\r\n              value: text,\r\n              hexPath: child.__minimactPath\r\n            });\r\n          }\r\n        } else if (t.isJSXElement(child)) {\r\n          const childStructure = extractElementStructure(child);\r\n          if (childStructure) {\r\n            children.push(childStructure);\r\n          }\r\n        } else if (t.isJSXExpressionContainer(child)) {\r\n          // Dynamic text content\r\n          const expr = child.expression;\r\n          if (t.isIdentifier(expr)) {\r\n            children.push({\r\n              type: \"text\",\r\n              binding: expr.name,\r\n              hexPath: child.__minimactPath\r\n            });\r\n          } else if (t.isMemberExpression(expr)) {\r\n            children.push({\r\n              type: \"text\",\r\n              binding: buildMemberPath(expr),\r\n              hexPath: child.__minimactPath\r\n            });\r\n          } else {\r\n            // Complex expression\r\n            children.push({\r\n              type: \"text\",\r\n              expression: generate(expr).code,\r\n              hexPath: child.__minimactPath\r\n            });\r\n          }\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "efdd3930",
+      "type": "VariableDeclaration",
+      "babel_source": "const child",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5a649c46",
+      "type": "IfStatement",
+      "condition": "t.isJSXText(child)",
+      "babel_source": "if (t.isJSXText(child)) {\r\n          const text = child.value.trim();\r\n          if (text) {\r\n            children.push({\r\n              type: \"text\",\r\n              value: text,\r\n              hexPath: child.__minimactPath\r\n            });\r\n          }\r\n        } else if (t.isJSXElement(child)) {\r\n          const childStructure = extractElementStructure(child);\r\n          if (childStructure) {\r\n            children.push(childStructure);\r\n          }\r\n        } else if (t.isJSXExpressionContainer(child)) {\r\n          // Dynamic text content\r\n          const expr = child.expression;\r\n          if (t.isIdentifier(expr)) {\r\n            children.push({\r\n              type: \"text\",\r\n              binding: expr.name,\r\n              hexPath: child.__minimactPath\r\n            });\r\n          } else if (t.isMemberExpression(expr)) {\r\n            children.push({\r\n              type: \"text\",\r\n              binding: buildMemberPath(expr),\r\n              hexPath: child.__minimactPath\r\n            });\r\n          } else {\r\n            // Complex expression\r\n            children.push({\r\n              type: \"text\",\r\n              expression: generate(expr).code,\r\n              hexPath: child.__minimactPath\r\n            });\r\n          }\r\n        }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8cc41c4e",
+      "type": "BabelTypeCheck",
+      "method": "isJSXText",
+      "babel_source": "t.isJSXText(child)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9fb13957",
+      "type": "VariableDeclaration",
+      "babel_source": "const text = child.value.trim();",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "906282d3",
+      "type": "IfStatement",
+      "condition": "text",
+      "babel_source": "if (text) {\r\n            children.push({\r\n              type: \"text\",\r\n              value: text,\r\n              hexPath: child.__minimactPath\r\n            });\r\n          }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "222bbfba",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n              type: \"text\",\r\n              value: text,\r\n              hexPath: child.__minimactPath\r\n            }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "534f2664",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(child)",
+      "babel_source": "if (t.isJSXElement(child)) {\r\n          const childStructure = extractElementStructure(child);\r\n          if (childStructure) {\r\n            children.push(childStructure);\r\n          }\r\n        } else if (t.isJSXExpressionContainer(child)) {\r\n          // Dynamic text content\r\n          const expr = child.expression;\r\n          if (t.isIdentifier(expr)) {\r\n            children.push({\r\n              type: \"text\",\r\n              binding: expr.name,\r\n              hexPath: child.__minimactPath\r\n            });\r\n          } else if (t.isMemberExpression(expr)) {\r\n            children.push({\r\n              type: \"text\",\r\n              binding: buildMemberPath(expr),\r\n              hexPath: child.__minimactPath\r\n            });\r\n          } else {\r\n            // Complex expression\r\n            children.push({\r\n              type: \"text\",\r\n              expression: generate(expr).code,\r\n              hexPath: child.__minimactPath\r\n            });\r\n          }\r\n        }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d44bd174",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(child)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "14a3b47d",
+      "type": "VariableDeclaration",
+      "babel_source": "const childStructure = extractElementStructure(child);",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f99f3a02",
+      "type": "IfStatement",
+      "condition": "childStructure",
+      "babel_source": "if (childStructure) {\r\n            children.push(childStructure);\r\n          }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f3a89039",
+      "type": "IfStatement",
+      "condition": "t.isJSXExpressionContainer(child)",
+      "babel_source": "if (t.isJSXExpressionContainer(child)) {\r\n          // Dynamic text content\r\n          const expr = child.expression;\r\n          if (t.isIdentifier(expr)) {\r\n            children.push({\r\n              type: \"text\",\r\n              binding: expr.name,\r\n              hexPath: child.__minimactPath\r\n            });\r\n          } else if (t.isMemberExpression(expr)) {\r\n            children.push({\r\n              type: \"text\",\r\n              binding: buildMemberPath(expr),\r\n              hexPath: child.__minimactPath\r\n            });\r\n          } else {\r\n            // Complex expression\r\n            children.push({\r\n              type: \"text\",\r\n              expression: generate(expr).code,\r\n              hexPath: child.__minimactPath\r\n            });\r\n          }\r\n        }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c53c8d32",
+      "type": "BabelTypeCheck",
+      "method": "isJSXExpressionContainer",
+      "babel_source": "t.isJSXExpressionContainer(child)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9e5f0b19",
+      "type": "VariableDeclaration",
+      "babel_source": "const expr = child.expression;",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5adbcce8",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(expr)",
+      "babel_source": "if (t.isIdentifier(expr)) {\r\n            children.push({\r\n              type: \"text\",\r\n              binding: expr.name,\r\n              hexPath: child.__minimactPath\r\n            });\r\n          } else if (t.isMemberExpression(expr)) {\r\n            children.push({\r\n              type: \"text\",\r\n              binding: buildMemberPath(expr),\r\n              hexPath: child.__minimactPath\r\n            });\r\n          } else {\r\n            // Complex expression\r\n            children.push({\r\n              type: \"text\",\r\n              expression: generate(expr).code,\r\n              hexPath: child.__minimactPath\r\n            });\r\n          }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42d26fd4",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(expr)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dc31db80",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n              type: \"text\",\r\n              binding: expr.name,\r\n              hexPath: child.__minimactPath\r\n            }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e792f3d2",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(expr)",
+      "babel_source": "if (t.isMemberExpression(expr)) {\r\n            children.push({\r\n              type: \"text\",\r\n              binding: buildMemberPath(expr),\r\n              hexPath: child.__minimactPath\r\n            });\r\n          } else {\r\n            // Complex expression\r\n            children.push({\r\n              type: \"text\",\r\n              expression: generate(expr).code,\r\n              hexPath: child.__minimactPath\r\n            });\r\n          }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c8858c63",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(expr)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b6b8697b",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n              type: \"text\",\r\n              binding: buildMemberPath(expr),\r\n              hexPath: child.__minimactPath\r\n            }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cdc8dabe",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n              type: \"text\",\r\n              expression: generate(expr).code,\r\n              hexPath: child.__minimactPath\r\n            }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "19f31922",
+      "type": "ReturnStatement",
+      "babel_source": "return {\r\n        type: \"element\",\r\n        tag: tagName,\r\n        hexPath,\r\n        attributes,\r\n        children\r\n      };",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "12b8b0ab",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n        type: \"element\",\r\n        tag: tagName,\r\n        hexPath,\r\n        attributes,\r\n        children\r\n      }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "369cefb2",
+      "type": "IfStatement",
+      "condition": "t.isJSXFragment(node)",
+      "babel_source": "if (t.isJSXFragment(node)) {\r\n      const children = [];\r\n      for (const child of node.children) {\r\n        if (t.isJSXElement(child)) {\r\n          const childStructure = extractElementStructure(child);\r\n          if (childStructure) {\r\n            children.push(childStructure);\r\n          }\r\n        }\r\n      }\r\n\r\n      return {\r\n        type: \"fragment\",\r\n        children\r\n      };\r\n    }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "00ed8bb0",
+      "type": "BabelTypeCheck",
+      "method": "isJSXFragment",
+      "babel_source": "t.isJSXFragment(node)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "57c7254a",
+      "type": "VariableDeclaration",
+      "babel_source": "const children = [];",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ac499959",
+      "type": "ForOfStatement",
+      "babel_source": "for (const child of node.children) {\r\n        if (t.isJSXElement(child)) {\r\n          const childStructure = extractElementStructure(child);\r\n          if (childStructure) {\r\n            children.push(childStructure);\r\n          }\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "efdd3930",
+      "type": "VariableDeclaration",
+      "babel_source": "const child",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "169b1769",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(child)",
+      "babel_source": "if (t.isJSXElement(child)) {\r\n          const childStructure = extractElementStructure(child);\r\n          if (childStructure) {\r\n            children.push(childStructure);\r\n          }\r\n        }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d44bd174",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(child)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "14a3b47d",
+      "type": "VariableDeclaration",
+      "babel_source": "const childStructure = extractElementStructure(child);",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f99f3a02",
+      "type": "IfStatement",
+      "condition": "childStructure",
+      "babel_source": "if (childStructure) {\r\n            children.push(childStructure);\r\n          }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b93a2dbd",
+      "type": "ReturnStatement",
+      "babel_source": "return {\r\n        type: \"fragment\",\r\n        children\r\n      };",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2198024b",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n        type: \"fragment\",\r\n        children\r\n      }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c4133e54",
+      "type": "VariableDeclaration",
+      "babel_source": "const parts = [];",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b74a5e61",
+      "type": "VariableDeclaration",
+      "babel_source": "let current = expr;",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ec94361c",
+      "type": "WhileStatement",
+      "babel_source": "while (t.isMemberExpression(current)) {\r\n      if (t.isIdentifier(current.property)) {\r\n        parts.unshift(current.property.name);\r\n      }\r\n      current = current.object;\r\n    }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "99ac970d",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(current)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d63eee77",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(current.property)",
+      "babel_source": "if (t.isIdentifier(current.property)) {\r\n        parts.unshift(current.property.name);\r\n      }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "70f404ee",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(current.property)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "05723cfe",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "current = current.object",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bf9886fb",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(current)",
+      "babel_source": "if (t.isIdentifier(current)) {\r\n      parts.unshift(current.name);\r\n    }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f41cdd7f",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(current)",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "048838a3",
+      "type": "ReturnStatement",
+      "babel_source": "return parts.length > 0 ? parts.join('.') : null;",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9728e5e0",
+      "type": "ConditionalExpression",
+      "babel_source": "parts.length > 0 ? parts.join('.') : null",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "41b46808",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "parts.length > 0",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "95b2bfa3",
+      "type": "ReturnStatement",
+      "babel_source": "return conditionalTemplates;",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/conditionalElementTemplates.cjs"
+  ]
+}

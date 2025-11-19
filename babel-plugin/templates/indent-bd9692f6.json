@@ -1,0 +1,77 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "indent",
+  "params": [
+    {
+      "name": "code",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "spaces",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function indent(code, spaces) {\r\n  const prefix = ' '.repeat(spaces);\r\n  return code.split('\\n').map(line => prefix + line).join('\\n');\r\n}",
+  "body_templates": [
+    {
+      "hash": "470c5143",
+      "type": "VariableDeclaration",
+      "babel_source": "const prefix = ' '.repeat(spaces);",
+      "parentContext": {
+        "functionName": "indent",
+        "functionParams": [
+          "code",
+          "spaces"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f0976edd",
+      "type": "ReturnStatement",
+      "babel_source": "return code.split('\\n').map(line => prefix + line).join('\\n');",
+      "parentContext": {
+        "functionName": "indent",
+        "functionParams": [
+          "code",
+          "spaces"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2f85aba3",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "line => prefix + line",
+      "parentContext": {
+        "functionName": "indent",
+        "functionParams": [
+          "code",
+          "spaces"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "925754fc",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "prefix + line",
+      "parentContext": {
+        "functionName": "indent",
+        "functionParams": [
+          "code",
+          "spaces"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "transpilers/typescriptToCSharp.cjs"
+  ]
+}

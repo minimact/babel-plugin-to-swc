@@ -1,0 +1,89 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateCSharpFromTernary",
+  "params": [
+    {
+      "name": "ternary",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "paramName",
+      "inferredType": "&str",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateCSharpFromTernary(ternary, paramName) {\r\n  const test = generateCSharpFromExpression(ternary.test, paramName);\r\n  const consequent = generateCSharpFromExpression(ternary.consequent, paramName);\r\n  const alternate = generateCSharpFromExpression(ternary.alternate, paramName);\r\n\r\n  return `${test} ? ${consequent} : ${alternate}`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "8b0487bb",
+      "type": "VariableDeclaration",
+      "babel_source": "const test = generateCSharpFromExpression(ternary.test, paramName);",
+      "parentContext": {
+        "functionName": "generateCSharpFromTernary",
+        "functionParams": [
+          "ternary",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "44da0383",
+      "type": "VariableDeclaration",
+      "babel_source": "const consequent = generateCSharpFromExpression(ternary.consequent, paramName);",
+      "parentContext": {
+        "functionName": "generateCSharpFromTernary",
+        "functionParams": [
+          "ternary",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6d247612",
+      "type": "VariableDeclaration",
+      "babel_source": "const alternate = generateCSharpFromExpression(ternary.alternate, paramName);",
+      "parentContext": {
+        "functionName": "generateCSharpFromTernary",
+        "functionParams": [
+          "ternary",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "58fe6404",
+      "type": "ReturnStatement",
+      "babel_source": "return `${test} ? ${consequent} : ${alternate}`;",
+      "parentContext": {
+        "functionName": "generateCSharpFromTernary",
+        "functionParams": [
+          "ternary",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3ddef566",
+      "type": "TemplateLiteral",
+      "babel_source": "`${test} ? ${consequent} : ${alternate}`",
+      "parentContext": {
+        "functionName": "generateCSharpFromTernary",
+        "functionParams": [
+          "ternary",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/useStateX.cjs"
+  ]
+}

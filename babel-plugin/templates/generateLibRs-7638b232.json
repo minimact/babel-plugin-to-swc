@@ -1,0 +1,141 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateLibRs",
+  "params": [
+    {
+      "name": "outputDir",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "taskFiles",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateLibRs(outputDir, taskFiles) {\r\n  let code = [];\r\n\r\n  code.push('//! Minimact Rust Tasks Library');\r\n  code.push('//! Auto-generated from TypeScript useServerTask calls');\r\n  code.push('');\r\n\r\n  // Module declarations\r\n  for (const task of taskFiles) {\r\n    code.push(`pub mod ${task.taskId};`);\r\n  }\r\n\r\n  code.push('');\r\n  code.push('// Re-exports');\r\n  for (const task of taskFiles) {\r\n    code.push(`pub use ${task.taskId}::{TaskInput as ${capitalize(task.taskId)}Input, TaskOutput as ${capitalize(task.taskId)}Output, execute as execute_${task.taskId}};`);\r\n  }\r\n\r\n  const filePath = path.join(outputDir, 'lib.rs');\r\n  fs.writeFileSync(filePath, code.join('\\n'));\r\n  console.log('[Rust] Generated lib.rs');\r\n}",
+  "body_templates": [
+    {
+      "hash": "d89b3964",
+      "type": "VariableDeclaration",
+      "babel_source": "let code = [];",
+      "parentContext": {
+        "functionName": "generateLibRs",
+        "functionParams": [
+          "outputDir",
+          "taskFiles"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "generateLibRs",
+        "functionParams": [
+          "outputDir",
+          "taskFiles"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f5e2faa8",
+      "type": "ForOfStatement",
+      "babel_source": "for (const task of taskFiles) {\r\n    code.push(`pub mod ${task.taskId};`);\r\n  }",
+      "parentContext": {
+        "functionName": "generateLibRs",
+        "functionParams": [
+          "outputDir",
+          "taskFiles"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "52d08538",
+      "type": "VariableDeclaration",
+      "babel_source": "const task",
+      "parentContext": {
+        "functionName": "generateLibRs",
+        "functionParams": [
+          "outputDir",
+          "taskFiles"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3b4ecf30",
+      "type": "TemplateLiteral",
+      "babel_source": "`pub mod ${task.taskId};`",
+      "parentContext": {
+        "functionName": "generateLibRs",
+        "functionParams": [
+          "outputDir",
+          "taskFiles"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9c1820a3",
+      "type": "ForOfStatement",
+      "babel_source": "for (const task of taskFiles) {\r\n    code.push(`pub use ${task.taskId}::{TaskInput as ${capitalize(task.taskId)}Input, TaskOutput as ${capitalize(task.taskId)}Output, execute as execute_${task.taskId}};`);\r\n  }",
+      "parentContext": {
+        "functionName": "generateLibRs",
+        "functionParams": [
+          "outputDir",
+          "taskFiles"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "52d08538",
+      "type": "VariableDeclaration",
+      "babel_source": "const task",
+      "parentContext": {
+        "functionName": "generateLibRs",
+        "functionParams": [
+          "outputDir",
+          "taskFiles"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4e3d911a",
+      "type": "TemplateLiteral",
+      "babel_source": "`pub use ${task.taskId}::{TaskInput as ${capitalize(task.taskId)}Input, TaskOutput as ${capitalize(task.taskId)}Output, execute as execute_${task.taskId}};`",
+      "parentContext": {
+        "functionName": "generateLibRs",
+        "functionParams": [
+          "outputDir",
+          "taskFiles"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "49322e8c",
+      "type": "VariableDeclaration",
+      "babel_source": "const filePath = path.join(outputDir, 'lib.rs');",
+      "parentContext": {
+        "functionName": "generateLibRs",
+        "functionParams": [
+          "outputDir",
+          "taskFiles"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/rustTask.cjs"
+  ]
+}

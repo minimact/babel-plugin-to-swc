@@ -1,0 +1,164 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractIdentifiers",
+  "params": [
+    {
+      "name": "expr",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    },
+    {
+      "name": "result",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractIdentifiers(expr, result) {\r\n    if (t.isIdentifier(expr)) {\r\n      result.push(expr.name);\r\n    } else if (t.isBinaryExpression(expr) || t.isLogicalExpression(expr)) {\r\n      extractIdentifiers(expr.left, result);\r\n      extractIdentifiers(expr.right, result);\r\n    } else if (t.isUnaryExpression(expr)) {\r\n      extractIdentifiers(expr.argument, result);\r\n    } else if (t.isMemberExpression(expr)) {\r\n      result.push(buildMemberPath(expr));\r\n    }\r\n  }",
+  "body_templates": [
+    {
+      "hash": "0e616e48",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(expr)",
+      "babel_source": "if (t.isIdentifier(expr)) {\r\n      result.push(expr.name);\r\n    } else if (t.isBinaryExpression(expr) || t.isLogicalExpression(expr)) {\r\n      extractIdentifiers(expr.left, result);\r\n      extractIdentifiers(expr.right, result);\r\n    } else if (t.isUnaryExpression(expr)) {\r\n      extractIdentifiers(expr.argument, result);\r\n    } else if (t.isMemberExpression(expr)) {\r\n      result.push(buildMemberPath(expr));\r\n    }",
+      "parentContext": {
+        "functionName": "extractIdentifiers",
+        "functionParams": [
+          "expr",
+          "result"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42d26fd4",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(expr)",
+      "parentContext": {
+        "functionName": "extractIdentifiers",
+        "functionParams": [
+          "expr",
+          "result"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9c94974f",
+      "type": "IfStatement",
+      "condition": "t.isBinaryExpression(expr) || t.isLogicalExpression(expr)",
+      "babel_source": "if (t.isBinaryExpression(expr) || t.isLogicalExpression(expr)) {\r\n      extractIdentifiers(expr.left, result);\r\n      extractIdentifiers(expr.right, result);\r\n    } else if (t.isUnaryExpression(expr)) {\r\n      extractIdentifiers(expr.argument, result);\r\n    } else if (t.isMemberExpression(expr)) {\r\n      result.push(buildMemberPath(expr));\r\n    }",
+      "parentContext": {
+        "functionName": "extractIdentifiers",
+        "functionParams": [
+          "expr",
+          "result"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "08ef35fd",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isBinaryExpression(expr) || t.isLogicalExpression(expr)",
+      "parentContext": {
+        "functionName": "extractIdentifiers",
+        "functionParams": [
+          "expr",
+          "result"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8db0ee56",
+      "type": "BabelTypeCheck",
+      "method": "isBinaryExpression",
+      "babel_source": "t.isBinaryExpression(expr)",
+      "parentContext": {
+        "functionName": "extractIdentifiers",
+        "functionParams": [
+          "expr",
+          "result"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c20dd732",
+      "type": "BabelTypeCheck",
+      "method": "isLogicalExpression",
+      "babel_source": "t.isLogicalExpression(expr)",
+      "parentContext": {
+        "functionName": "extractIdentifiers",
+        "functionParams": [
+          "expr",
+          "result"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9c4ef861",
+      "type": "IfStatement",
+      "condition": "t.isUnaryExpression(expr)",
+      "babel_source": "if (t.isUnaryExpression(expr)) {\r\n      extractIdentifiers(expr.argument, result);\r\n    } else if (t.isMemberExpression(expr)) {\r\n      result.push(buildMemberPath(expr));\r\n    }",
+      "parentContext": {
+        "functionName": "extractIdentifiers",
+        "functionParams": [
+          "expr",
+          "result"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4b2e045a",
+      "type": "BabelTypeCheck",
+      "method": "isUnaryExpression",
+      "babel_source": "t.isUnaryExpression(expr)",
+      "parentContext": {
+        "functionName": "extractIdentifiers",
+        "functionParams": [
+          "expr",
+          "result"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "658abce9",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(expr)",
+      "babel_source": "if (t.isMemberExpression(expr)) {\r\n      result.push(buildMemberPath(expr));\r\n    }",
+      "parentContext": {
+        "functionName": "extractIdentifiers",
+        "functionParams": [
+          "expr",
+          "result"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c8858c63",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(expr)",
+      "parentContext": {
+        "functionName": "extractIdentifiers",
+        "functionParams": [
+          "expr",
+          "result"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/templates.cjs"
+  ]
+}

@@ -1,0 +1,548 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractUseMvcState",
+  "params": [
+    {
+      "name": "path",
+      "inferredType": "&Path",
+      "defaultValue": null
+    },
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractUseMvcState(path, component) {\r\n  const parent = path.parent;\r\n\r\n  if (!t.isVariableDeclarator(parent)) return;\r\n  if (!t.isArrayPattern(parent.id)) return;\r\n\r\n  const elements = parent.id.elements;\r\n  const propertyNameArg = path.node.arguments[0];\r\n\r\n  // Extract property name (must be string literal)\r\n  if (!t.isStringLiteral(propertyNameArg)) {\r\n    console.warn('[useMvcState] Property name must be a string literal');\r\n    return;\r\n  }\r\n\r\n  const propertyName = propertyNameArg.value;\r\n\r\n  // useMvcState can return either [value] or [value, setter]\r\n  // depending on mutability\r\n  const stateVar = elements[0];\r\n  const setterVar = elements.length > 1 ? elements[1] : null;\r\n\r\n  // Extract TypeScript generic type: useMvcState<string>('name')\r\n  // But prefer the type from the ViewModel interface if available (more reliable)\r\n  const typeParam = path.node.typeParameters?.params[0];\r\n  let csharpType = typeParam ? tsTypeToCSharpType(typeParam) : 'dynamic';\r\n\r\n  // Try to find the actual type from the ViewModel interface\r\n  const interfaceType = findViewModelPropertyType(path, propertyName, component);\r\n  if (interfaceType) {\r\n    csharpType = interfaceType;\r\n    console.log(`[useMvcState] Found type for '${propertyName}' from interface: ${interfaceType}`);\r\n  } else {\r\n    console.log(`[useMvcState] Using generic type for '${propertyName}': ${csharpType}`);\r\n  }\r\n\r\n  // Initialize useMvcState array if needed\r\n  component.useMvcState = component.useMvcState || [];\r\n\r\n  const mvcStateInfo = {\r\n    name: stateVar ? stateVar.name : null,\r\n    setter: setterVar ? setterVar.name : null,\r\n    propertyName: propertyName,\r\n    type: csharpType  // ✅ Use type from interface (preferred) or generic fallback\r\n  };\r\n\r\n  component.useMvcState.push(mvcStateInfo);\r\n\r\n  // Track as MVC state type\r\n  if (stateVar) {\r\n    component.stateTypes = component.stateTypes || new Map();\r\n    component.stateTypes.set(stateVar.name, 'mvc');\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "356fe96c",
+      "type": "VariableDeclaration",
+      "babel_source": "const parent = path.parent;",
+      "parentContext": {
+        "functionName": "extractUseMvcState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1cfe78c4",
+      "type": "IfStatement",
+      "condition": "!t.isVariableDeclarator(parent)",
+      "babel_source": "if (!t.isVariableDeclarator(parent)) return;",
+      "parentContext": {
+        "functionName": "extractUseMvcState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dc772752",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isVariableDeclarator(parent)",
+      "parentContext": {
+        "functionName": "extractUseMvcState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "27a39ea7",
+      "type": "BabelTypeCheck",
+      "method": "isVariableDeclarator",
+      "babel_source": "t.isVariableDeclarator(parent)",
+      "parentContext": {
+        "functionName": "extractUseMvcState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8beaabe2",
+      "type": "ReturnStatement",
+      "babel_source": "return;",
+      "parentContext": {
+        "functionName": "extractUseMvcState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a5d71bd4",
+      "type": "IfStatement",
+      "condition": "!t.isArrayPattern(parent.id)",
+      "babel_source": "if (!t.isArrayPattern(parent.id)) return;",
+      "parentContext": {
+        "functionName": "extractUseMvcState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8b6a1332",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isArrayPattern(parent.id)",
+      "parentContext": {
+        "functionName": "extractUseMvcState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ac18b505",
+      "type": "BabelTypeCheck",
+      "method": "isArrayPattern",
+      "babel_source": "t.isArrayPattern(parent.id)",
+      "parentContext": {
+        "functionName": "extractUseMvcState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8beaabe2",
+      "type": "ReturnStatement",
+      "babel_source": "return;",
+      "parentContext": {
+        "functionName": "extractUseMvcState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e9dbe09c",
+      "type": "VariableDeclaration",
+      "babel_source": "const elements = parent.id.elements;",
+      "parentContext": {
+        "functionName": "extractUseMvcState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "297aaf24",
+      "type": "VariableDeclaration",
+      "babel_source": "const propertyNameArg = path.node.arguments[0];",
+      "parentContext": {
+        "functionName": "extractUseMvcState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4b82bde1",
+      "type": "IfStatement",
+      "condition": "!t.isStringLiteral(propertyNameArg)",
+      "babel_source": "if (!t.isStringLiteral(propertyNameArg)) {\r\n    console.warn('[useMvcState] Property name must be a string literal');\r\n    return;\r\n  }",
+      "parentContext": {
+        "functionName": "extractUseMvcState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2bb03f4b",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isStringLiteral(propertyNameArg)",
+      "parentContext": {
+        "functionName": "extractUseMvcState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "da1aadcf",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(propertyNameArg)",
+      "parentContext": {
+        "functionName": "extractUseMvcState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8beaabe2",
+      "type": "ReturnStatement",
+      "babel_source": "return;",
+      "parentContext": {
+        "functionName": "extractUseMvcState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "25d16ff2",
+      "type": "VariableDeclaration",
+      "babel_source": "const propertyName = propertyNameArg.value;",
+      "parentContext": {
+        "functionName": "extractUseMvcState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "72bd4272",
+      "type": "VariableDeclaration",
+      "babel_source": "const stateVar = elements[0];",
+      "parentContext": {
+        "functionName": "extractUseMvcState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2c23f886",
+      "type": "VariableDeclaration",
+      "babel_source": "const setterVar = elements.length > 1 ? elements[1] : null;",
+      "parentContext": {
+        "functionName": "extractUseMvcState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0fdc924f",
+      "type": "ConditionalExpression",
+      "babel_source": "elements.length > 1 ? elements[1] : null",
+      "parentContext": {
+        "functionName": "extractUseMvcState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3fd87810",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "elements.length > 1",
+      "parentContext": {
+        "functionName": "extractUseMvcState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ffd1d058",
+      "type": "VariableDeclaration",
+      "babel_source": "const typeParam = path.node.typeParameters?.params[0];",
+      "parentContext": {
+        "functionName": "extractUseMvcState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "14406ff3",
+      "type": "VariableDeclaration",
+      "babel_source": "let csharpType = typeParam ? tsTypeToCSharpType(typeParam) : 'dynamic';",
+      "parentContext": {
+        "functionName": "extractUseMvcState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "074a368b",
+      "type": "ConditionalExpression",
+      "babel_source": "typeParam ? tsTypeToCSharpType(typeParam) : 'dynamic'",
+      "parentContext": {
+        "functionName": "extractUseMvcState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ca5e6810",
+      "type": "VariableDeclaration",
+      "babel_source": "const interfaceType = findViewModelPropertyType(path, propertyName, component);",
+      "parentContext": {
+        "functionName": "extractUseMvcState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "29375df2",
+      "type": "IfStatement",
+      "condition": "interfaceType",
+      "babel_source": "if (interfaceType) {\r\n    csharpType = interfaceType;\r\n    console.log(`[useMvcState] Found type for '${propertyName}' from interface: ${interfaceType}`);\r\n  } else {\r\n    console.log(`[useMvcState] Using generic type for '${propertyName}': ${csharpType}`);\r\n  }",
+      "parentContext": {
+        "functionName": "extractUseMvcState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3f9f7b65",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "csharpType = interfaceType",
+      "parentContext": {
+        "functionName": "extractUseMvcState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4fbe3273",
+      "type": "TemplateLiteral",
+      "babel_source": "`[useMvcState] Found type for '${propertyName}' from interface: ${interfaceType}`",
+      "parentContext": {
+        "functionName": "extractUseMvcState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "01acf4c9",
+      "type": "TemplateLiteral",
+      "babel_source": "`[useMvcState] Using generic type for '${propertyName}': ${csharpType}`",
+      "parentContext": {
+        "functionName": "extractUseMvcState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1173e4be",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "component.useMvcState = component.useMvcState || []",
+      "parentContext": {
+        "functionName": "extractUseMvcState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e513bd7f",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "component.useMvcState || []",
+      "parentContext": {
+        "functionName": "extractUseMvcState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractUseMvcState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "18a1fbb1",
+      "type": "VariableDeclaration",
+      "babel_source": "const mvcStateInfo = {\r\n    name: stateVar ? stateVar.name : null,\r\n    setter: setterVar ? setterVar.name : null,\r\n    propertyName: propertyName,\r\n    type: csharpType  // ✅ Use type from interface (preferred) or generic fallback\r\n  };",
+      "parentContext": {
+        "functionName": "extractUseMvcState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9ca50d87",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    name: stateVar ? stateVar.name : null,\r\n    setter: setterVar ? setterVar.name : null,\r\n    propertyName: propertyName,\r\n    type: csharpType  // ✅ Use type from interface (preferred) or generic fallback\r\n  }",
+      "parentContext": {
+        "functionName": "extractUseMvcState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a1aebfe7",
+      "type": "ConditionalExpression",
+      "babel_source": "stateVar ? stateVar.name : null",
+      "parentContext": {
+        "functionName": "extractUseMvcState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "93334bfc",
+      "type": "ConditionalExpression",
+      "babel_source": "setterVar ? setterVar.name : null",
+      "parentContext": {
+        "functionName": "extractUseMvcState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "474a602b",
+      "type": "IfStatement",
+      "condition": "stateVar",
+      "babel_source": "if (stateVar) {\r\n    component.stateTypes = component.stateTypes || new Map();\r\n    component.stateTypes.set(stateVar.name, 'mvc');\r\n  }",
+      "parentContext": {
+        "functionName": "extractUseMvcState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "88835452",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "component.stateTypes = component.stateTypes || new Map()",
+      "parentContext": {
+        "functionName": "extractUseMvcState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "606d5137",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "component.stateTypes || new Map()",
+      "parentContext": {
+        "functionName": "extractUseMvcState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cc227fdc",
+      "type": "NewExpression",
+      "babel_source": "new Map()",
+      "parentContext": {
+        "functionName": "extractUseMvcState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/hooks.cjs"
+  ]
+}

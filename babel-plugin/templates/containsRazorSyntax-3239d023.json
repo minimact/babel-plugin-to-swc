@@ -1,0 +1,242 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "containsRazorSyntax",
+  "params": [
+    {
+      "name": "markdown",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function containsRazorSyntax(markdown) {\r\n  if (!markdown || typeof markdown !== 'string') {\r\n    return false;\r\n  }\r\n\r\n  // Razor patterns to detect:\r\n  // 1. @variableName or @variable.Property (but not email addresses)\r\n  // 2. @if, @foreach, @for, @switch, @while\r\n  // 3. @(expression)\r\n\r\n  const patterns = [\r\n    /@[a-zA-Z_][a-zA-Z0-9_]*(?:\\.[a-zA-Z_][a-zA-Z0-9_]*)*/,  // @variable or @variable.property\r\n    /@if\\s*\\(/,                                               // @if (\r\n    /@foreach\\s*\\(/,                                          // @foreach (\r\n    /@for\\s*\\(/,                                              // @for (\r\n    /@switch\\s*\\(/,                                           // @switch (\r\n    /@while\\s*\\(/,                                            // @while (\r\n    /@\\([^)]+\\)/                                              // @(expression)\r\n  ];\r\n\r\n  return patterns.some(pattern => pattern.test(markdown));\r\n}",
+  "body_templates": [
+    {
+      "hash": "cdde7edb",
+      "type": "IfStatement",
+      "condition": "!markdown || typeof markdown !== 'string'",
+      "babel_source": "if (!markdown || typeof markdown !== 'string') {\r\n    return false;\r\n  }",
+      "parentContext": {
+        "functionName": "containsRazorSyntax",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "74d049c9",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "!markdown || typeof markdown !== 'string'",
+      "parentContext": {
+        "functionName": "containsRazorSyntax",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d77f9c11",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!markdown",
+      "parentContext": {
+        "functionName": "containsRazorSyntax",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a62e6486",
+      "type": "BinaryExpression",
+      "operator": "!==",
+      "babel_source": "typeof markdown !== 'string'",
+      "parentContext": {
+        "functionName": "containsRazorSyntax",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1b8b2a1a",
+      "type": "UnaryExpression",
+      "operator": "typeof",
+      "babel_source": "typeof markdown",
+      "parentContext": {
+        "functionName": "containsRazorSyntax",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dabbdf16",
+      "type": "ReturnStatement",
+      "babel_source": "return false;",
+      "parentContext": {
+        "functionName": "containsRazorSyntax",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "285c8b93",
+      "type": "VariableDeclaration",
+      "babel_source": "const patterns = [\r\n    /@[a-zA-Z_][a-zA-Z0-9_]*(?:\\.[a-zA-Z_][a-zA-Z0-9_]*)*/,  // @variable or @variable.property\r\n    /@if\\s*\\(/,                                               // @if (\r\n    /@foreach\\s*\\(/,                                          // @foreach (\r\n    /@for\\s*\\(/,                                              // @for (\r\n    /@switch\\s*\\(/,                                           // @switch (\r\n    /@while\\s*\\(/,                                            // @while (\r\n    /@\\([^)]+\\)/                                              // @(expression)\r\n  ];",
+      "parentContext": {
+        "functionName": "containsRazorSyntax",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3cda3685",
+      "type": "ArrayExpression",
+      "babel_source": "[\r\n    /@[a-zA-Z_][a-zA-Z0-9_]*(?:\\.[a-zA-Z_][a-zA-Z0-9_]*)*/,  // @variable or @variable.property\r\n    /@if\\s*\\(/,                                               // @if (\r\n    /@foreach\\s*\\(/,                                          // @foreach (\r\n    /@for\\s*\\(/,                                              // @for (\r\n    /@switch\\s*\\(/,                                           // @switch (\r\n    /@while\\s*\\(/,                                            // @while (\r\n    /@\\([^)]+\\)/                                              // @(expression)\r\n  ]",
+      "parentContext": {
+        "functionName": "containsRazorSyntax",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7f662e64",
+      "type": "RegExpLiteral",
+      "pattern": "@[a-zA-Z_][a-zA-Z0-9_]*(?:\\.[a-zA-Z_][a-zA-Z0-9_]*)*",
+      "flags": "",
+      "babel_source": "/@[a-zA-Z_][a-zA-Z0-9_]*(?:\\.[a-zA-Z_][a-zA-Z0-9_]*)*/",
+      "parentContext": {
+        "functionName": "containsRazorSyntax",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b4a0fdbb",
+      "type": "RegExpLiteral",
+      "pattern": "@if\\s*\\(",
+      "flags": "",
+      "babel_source": "/@if\\s*\\(/",
+      "parentContext": {
+        "functionName": "containsRazorSyntax",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e3169fe9",
+      "type": "RegExpLiteral",
+      "pattern": "@foreach\\s*\\(",
+      "flags": "",
+      "babel_source": "/@foreach\\s*\\(/",
+      "parentContext": {
+        "functionName": "containsRazorSyntax",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d4cde26f",
+      "type": "RegExpLiteral",
+      "pattern": "@for\\s*\\(",
+      "flags": "",
+      "babel_source": "/@for\\s*\\(/",
+      "parentContext": {
+        "functionName": "containsRazorSyntax",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "887884ca",
+      "type": "RegExpLiteral",
+      "pattern": "@switch\\s*\\(",
+      "flags": "",
+      "babel_source": "/@switch\\s*\\(/",
+      "parentContext": {
+        "functionName": "containsRazorSyntax",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5580af66",
+      "type": "RegExpLiteral",
+      "pattern": "@while\\s*\\(",
+      "flags": "",
+      "babel_source": "/@while\\s*\\(/",
+      "parentContext": {
+        "functionName": "containsRazorSyntax",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1d028599",
+      "type": "RegExpLiteral",
+      "pattern": "@\\([^)]+\\)",
+      "flags": "",
+      "babel_source": "/@\\([^)]+\\)/",
+      "parentContext": {
+        "functionName": "containsRazorSyntax",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5ba4c73e",
+      "type": "ReturnStatement",
+      "babel_source": "return patterns.some(pattern => pattern.test(markdown));",
+      "parentContext": {
+        "functionName": "containsRazorSyntax",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a088c860",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "pattern => pattern.test(markdown)",
+      "parentContext": {
+        "functionName": "containsRazorSyntax",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/razorDetection.cjs"
+  ]
+}

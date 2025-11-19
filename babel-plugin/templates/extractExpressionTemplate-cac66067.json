@@ -1,0 +1,367 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractExpressionTemplate",
+  "params": [
+    {
+      "name": "expr",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    },
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "path",
+      "inferredType": "&Path",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractExpressionTemplate(expr, component, path) {\r\n    // Skip if it's a simple identifier (no transformation)\r\n    if (t.isIdentifier(expr)) {\r\n      return null;\r\n    }\r\n\r\n    // Skip conditionals (handled by structural templates)\r\n    if (t.isConditionalExpression(expr) || t.isLogicalExpression(expr)) {\r\n      return null;\r\n    }\r\n\r\n    // Method call: price.toFixed(2)\r\n    if (t.isCallExpression(expr) && t.isMemberExpression(expr.callee)) {\r\n      return extractMethodCallTemplate(expr, component, path);\r\n    }\r\n\r\n    // Binary expression: count * 2 + 1\r\n    if (t.isBinaryExpression(expr)) {\r\n      return extractBinaryExpressionTemplate(expr, component, path);\r\n    }\r\n\r\n    // Member expression: user.name, items.length\r\n    if (t.isMemberExpression(expr)) {\r\n      return extractMemberExpressionTemplate(expr, component, path);\r\n    }\r\n\r\n    // Unary expression: -count, +value\r\n    if (t.isUnaryExpression(expr)) {\r\n      return extractUnaryExpressionTemplate(expr, component, path);\r\n    }\r\n\r\n    return null;\r\n  }",
+  "body_templates": [
+    {
+      "hash": "c7e3a346",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(expr)",
+      "babel_source": "if (t.isIdentifier(expr)) {\r\n      return null;\r\n    }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplate",
+        "functionParams": [
+          "expr",
+          "component",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42d26fd4",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(expr)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplate",
+        "functionParams": [
+          "expr",
+          "component",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractExpressionTemplate",
+        "functionParams": [
+          "expr",
+          "component",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "caea504b",
+      "type": "IfStatement",
+      "condition": "t.isConditionalExpression(expr) || t.isLogicalExpression(expr)",
+      "babel_source": "if (t.isConditionalExpression(expr) || t.isLogicalExpression(expr)) {\r\n      return null;\r\n    }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplate",
+        "functionParams": [
+          "expr",
+          "component",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1a0e00de",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isConditionalExpression(expr) || t.isLogicalExpression(expr)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplate",
+        "functionParams": [
+          "expr",
+          "component",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5574ecc1",
+      "type": "BabelTypeCheck",
+      "method": "isConditionalExpression",
+      "babel_source": "t.isConditionalExpression(expr)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplate",
+        "functionParams": [
+          "expr",
+          "component",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c20dd732",
+      "type": "BabelTypeCheck",
+      "method": "isLogicalExpression",
+      "babel_source": "t.isLogicalExpression(expr)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplate",
+        "functionParams": [
+          "expr",
+          "component",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractExpressionTemplate",
+        "functionParams": [
+          "expr",
+          "component",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "579174d2",
+      "type": "IfStatement",
+      "condition": "t.isCallExpression(expr) && t.isMemberExpression(expr.callee)",
+      "babel_source": "if (t.isCallExpression(expr) && t.isMemberExpression(expr.callee)) {\r\n      return extractMethodCallTemplate(expr, component, path);\r\n    }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplate",
+        "functionParams": [
+          "expr",
+          "component",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c2656421",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isCallExpression(expr) && t.isMemberExpression(expr.callee)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplate",
+        "functionParams": [
+          "expr",
+          "component",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "46479f62",
+      "type": "BabelTypeCheck",
+      "method": "isCallExpression",
+      "babel_source": "t.isCallExpression(expr)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplate",
+        "functionParams": [
+          "expr",
+          "component",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d6c41024",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(expr.callee)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplate",
+        "functionParams": [
+          "expr",
+          "component",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b63d78da",
+      "type": "ReturnStatement",
+      "babel_source": "return extractMethodCallTemplate(expr, component, path);",
+      "parentContext": {
+        "functionName": "extractExpressionTemplate",
+        "functionParams": [
+          "expr",
+          "component",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8118ee5e",
+      "type": "IfStatement",
+      "condition": "t.isBinaryExpression(expr)",
+      "babel_source": "if (t.isBinaryExpression(expr)) {\r\n      return extractBinaryExpressionTemplate(expr, component, path);\r\n    }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplate",
+        "functionParams": [
+          "expr",
+          "component",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8db0ee56",
+      "type": "BabelTypeCheck",
+      "method": "isBinaryExpression",
+      "babel_source": "t.isBinaryExpression(expr)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplate",
+        "functionParams": [
+          "expr",
+          "component",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9d23400b",
+      "type": "ReturnStatement",
+      "babel_source": "return extractBinaryExpressionTemplate(expr, component, path);",
+      "parentContext": {
+        "functionName": "extractExpressionTemplate",
+        "functionParams": [
+          "expr",
+          "component",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "79b73aa9",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(expr)",
+      "babel_source": "if (t.isMemberExpression(expr)) {\r\n      return extractMemberExpressionTemplate(expr, component, path);\r\n    }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplate",
+        "functionParams": [
+          "expr",
+          "component",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c8858c63",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(expr)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplate",
+        "functionParams": [
+          "expr",
+          "component",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "06a46a2d",
+      "type": "ReturnStatement",
+      "babel_source": "return extractMemberExpressionTemplate(expr, component, path);",
+      "parentContext": {
+        "functionName": "extractExpressionTemplate",
+        "functionParams": [
+          "expr",
+          "component",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dc70bfa3",
+      "type": "IfStatement",
+      "condition": "t.isUnaryExpression(expr)",
+      "babel_source": "if (t.isUnaryExpression(expr)) {\r\n      return extractUnaryExpressionTemplate(expr, component, path);\r\n    }",
+      "parentContext": {
+        "functionName": "extractExpressionTemplate",
+        "functionParams": [
+          "expr",
+          "component",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4b2e045a",
+      "type": "BabelTypeCheck",
+      "method": "isUnaryExpression",
+      "babel_source": "t.isUnaryExpression(expr)",
+      "parentContext": {
+        "functionName": "extractExpressionTemplate",
+        "functionParams": [
+          "expr",
+          "component",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "874beb04",
+      "type": "ReturnStatement",
+      "babel_source": "return extractUnaryExpressionTemplate(expr, component, path);",
+      "parentContext": {
+        "functionName": "extractExpressionTemplate",
+        "functionParams": [
+          "expr",
+          "component",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractExpressionTemplate",
+        "functionParams": [
+          "expr",
+          "component",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/expressionTemplates.cjs"
+  ]
+}

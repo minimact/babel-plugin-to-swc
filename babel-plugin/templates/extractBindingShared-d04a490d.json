@@ -1,0 +1,323 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractBindingShared",
+  "params": [
+    {
+      "name": "expr",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    },
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractBindingShared(expr, component) {\r\n  if (t.isIdentifier(expr)) {\r\n    return expr.name;\r\n  } else if (t.isMemberExpression(expr)) {\r\n    return buildMemberPathShared(expr);\r\n  } else if (t.isCallExpression(expr)) {\r\n    // First try method call binding (toFixed, etc.)\r\n    const methodBinding = extractMethodCallBindingShared(expr);\r\n    if (methodBinding) {\r\n      return methodBinding;\r\n    }\r\n\r\n    // Otherwise, handle chained method calls: todo.text.substring(0, 10).toUpperCase()\r\n    return extractComplexCallExpression(expr);\r\n  } else if (t.isBinaryExpression(expr)) {\r\n    // Handle binary expressions: todo.priority + 1, price * quantity, etc.\r\n    return extractBinaryExpressionBinding(expr);\r\n  } else if (t.isLogicalExpression(expr)) {\r\n    // Handle logical expressions: todo.dueDate || 'No due date'\r\n    return extractLogicalExpressionBinding(expr);\r\n  } else if (t.isUnaryExpression(expr)) {\r\n    // Handle unary expressions: !todo.completed\r\n    return extractUnaryExpressionBinding(expr);\r\n  } else {\r\n    return null;\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "559d7252",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(expr)",
+      "babel_source": "if (t.isIdentifier(expr)) {\r\n    return expr.name;\r\n  } else if (t.isMemberExpression(expr)) {\r\n    return buildMemberPathShared(expr);\r\n  } else if (t.isCallExpression(expr)) {\r\n    // First try method call binding (toFixed, etc.)\r\n    const methodBinding = extractMethodCallBindingShared(expr);\r\n    if (methodBinding) {\r\n      return methodBinding;\r\n    }\r\n\r\n    // Otherwise, handle chained method calls: todo.text.substring(0, 10).toUpperCase()\r\n    return extractComplexCallExpression(expr);\r\n  } else if (t.isBinaryExpression(expr)) {\r\n    // Handle binary expressions: todo.priority + 1, price * quantity, etc.\r\n    return extractBinaryExpressionBinding(expr);\r\n  } else if (t.isLogicalExpression(expr)) {\r\n    // Handle logical expressions: todo.dueDate || 'No due date'\r\n    return extractLogicalExpressionBinding(expr);\r\n  } else if (t.isUnaryExpression(expr)) {\r\n    // Handle unary expressions: !todo.completed\r\n    return extractUnaryExpressionBinding(expr);\r\n  } else {\r\n    return null;\r\n  }",
+      "parentContext": {
+        "functionName": "extractBindingShared",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42d26fd4",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(expr)",
+      "parentContext": {
+        "functionName": "extractBindingShared",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dc053a27",
+      "type": "ReturnStatement",
+      "babel_source": "return expr.name;",
+      "parentContext": {
+        "functionName": "extractBindingShared",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "70e70c49",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(expr)",
+      "babel_source": "if (t.isMemberExpression(expr)) {\r\n    return buildMemberPathShared(expr);\r\n  } else if (t.isCallExpression(expr)) {\r\n    // First try method call binding (toFixed, etc.)\r\n    const methodBinding = extractMethodCallBindingShared(expr);\r\n    if (methodBinding) {\r\n      return methodBinding;\r\n    }\r\n\r\n    // Otherwise, handle chained method calls: todo.text.substring(0, 10).toUpperCase()\r\n    return extractComplexCallExpression(expr);\r\n  } else if (t.isBinaryExpression(expr)) {\r\n    // Handle binary expressions: todo.priority + 1, price * quantity, etc.\r\n    return extractBinaryExpressionBinding(expr);\r\n  } else if (t.isLogicalExpression(expr)) {\r\n    // Handle logical expressions: todo.dueDate || 'No due date'\r\n    return extractLogicalExpressionBinding(expr);\r\n  } else if (t.isUnaryExpression(expr)) {\r\n    // Handle unary expressions: !todo.completed\r\n    return extractUnaryExpressionBinding(expr);\r\n  } else {\r\n    return null;\r\n  }",
+      "parentContext": {
+        "functionName": "extractBindingShared",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c8858c63",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(expr)",
+      "parentContext": {
+        "functionName": "extractBindingShared",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "937d28ab",
+      "type": "ReturnStatement",
+      "babel_source": "return buildMemberPathShared(expr);",
+      "parentContext": {
+        "functionName": "extractBindingShared",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "df706b24",
+      "type": "IfStatement",
+      "condition": "t.isCallExpression(expr)",
+      "babel_source": "if (t.isCallExpression(expr)) {\r\n    // First try method call binding (toFixed, etc.)\r\n    const methodBinding = extractMethodCallBindingShared(expr);\r\n    if (methodBinding) {\r\n      return methodBinding;\r\n    }\r\n\r\n    // Otherwise, handle chained method calls: todo.text.substring(0, 10).toUpperCase()\r\n    return extractComplexCallExpression(expr);\r\n  } else if (t.isBinaryExpression(expr)) {\r\n    // Handle binary expressions: todo.priority + 1, price * quantity, etc.\r\n    return extractBinaryExpressionBinding(expr);\r\n  } else if (t.isLogicalExpression(expr)) {\r\n    // Handle logical expressions: todo.dueDate || 'No due date'\r\n    return extractLogicalExpressionBinding(expr);\r\n  } else if (t.isUnaryExpression(expr)) {\r\n    // Handle unary expressions: !todo.completed\r\n    return extractUnaryExpressionBinding(expr);\r\n  } else {\r\n    return null;\r\n  }",
+      "parentContext": {
+        "functionName": "extractBindingShared",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "46479f62",
+      "type": "BabelTypeCheck",
+      "method": "isCallExpression",
+      "babel_source": "t.isCallExpression(expr)",
+      "parentContext": {
+        "functionName": "extractBindingShared",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ac325ba9",
+      "type": "VariableDeclaration",
+      "babel_source": "const methodBinding = extractMethodCallBindingShared(expr);",
+      "parentContext": {
+        "functionName": "extractBindingShared",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "19d2c68a",
+      "type": "IfStatement",
+      "condition": "methodBinding",
+      "babel_source": "if (methodBinding) {\r\n      return methodBinding;\r\n    }",
+      "parentContext": {
+        "functionName": "extractBindingShared",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bc5b1adc",
+      "type": "ReturnStatement",
+      "babel_source": "return methodBinding;",
+      "parentContext": {
+        "functionName": "extractBindingShared",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4b3a440f",
+      "type": "ReturnStatement",
+      "babel_source": "return extractComplexCallExpression(expr);",
+      "parentContext": {
+        "functionName": "extractBindingShared",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "eb6a7467",
+      "type": "IfStatement",
+      "condition": "t.isBinaryExpression(expr)",
+      "babel_source": "if (t.isBinaryExpression(expr)) {\r\n    // Handle binary expressions: todo.priority + 1, price * quantity, etc.\r\n    return extractBinaryExpressionBinding(expr);\r\n  } else if (t.isLogicalExpression(expr)) {\r\n    // Handle logical expressions: todo.dueDate || 'No due date'\r\n    return extractLogicalExpressionBinding(expr);\r\n  } else if (t.isUnaryExpression(expr)) {\r\n    // Handle unary expressions: !todo.completed\r\n    return extractUnaryExpressionBinding(expr);\r\n  } else {\r\n    return null;\r\n  }",
+      "parentContext": {
+        "functionName": "extractBindingShared",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8db0ee56",
+      "type": "BabelTypeCheck",
+      "method": "isBinaryExpression",
+      "babel_source": "t.isBinaryExpression(expr)",
+      "parentContext": {
+        "functionName": "extractBindingShared",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "34d6b14b",
+      "type": "ReturnStatement",
+      "babel_source": "return extractBinaryExpressionBinding(expr);",
+      "parentContext": {
+        "functionName": "extractBindingShared",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "abd70c22",
+      "type": "IfStatement",
+      "condition": "t.isLogicalExpression(expr)",
+      "babel_source": "if (t.isLogicalExpression(expr)) {\r\n    // Handle logical expressions: todo.dueDate || 'No due date'\r\n    return extractLogicalExpressionBinding(expr);\r\n  } else if (t.isUnaryExpression(expr)) {\r\n    // Handle unary expressions: !todo.completed\r\n    return extractUnaryExpressionBinding(expr);\r\n  } else {\r\n    return null;\r\n  }",
+      "parentContext": {
+        "functionName": "extractBindingShared",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c20dd732",
+      "type": "BabelTypeCheck",
+      "method": "isLogicalExpression",
+      "babel_source": "t.isLogicalExpression(expr)",
+      "parentContext": {
+        "functionName": "extractBindingShared",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d511bbd3",
+      "type": "ReturnStatement",
+      "babel_source": "return extractLogicalExpressionBinding(expr);",
+      "parentContext": {
+        "functionName": "extractBindingShared",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e2747b0c",
+      "type": "IfStatement",
+      "condition": "t.isUnaryExpression(expr)",
+      "babel_source": "if (t.isUnaryExpression(expr)) {\r\n    // Handle unary expressions: !todo.completed\r\n    return extractUnaryExpressionBinding(expr);\r\n  } else {\r\n    return null;\r\n  }",
+      "parentContext": {
+        "functionName": "extractBindingShared",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4b2e045a",
+      "type": "BabelTypeCheck",
+      "method": "isUnaryExpression",
+      "babel_source": "t.isUnaryExpression(expr)",
+      "parentContext": {
+        "functionName": "extractBindingShared",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9572cb7e",
+      "type": "ReturnStatement",
+      "babel_source": "return extractUnaryExpressionBinding(expr);",
+      "parentContext": {
+        "functionName": "extractBindingShared",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractBindingShared",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/templates.cjs"
+  ]
+}

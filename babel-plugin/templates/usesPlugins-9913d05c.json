@@ -1,0 +1,57 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "usesPlugins",
+  "params": [
+    {
+      "name": "componentState",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function usesPlugins(componentState) {\r\n  return componentState.pluginUsages && componentState.pluginUsages.length > 0;\r\n}",
+  "body_templates": [
+    {
+      "hash": "f85d3a0b",
+      "type": "ReturnStatement",
+      "babel_source": "return componentState.pluginUsages && componentState.pluginUsages.length > 0;",
+      "parentContext": {
+        "functionName": "usesPlugins",
+        "functionParams": [
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "783d9eab",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "componentState.pluginUsages && componentState.pluginUsages.length > 0",
+      "parentContext": {
+        "functionName": "usesPlugins",
+        "functionParams": [
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "05bca0bf",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "componentState.pluginUsages.length > 0",
+      "parentContext": {
+        "functionName": "usesPlugins",
+        "functionParams": [
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/plugin.cjs"
+  ]
+}

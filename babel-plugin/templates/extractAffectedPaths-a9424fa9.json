@@ -1,0 +1,212 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractAffectedPaths",
+  "params": [
+    {
+      "name": "state",
+      "inferredType": "&mut State",
+      "defaultValue": null
+    },
+    {
+      "name": "templates",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractAffectedPaths(state, templates) {\r\n  const paths = new Set();\r\n\r\n  if (!templates) {\r\n    return [];\r\n  }\r\n\r\n  // Find templates that reference these state keys\r\n  Object.entries(templates).forEach(([path, template]) => {\r\n    if (template.bindings && Array.isArray(template.bindings)) {\r\n      // Check if any of the bindings match state keys\r\n      template.bindings.forEach(binding => {\r\n        // Binding might be \"count\" or \"item.count\" or nested\r\n        const baseKey = binding.split('.')[0];\r\n        if (baseKey in state) {\r\n          paths.add(path);\r\n        }\r\n      });\r\n    }\r\n  });\r\n\r\n  return Array.from(paths).sort();\r\n}",
+  "body_templates": [
+    {
+      "hash": "5929a3e5",
+      "type": "VariableDeclaration",
+      "babel_source": "const paths = new Set();",
+      "parentContext": {
+        "functionName": "extractAffectedPaths",
+        "functionParams": [
+          "state",
+          "templates"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1ae36cea",
+      "type": "NewExpression",
+      "babel_source": "new Set()",
+      "parentContext": {
+        "functionName": "extractAffectedPaths",
+        "functionParams": [
+          "state",
+          "templates"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e4461d04",
+      "type": "IfStatement",
+      "condition": "!templates",
+      "babel_source": "if (!templates) {\r\n    return [];\r\n  }",
+      "parentContext": {
+        "functionName": "extractAffectedPaths",
+        "functionParams": [
+          "state",
+          "templates"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c51806c9",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!templates",
+      "parentContext": {
+        "functionName": "extractAffectedPaths",
+        "functionParams": [
+          "state",
+          "templates"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c7221e11",
+      "type": "ReturnStatement",
+      "babel_source": "return [];",
+      "parentContext": {
+        "functionName": "extractAffectedPaths",
+        "functionParams": [
+          "state",
+          "templates"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractAffectedPaths",
+        "functionParams": [
+          "state",
+          "templates"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "929c5fe0",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "([path, template]) => {\r\n    if (template.bindings && Array.isArray(template.bindings)) {\r\n      // Check if any of the bindings match state keys\r\n      template.bindings.forEach(binding => {\r\n        // Binding might be \"count\" or \"item.count\" or nested\r\n        const baseKey = binding.split('.')[0];\r\n        if (baseKey in state) {\r\n          paths.add(path);\r\n        }\r\n      });\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "extractAffectedPaths",
+        "functionParams": [
+          "state",
+          "templates"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c62ce321",
+      "type": "IfStatement",
+      "condition": "template.bindings && Array.isArray(template.bindings)",
+      "babel_source": "if (template.bindings && Array.isArray(template.bindings)) {\r\n      // Check if any of the bindings match state keys\r\n      template.bindings.forEach(binding => {\r\n        // Binding might be \"count\" or \"item.count\" or nested\r\n        const baseKey = binding.split('.')[0];\r\n        if (baseKey in state) {\r\n          paths.add(path);\r\n        }\r\n      });\r\n    }",
+      "parentContext": {
+        "functionName": "extractAffectedPaths",
+        "functionParams": [
+          "state",
+          "templates"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cab9abc7",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "template.bindings && Array.isArray(template.bindings)",
+      "parentContext": {
+        "functionName": "extractAffectedPaths",
+        "functionParams": [
+          "state",
+          "templates"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "132fb303",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "binding => {\r\n        // Binding might be \"count\" or \"item.count\" or nested\r\n        const baseKey = binding.split('.')[0];\r\n        if (baseKey in state) {\r\n          paths.add(path);\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "extractAffectedPaths",
+        "functionParams": [
+          "state",
+          "templates"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ffd9690d",
+      "type": "VariableDeclaration",
+      "babel_source": "const baseKey = binding.split('.')[0];",
+      "parentContext": {
+        "functionName": "extractAffectedPaths",
+        "functionParams": [
+          "state",
+          "templates"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5e3c976f",
+      "type": "IfStatement",
+      "condition": "baseKey in state",
+      "babel_source": "if (baseKey in state) {\r\n          paths.add(path);\r\n        }",
+      "parentContext": {
+        "functionName": "extractAffectedPaths",
+        "functionParams": [
+          "state",
+          "templates"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "562e812b",
+      "type": "BinaryExpression",
+      "operator": "in",
+      "babel_source": "baseKey in state",
+      "parentContext": {
+        "functionName": "extractAffectedPaths",
+        "functionParams": [
+          "state",
+          "templates"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "db8dd6c5",
+      "type": "ReturnStatement",
+      "babel_source": "return Array.from(paths).sort();",
+      "parentContext": {
+        "functionName": "extractAffectedPaths",
+        "functionParams": [
+          "state",
+          "templates"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/timelineGenerator.cjs"
+  ]
+}

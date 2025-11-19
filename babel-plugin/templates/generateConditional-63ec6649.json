@@ -1,0 +1,113 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateConditional",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "indent",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateConditional(node, component, indent) {\r\n  const indentStr = '    '.repeat(indent);\r\n  const condition = generateCSharpExpression(node.test);\r\n  const consequent = generateJSXElement(node.consequent, component, indent);\r\n  const alternate = generateJSXElement(node.alternate, component, indent);\r\n\r\n  return `${indentStr}return ${condition}\\n${indentStr}    ? ${consequent}\\n${indentStr}    : ${alternate};`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "9929f4d7",
+      "type": "VariableDeclaration",
+      "babel_source": "const indentStr = '    '.repeat(indent);",
+      "parentContext": {
+        "functionName": "generateConditional",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1864447c",
+      "type": "VariableDeclaration",
+      "babel_source": "const condition = generateCSharpExpression(node.test);",
+      "parentContext": {
+        "functionName": "generateConditional",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b0fdd9f8",
+      "type": "VariableDeclaration",
+      "babel_source": "const consequent = generateJSXElement(node.consequent, component, indent);",
+      "parentContext": {
+        "functionName": "generateConditional",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "888f22d2",
+      "type": "VariableDeclaration",
+      "babel_source": "const alternate = generateJSXElement(node.alternate, component, indent);",
+      "parentContext": {
+        "functionName": "generateConditional",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "31dfecc1",
+      "type": "ReturnStatement",
+      "babel_source": "return `${indentStr}return ${condition}\\n${indentStr}    ? ${consequent}\\n${indentStr}    : ${alternate};`;",
+      "parentContext": {
+        "functionName": "generateConditional",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "28c627a0",
+      "type": "TemplateLiteral",
+      "babel_source": "`${indentStr}return ${condition}\\n${indentStr}    ? ${consequent}\\n${indentStr}    : ${alternate};`",
+      "parentContext": {
+        "functionName": "generateConditional",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/expressions.cjs"
+  ]
+}

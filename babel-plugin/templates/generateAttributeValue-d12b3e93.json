@@ -1,0 +1,157 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateAttributeValue",
+  "params": [
+    {
+      "name": "value",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateAttributeValue(value) {\r\n  if (!value) return '\"\"';\r\n\r\n  if (t.isStringLiteral(value)) {\r\n    return `\"${escapeCSharpString(value.value)}\"`;\r\n  }\r\n\r\n  if (t.isJSXExpressionContainer(value)) {\r\n    return generateCSharpExpression(value.expression);\r\n  }\r\n\r\n  return '\"\"';\r\n}",
+  "body_templates": [
+    {
+      "hash": "f2de0a50",
+      "type": "IfStatement",
+      "condition": "!value",
+      "babel_source": "if (!value) return '\"\"';",
+      "parentContext": {
+        "functionName": "generateAttributeValue",
+        "functionParams": [
+          "value"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c501cea7",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!value",
+      "parentContext": {
+        "functionName": "generateAttributeValue",
+        "functionParams": [
+          "value"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "248880b6",
+      "type": "ReturnStatement",
+      "babel_source": "return '\"\"';",
+      "parentContext": {
+        "functionName": "generateAttributeValue",
+        "functionParams": [
+          "value"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e4579529",
+      "type": "IfStatement",
+      "condition": "t.isStringLiteral(value)",
+      "babel_source": "if (t.isStringLiteral(value)) {\r\n    return `\"${escapeCSharpString(value.value)}\"`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateAttributeValue",
+        "functionParams": [
+          "value"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a835f893",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(value)",
+      "parentContext": {
+        "functionName": "generateAttributeValue",
+        "functionParams": [
+          "value"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "aa351cb9",
+      "type": "ReturnStatement",
+      "babel_source": "return `\"${escapeCSharpString(value.value)}\"`;",
+      "parentContext": {
+        "functionName": "generateAttributeValue",
+        "functionParams": [
+          "value"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "43b188a4",
+      "type": "TemplateLiteral",
+      "babel_source": "`\"${escapeCSharpString(value.value)}\"`",
+      "parentContext": {
+        "functionName": "generateAttributeValue",
+        "functionParams": [
+          "value"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "08126130",
+      "type": "IfStatement",
+      "condition": "t.isJSXExpressionContainer(value)",
+      "babel_source": "if (t.isJSXExpressionContainer(value)) {\r\n    return generateCSharpExpression(value.expression);\r\n  }",
+      "parentContext": {
+        "functionName": "generateAttributeValue",
+        "functionParams": [
+          "value"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "846bea62",
+      "type": "BabelTypeCheck",
+      "method": "isJSXExpressionContainer",
+      "babel_source": "t.isJSXExpressionContainer(value)",
+      "parentContext": {
+        "functionName": "generateAttributeValue",
+        "functionParams": [
+          "value"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dc9f7fab",
+      "type": "ReturnStatement",
+      "babel_source": "return generateCSharpExpression(value.expression);",
+      "parentContext": {
+        "functionName": "generateAttributeValue",
+        "functionParams": [
+          "value"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "248880b6",
+      "type": "ReturnStatement",
+      "babel_source": "return '\"\"';",
+      "parentContext": {
+        "functionName": "generateAttributeValue",
+        "functionParams": [
+          "value"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/expressions.cjs"
+  ]
+}

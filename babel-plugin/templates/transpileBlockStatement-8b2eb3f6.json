@@ -1,0 +1,80 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "transpileBlockStatement",
+  "params": [
+    {
+      "name": "block",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function transpileBlockStatement(block) {\r\n  let code = '';\r\n\r\n  for (const statement of block.body) {\r\n    code += transpileStatement(statement);\r\n  }\r\n\r\n  return code;\r\n}",
+  "body_templates": [
+    {
+      "hash": "f42e2303",
+      "type": "VariableDeclaration",
+      "babel_source": "let code = '';",
+      "parentContext": {
+        "functionName": "transpileBlockStatement",
+        "functionParams": [
+          "block"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d8b94693",
+      "type": "ForOfStatement",
+      "babel_source": "for (const statement of block.body) {\r\n    code += transpileStatement(statement);\r\n  }",
+      "parentContext": {
+        "functionName": "transpileBlockStatement",
+        "functionParams": [
+          "block"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f397d33c",
+      "type": "VariableDeclaration",
+      "babel_source": "const statement",
+      "parentContext": {
+        "functionName": "transpileBlockStatement",
+        "functionParams": [
+          "block"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0d4252e9",
+      "type": "AssignmentExpression",
+      "operator": "+=",
+      "babel_source": "code += transpileStatement(statement)",
+      "parentContext": {
+        "functionName": "transpileBlockStatement",
+        "functionParams": [
+          "block"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f27c6cd",
+      "type": "ReturnStatement",
+      "babel_source": "return code;",
+      "parentContext": {
+        "functionName": "transpileBlockStatement",
+        "functionParams": [
+          "block"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "transpilers/typescriptToRust.cjs"
+  ]
+}

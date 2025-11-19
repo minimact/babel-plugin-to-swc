@@ -1,0 +1,353 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateCSharpFromMethodCall",
+  "params": [
+    {
+      "name": "callExpr",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    },
+    {
+      "name": "paramName",
+      "inferredType": "&str",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateCSharpFromMethodCall(callExpr, paramName) {\r\n  if (t.isMemberExpression(callExpr.callee)) {\r\n    const object = generateCSharpFromExpression(callExpr.callee.object, paramName);\r\n    const method = callExpr.callee.property.name;\r\n    const args = callExpr.arguments;\r\n\r\n    // Map JS methods to C# equivalents\r\n    const methodMap = {\r\n      'toFixed': (args) => {\r\n        const decimals = args[0] && t.isNumericLiteral(args[0]) ? args[0].value : 2;\r\n        return `ToString(\"F${decimals}\")`;\r\n      },\r\n      'toUpperCase': () => 'ToUpper()',\r\n      'toLowerCase': () => 'ToLower()',\r\n      'toString': () => 'ToString()',\r\n      'trim': () => 'Trim()',\r\n      'length': () => 'Length'\r\n    };\r\n\r\n    const csharpMethod = methodMap[method] ? methodMap[method](args) : `${method}()`;\r\n    return `${object}.${csharpMethod}`;\r\n  }\r\n\r\n  return 'null';\r\n}",
+  "body_templates": [
+    {
+      "hash": "67c41e72",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(callExpr.callee)",
+      "babel_source": "if (t.isMemberExpression(callExpr.callee)) {\r\n    const object = generateCSharpFromExpression(callExpr.callee.object, paramName);\r\n    const method = callExpr.callee.property.name;\r\n    const args = callExpr.arguments;\r\n\r\n    // Map JS methods to C# equivalents\r\n    const methodMap = {\r\n      'toFixed': (args) => {\r\n        const decimals = args[0] && t.isNumericLiteral(args[0]) ? args[0].value : 2;\r\n        return `ToString(\"F${decimals}\")`;\r\n      },\r\n      'toUpperCase': () => 'ToUpper()',\r\n      'toLowerCase': () => 'ToLower()',\r\n      'toString': () => 'ToString()',\r\n      'trim': () => 'Trim()',\r\n      'length': () => 'Length'\r\n    };\r\n\r\n    const csharpMethod = methodMap[method] ? methodMap[method](args) : `${method}()`;\r\n    return `${object}.${csharpMethod}`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateCSharpFromMethodCall",
+        "functionParams": [
+          "callExpr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "38a32d23",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(callExpr.callee)",
+      "parentContext": {
+        "functionName": "generateCSharpFromMethodCall",
+        "functionParams": [
+          "callExpr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9db189cd",
+      "type": "VariableDeclaration",
+      "babel_source": "const object = generateCSharpFromExpression(callExpr.callee.object, paramName);",
+      "parentContext": {
+        "functionName": "generateCSharpFromMethodCall",
+        "functionParams": [
+          "callExpr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4d733b51",
+      "type": "VariableDeclaration",
+      "babel_source": "const method = callExpr.callee.property.name;",
+      "parentContext": {
+        "functionName": "generateCSharpFromMethodCall",
+        "functionParams": [
+          "callExpr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "197b5cd7",
+      "type": "VariableDeclaration",
+      "babel_source": "const args = callExpr.arguments;",
+      "parentContext": {
+        "functionName": "generateCSharpFromMethodCall",
+        "functionParams": [
+          "callExpr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bcdbef7a",
+      "type": "VariableDeclaration",
+      "babel_source": "const methodMap = {\r\n      'toFixed': (args) => {\r\n        const decimals = args[0] && t.isNumericLiteral(args[0]) ? args[0].value : 2;\r\n        return `ToString(\"F${decimals}\")`;\r\n      },\r\n      'toUpperCase': () => 'ToUpper()',\r\n      'toLowerCase': () => 'ToLower()',\r\n      'toString': () => 'ToString()',\r\n      'trim': () => 'Trim()',\r\n      'length': () => 'Length'\r\n    };",
+      "parentContext": {
+        "functionName": "generateCSharpFromMethodCall",
+        "functionParams": [
+          "callExpr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "75ac33e3",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n      'toFixed': (args) => {\r\n        const decimals = args[0] && t.isNumericLiteral(args[0]) ? args[0].value : 2;\r\n        return `ToString(\"F${decimals}\")`;\r\n      },\r\n      'toUpperCase': () => 'ToUpper()',\r\n      'toLowerCase': () => 'ToLower()',\r\n      'toString': () => 'ToString()',\r\n      'trim': () => 'Trim()',\r\n      'length': () => 'Length'\r\n    }",
+      "parentContext": {
+        "functionName": "generateCSharpFromMethodCall",
+        "functionParams": [
+          "callExpr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "54322c5d",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "(args) => {\r\n        const decimals = args[0] && t.isNumericLiteral(args[0]) ? args[0].value : 2;\r\n        return `ToString(\"F${decimals}\")`;\r\n      }",
+      "parentContext": {
+        "functionName": "generateCSharpFromMethodCall",
+        "functionParams": [
+          "callExpr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "be89ad41",
+      "type": "VariableDeclaration",
+      "babel_source": "const decimals = args[0] && t.isNumericLiteral(args[0]) ? args[0].value : 2;",
+      "parentContext": {
+        "functionName": "generateCSharpFromMethodCall",
+        "functionParams": [
+          "callExpr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7e1141cb",
+      "type": "ConditionalExpression",
+      "babel_source": "args[0] && t.isNumericLiteral(args[0]) ? args[0].value : 2",
+      "parentContext": {
+        "functionName": "generateCSharpFromMethodCall",
+        "functionParams": [
+          "callExpr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a7b5c87e",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "args[0] && t.isNumericLiteral(args[0])",
+      "parentContext": {
+        "functionName": "generateCSharpFromMethodCall",
+        "functionParams": [
+          "callExpr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6ef9f3ea",
+      "type": "BabelTypeCheck",
+      "method": "isNumericLiteral",
+      "babel_source": "t.isNumericLiteral(args[0])",
+      "parentContext": {
+        "functionName": "generateCSharpFromMethodCall",
+        "functionParams": [
+          "callExpr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e5407364",
+      "type": "ReturnStatement",
+      "babel_source": "return `ToString(\"F${decimals}\")`;",
+      "parentContext": {
+        "functionName": "generateCSharpFromMethodCall",
+        "functionParams": [
+          "callExpr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "019cfa6d",
+      "type": "TemplateLiteral",
+      "babel_source": "`ToString(\"F${decimals}\")`",
+      "parentContext": {
+        "functionName": "generateCSharpFromMethodCall",
+        "functionParams": [
+          "callExpr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "71211a3e",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "() => 'ToUpper()'",
+      "parentContext": {
+        "functionName": "generateCSharpFromMethodCall",
+        "functionParams": [
+          "callExpr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0061dff6",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "() => 'ToLower()'",
+      "parentContext": {
+        "functionName": "generateCSharpFromMethodCall",
+        "functionParams": [
+          "callExpr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "deedc308",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "() => 'ToString()'",
+      "parentContext": {
+        "functionName": "generateCSharpFromMethodCall",
+        "functionParams": [
+          "callExpr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6c03c14d",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "() => 'Trim()'",
+      "parentContext": {
+        "functionName": "generateCSharpFromMethodCall",
+        "functionParams": [
+          "callExpr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ec8f07ac",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "() => 'Length'",
+      "parentContext": {
+        "functionName": "generateCSharpFromMethodCall",
+        "functionParams": [
+          "callExpr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ab04a02",
+      "type": "VariableDeclaration",
+      "babel_source": "const csharpMethod = methodMap[method] ? methodMap[method](args) : `${method}()`;",
+      "parentContext": {
+        "functionName": "generateCSharpFromMethodCall",
+        "functionParams": [
+          "callExpr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "852cc3c6",
+      "type": "ConditionalExpression",
+      "babel_source": "methodMap[method] ? methodMap[method](args) : `${method}()`",
+      "parentContext": {
+        "functionName": "generateCSharpFromMethodCall",
+        "functionParams": [
+          "callExpr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8fc992de",
+      "type": "TemplateLiteral",
+      "babel_source": "`${method}()`",
+      "parentContext": {
+        "functionName": "generateCSharpFromMethodCall",
+        "functionParams": [
+          "callExpr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b77b5733",
+      "type": "ReturnStatement",
+      "babel_source": "return `${object}.${csharpMethod}`;",
+      "parentContext": {
+        "functionName": "generateCSharpFromMethodCall",
+        "functionParams": [
+          "callExpr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ee457dcc",
+      "type": "TemplateLiteral",
+      "babel_source": "`${object}.${csharpMethod}`",
+      "parentContext": {
+        "functionName": "generateCSharpFromMethodCall",
+        "functionParams": [
+          "callExpr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e6caf818",
+      "type": "ReturnStatement",
+      "babel_source": "return 'null';",
+      "parentContext": {
+        "functionName": "generateCSharpFromMethodCall",
+        "functionParams": [
+          "callExpr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/useStateX.cjs"
+  ]
+}

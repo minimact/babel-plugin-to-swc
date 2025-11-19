@@ -1,0 +1,3192 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractStructuralTemplates",
+  "params": [
+    {
+      "name": "renderBody",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractStructuralTemplates(renderBody, component) {\r\n  if (!renderBody) return [];\r\n\r\n  const structuralTemplates = [];\r\n\r\n  /**\r\n   * Traverse JSX tree looking for conditional expressions that affect structure\r\n   */\r\n  function traverseJSX(node, path = []) {\r\n    if (t.isJSXElement(node)) {\r\n      // Check children for conditional expressions\r\n      for (let i = 0; i < node.children.length; i++) {\r\n        const child = node.children[i];\r\n\r\n        if (t.isJSXExpressionContainer(child)) {\r\n          const expr = child.expression;\r\n\r\n          // Ternary: {condition ? <A /> : <B />}\r\n          if (t.isConditionalExpression(expr)) {\r\n            const template = extractConditionalStructuralTemplate(expr, component, [...path, i]);\r\n            if (template) {\r\n              structuralTemplates.push(template);\r\n            }\r\n          }\r\n\r\n          // Logical AND: {condition && <Component />}\r\n          if (t.isLogicalExpression(expr) && expr.operator === '&&') {\r\n            const template = extractLogicalAndTemplate(expr, component, [...path, i]);\r\n            if (template) {\r\n              structuralTemplates.push(template);\r\n            }\r\n          }\r\n        } else if (t.isJSXElement(child)) {\r\n          traverseJSX(child, [...path, i]);\r\n        }\r\n      }\r\n    } else if (t.isJSXFragment(node)) {\r\n      for (let i = 0; i < node.children.length; i++) {\r\n        const child = node.children[i];\r\n        if (t.isJSXElement(child)) {\r\n          traverseJSX(child, [...path, i]);\r\n        } else if (t.isJSXExpressionContainer(child)) {\r\n          const expr = child.expression;\r\n\r\n          if (t.isConditionalExpression(expr)) {\r\n            const template = extractConditionalStructuralTemplate(expr, component, [...path, i]);\r\n            if (template) {\r\n              structuralTemplates.push(template);\r\n            }\r\n          }\r\n\r\n          if (t.isLogicalExpression(expr) && expr.operator === '&&') {\r\n            const template = extractLogicalAndTemplate(expr, component, [...path, i]);\r\n            if (template) {\r\n              structuralTemplates.push(template);\r\n            }\r\n          }\r\n        }\r\n      }\r\n    }\r\n  }\r\n\r\n  /**\r\n   * Extract structural template from ternary conditional\r\n   *\r\n   * Example: {isLoggedIn ? <Dashboard /> : <LoginForm />}\r\n   * →\r\n   * {\r\n   *   type: 'conditional',\r\n   *   conditionBinding: 'isLoggedIn',\r\n   *   branches: {\r\n   *     'true': ElementTemplate { tag: 'Dashboard', ... },\r\n   *     'false': ElementTemplate { tag: 'LoginForm', ... }\r\n   *   }\r\n   * }\r\n   */\r\n  function extractConditionalStructuralTemplate(conditionalExpr, component, path) {\r\n    const test = conditionalExpr.test;\r\n    const consequent = conditionalExpr.consequent;\r\n    const alternate = conditionalExpr.alternate;\r\n\r\n    // Extract condition binding\r\n    const conditionBinding = extractBinding(test, component);\r\n    if (!conditionBinding) {\r\n      console.warn('[Structural Template] Could not extract condition binding');\r\n      return null;\r\n    }\r\n\r\n    // Check if both branches are JSX elements (structural change)\r\n    const hasTrueBranch = t.isJSXElement(consequent) || t.isJSXFragment(consequent);\r\n    const hasFalseBranch = t.isJSXElement(alternate) || t.isJSXFragment(alternate) || t.isNullLiteral(alternate);\r\n\r\n    if (!hasTrueBranch && !hasFalseBranch) {\r\n      // Not a structural template (probably just conditional text)\r\n      return null;\r\n    }\r\n\r\n    // Extract templates for both branches\r\n    const branches = {};\r\n\r\n    if (hasTrueBranch) {\r\n      const trueBranch = extractElementOrFragmentTemplate(consequent, component);\r\n      if (trueBranch) {\r\n        branches['true'] = trueBranch;\r\n      }\r\n    }\r\n\r\n    if (hasFalseBranch) {\r\n      if (t.isNullLiteral(alternate)) {\r\n        branches['false'] = { type: 'Null' };\r\n      } else {\r\n        const falseBranch = extractElementOrFragmentTemplate(alternate, component);\r\n        if (falseBranch) {\r\n          branches['false'] = falseBranch;\r\n        }\r\n      }\r\n    }\r\n\r\n    // Determine state key (for C# attribute)\r\n    const stateKey = extractStateKey(test, component);\r\n\r\n    return {\r\n      type: 'conditional',\r\n      stateKey: stateKey || conditionBinding,\r\n      conditionBinding,\r\n      branches,\r\n      path\r\n    };\r\n  }\r\n\r\n  /**\r\n   * Extract structural template from logical AND\r\n   *\r\n   * Example: {error && <ErrorMessage />}\r\n   * →\r\n   * {\r\n   *   type: 'logicalAnd',\r\n   *   conditionBinding: 'error',\r\n   *   branches: {\r\n   *     'truthy': ElementTemplate { tag: 'ErrorMessage', ... },\r\n   *     'falsy': { type: 'Null' }\r\n   *   }\r\n   * }\r\n   */\r\n  function extractLogicalAndTemplate(logicalExpr, component, path) {\r\n    const left = logicalExpr.left;\r\n    const right = logicalExpr.right;\r\n\r\n    // Extract condition binding from left side\r\n    const conditionBinding = extractBinding(left, component);\r\n    if (!conditionBinding) {\r\n      return null;\r\n    }\r\n\r\n    // Check if right side is JSX element (structural change)\r\n    if (!t.isJSXElement(right) && !t.isJSXFragment(right)) {\r\n      return null;\r\n    }\r\n\r\n    // Extract template for truthy case\r\n    const truthyBranch = extractElementOrFragmentTemplate(right, component);\r\n    if (!truthyBranch) {\r\n      return null;\r\n    }\r\n\r\n    const stateKey = extractStateKey(left, component);\r\n\r\n    return {\r\n      type: 'logicalAnd',\r\n      stateKey: stateKey || conditionBinding,\r\n      conditionBinding,\r\n      branches: {\r\n        'truthy': truthyBranch,\r\n        'falsy': { type: 'Null' }\r\n      },\r\n      path\r\n    };\r\n  }\r\n\r\n  /**\r\n   * Extract element or fragment template\r\n   */\r\n  function extractElementOrFragmentTemplate(node, component) {\r\n    if (t.isJSXElement(node)) {\r\n      return extractSimpleElementTemplate(node, component);\r\n    } else if (t.isJSXFragment(node)) {\r\n      return {\r\n        type: 'Fragment',\r\n        children: node.children\r\n          .filter(child => t.isJSXElement(child) || t.isJSXText(child))\r\n          .map(child => {\r\n            if (t.isJSXElement(child)) {\r\n              return extractSimpleElementTemplate(child, component);\r\n            } else if (t.isJSXText(child)) {\r\n              const text = child.value.trim();\r\n              return text ? { type: 'Text', content: text } : null;\r\n            }\r\n          })\r\n          .filter(Boolean)\r\n      };\r\n    }\r\n    return null;\r\n  }\r\n\r\n  /**\r\n   * Extract simple element template (without nested state dependencies)\r\n   *\r\n   * For structural templates, we extract a simplified version that captures:\r\n   * - Tag name\r\n   * - Static props\r\n   * - Structure (not deeply nested templates)\r\n   */\r\n  function extractSimpleElementTemplate(jsxElement, component) {\r\n    const tagName = jsxElement.openingElement.name.name;\r\n    const attributes = jsxElement.openingElement.attributes;\r\n\r\n    // Extract static props only (complex props handled separately)\r\n    const props = {};\r\n    for (const attr of attributes) {\r\n      if (t.isJSXAttribute(attr)) {\r\n        const propName = attr.name.name;\r\n        const propValue = attr.value;\r\n\r\n        if (t.isStringLiteral(propValue)) {\r\n          props[propName] = propValue.value;\r\n        } else if (t.isJSXExpressionContainer(propValue)) {\r\n          // Mark as dynamic (will be re-evaluated)\r\n          const expr = propValue.expression;\r\n          if (t.isIdentifier(expr)) {\r\n            props[propName] = { binding: expr.name };\r\n          } else {\r\n            props[propName] = { expression: true };\r\n          }\r\n        }\r\n      }\r\n    }\r\n\r\n    // Extract children (simplified)\r\n    const children = jsxElement.children\r\n      .filter(child => t.isJSXElement(child) || t.isJSXText(child))\r\n      .map(child => {\r\n        if (t.isJSXElement(child)) {\r\n          return extractSimpleElementTemplate(child, component);\r\n        } else if (t.isJSXText(child)) {\r\n          const text = child.value.trim();\r\n          return text ? { type: 'Text', content: text } : null;\r\n        }\r\n      })\r\n      .filter(Boolean);\r\n\r\n    return {\r\n      type: 'Element',\r\n      tag: tagName,\r\n      props: Object.keys(props).length > 0 ? props : null,\r\n      children: children.length > 0 ? children : null\r\n    };\r\n  }\r\n\r\n  /**\r\n   * Extract binding from expression\r\n   */\r\n  function extractBinding(expr, component) {\r\n    if (t.isIdentifier(expr)) {\r\n      return expr.name;\r\n    } else if (t.isMemberExpression(expr)) {\r\n      return buildMemberPath(expr);\r\n    } else if (t.isUnaryExpression(expr) && expr.operator === '!') {\r\n      // Handle !isLoading\r\n      const binding = extractBinding(expr.argument, component);\r\n      return binding ? `!${binding}` : null;\r\n    }\r\n    return null;\r\n  }\r\n\r\n  /**\r\n   * Extract state key (root variable name) from expression\r\n   */\r\n  function extractStateKey(expr, component) {\r\n    if (t.isIdentifier(expr)) {\r\n      return expr.name;\r\n    } else if (t.isMemberExpression(expr)) {\r\n      // Get root object: user.isLoggedIn → \"user\"\r\n      let current = expr;\r\n      while (t.isMemberExpression(current)) {\r\n        current = current.object;\r\n      }\r\n      if (t.isIdentifier(current)) {\r\n        return current.name;\r\n      }\r\n    } else if (t.isUnaryExpression(expr)) {\r\n      return extractStateKey(expr.argument, component);\r\n    }\r\n    return null;\r\n  }\r\n\r\n  /**\r\n   * Build member expression path\r\n   */\r\n  function buildMemberPath(expr) {\r\n    const parts = [];\r\n    let current = expr;\r\n\r\n    while (t.isMemberExpression(current)) {\r\n      if (t.isIdentifier(current.property)) {\r\n        parts.unshift(current.property.name);\r\n      }\r\n      current = current.object;\r\n    }\r\n\r\n    if (t.isIdentifier(current)) {\r\n      parts.unshift(current.name);\r\n    }\r\n\r\n    return parts.join('.');\r\n  }\r\n\r\n  // Start traversal\r\n  traverseJSX(renderBody);\r\n\r\n  return structuralTemplates;\r\n}",
+  "body_templates": [
+    {
+      "hash": "7ba9f7aa",
+      "type": "IfStatement",
+      "condition": "!renderBody",
+      "babel_source": "if (!renderBody) return [];",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bc65e16e",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!renderBody",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c7221e11",
+      "type": "ReturnStatement",
+      "babel_source": "return [];",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "88a4b84c",
+      "type": "VariableDeclaration",
+      "babel_source": "const structuralTemplates = [];",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "83133507",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(node)",
+      "babel_source": "if (t.isJSXElement(node)) {\r\n      // Check children for conditional expressions\r\n      for (let i = 0; i < node.children.length; i++) {\r\n        const child = node.children[i];\r\n\r\n        if (t.isJSXExpressionContainer(child)) {\r\n          const expr = child.expression;\r\n\r\n          // Ternary: {condition ? <A /> : <B />}\r\n          if (t.isConditionalExpression(expr)) {\r\n            const template = extractConditionalStructuralTemplate(expr, component, [...path, i]);\r\n            if (template) {\r\n              structuralTemplates.push(template);\r\n            }\r\n          }\r\n\r\n          // Logical AND: {condition && <Component />}\r\n          if (t.isLogicalExpression(expr) && expr.operator === '&&') {\r\n            const template = extractLogicalAndTemplate(expr, component, [...path, i]);\r\n            if (template) {\r\n              structuralTemplates.push(template);\r\n            }\r\n          }\r\n        } else if (t.isJSXElement(child)) {\r\n          traverseJSX(child, [...path, i]);\r\n        }\r\n      }\r\n    } else if (t.isJSXFragment(node)) {\r\n      for (let i = 0; i < node.children.length; i++) {\r\n        const child = node.children[i];\r\n        if (t.isJSXElement(child)) {\r\n          traverseJSX(child, [...path, i]);\r\n        } else if (t.isJSXExpressionContainer(child)) {\r\n          const expr = child.expression;\r\n\r\n          if (t.isConditionalExpression(expr)) {\r\n            const template = extractConditionalStructuralTemplate(expr, component, [...path, i]);\r\n            if (template) {\r\n              structuralTemplates.push(template);\r\n            }\r\n          }\r\n\r\n          if (t.isLogicalExpression(expr) && expr.operator === '&&') {\r\n            const template = extractLogicalAndTemplate(expr, component, [...path, i]);\r\n            if (template) {\r\n              structuralTemplates.push(template);\r\n            }\r\n          }\r\n        }\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "606ccdc5",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(node)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5141f1c3",
+      "type": "ForStatement",
+      "babel_source": "for (let i = 0; i < node.children.length; i++) {\r\n        const child = node.children[i];\r\n\r\n        if (t.isJSXExpressionContainer(child)) {\r\n          const expr = child.expression;\r\n\r\n          // Ternary: {condition ? <A /> : <B />}\r\n          if (t.isConditionalExpression(expr)) {\r\n            const template = extractConditionalStructuralTemplate(expr, component, [...path, i]);\r\n            if (template) {\r\n              structuralTemplates.push(template);\r\n            }\r\n          }\r\n\r\n          // Logical AND: {condition && <Component />}\r\n          if (t.isLogicalExpression(expr) && expr.operator === '&&') {\r\n            const template = extractLogicalAndTemplate(expr, component, [...path, i]);\r\n            if (template) {\r\n              structuralTemplates.push(template);\r\n            }\r\n          }\r\n        } else if (t.isJSXElement(child)) {\r\n          traverseJSX(child, [...path, i]);\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ecb911a1",
+      "type": "VariableDeclaration",
+      "babel_source": "let i = 0",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a6e11c46",
+      "type": "BinaryExpression",
+      "operator": "<",
+      "babel_source": "i < node.children.length",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e8dee0e1",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "i++",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "489e538d",
+      "type": "VariableDeclaration",
+      "babel_source": "const child = node.children[i];",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2fdc5a27",
+      "type": "IfStatement",
+      "condition": "t.isJSXExpressionContainer(child)",
+      "babel_source": "if (t.isJSXExpressionContainer(child)) {\r\n          const expr = child.expression;\r\n\r\n          // Ternary: {condition ? <A /> : <B />}\r\n          if (t.isConditionalExpression(expr)) {\r\n            const template = extractConditionalStructuralTemplate(expr, component, [...path, i]);\r\n            if (template) {\r\n              structuralTemplates.push(template);\r\n            }\r\n          }\r\n\r\n          // Logical AND: {condition && <Component />}\r\n          if (t.isLogicalExpression(expr) && expr.operator === '&&') {\r\n            const template = extractLogicalAndTemplate(expr, component, [...path, i]);\r\n            if (template) {\r\n              structuralTemplates.push(template);\r\n            }\r\n          }\r\n        } else if (t.isJSXElement(child)) {\r\n          traverseJSX(child, [...path, i]);\r\n        }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c53c8d32",
+      "type": "BabelTypeCheck",
+      "method": "isJSXExpressionContainer",
+      "babel_source": "t.isJSXExpressionContainer(child)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9e5f0b19",
+      "type": "VariableDeclaration",
+      "babel_source": "const expr = child.expression;",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ddd42779",
+      "type": "IfStatement",
+      "condition": "t.isConditionalExpression(expr)",
+      "babel_source": "if (t.isConditionalExpression(expr)) {\r\n            const template = extractConditionalStructuralTemplate(expr, component, [...path, i]);\r\n            if (template) {\r\n              structuralTemplates.push(template);\r\n            }\r\n          }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5574ecc1",
+      "type": "BabelTypeCheck",
+      "method": "isConditionalExpression",
+      "babel_source": "t.isConditionalExpression(expr)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fab17cc5",
+      "type": "VariableDeclaration",
+      "babel_source": "const template = extractConditionalStructuralTemplate(expr, component, [...path, i]);",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "31f59839",
+      "type": "ArrayExpression",
+      "babel_source": "[...path, i]",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1d557abe",
+      "type": "SpreadElement",
+      "babel_source": "...path",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b769462b",
+      "type": "IfStatement",
+      "condition": "template",
+      "babel_source": "if (template) {\r\n              structuralTemplates.push(template);\r\n            }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "95a6fbe6",
+      "type": "IfStatement",
+      "condition": "t.isLogicalExpression(expr) && expr.operator === '&&'",
+      "babel_source": "if (t.isLogicalExpression(expr) && expr.operator === '&&') {\r\n            const template = extractLogicalAndTemplate(expr, component, [...path, i]);\r\n            if (template) {\r\n              structuralTemplates.push(template);\r\n            }\r\n          }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "295b4c4d",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isLogicalExpression(expr) && expr.operator === '&&'",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c20dd732",
+      "type": "BabelTypeCheck",
+      "method": "isLogicalExpression",
+      "babel_source": "t.isLogicalExpression(expr)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "312ae3e2",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "expr.operator === '&&'",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dcb3cec3",
+      "type": "VariableDeclaration",
+      "babel_source": "const template = extractLogicalAndTemplate(expr, component, [...path, i]);",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "31f59839",
+      "type": "ArrayExpression",
+      "babel_source": "[...path, i]",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1d557abe",
+      "type": "SpreadElement",
+      "babel_source": "...path",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b769462b",
+      "type": "IfStatement",
+      "condition": "template",
+      "babel_source": "if (template) {\r\n              structuralTemplates.push(template);\r\n            }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c300e860",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(child)",
+      "babel_source": "if (t.isJSXElement(child)) {\r\n          traverseJSX(child, [...path, i]);\r\n        }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d44bd174",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(child)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "31f59839",
+      "type": "ArrayExpression",
+      "babel_source": "[...path, i]",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1d557abe",
+      "type": "SpreadElement",
+      "babel_source": "...path",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f7dce9a2",
+      "type": "IfStatement",
+      "condition": "t.isJSXFragment(node)",
+      "babel_source": "if (t.isJSXFragment(node)) {\r\n      for (let i = 0; i < node.children.length; i++) {\r\n        const child = node.children[i];\r\n        if (t.isJSXElement(child)) {\r\n          traverseJSX(child, [...path, i]);\r\n        } else if (t.isJSXExpressionContainer(child)) {\r\n          const expr = child.expression;\r\n\r\n          if (t.isConditionalExpression(expr)) {\r\n            const template = extractConditionalStructuralTemplate(expr, component, [...path, i]);\r\n            if (template) {\r\n              structuralTemplates.push(template);\r\n            }\r\n          }\r\n\r\n          if (t.isLogicalExpression(expr) && expr.operator === '&&') {\r\n            const template = extractLogicalAndTemplate(expr, component, [...path, i]);\r\n            if (template) {\r\n              structuralTemplates.push(template);\r\n            }\r\n          }\r\n        }\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "00ed8bb0",
+      "type": "BabelTypeCheck",
+      "method": "isJSXFragment",
+      "babel_source": "t.isJSXFragment(node)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c3e3844c",
+      "type": "ForStatement",
+      "babel_source": "for (let i = 0; i < node.children.length; i++) {\r\n        const child = node.children[i];\r\n        if (t.isJSXElement(child)) {\r\n          traverseJSX(child, [...path, i]);\r\n        } else if (t.isJSXExpressionContainer(child)) {\r\n          const expr = child.expression;\r\n\r\n          if (t.isConditionalExpression(expr)) {\r\n            const template = extractConditionalStructuralTemplate(expr, component, [...path, i]);\r\n            if (template) {\r\n              structuralTemplates.push(template);\r\n            }\r\n          }\r\n\r\n          if (t.isLogicalExpression(expr) && expr.operator === '&&') {\r\n            const template = extractLogicalAndTemplate(expr, component, [...path, i]);\r\n            if (template) {\r\n              structuralTemplates.push(template);\r\n            }\r\n          }\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ecb911a1",
+      "type": "VariableDeclaration",
+      "babel_source": "let i = 0",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a6e11c46",
+      "type": "BinaryExpression",
+      "operator": "<",
+      "babel_source": "i < node.children.length",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e8dee0e1",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "i++",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "489e538d",
+      "type": "VariableDeclaration",
+      "babel_source": "const child = node.children[i];",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "35710485",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(child)",
+      "babel_source": "if (t.isJSXElement(child)) {\r\n          traverseJSX(child, [...path, i]);\r\n        } else if (t.isJSXExpressionContainer(child)) {\r\n          const expr = child.expression;\r\n\r\n          if (t.isConditionalExpression(expr)) {\r\n            const template = extractConditionalStructuralTemplate(expr, component, [...path, i]);\r\n            if (template) {\r\n              structuralTemplates.push(template);\r\n            }\r\n          }\r\n\r\n          if (t.isLogicalExpression(expr) && expr.operator === '&&') {\r\n            const template = extractLogicalAndTemplate(expr, component, [...path, i]);\r\n            if (template) {\r\n              structuralTemplates.push(template);\r\n            }\r\n          }\r\n        }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d44bd174",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(child)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "31f59839",
+      "type": "ArrayExpression",
+      "babel_source": "[...path, i]",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1d557abe",
+      "type": "SpreadElement",
+      "babel_source": "...path",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "206094f7",
+      "type": "IfStatement",
+      "condition": "t.isJSXExpressionContainer(child)",
+      "babel_source": "if (t.isJSXExpressionContainer(child)) {\r\n          const expr = child.expression;\r\n\r\n          if (t.isConditionalExpression(expr)) {\r\n            const template = extractConditionalStructuralTemplate(expr, component, [...path, i]);\r\n            if (template) {\r\n              structuralTemplates.push(template);\r\n            }\r\n          }\r\n\r\n          if (t.isLogicalExpression(expr) && expr.operator === '&&') {\r\n            const template = extractLogicalAndTemplate(expr, component, [...path, i]);\r\n            if (template) {\r\n              structuralTemplates.push(template);\r\n            }\r\n          }\r\n        }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c53c8d32",
+      "type": "BabelTypeCheck",
+      "method": "isJSXExpressionContainer",
+      "babel_source": "t.isJSXExpressionContainer(child)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9e5f0b19",
+      "type": "VariableDeclaration",
+      "babel_source": "const expr = child.expression;",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ddd42779",
+      "type": "IfStatement",
+      "condition": "t.isConditionalExpression(expr)",
+      "babel_source": "if (t.isConditionalExpression(expr)) {\r\n            const template = extractConditionalStructuralTemplate(expr, component, [...path, i]);\r\n            if (template) {\r\n              structuralTemplates.push(template);\r\n            }\r\n          }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5574ecc1",
+      "type": "BabelTypeCheck",
+      "method": "isConditionalExpression",
+      "babel_source": "t.isConditionalExpression(expr)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fab17cc5",
+      "type": "VariableDeclaration",
+      "babel_source": "const template = extractConditionalStructuralTemplate(expr, component, [...path, i]);",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "31f59839",
+      "type": "ArrayExpression",
+      "babel_source": "[...path, i]",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1d557abe",
+      "type": "SpreadElement",
+      "babel_source": "...path",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b769462b",
+      "type": "IfStatement",
+      "condition": "template",
+      "babel_source": "if (template) {\r\n              structuralTemplates.push(template);\r\n            }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "95a6fbe6",
+      "type": "IfStatement",
+      "condition": "t.isLogicalExpression(expr) && expr.operator === '&&'",
+      "babel_source": "if (t.isLogicalExpression(expr) && expr.operator === '&&') {\r\n            const template = extractLogicalAndTemplate(expr, component, [...path, i]);\r\n            if (template) {\r\n              structuralTemplates.push(template);\r\n            }\r\n          }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "295b4c4d",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isLogicalExpression(expr) && expr.operator === '&&'",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c20dd732",
+      "type": "BabelTypeCheck",
+      "method": "isLogicalExpression",
+      "babel_source": "t.isLogicalExpression(expr)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "312ae3e2",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "expr.operator === '&&'",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dcb3cec3",
+      "type": "VariableDeclaration",
+      "babel_source": "const template = extractLogicalAndTemplate(expr, component, [...path, i]);",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "31f59839",
+      "type": "ArrayExpression",
+      "babel_source": "[...path, i]",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1d557abe",
+      "type": "SpreadElement",
+      "babel_source": "...path",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b769462b",
+      "type": "IfStatement",
+      "condition": "template",
+      "babel_source": "if (template) {\r\n              structuralTemplates.push(template);\r\n            }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0580b47c",
+      "type": "VariableDeclaration",
+      "babel_source": "const test = conditionalExpr.test;",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "41b62084",
+      "type": "VariableDeclaration",
+      "babel_source": "const consequent = conditionalExpr.consequent;",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c01cc85c",
+      "type": "VariableDeclaration",
+      "babel_source": "const alternate = conditionalExpr.alternate;",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2083f988",
+      "type": "VariableDeclaration",
+      "babel_source": "const conditionBinding = extractBinding(test, component);",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f928acef",
+      "type": "IfStatement",
+      "condition": "!conditionBinding",
+      "babel_source": "if (!conditionBinding) {\r\n      console.warn('[Structural Template] Could not extract condition binding');\r\n      return null;\r\n    }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cf30b26e",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!conditionBinding",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "698e07ea",
+      "type": "VariableDeclaration",
+      "babel_source": "const hasTrueBranch = t.isJSXElement(consequent) || t.isJSXFragment(consequent);",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "206afb41",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isJSXElement(consequent) || t.isJSXFragment(consequent)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5395efda",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(consequent)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c9fb974c",
+      "type": "BabelTypeCheck",
+      "method": "isJSXFragment",
+      "babel_source": "t.isJSXFragment(consequent)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8b8f8d13",
+      "type": "VariableDeclaration",
+      "babel_source": "const hasFalseBranch = t.isJSXElement(alternate) || t.isJSXFragment(alternate) || t.isNullLiteral(alternate);",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "227d184c",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isJSXElement(alternate) || t.isJSXFragment(alternate) || t.isNullLiteral(alternate)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8faa9a16",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isJSXElement(alternate) || t.isJSXFragment(alternate)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e91dca1c",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(alternate)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b8b8dabd",
+      "type": "BabelTypeCheck",
+      "method": "isJSXFragment",
+      "babel_source": "t.isJSXFragment(alternate)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "10e00a9e",
+      "type": "BabelTypeCheck",
+      "method": "isNullLiteral",
+      "babel_source": "t.isNullLiteral(alternate)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "799dd6a3",
+      "type": "IfStatement",
+      "condition": "!hasTrueBranch && !hasFalseBranch",
+      "babel_source": "if (!hasTrueBranch && !hasFalseBranch) {\r\n      // Not a structural template (probably just conditional text)\r\n      return null;\r\n    }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "535f6c7c",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "!hasTrueBranch && !hasFalseBranch",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "47cc4790",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!hasTrueBranch",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "998fe545",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!hasFalseBranch",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ad2f493f",
+      "type": "VariableDeclaration",
+      "babel_source": "const branches = {};",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "44136fa3",
+      "type": "ObjectExpression",
+      "babel_source": "{}",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0eaa4d07",
+      "type": "IfStatement",
+      "condition": "hasTrueBranch",
+      "babel_source": "if (hasTrueBranch) {\r\n      const trueBranch = extractElementOrFragmentTemplate(consequent, component);\r\n      if (trueBranch) {\r\n        branches['true'] = trueBranch;\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d2fb7c41",
+      "type": "VariableDeclaration",
+      "babel_source": "const trueBranch = extractElementOrFragmentTemplate(consequent, component);",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f2b6d041",
+      "type": "IfStatement",
+      "condition": "trueBranch",
+      "babel_source": "if (trueBranch) {\r\n        branches['true'] = trueBranch;\r\n      }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "efb23ba3",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "branches['true'] = trueBranch",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9c10d827",
+      "type": "IfStatement",
+      "condition": "hasFalseBranch",
+      "babel_source": "if (hasFalseBranch) {\r\n      if (t.isNullLiteral(alternate)) {\r\n        branches['false'] = { type: 'Null' };\r\n      } else {\r\n        const falseBranch = extractElementOrFragmentTemplate(alternate, component);\r\n        if (falseBranch) {\r\n          branches['false'] = falseBranch;\r\n        }\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "00b8ea03",
+      "type": "IfStatement",
+      "condition": "t.isNullLiteral(alternate)",
+      "babel_source": "if (t.isNullLiteral(alternate)) {\r\n        branches['false'] = { type: 'Null' };\r\n      } else {\r\n        const falseBranch = extractElementOrFragmentTemplate(alternate, component);\r\n        if (falseBranch) {\r\n          branches['false'] = falseBranch;\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "10e00a9e",
+      "type": "BabelTypeCheck",
+      "method": "isNullLiteral",
+      "babel_source": "t.isNullLiteral(alternate)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8479a04c",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "branches['false'] = { type: 'Null' }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2e3cd1df",
+      "type": "ObjectExpression",
+      "babel_source": "{ type: 'Null' }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9824e555",
+      "type": "VariableDeclaration",
+      "babel_source": "const falseBranch = extractElementOrFragmentTemplate(alternate, component);",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8eb99650",
+      "type": "IfStatement",
+      "condition": "falseBranch",
+      "babel_source": "if (falseBranch) {\r\n          branches['false'] = falseBranch;\r\n        }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "40e0bbd9",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "branches['false'] = falseBranch",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c353026d",
+      "type": "VariableDeclaration",
+      "babel_source": "const stateKey = extractStateKey(test, component);",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c6a2e31d",
+      "type": "ReturnStatement",
+      "babel_source": "return {\r\n      type: 'conditional',\r\n      stateKey: stateKey || conditionBinding,\r\n      conditionBinding,\r\n      branches,\r\n      path\r\n    };",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "93067a8d",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n      type: 'conditional',\r\n      stateKey: stateKey || conditionBinding,\r\n      conditionBinding,\r\n      branches,\r\n      path\r\n    }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "39e55b64",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "stateKey || conditionBinding",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "13145cac",
+      "type": "VariableDeclaration",
+      "babel_source": "const left = logicalExpr.left;",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8d2e88e7",
+      "type": "VariableDeclaration",
+      "babel_source": "const right = logicalExpr.right;",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e2ca69d0",
+      "type": "VariableDeclaration",
+      "babel_source": "const conditionBinding = extractBinding(left, component);",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4dc3c578",
+      "type": "IfStatement",
+      "condition": "!conditionBinding",
+      "babel_source": "if (!conditionBinding) {\r\n      return null;\r\n    }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cf30b26e",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!conditionBinding",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dee51964",
+      "type": "IfStatement",
+      "condition": "!t.isJSXElement(right) && !t.isJSXFragment(right)",
+      "babel_source": "if (!t.isJSXElement(right) && !t.isJSXFragment(right)) {\r\n      return null;\r\n    }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e246a628",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "!t.isJSXElement(right) && !t.isJSXFragment(right)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c2be9785",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isJSXElement(right)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ea961854",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(right)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c96bdf4f",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isJSXFragment(right)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e9149293",
+      "type": "BabelTypeCheck",
+      "method": "isJSXFragment",
+      "babel_source": "t.isJSXFragment(right)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "896d3190",
+      "type": "VariableDeclaration",
+      "babel_source": "const truthyBranch = extractElementOrFragmentTemplate(right, component);",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8cdd32da",
+      "type": "IfStatement",
+      "condition": "!truthyBranch",
+      "babel_source": "if (!truthyBranch) {\r\n      return null;\r\n    }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c6d51ac8",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!truthyBranch",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6da21621",
+      "type": "VariableDeclaration",
+      "babel_source": "const stateKey = extractStateKey(left, component);",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3d43254c",
+      "type": "ReturnStatement",
+      "babel_source": "return {\r\n      type: 'logicalAnd',\r\n      stateKey: stateKey || conditionBinding,\r\n      conditionBinding,\r\n      branches: {\r\n        'truthy': truthyBranch,\r\n        'falsy': { type: 'Null' }\r\n      },\r\n      path\r\n    };",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c82f537d",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n      type: 'logicalAnd',\r\n      stateKey: stateKey || conditionBinding,\r\n      conditionBinding,\r\n      branches: {\r\n        'truthy': truthyBranch,\r\n        'falsy': { type: 'Null' }\r\n      },\r\n      path\r\n    }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "39e55b64",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "stateKey || conditionBinding",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "eb8cec4d",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n        'truthy': truthyBranch,\r\n        'falsy': { type: 'Null' }\r\n      }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2e3cd1df",
+      "type": "ObjectExpression",
+      "babel_source": "{ type: 'Null' }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8c6e6f7c",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(node)",
+      "babel_source": "if (t.isJSXElement(node)) {\r\n      return extractSimpleElementTemplate(node, component);\r\n    } else if (t.isJSXFragment(node)) {\r\n      return {\r\n        type: 'Fragment',\r\n        children: node.children\r\n          .filter(child => t.isJSXElement(child) || t.isJSXText(child))\r\n          .map(child => {\r\n            if (t.isJSXElement(child)) {\r\n              return extractSimpleElementTemplate(child, component);\r\n            } else if (t.isJSXText(child)) {\r\n              const text = child.value.trim();\r\n              return text ? { type: 'Text', content: text } : null;\r\n            }\r\n          })\r\n          .filter(Boolean)\r\n      };\r\n    }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "606ccdc5",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(node)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "99c6237d",
+      "type": "ReturnStatement",
+      "babel_source": "return extractSimpleElementTemplate(node, component);",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0f5b3d38",
+      "type": "IfStatement",
+      "condition": "t.isJSXFragment(node)",
+      "babel_source": "if (t.isJSXFragment(node)) {\r\n      return {\r\n        type: 'Fragment',\r\n        children: node.children\r\n          .filter(child => t.isJSXElement(child) || t.isJSXText(child))\r\n          .map(child => {\r\n            if (t.isJSXElement(child)) {\r\n              return extractSimpleElementTemplate(child, component);\r\n            } else if (t.isJSXText(child)) {\r\n              const text = child.value.trim();\r\n              return text ? { type: 'Text', content: text } : null;\r\n            }\r\n          })\r\n          .filter(Boolean)\r\n      };\r\n    }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "00ed8bb0",
+      "type": "BabelTypeCheck",
+      "method": "isJSXFragment",
+      "babel_source": "t.isJSXFragment(node)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "185ed006",
+      "type": "ReturnStatement",
+      "babel_source": "return {\r\n        type: 'Fragment',\r\n        children: node.children\r\n          .filter(child => t.isJSXElement(child) || t.isJSXText(child))\r\n          .map(child => {\r\n            if (t.isJSXElement(child)) {\r\n              return extractSimpleElementTemplate(child, component);\r\n            } else if (t.isJSXText(child)) {\r\n              const text = child.value.trim();\r\n              return text ? { type: 'Text', content: text } : null;\r\n            }\r\n          })\r\n          .filter(Boolean)\r\n      };",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e3280af2",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n        type: 'Fragment',\r\n        children: node.children\r\n          .filter(child => t.isJSXElement(child) || t.isJSXText(child))\r\n          .map(child => {\r\n            if (t.isJSXElement(child)) {\r\n              return extractSimpleElementTemplate(child, component);\r\n            } else if (t.isJSXText(child)) {\r\n              const text = child.value.trim();\r\n              return text ? { type: 'Text', content: text } : null;\r\n            }\r\n          })\r\n          .filter(Boolean)\r\n      }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "41793b8b",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "child => t.isJSXElement(child) || t.isJSXText(child)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8598027d",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isJSXElement(child) || t.isJSXText(child)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d44bd174",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(child)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8cc41c4e",
+      "type": "BabelTypeCheck",
+      "method": "isJSXText",
+      "babel_source": "t.isJSXText(child)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cf176262",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "child => {\r\n            if (t.isJSXElement(child)) {\r\n              return extractSimpleElementTemplate(child, component);\r\n            } else if (t.isJSXText(child)) {\r\n              const text = child.value.trim();\r\n              return text ? { type: 'Text', content: text } : null;\r\n            }\r\n          }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "012491fe",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(child)",
+      "babel_source": "if (t.isJSXElement(child)) {\r\n              return extractSimpleElementTemplate(child, component);\r\n            } else if (t.isJSXText(child)) {\r\n              const text = child.value.trim();\r\n              return text ? { type: 'Text', content: text } : null;\r\n            }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d44bd174",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(child)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bee3fc7c",
+      "type": "ReturnStatement",
+      "babel_source": "return extractSimpleElementTemplate(child, component);",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "45185437",
+      "type": "IfStatement",
+      "condition": "t.isJSXText(child)",
+      "babel_source": "if (t.isJSXText(child)) {\r\n              const text = child.value.trim();\r\n              return text ? { type: 'Text', content: text } : null;\r\n            }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8cc41c4e",
+      "type": "BabelTypeCheck",
+      "method": "isJSXText",
+      "babel_source": "t.isJSXText(child)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9fb13957",
+      "type": "VariableDeclaration",
+      "babel_source": "const text = child.value.trim();",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cafc00ee",
+      "type": "ReturnStatement",
+      "babel_source": "return text ? { type: 'Text', content: text } : null;",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e92cb068",
+      "type": "ConditionalExpression",
+      "babel_source": "text ? { type: 'Text', content: text } : null",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d5b99f90",
+      "type": "ObjectExpression",
+      "babel_source": "{ type: 'Text', content: text }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ba4ebc27",
+      "type": "VariableDeclaration",
+      "babel_source": "const tagName = jsxElement.openingElement.name.name;",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "68b20f04",
+      "type": "VariableDeclaration",
+      "babel_source": "const attributes = jsxElement.openingElement.attributes;",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a6ed2909",
+      "type": "VariableDeclaration",
+      "babel_source": "const props = {};",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "44136fa3",
+      "type": "ObjectExpression",
+      "babel_source": "{}",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0ada5bfd",
+      "type": "ForOfStatement",
+      "babel_source": "for (const attr of attributes) {\r\n      if (t.isJSXAttribute(attr)) {\r\n        const propName = attr.name.name;\r\n        const propValue = attr.value;\r\n\r\n        if (t.isStringLiteral(propValue)) {\r\n          props[propName] = propValue.value;\r\n        } else if (t.isJSXExpressionContainer(propValue)) {\r\n          // Mark as dynamic (will be re-evaluated)\r\n          const expr = propValue.expression;\r\n          if (t.isIdentifier(expr)) {\r\n            props[propName] = { binding: expr.name };\r\n          } else {\r\n            props[propName] = { expression: true };\r\n          }\r\n        }\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "02ca2e7f",
+      "type": "VariableDeclaration",
+      "babel_source": "const attr",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "113a0f7e",
+      "type": "IfStatement",
+      "condition": "t.isJSXAttribute(attr)",
+      "babel_source": "if (t.isJSXAttribute(attr)) {\r\n        const propName = attr.name.name;\r\n        const propValue = attr.value;\r\n\r\n        if (t.isStringLiteral(propValue)) {\r\n          props[propName] = propValue.value;\r\n        } else if (t.isJSXExpressionContainer(propValue)) {\r\n          // Mark as dynamic (will be re-evaluated)\r\n          const expr = propValue.expression;\r\n          if (t.isIdentifier(expr)) {\r\n            props[propName] = { binding: expr.name };\r\n          } else {\r\n            props[propName] = { expression: true };\r\n          }\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7468026c",
+      "type": "BabelTypeCheck",
+      "method": "isJSXAttribute",
+      "babel_source": "t.isJSXAttribute(attr)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7ec4be49",
+      "type": "VariableDeclaration",
+      "babel_source": "const propName = attr.name.name;",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "36298b97",
+      "type": "VariableDeclaration",
+      "babel_source": "const propValue = attr.value;",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "691c407b",
+      "type": "IfStatement",
+      "condition": "t.isStringLiteral(propValue)",
+      "babel_source": "if (t.isStringLiteral(propValue)) {\r\n          props[propName] = propValue.value;\r\n        } else if (t.isJSXExpressionContainer(propValue)) {\r\n          // Mark as dynamic (will be re-evaluated)\r\n          const expr = propValue.expression;\r\n          if (t.isIdentifier(expr)) {\r\n            props[propName] = { binding: expr.name };\r\n          } else {\r\n            props[propName] = { expression: true };\r\n          }\r\n        }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d5e588e0",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(propValue)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "412d7483",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "props[propName] = propValue.value",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "12bf8752",
+      "type": "IfStatement",
+      "condition": "t.isJSXExpressionContainer(propValue)",
+      "babel_source": "if (t.isJSXExpressionContainer(propValue)) {\r\n          // Mark as dynamic (will be re-evaluated)\r\n          const expr = propValue.expression;\r\n          if (t.isIdentifier(expr)) {\r\n            props[propName] = { binding: expr.name };\r\n          } else {\r\n            props[propName] = { expression: true };\r\n          }\r\n        }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c1bf261c",
+      "type": "BabelTypeCheck",
+      "method": "isJSXExpressionContainer",
+      "babel_source": "t.isJSXExpressionContainer(propValue)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2a180b1f",
+      "type": "VariableDeclaration",
+      "babel_source": "const expr = propValue.expression;",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "61ea0b14",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(expr)",
+      "babel_source": "if (t.isIdentifier(expr)) {\r\n            props[propName] = { binding: expr.name };\r\n          } else {\r\n            props[propName] = { expression: true };\r\n          }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42d26fd4",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(expr)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "558459fa",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "props[propName] = { binding: expr.name }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ef0fafa",
+      "type": "ObjectExpression",
+      "babel_source": "{ binding: expr.name }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "782eab92",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "props[propName] = { expression: true }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "452bd73c",
+      "type": "ObjectExpression",
+      "babel_source": "{ expression: true }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2a0b8c3e",
+      "type": "VariableDeclaration",
+      "babel_source": "const children = jsxElement.children\r\n      .filter(child => t.isJSXElement(child) || t.isJSXText(child))\r\n      .map(child => {\r\n        if (t.isJSXElement(child)) {\r\n          return extractSimpleElementTemplate(child, component);\r\n        } else if (t.isJSXText(child)) {\r\n          const text = child.value.trim();\r\n          return text ? { type: 'Text', content: text } : null;\r\n        }\r\n      })\r\n      .filter(Boolean);",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "41793b8b",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "child => t.isJSXElement(child) || t.isJSXText(child)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8598027d",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isJSXElement(child) || t.isJSXText(child)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d44bd174",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(child)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8cc41c4e",
+      "type": "BabelTypeCheck",
+      "method": "isJSXText",
+      "babel_source": "t.isJSXText(child)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4eec7b89",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "child => {\r\n        if (t.isJSXElement(child)) {\r\n          return extractSimpleElementTemplate(child, component);\r\n        } else if (t.isJSXText(child)) {\r\n          const text = child.value.trim();\r\n          return text ? { type: 'Text', content: text } : null;\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "37e6dd40",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(child)",
+      "babel_source": "if (t.isJSXElement(child)) {\r\n          return extractSimpleElementTemplate(child, component);\r\n        } else if (t.isJSXText(child)) {\r\n          const text = child.value.trim();\r\n          return text ? { type: 'Text', content: text } : null;\r\n        }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d44bd174",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(child)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bee3fc7c",
+      "type": "ReturnStatement",
+      "babel_source": "return extractSimpleElementTemplate(child, component);",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9ae550c6",
+      "type": "IfStatement",
+      "condition": "t.isJSXText(child)",
+      "babel_source": "if (t.isJSXText(child)) {\r\n          const text = child.value.trim();\r\n          return text ? { type: 'Text', content: text } : null;\r\n        }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8cc41c4e",
+      "type": "BabelTypeCheck",
+      "method": "isJSXText",
+      "babel_source": "t.isJSXText(child)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9fb13957",
+      "type": "VariableDeclaration",
+      "babel_source": "const text = child.value.trim();",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cafc00ee",
+      "type": "ReturnStatement",
+      "babel_source": "return text ? { type: 'Text', content: text } : null;",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e92cb068",
+      "type": "ConditionalExpression",
+      "babel_source": "text ? { type: 'Text', content: text } : null",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d5b99f90",
+      "type": "ObjectExpression",
+      "babel_source": "{ type: 'Text', content: text }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "48a5d0e5",
+      "type": "ReturnStatement",
+      "babel_source": "return {\r\n      type: 'Element',\r\n      tag: tagName,\r\n      props: Object.keys(props).length > 0 ? props : null,\r\n      children: children.length > 0 ? children : null\r\n    };",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bdd8a018",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n      type: 'Element',\r\n      tag: tagName,\r\n      props: Object.keys(props).length > 0 ? props : null,\r\n      children: children.length > 0 ? children : null\r\n    }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fc099d79",
+      "type": "ConditionalExpression",
+      "babel_source": "Object.keys(props).length > 0 ? props : null",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b8dc4081",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "Object.keys(props).length > 0",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c50e380d",
+      "type": "ConditionalExpression",
+      "babel_source": "children.length > 0 ? children : null",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0a6f5294",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "children.length > 0",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2295cd1d",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(expr)",
+      "babel_source": "if (t.isIdentifier(expr)) {\r\n      return expr.name;\r\n    } else if (t.isMemberExpression(expr)) {\r\n      return buildMemberPath(expr);\r\n    } else if (t.isUnaryExpression(expr) && expr.operator === '!') {\r\n      // Handle !isLoading\r\n      const binding = extractBinding(expr.argument, component);\r\n      return binding ? `!${binding}` : null;\r\n    }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42d26fd4",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(expr)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dc053a27",
+      "type": "ReturnStatement",
+      "babel_source": "return expr.name;",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8b08abcd",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(expr)",
+      "babel_source": "if (t.isMemberExpression(expr)) {\r\n      return buildMemberPath(expr);\r\n    } else if (t.isUnaryExpression(expr) && expr.operator === '!') {\r\n      // Handle !isLoading\r\n      const binding = extractBinding(expr.argument, component);\r\n      return binding ? `!${binding}` : null;\r\n    }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c8858c63",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(expr)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "555e4b1f",
+      "type": "ReturnStatement",
+      "babel_source": "return buildMemberPath(expr);",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4c73cd2c",
+      "type": "IfStatement",
+      "condition": "t.isUnaryExpression(expr) && expr.operator === '!'",
+      "babel_source": "if (t.isUnaryExpression(expr) && expr.operator === '!') {\r\n      // Handle !isLoading\r\n      const binding = extractBinding(expr.argument, component);\r\n      return binding ? `!${binding}` : null;\r\n    }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f7ca2c2f",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isUnaryExpression(expr) && expr.operator === '!'",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4b2e045a",
+      "type": "BabelTypeCheck",
+      "method": "isUnaryExpression",
+      "babel_source": "t.isUnaryExpression(expr)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9893e520",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "expr.operator === '!'",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d01d9fcc",
+      "type": "VariableDeclaration",
+      "babel_source": "const binding = extractBinding(expr.argument, component);",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "59b5cee3",
+      "type": "ReturnStatement",
+      "babel_source": "return binding ? `!${binding}` : null;",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "95e273ff",
+      "type": "ConditionalExpression",
+      "babel_source": "binding ? `!${binding}` : null",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0a8c3b4e",
+      "type": "TemplateLiteral",
+      "babel_source": "`!${binding}`",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5d9f0c45",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(expr)",
+      "babel_source": "if (t.isIdentifier(expr)) {\r\n      return expr.name;\r\n    } else if (t.isMemberExpression(expr)) {\r\n      // Get root object: user.isLoggedIn → \"user\"\r\n      let current = expr;\r\n      while (t.isMemberExpression(current)) {\r\n        current = current.object;\r\n      }\r\n      if (t.isIdentifier(current)) {\r\n        return current.name;\r\n      }\r\n    } else if (t.isUnaryExpression(expr)) {\r\n      return extractStateKey(expr.argument, component);\r\n    }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42d26fd4",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(expr)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dc053a27",
+      "type": "ReturnStatement",
+      "babel_source": "return expr.name;",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e797e66a",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(expr)",
+      "babel_source": "if (t.isMemberExpression(expr)) {\r\n      // Get root object: user.isLoggedIn → \"user\"\r\n      let current = expr;\r\n      while (t.isMemberExpression(current)) {\r\n        current = current.object;\r\n      }\r\n      if (t.isIdentifier(current)) {\r\n        return current.name;\r\n      }\r\n    } else if (t.isUnaryExpression(expr)) {\r\n      return extractStateKey(expr.argument, component);\r\n    }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c8858c63",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(expr)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b74a5e61",
+      "type": "VariableDeclaration",
+      "babel_source": "let current = expr;",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "847810c1",
+      "type": "WhileStatement",
+      "babel_source": "while (t.isMemberExpression(current)) {\r\n        current = current.object;\r\n      }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "99ac970d",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(current)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "05723cfe",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "current = current.object",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "17c54bb7",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(current)",
+      "babel_source": "if (t.isIdentifier(current)) {\r\n        return current.name;\r\n      }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f41cdd7f",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(current)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8eb838fb",
+      "type": "ReturnStatement",
+      "babel_source": "return current.name;",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f2b62151",
+      "type": "IfStatement",
+      "condition": "t.isUnaryExpression(expr)",
+      "babel_source": "if (t.isUnaryExpression(expr)) {\r\n      return extractStateKey(expr.argument, component);\r\n    }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4b2e045a",
+      "type": "BabelTypeCheck",
+      "method": "isUnaryExpression",
+      "babel_source": "t.isUnaryExpression(expr)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9323bdcf",
+      "type": "ReturnStatement",
+      "babel_source": "return extractStateKey(expr.argument, component);",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c4133e54",
+      "type": "VariableDeclaration",
+      "babel_source": "const parts = [];",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b74a5e61",
+      "type": "VariableDeclaration",
+      "babel_source": "let current = expr;",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ec94361c",
+      "type": "WhileStatement",
+      "babel_source": "while (t.isMemberExpression(current)) {\r\n      if (t.isIdentifier(current.property)) {\r\n        parts.unshift(current.property.name);\r\n      }\r\n      current = current.object;\r\n    }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "99ac970d",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(current)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d63eee77",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(current.property)",
+      "babel_source": "if (t.isIdentifier(current.property)) {\r\n        parts.unshift(current.property.name);\r\n      }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "70f404ee",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(current.property)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "05723cfe",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "current = current.object",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bf9886fb",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(current)",
+      "babel_source": "if (t.isIdentifier(current)) {\r\n      parts.unshift(current.name);\r\n    }",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f41cdd7f",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(current)",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42163b24",
+      "type": "ReturnStatement",
+      "babel_source": "return parts.join('.');",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e0f20dcc",
+      "type": "ReturnStatement",
+      "babel_source": "return structuralTemplates;",
+      "parentContext": {
+        "functionName": "extractStructuralTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/structuralTemplates.cjs"
+  ]
+}

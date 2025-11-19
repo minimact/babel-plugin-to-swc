@@ -1,0 +1,203 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractControlMethod",
+  "params": [
+    {
+      "name": "callExpr",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    },
+    {
+      "name": "timeline",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "method",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractControlMethod(callExpr, timeline, method) {\r\n  timeline.controlMethods.push({\r\n    method: method,\r\n    arguments: callExpr.arguments.map(arg => {\r\n      if (t.isNumericLiteral(arg)) return arg.value;\r\n      if (t.isStringLiteral(arg)) return arg.value;\r\n      if (t.isBooleanLiteral(arg)) return arg.value;\r\n      return undefined;\r\n    })\r\n  });\r\n}",
+  "body_templates": [
+    {
+      "hash": "fd10e337",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    method: method,\r\n    arguments: callExpr.arguments.map(arg => {\r\n      if (t.isNumericLiteral(arg)) return arg.value;\r\n      if (t.isStringLiteral(arg)) return arg.value;\r\n      if (t.isBooleanLiteral(arg)) return arg.value;\r\n      return undefined;\r\n    })\r\n  }",
+      "parentContext": {
+        "functionName": "extractControlMethod",
+        "functionParams": [
+          "callExpr",
+          "timeline",
+          "method"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "72b9dccb",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "arg => {\r\n      if (t.isNumericLiteral(arg)) return arg.value;\r\n      if (t.isStringLiteral(arg)) return arg.value;\r\n      if (t.isBooleanLiteral(arg)) return arg.value;\r\n      return undefined;\r\n    }",
+      "parentContext": {
+        "functionName": "extractControlMethod",
+        "functionParams": [
+          "callExpr",
+          "timeline",
+          "method"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1fbeef54",
+      "type": "IfStatement",
+      "condition": "t.isNumericLiteral(arg)",
+      "babel_source": "if (t.isNumericLiteral(arg)) return arg.value;",
+      "parentContext": {
+        "functionName": "extractControlMethod",
+        "functionParams": [
+          "callExpr",
+          "timeline",
+          "method"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f154633b",
+      "type": "BabelTypeCheck",
+      "method": "isNumericLiteral",
+      "babel_source": "t.isNumericLiteral(arg)",
+      "parentContext": {
+        "functionName": "extractControlMethod",
+        "functionParams": [
+          "callExpr",
+          "timeline",
+          "method"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a32a50fe",
+      "type": "ReturnStatement",
+      "babel_source": "return arg.value;",
+      "parentContext": {
+        "functionName": "extractControlMethod",
+        "functionParams": [
+          "callExpr",
+          "timeline",
+          "method"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d8b3a0ff",
+      "type": "IfStatement",
+      "condition": "t.isStringLiteral(arg)",
+      "babel_source": "if (t.isStringLiteral(arg)) return arg.value;",
+      "parentContext": {
+        "functionName": "extractControlMethod",
+        "functionParams": [
+          "callExpr",
+          "timeline",
+          "method"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3be46d5d",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(arg)",
+      "parentContext": {
+        "functionName": "extractControlMethod",
+        "functionParams": [
+          "callExpr",
+          "timeline",
+          "method"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a32a50fe",
+      "type": "ReturnStatement",
+      "babel_source": "return arg.value;",
+      "parentContext": {
+        "functionName": "extractControlMethod",
+        "functionParams": [
+          "callExpr",
+          "timeline",
+          "method"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9c7bb4c9",
+      "type": "IfStatement",
+      "condition": "t.isBooleanLiteral(arg)",
+      "babel_source": "if (t.isBooleanLiteral(arg)) return arg.value;",
+      "parentContext": {
+        "functionName": "extractControlMethod",
+        "functionParams": [
+          "callExpr",
+          "timeline",
+          "method"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1f7a5aa1",
+      "type": "BabelTypeCheck",
+      "method": "isBooleanLiteral",
+      "babel_source": "t.isBooleanLiteral(arg)",
+      "parentContext": {
+        "functionName": "extractControlMethod",
+        "functionParams": [
+          "callExpr",
+          "timeline",
+          "method"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a32a50fe",
+      "type": "ReturnStatement",
+      "babel_source": "return arg.value;",
+      "parentContext": {
+        "functionName": "extractControlMethod",
+        "functionParams": [
+          "callExpr",
+          "timeline",
+          "method"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4fb378f2",
+      "type": "ReturnStatement",
+      "babel_source": "return undefined;",
+      "parentContext": {
+        "functionName": "extractControlMethod",
+        "functionParams": [
+          "callExpr",
+          "timeline",
+          "method"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/timelineAnalyzer.cjs"
+  ]
+}

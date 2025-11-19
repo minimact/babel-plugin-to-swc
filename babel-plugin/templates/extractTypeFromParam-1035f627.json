@@ -1,0 +1,82 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractTypeFromParam",
+  "params": [
+    {
+      "name": "param",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractTypeFromParam(param) {\r\n  if (param.typeAnnotation && t.isTSTypeAnnotation(param.typeAnnotation)) {\r\n    return extractTypeString(param.typeAnnotation.typeAnnotation);\r\n  }\r\n  return 'any';\r\n}",
+  "body_templates": [
+    {
+      "hash": "436cf203",
+      "type": "IfStatement",
+      "condition": "param.typeAnnotation && t.isTSTypeAnnotation(param.typeAnnotation)",
+      "babel_source": "if (param.typeAnnotation && t.isTSTypeAnnotation(param.typeAnnotation)) {\r\n    return extractTypeString(param.typeAnnotation.typeAnnotation);\r\n  }",
+      "parentContext": {
+        "functionName": "extractTypeFromParam",
+        "functionParams": [
+          "param"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "be568f5b",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "param.typeAnnotation && t.isTSTypeAnnotation(param.typeAnnotation)",
+      "parentContext": {
+        "functionName": "extractTypeFromParam",
+        "functionParams": [
+          "param"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "85e36d29",
+      "type": "BabelTypeCheck",
+      "method": "isTSTypeAnnotation",
+      "babel_source": "t.isTSTypeAnnotation(param.typeAnnotation)",
+      "parentContext": {
+        "functionName": "extractTypeFromParam",
+        "functionParams": [
+          "param"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "877534cc",
+      "type": "ReturnStatement",
+      "babel_source": "return extractTypeString(param.typeAnnotation.typeAnnotation);",
+      "parentContext": {
+        "functionName": "extractTypeFromParam",
+        "functionParams": [
+          "param"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "578ca534",
+      "type": "ReturnStatement",
+      "babel_source": "return 'any';",
+      "parentContext": {
+        "functionName": "extractTypeFromParam",
+        "functionParams": [
+          "param"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/hookAnalyzer.cjs"
+  ]
+}

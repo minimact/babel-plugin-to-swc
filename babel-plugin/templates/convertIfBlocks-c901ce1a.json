@@ -1,0 +1,202 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "convertIfBlocks",
+  "params": [
+    {
+      "name": "markdown",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function convertIfBlocks(markdown) {\r\n  // Pattern: @if \\s* ( condition ) \\s* { body } [else { elseBody }]\r\n  // Using [\\s\\S] to match any character including newlines\r\n\r\n  const ifPattern = /@if\\s*\\(([^)]+)\\)\\s*\\{([\\s\\S]*?)\\}(?:\\s*else\\s*\\{([\\s\\S]*?)\\})?/g;\r\n\r\n  return markdown.replace(ifPattern, (match, condition, thenBody, elseBody) => {\r\n    const then = thenBody.trim();\r\n    const elsePart = elseBody ? elseBody.trim() : '';\r\n\r\n    // Recursively convert nested Razor in the bodies\r\n    const convertedThen = convertNestedRazor(then);\r\n    const convertedElse = elsePart ? convertNestedRazor(elsePart) : '';\r\n\r\n    if (convertedElse) {\r\n      return `{(${condition} ? @\"${convertedThen}\" : @\"${convertedElse}\")}`;\r\n    } else {\r\n      return `{(${condition} ? @\"${convertedThen}\" : \"\")}`;\r\n    }\r\n  });\r\n}",
+  "body_templates": [
+    {
+      "hash": "533ea8dd",
+      "type": "VariableDeclaration",
+      "babel_source": "const ifPattern = /@if\\s*\\(([^)]+)\\)\\s*\\{([\\s\\S]*?)\\}(?:\\s*else\\s*\\{([\\s\\S]*?)\\})?/g;",
+      "parentContext": {
+        "functionName": "convertIfBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "78b71f0d",
+      "type": "RegExpLiteral",
+      "pattern": "@if\\s*\\(([^)]+)\\)\\s*\\{([\\s\\S]*?)\\}(?:\\s*else\\s*\\{([\\s\\S]*?)\\})?",
+      "flags": "g",
+      "babel_source": "/@if\\s*\\(([^)]+)\\)\\s*\\{([\\s\\S]*?)\\}(?:\\s*else\\s*\\{([\\s\\S]*?)\\})?/g",
+      "parentContext": {
+        "functionName": "convertIfBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "121b30bb",
+      "type": "ReturnStatement",
+      "babel_source": "return markdown.replace(ifPattern, (match, condition, thenBody, elseBody) => {\r\n    const then = thenBody.trim();\r\n    const elsePart = elseBody ? elseBody.trim() : '';\r\n\r\n    // Recursively convert nested Razor in the bodies\r\n    const convertedThen = convertNestedRazor(then);\r\n    const convertedElse = elsePart ? convertNestedRazor(elsePart) : '';\r\n\r\n    if (convertedElse) {\r\n      return `{(${condition} ? @\"${convertedThen}\" : @\"${convertedElse}\")}`;\r\n    } else {\r\n      return `{(${condition} ? @\"${convertedThen}\" : \"\")}`;\r\n    }\r\n  });",
+      "parentContext": {
+        "functionName": "convertIfBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9fb2b450",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "(match, condition, thenBody, elseBody) => {\r\n    const then = thenBody.trim();\r\n    const elsePart = elseBody ? elseBody.trim() : '';\r\n\r\n    // Recursively convert nested Razor in the bodies\r\n    const convertedThen = convertNestedRazor(then);\r\n    const convertedElse = elsePart ? convertNestedRazor(elsePart) : '';\r\n\r\n    if (convertedElse) {\r\n      return `{(${condition} ? @\"${convertedThen}\" : @\"${convertedElse}\")}`;\r\n    } else {\r\n      return `{(${condition} ? @\"${convertedThen}\" : \"\")}`;\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "convertIfBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "78442b36",
+      "type": "VariableDeclaration",
+      "babel_source": "const then = thenBody.trim();",
+      "parentContext": {
+        "functionName": "convertIfBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5f220ba8",
+      "type": "VariableDeclaration",
+      "babel_source": "const elsePart = elseBody ? elseBody.trim() : '';",
+      "parentContext": {
+        "functionName": "convertIfBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ad951ffe",
+      "type": "ConditionalExpression",
+      "babel_source": "elseBody ? elseBody.trim() : ''",
+      "parentContext": {
+        "functionName": "convertIfBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0f3c3da1",
+      "type": "VariableDeclaration",
+      "babel_source": "const convertedThen = convertNestedRazor(then);",
+      "parentContext": {
+        "functionName": "convertIfBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fbced088",
+      "type": "VariableDeclaration",
+      "babel_source": "const convertedElse = elsePart ? convertNestedRazor(elsePart) : '';",
+      "parentContext": {
+        "functionName": "convertIfBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "309da403",
+      "type": "ConditionalExpression",
+      "babel_source": "elsePart ? convertNestedRazor(elsePart) : ''",
+      "parentContext": {
+        "functionName": "convertIfBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "78444b09",
+      "type": "IfStatement",
+      "condition": "convertedElse",
+      "babel_source": "if (convertedElse) {\r\n      return `{(${condition} ? @\"${convertedThen}\" : @\"${convertedElse}\")}`;\r\n    } else {\r\n      return `{(${condition} ? @\"${convertedThen}\" : \"\")}`;\r\n    }",
+      "parentContext": {
+        "functionName": "convertIfBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "72c5f68a",
+      "type": "ReturnStatement",
+      "babel_source": "return `{(${condition} ? @\"${convertedThen}\" : @\"${convertedElse}\")}`;",
+      "parentContext": {
+        "functionName": "convertIfBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cdf9bae2",
+      "type": "TemplateLiteral",
+      "babel_source": "`{(${condition} ? @\"${convertedThen}\" : @\"${convertedElse}\")}`",
+      "parentContext": {
+        "functionName": "convertIfBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c1ce2909",
+      "type": "ReturnStatement",
+      "babel_source": "return `{(${condition} ? @\"${convertedThen}\" : \"\")}`;",
+      "parentContext": {
+        "functionName": "convertIfBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d45c2340",
+      "type": "TemplateLiteral",
+      "babel_source": "`{(${condition} ? @\"${convertedThen}\" : \"\")}`",
+      "parentContext": {
+        "functionName": "convertIfBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/razorMarkdown.cjs"
+  ]
+}

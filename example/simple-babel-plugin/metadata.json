@@ -171,7 +171,9 @@
     },
 
     "capitalize": {
-      "params": [],
+      "params": [
+        { "name": "str", "type": "&str" }
+      ],
       "returns": "String",
       "skip": true
     }

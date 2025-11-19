@@ -1,0 +1,1657 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateComponentWrapper",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "parentComponent",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "indent",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateComponentWrapper(node, parentComponent, indent) {\r\n  const generate = require('@babel/generator').default;\r\n\r\n  const attributes = node.openingElement.attributes;\r\n  const hexPath = node.__minimactPath || '';\r\n\r\n  // Extract name=\"...\" attribute\r\n  const nameAttr = attributes.find(attr => {\r\n    if (!t.isJSXAttribute(attr)) return false;\r\n    // attr.name is JSXIdentifier, not regular Identifier\r\n    const attrName = t.isJSXIdentifier(attr.name) ? attr.name.name : null;\r\n    return attrName === 'name';\r\n  });\r\n\r\n  if (!nameAttr) {\r\n    throw new Error('[Lifted State] <Component> element must have a \"name\" attribute');\r\n  }\r\n\r\n  const componentName = t.isStringLiteral(nameAttr.value)\r\n    ? nameAttr.value.value\r\n    : null;\r\n\r\n  if (!componentName) {\r\n    throw new Error('[Lifted State] <Component> name attribute must be a string literal');\r\n  }\r\n\r\n  // Extract state={...} attribute\r\n  const stateAttr = attributes.find(attr => {\r\n    if (!t.isJSXAttribute(attr)) return false;\r\n    const attrName = t.isJSXIdentifier(attr.name) ? attr.name.name : null;\r\n    return attrName === 'state';\r\n  });\r\n\r\n  let stateCode = 'new Dictionary<string, object>()';\r\n\r\n  if (stateAttr && t.isJSXExpressionContainer(stateAttr.value)) {\r\n    const stateExpr = stateAttr.value.expression;\r\n\r\n    if (t.isObjectExpression(stateExpr)) {\r\n      // Track lifted state keys in parent component\r\n      if (!parentComponent.liftedComponentState) {\r\n        parentComponent.liftedComponentState = [];\r\n      }\r\n\r\n      for (const prop of stateExpr.properties) {\r\n        if (t.isObjectProperty(prop) && t.isIdentifier(prop.key)) {\r\n          const localKey = prop.key.name;\r\n          const namespacedKey = `${componentName}.${localKey}`;\r\n          const initialValue = generate(prop.value).code;\r\n\r\n          parentComponent.liftedComponentState.push({\r\n            componentName,\r\n            localKey,\r\n            namespacedKey,\r\n            initialValue\r\n          });\r\n        }\r\n      }\r\n\r\n      // Generate C# dictionary initializer\r\n      // Force Dictionary format for VComponentWrapper.InitialState\r\n      const { generateCSharpExpression } = require('./expressions.cjs');\r\n      const properties = stateExpr.properties.map(prop => {\r\n        if (t.isObjectProperty(prop)) {\r\n          const key = t.isIdentifier(prop.key) ? prop.key.name : prop.key.value;\r\n          const value = generateCSharpExpression(prop.value, parentComponent, 0);\r\n          return `[\"${key}\"] = ${value}`;\r\n        }\r\n        return '';\r\n      }).filter(p => p !== '');\r\n\r\n      if (properties.length === 0) {\r\n        stateCode = 'new Dictionary<string, object>()';\r\n      } else {\r\n        stateCode = `new Dictionary<string, object> { ${properties.join(', ')} }`;\r\n      }\r\n    }\r\n  }\r\n\r\n  // Extract child component JSX (should be single element)\r\n  const childComponents = node.children.filter(c => t.isJSXElement(c));\r\n\r\n  if (childComponents.length === 0) {\r\n    throw new Error(`[Lifted State] <Component name=\"${componentName}\"> must have exactly one child element`);\r\n  }\r\n\r\n  if (childComponents.length > 1) {\r\n    throw new Error(`[Lifted State] <Component name=\"${componentName}\"> must have exactly one child element, found ${childComponents.length}`);\r\n  }\r\n\r\n  const childComponent = childComponents[0];\r\n  const childTagName = childComponent.openingElement.name.name;\r\n\r\n  console.log(`[Lifted State] ✅ Detected <Component name=\"${componentName}\"> wrapping <${childTagName} />`);\r\n\r\n  // Detect protected state keys (from child component's useProtectedState)\r\n  // We need to find the child component in the processed components\r\n  const protectedKeys = [];\r\n\r\n  // Look through processed components for a component matching childTagName\r\n  if (parentComponent._childComponents) {\r\n    const childComp = parentComponent._childComponents.find(c => c.name === childTagName);\r\n\r\n    if (childComp && childComp.useProtectedState) {\r\n      for (const protectedState of childComp.useProtectedState) {\r\n        protectedKeys.push(protectedState.name);\r\n        console.log(`[Lifted State] 🔒 Protected state detected: ${protectedState.name} in ${childTagName}`);\r\n      }\r\n    }\r\n  }\r\n\r\n  // Generate ProtectedKeys code\r\n  const protectedKeysCode = protectedKeys.length > 0\r\n    ? `    ProtectedKeys = new HashSet<string> { ${protectedKeys.map(k => `\"${k}\"`).join(', ')} },`\r\n    : '';\r\n\r\n  // Generate VComponentWrapper instantiation\r\n  return `new VComponentWrapper\r\n{\r\n    ComponentName = \"${componentName}\",\r\n    ComponentType = \"${childTagName}\",\r\n    HexPath = \"${hexPath}\",\r\n    InitialState = ${stateCode},\r\n${protectedKeysCode}\r\n    ParentComponent = this\r\n}`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "a497c1e9",
+      "type": "VariableDeclaration",
+      "babel_source": "const generate = require('@babel/generator').default;",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b2f3dc2a",
+      "type": "VariableDeclaration",
+      "babel_source": "const attributes = node.openingElement.attributes;",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6545e565",
+      "type": "VariableDeclaration",
+      "babel_source": "const hexPath = node.__minimactPath || '';",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e3e86ef1",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "node.__minimactPath || ''",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "52a88c2d",
+      "type": "VariableDeclaration",
+      "babel_source": "const nameAttr = attributes.find(attr => {\r\n    if (!t.isJSXAttribute(attr)) return false;\r\n    // attr.name is JSXIdentifier, not regular Identifier\r\n    const attrName = t.isJSXIdentifier(attr.name) ? attr.name.name : null;\r\n    return attrName === 'name';\r\n  });",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "10f1d8f0",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "attr => {\r\n    if (!t.isJSXAttribute(attr)) return false;\r\n    // attr.name is JSXIdentifier, not regular Identifier\r\n    const attrName = t.isJSXIdentifier(attr.name) ? attr.name.name : null;\r\n    return attrName === 'name';\r\n  }",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "586a7b62",
+      "type": "IfStatement",
+      "condition": "!t.isJSXAttribute(attr)",
+      "babel_source": "if (!t.isJSXAttribute(attr)) return false;",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bb6c8d4f",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isJSXAttribute(attr)",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7468026c",
+      "type": "BabelTypeCheck",
+      "method": "isJSXAttribute",
+      "babel_source": "t.isJSXAttribute(attr)",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dabbdf16",
+      "type": "ReturnStatement",
+      "babel_source": "return false;",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "69f3fd63",
+      "type": "VariableDeclaration",
+      "babel_source": "const attrName = t.isJSXIdentifier(attr.name) ? attr.name.name : null;",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "86b52d92",
+      "type": "ConditionalExpression",
+      "babel_source": "t.isJSXIdentifier(attr.name) ? attr.name.name : null",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "51c2fb7e",
+      "type": "BabelTypeCheck",
+      "method": "isJSXIdentifier",
+      "babel_source": "t.isJSXIdentifier(attr.name)",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "eb0671e1",
+      "type": "ReturnStatement",
+      "babel_source": "return attrName === 'name';",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "932e08ee",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "attrName === 'name'",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5fd49cb0",
+      "type": "IfStatement",
+      "condition": "!nameAttr",
+      "babel_source": "if (!nameAttr) {\r\n    throw new Error('[Lifted State] <Component> element must have a \"name\" attribute');\r\n  }",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e7df6a33",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!nameAttr",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "61f6d1b4",
+      "type": "ThrowStatement",
+      "babel_source": "throw new Error('[Lifted State] <Component> element must have a \"name\" attribute');",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "aad8d8fc",
+      "type": "NewExpression",
+      "babel_source": "new Error('[Lifted State] <Component> element must have a \"name\" attribute')",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "697e2e33",
+      "type": "VariableDeclaration",
+      "babel_source": "const componentName = t.isStringLiteral(nameAttr.value)\r\n    ? nameAttr.value.value\r\n    : null;",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "240e6134",
+      "type": "ConditionalExpression",
+      "babel_source": "t.isStringLiteral(nameAttr.value)\r\n    ? nameAttr.value.value\r\n    : null",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0c771261",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(nameAttr.value)",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8dd1dda7",
+      "type": "IfStatement",
+      "condition": "!componentName",
+      "babel_source": "if (!componentName) {\r\n    throw new Error('[Lifted State] <Component> name attribute must be a string literal');\r\n  }",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "07aae00a",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!componentName",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f5afea27",
+      "type": "ThrowStatement",
+      "babel_source": "throw new Error('[Lifted State] <Component> name attribute must be a string literal');",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ac91cf01",
+      "type": "NewExpression",
+      "babel_source": "new Error('[Lifted State] <Component> name attribute must be a string literal')",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ecfb331d",
+      "type": "VariableDeclaration",
+      "babel_source": "const stateAttr = attributes.find(attr => {\r\n    if (!t.isJSXAttribute(attr)) return false;\r\n    const attrName = t.isJSXIdentifier(attr.name) ? attr.name.name : null;\r\n    return attrName === 'state';\r\n  });",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "028572b8",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "attr => {\r\n    if (!t.isJSXAttribute(attr)) return false;\r\n    const attrName = t.isJSXIdentifier(attr.name) ? attr.name.name : null;\r\n    return attrName === 'state';\r\n  }",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "586a7b62",
+      "type": "IfStatement",
+      "condition": "!t.isJSXAttribute(attr)",
+      "babel_source": "if (!t.isJSXAttribute(attr)) return false;",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bb6c8d4f",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isJSXAttribute(attr)",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7468026c",
+      "type": "BabelTypeCheck",
+      "method": "isJSXAttribute",
+      "babel_source": "t.isJSXAttribute(attr)",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dabbdf16",
+      "type": "ReturnStatement",
+      "babel_source": "return false;",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "69f3fd63",
+      "type": "VariableDeclaration",
+      "babel_source": "const attrName = t.isJSXIdentifier(attr.name) ? attr.name.name : null;",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "86b52d92",
+      "type": "ConditionalExpression",
+      "babel_source": "t.isJSXIdentifier(attr.name) ? attr.name.name : null",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "51c2fb7e",
+      "type": "BabelTypeCheck",
+      "method": "isJSXIdentifier",
+      "babel_source": "t.isJSXIdentifier(attr.name)",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8b34e397",
+      "type": "ReturnStatement",
+      "babel_source": "return attrName === 'state';",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3ed003c1",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "attrName === 'state'",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ac9bbbe5",
+      "type": "VariableDeclaration",
+      "babel_source": "let stateCode = 'new Dictionary<string, object>()';",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0b01ffee",
+      "type": "IfStatement",
+      "condition": "stateAttr && t.isJSXExpressionContainer(stateAttr.value)",
+      "babel_source": "if (stateAttr && t.isJSXExpressionContainer(stateAttr.value)) {\r\n    const stateExpr = stateAttr.value.expression;\r\n\r\n    if (t.isObjectExpression(stateExpr)) {\r\n      // Track lifted state keys in parent component\r\n      if (!parentComponent.liftedComponentState) {\r\n        parentComponent.liftedComponentState = [];\r\n      }\r\n\r\n      for (const prop of stateExpr.properties) {\r\n        if (t.isObjectProperty(prop) && t.isIdentifier(prop.key)) {\r\n          const localKey = prop.key.name;\r\n          const namespacedKey = `${componentName}.${localKey}`;\r\n          const initialValue = generate(prop.value).code;\r\n\r\n          parentComponent.liftedComponentState.push({\r\n            componentName,\r\n            localKey,\r\n            namespacedKey,\r\n            initialValue\r\n          });\r\n        }\r\n      }\r\n\r\n      // Generate C# dictionary initializer\r\n      // Force Dictionary format for VComponentWrapper.InitialState\r\n      const { generateCSharpExpression } = require('./expressions.cjs');\r\n      const properties = stateExpr.properties.map(prop => {\r\n        if (t.isObjectProperty(prop)) {\r\n          const key = t.isIdentifier(prop.key) ? prop.key.name : prop.key.value;\r\n          const value = generateCSharpExpression(prop.value, parentComponent, 0);\r\n          return `[\"${key}\"] = ${value}`;\r\n        }\r\n        return '';\r\n      }).filter(p => p !== '');\r\n\r\n      if (properties.length === 0) {\r\n        stateCode = 'new Dictionary<string, object>()';\r\n      } else {\r\n        stateCode = `new Dictionary<string, object> { ${properties.join(', ')} }`;\r\n      }\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3c319867",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "stateAttr && t.isJSXExpressionContainer(stateAttr.value)",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4896aeb9",
+      "type": "BabelTypeCheck",
+      "method": "isJSXExpressionContainer",
+      "babel_source": "t.isJSXExpressionContainer(stateAttr.value)",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a083d677",
+      "type": "VariableDeclaration",
+      "babel_source": "const stateExpr = stateAttr.value.expression;",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9caed7bb",
+      "type": "IfStatement",
+      "condition": "t.isObjectExpression(stateExpr)",
+      "babel_source": "if (t.isObjectExpression(stateExpr)) {\r\n      // Track lifted state keys in parent component\r\n      if (!parentComponent.liftedComponentState) {\r\n        parentComponent.liftedComponentState = [];\r\n      }\r\n\r\n      for (const prop of stateExpr.properties) {\r\n        if (t.isObjectProperty(prop) && t.isIdentifier(prop.key)) {\r\n          const localKey = prop.key.name;\r\n          const namespacedKey = `${componentName}.${localKey}`;\r\n          const initialValue = generate(prop.value).code;\r\n\r\n          parentComponent.liftedComponentState.push({\r\n            componentName,\r\n            localKey,\r\n            namespacedKey,\r\n            initialValue\r\n          });\r\n        }\r\n      }\r\n\r\n      // Generate C# dictionary initializer\r\n      // Force Dictionary format for VComponentWrapper.InitialState\r\n      const { generateCSharpExpression } = require('./expressions.cjs');\r\n      const properties = stateExpr.properties.map(prop => {\r\n        if (t.isObjectProperty(prop)) {\r\n          const key = t.isIdentifier(prop.key) ? prop.key.name : prop.key.value;\r\n          const value = generateCSharpExpression(prop.value, parentComponent, 0);\r\n          return `[\"${key}\"] = ${value}`;\r\n        }\r\n        return '';\r\n      }).filter(p => p !== '');\r\n\r\n      if (properties.length === 0) {\r\n        stateCode = 'new Dictionary<string, object>()';\r\n      } else {\r\n        stateCode = `new Dictionary<string, object> { ${properties.join(', ')} }`;\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6c30ebf0",
+      "type": "BabelTypeCheck",
+      "method": "isObjectExpression",
+      "babel_source": "t.isObjectExpression(stateExpr)",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f24090cf",
+      "type": "IfStatement",
+      "condition": "!parentComponent.liftedComponentState",
+      "babel_source": "if (!parentComponent.liftedComponentState) {\r\n        parentComponent.liftedComponentState = [];\r\n      }",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "867ca766",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!parentComponent.liftedComponentState",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2063f763",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "parentComponent.liftedComponentState = []",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "effd112b",
+      "type": "ForOfStatement",
+      "babel_source": "for (const prop of stateExpr.properties) {\r\n        if (t.isObjectProperty(prop) && t.isIdentifier(prop.key)) {\r\n          const localKey = prop.key.name;\r\n          const namespacedKey = `${componentName}.${localKey}`;\r\n          const initialValue = generate(prop.value).code;\r\n\r\n          parentComponent.liftedComponentState.push({\r\n            componentName,\r\n            localKey,\r\n            namespacedKey,\r\n            initialValue\r\n          });\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "098a3cb5",
+      "type": "VariableDeclaration",
+      "babel_source": "const prop",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c0ab7ea2",
+      "type": "IfStatement",
+      "condition": "t.isObjectProperty(prop) && t.isIdentifier(prop.key)",
+      "babel_source": "if (t.isObjectProperty(prop) && t.isIdentifier(prop.key)) {\r\n          const localKey = prop.key.name;\r\n          const namespacedKey = `${componentName}.${localKey}`;\r\n          const initialValue = generate(prop.value).code;\r\n\r\n          parentComponent.liftedComponentState.push({\r\n            componentName,\r\n            localKey,\r\n            namespacedKey,\r\n            initialValue\r\n          });\r\n        }",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "192fdbdf",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isObjectProperty(prop) && t.isIdentifier(prop.key)",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d8cb3d9e",
+      "type": "BabelTypeCheck",
+      "method": "isObjectProperty",
+      "babel_source": "t.isObjectProperty(prop)",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f3845e36",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(prop.key)",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1b75cae4",
+      "type": "VariableDeclaration",
+      "babel_source": "const localKey = prop.key.name;",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d284d4f8",
+      "type": "VariableDeclaration",
+      "babel_source": "const namespacedKey = `${componentName}.${localKey}`;",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "26593311",
+      "type": "TemplateLiteral",
+      "babel_source": "`${componentName}.${localKey}`",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "be9bd78a",
+      "type": "VariableDeclaration",
+      "babel_source": "const initialValue = generate(prop.value).code;",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dbdc441e",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n            componentName,\r\n            localKey,\r\n            namespacedKey,\r\n            initialValue\r\n          }",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "57c8d9bd",
+      "type": "VariableDeclaration",
+      "babel_source": "const { generateCSharpExpression } = require('./expressions.cjs');",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8a3a990e",
+      "type": "VariableDeclaration",
+      "babel_source": "const properties = stateExpr.properties.map(prop => {\r\n        if (t.isObjectProperty(prop)) {\r\n          const key = t.isIdentifier(prop.key) ? prop.key.name : prop.key.value;\r\n          const value = generateCSharpExpression(prop.value, parentComponent, 0);\r\n          return `[\"${key}\"] = ${value}`;\r\n        }\r\n        return '';\r\n      }).filter(p => p !== '');",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8ca06623",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "prop => {\r\n        if (t.isObjectProperty(prop)) {\r\n          const key = t.isIdentifier(prop.key) ? prop.key.name : prop.key.value;\r\n          const value = generateCSharpExpression(prop.value, parentComponent, 0);\r\n          return `[\"${key}\"] = ${value}`;\r\n        }\r\n        return '';\r\n      }",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f6b55041",
+      "type": "IfStatement",
+      "condition": "t.isObjectProperty(prop)",
+      "babel_source": "if (t.isObjectProperty(prop)) {\r\n          const key = t.isIdentifier(prop.key) ? prop.key.name : prop.key.value;\r\n          const value = generateCSharpExpression(prop.value, parentComponent, 0);\r\n          return `[\"${key}\"] = ${value}`;\r\n        }",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d8cb3d9e",
+      "type": "BabelTypeCheck",
+      "method": "isObjectProperty",
+      "babel_source": "t.isObjectProperty(prop)",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c94bac7f",
+      "type": "VariableDeclaration",
+      "babel_source": "const key = t.isIdentifier(prop.key) ? prop.key.name : prop.key.value;",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "32a67b85",
+      "type": "ConditionalExpression",
+      "babel_source": "t.isIdentifier(prop.key) ? prop.key.name : prop.key.value",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f3845e36",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(prop.key)",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "eebe2e74",
+      "type": "VariableDeclaration",
+      "babel_source": "const value = generateCSharpExpression(prop.value, parentComponent, 0);",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d7afbd24",
+      "type": "ReturnStatement",
+      "babel_source": "return `[\"${key}\"] = ${value}`;",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6b887ff3",
+      "type": "TemplateLiteral",
+      "babel_source": "`[\"${key}\"] = ${value}`",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7be478c8",
+      "type": "ReturnStatement",
+      "babel_source": "return '';",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "adef2565",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "p => p !== ''",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f83c4dea",
+      "type": "BinaryExpression",
+      "operator": "!==",
+      "babel_source": "p !== ''",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e4cc573c",
+      "type": "IfStatement",
+      "condition": "properties.length === 0",
+      "babel_source": "if (properties.length === 0) {\r\n        stateCode = 'new Dictionary<string, object>()';\r\n      } else {\r\n        stateCode = `new Dictionary<string, object> { ${properties.join(', ')} }`;\r\n      }",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "99d3d71a",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "properties.length === 0",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "71a80294",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "stateCode = 'new Dictionary<string, object>()'",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f8e4c27c",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "stateCode = `new Dictionary<string, object> { ${properties.join(', ')} }`",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "23e2c976",
+      "type": "TemplateLiteral",
+      "babel_source": "`new Dictionary<string, object> { ${properties.join(', ')} }`",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "44e67c38",
+      "type": "VariableDeclaration",
+      "babel_source": "const childComponents = node.children.filter(c => t.isJSXElement(c));",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6ea09504",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "c => t.isJSXElement(c)",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c93022c2",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(c)",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1814748c",
+      "type": "IfStatement",
+      "condition": "childComponents.length === 0",
+      "babel_source": "if (childComponents.length === 0) {\r\n    throw new Error(`[Lifted State] <Component name=\"${componentName}\"> must have exactly one child element`);\r\n  }",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "63f74a06",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "childComponents.length === 0",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "21db05e2",
+      "type": "ThrowStatement",
+      "babel_source": "throw new Error(`[Lifted State] <Component name=\"${componentName}\"> must have exactly one child element`);",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "30e7db87",
+      "type": "NewExpression",
+      "babel_source": "new Error(`[Lifted State] <Component name=\"${componentName}\"> must have exactly one child element`)",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7f44307c",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Lifted State] <Component name=\"${componentName}\"> must have exactly one child element`",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e10f58ee",
+      "type": "IfStatement",
+      "condition": "childComponents.length > 1",
+      "babel_source": "if (childComponents.length > 1) {\r\n    throw new Error(`[Lifted State] <Component name=\"${componentName}\"> must have exactly one child element, found ${childComponents.length}`);\r\n  }",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "836f04a5",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "childComponents.length > 1",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f8acc166",
+      "type": "ThrowStatement",
+      "babel_source": "throw new Error(`[Lifted State] <Component name=\"${componentName}\"> must have exactly one child element, found ${childComponents.length}`);",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5ec87403",
+      "type": "NewExpression",
+      "babel_source": "new Error(`[Lifted State] <Component name=\"${componentName}\"> must have exactly one child element, found ${childComponents.length}`)",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "081d1b8c",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Lifted State] <Component name=\"${componentName}\"> must have exactly one child element, found ${childComponents.length}`",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5da82944",
+      "type": "VariableDeclaration",
+      "babel_source": "const childComponent = childComponents[0];",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "74a05cf1",
+      "type": "VariableDeclaration",
+      "babel_source": "const childTagName = childComponent.openingElement.name.name;",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d2bf9ff5",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Lifted State] ✅ Detected <Component name=\"${componentName}\"> wrapping <${childTagName} />`",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "364c6529",
+      "type": "VariableDeclaration",
+      "babel_source": "const protectedKeys = [];",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e25b40e3",
+      "type": "IfStatement",
+      "condition": "parentComponent._childComponents",
+      "babel_source": "if (parentComponent._childComponents) {\r\n    const childComp = parentComponent._childComponents.find(c => c.name === childTagName);\r\n\r\n    if (childComp && childComp.useProtectedState) {\r\n      for (const protectedState of childComp.useProtectedState) {\r\n        protectedKeys.push(protectedState.name);\r\n        console.log(`[Lifted State] 🔒 Protected state detected: ${protectedState.name} in ${childTagName}`);\r\n      }\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fcf0ff8e",
+      "type": "VariableDeclaration",
+      "babel_source": "const childComp = parentComponent._childComponents.find(c => c.name === childTagName);",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "191eb550",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "c => c.name === childTagName",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "22eca2e6",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "c.name === childTagName",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b725212c",
+      "type": "IfStatement",
+      "condition": "childComp && childComp.useProtectedState",
+      "babel_source": "if (childComp && childComp.useProtectedState) {\r\n      for (const protectedState of childComp.useProtectedState) {\r\n        protectedKeys.push(protectedState.name);\r\n        console.log(`[Lifted State] 🔒 Protected state detected: ${protectedState.name} in ${childTagName}`);\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cb651eaf",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "childComp && childComp.useProtectedState",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a5fe709a",
+      "type": "ForOfStatement",
+      "babel_source": "for (const protectedState of childComp.useProtectedState) {\r\n        protectedKeys.push(protectedState.name);\r\n        console.log(`[Lifted State] 🔒 Protected state detected: ${protectedState.name} in ${childTagName}`);\r\n      }",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "61fe9b65",
+      "type": "VariableDeclaration",
+      "babel_source": "const protectedState",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "41003dcb",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Lifted State] 🔒 Protected state detected: ${protectedState.name} in ${childTagName}`",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dce679f5",
+      "type": "VariableDeclaration",
+      "babel_source": "const protectedKeysCode = protectedKeys.length > 0\r\n    ? `    ProtectedKeys = new HashSet<string> { ${protectedKeys.map(k => `\"${k}\"`).join(', ')} },`\r\n    : '';",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e4c7e6f3",
+      "type": "ConditionalExpression",
+      "babel_source": "protectedKeys.length > 0\r\n    ? `    ProtectedKeys = new HashSet<string> { ${protectedKeys.map(k => `\"${k}\"`).join(', ')} },`\r\n    : ''",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e2a57c67",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "protectedKeys.length > 0",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "34187f37",
+      "type": "TemplateLiteral",
+      "babel_source": "`    ProtectedKeys = new HashSet<string> { ${protectedKeys.map(k => `\"${k}\"`).join(', ')} },`",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "12da159d",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "k => `\"${k}\"`",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c3bd761b",
+      "type": "TemplateLiteral",
+      "babel_source": "`\"${k}\"`",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d2753039",
+      "type": "ReturnStatement",
+      "babel_source": "return `new VComponentWrapper\r\n{\r\n    ComponentName = \"${componentName}\",\r\n    ComponentType = \"${childTagName}\",\r\n    HexPath = \"${hexPath}\",\r\n    InitialState = ${stateCode},\r\n${protectedKeysCode}\r\n    ParentComponent = this\r\n}`;",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9db52ca3",
+      "type": "TemplateLiteral",
+      "babel_source": "`new VComponentWrapper\r\n{\r\n    ComponentName = \"${componentName}\",\r\n    ComponentType = \"${childTagName}\",\r\n    HexPath = \"${hexPath}\",\r\n    InitialState = ${stateCode},\r\n${protectedKeysCode}\r\n    ParentComponent = this\r\n}`",
+      "parentContext": {
+        "functionName": "generateComponentWrapper",
+        "functionParams": [
+          "node",
+          "parentComponent",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/jsx.cjs"
+  ]
+}

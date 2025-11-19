@@ -1,0 +1,154 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractFunctionDeclaration",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractFunctionDeclaration(node) {\r\n  if (!node.id) return null;\r\n\r\n  const name = node.id.name;\r\n  const params = node.params.map(p => ({\r\n    name: p.name || 'arg',\r\n    type: extractTypeFromParam(p)\r\n  }));\r\n\r\n  const bodyCode = generateBlockCode(node.body);\r\n\r\n  return {\r\n    name: name,\r\n    params: params,\r\n    returnType: 'void',\r\n    body: bodyCode\r\n  };\r\n}",
+  "body_templates": [
+    {
+      "hash": "cc414142",
+      "type": "IfStatement",
+      "condition": "!node.id",
+      "babel_source": "if (!node.id) return null;",
+      "parentContext": {
+        "functionName": "extractFunctionDeclaration",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "121d9445",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!node.id",
+      "parentContext": {
+        "functionName": "extractFunctionDeclaration",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractFunctionDeclaration",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fbcf2487",
+      "type": "VariableDeclaration",
+      "babel_source": "const name = node.id.name;",
+      "parentContext": {
+        "functionName": "extractFunctionDeclaration",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "886b85d4",
+      "type": "VariableDeclaration",
+      "babel_source": "const params = node.params.map(p => ({\r\n    name: p.name || 'arg',\r\n    type: extractTypeFromParam(p)\r\n  }));",
+      "parentContext": {
+        "functionName": "extractFunctionDeclaration",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "02f2a2af",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "p => ({\r\n    name: p.name || 'arg',\r\n    type: extractTypeFromParam(p)\r\n  })",
+      "parentContext": {
+        "functionName": "extractFunctionDeclaration",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0918e4f8",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    name: p.name || 'arg',\r\n    type: extractTypeFromParam(p)\r\n  }",
+      "parentContext": {
+        "functionName": "extractFunctionDeclaration",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7afb97fa",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "p.name || 'arg'",
+      "parentContext": {
+        "functionName": "extractFunctionDeclaration",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "acfeeffa",
+      "type": "VariableDeclaration",
+      "babel_source": "const bodyCode = generateBlockCode(node.body);",
+      "parentContext": {
+        "functionName": "extractFunctionDeclaration",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2d2f9422",
+      "type": "ReturnStatement",
+      "babel_source": "return {\r\n    name: name,\r\n    params: params,\r\n    returnType: 'void',\r\n    body: bodyCode\r\n  };",
+      "parentContext": {
+        "functionName": "extractFunctionDeclaration",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b21a75bf",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    name: name,\r\n    params: params,\r\n    returnType: 'void',\r\n    body: bodyCode\r\n  }",
+      "parentContext": {
+        "functionName": "extractFunctionDeclaration",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/hookAnalyzer.cjs"
+  ]
+}

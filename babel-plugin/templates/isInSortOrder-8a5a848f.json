@@ -1,0 +1,161 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "isInSortOrder",
+  "params": [
+    {
+      "name": "key",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "previousKey",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "nextKey",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "bool",
+  "babel_source": "function isInSortOrder(key, previousKey, nextKey) {\r\n  // If there's a previous key, current must be greater\r\n  if (previousKey && key <= previousKey) {\r\n    return false;\r\n  }\r\n\r\n  // If there's a next key, current must be less\r\n  if (nextKey && key >= nextKey) {\r\n    return false;\r\n  }\r\n\r\n  return true;\r\n}",
+  "body_templates": [
+    {
+      "hash": "9c27b264",
+      "type": "IfStatement",
+      "condition": "previousKey && key <= previousKey",
+      "babel_source": "if (previousKey && key <= previousKey) {\r\n    return false;\r\n  }",
+      "parentContext": {
+        "functionName": "isInSortOrder",
+        "functionParams": [
+          "key",
+          "previousKey",
+          "nextKey"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ce5ffc32",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "previousKey && key <= previousKey",
+      "parentContext": {
+        "functionName": "isInSortOrder",
+        "functionParams": [
+          "key",
+          "previousKey",
+          "nextKey"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d32e3437",
+      "type": "BinaryExpression",
+      "operator": "<=",
+      "babel_source": "key <= previousKey",
+      "parentContext": {
+        "functionName": "isInSortOrder",
+        "functionParams": [
+          "key",
+          "previousKey",
+          "nextKey"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dabbdf16",
+      "type": "ReturnStatement",
+      "babel_source": "return false;",
+      "parentContext": {
+        "functionName": "isInSortOrder",
+        "functionParams": [
+          "key",
+          "previousKey",
+          "nextKey"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "44af7da2",
+      "type": "IfStatement",
+      "condition": "nextKey && key >= nextKey",
+      "babel_source": "if (nextKey && key >= nextKey) {\r\n    return false;\r\n  }",
+      "parentContext": {
+        "functionName": "isInSortOrder",
+        "functionParams": [
+          "key",
+          "previousKey",
+          "nextKey"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3e21f977",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "nextKey && key >= nextKey",
+      "parentContext": {
+        "functionName": "isInSortOrder",
+        "functionParams": [
+          "key",
+          "previousKey",
+          "nextKey"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6167d58a",
+      "type": "BinaryExpression",
+      "operator": ">=",
+      "babel_source": "key >= nextKey",
+      "parentContext": {
+        "functionName": "isInSortOrder",
+        "functionParams": [
+          "key",
+          "previousKey",
+          "nextKey"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dabbdf16",
+      "type": "ReturnStatement",
+      "babel_source": "return false;",
+      "parentContext": {
+        "functionName": "isInSortOrder",
+        "functionParams": [
+          "key",
+          "previousKey",
+          "nextKey"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "10e0fa08",
+      "type": "ReturnStatement",
+      "babel_source": "return true;",
+      "parentContext": {
+        "functionName": "isInSortOrder",
+        "functionParams": [
+          "key",
+          "previousKey",
+          "nextKey"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "utils/pathAssignment.cjs"
+  ]
+}

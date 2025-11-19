@@ -1,0 +1,334 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractDestructured",
+  "params": [
+    {
+      "name": "pattern",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "path",
+      "inferredType": "&Path",
+      "defaultValue": "[]"
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractDestructured(pattern, path = []) {\r\n          if (t.isObjectPattern(pattern)) {\r\n            for (const prop of pattern.properties) {\r\n              if (t.isObjectProperty(prop)) {\r\n                const key = t.isIdentifier(prop.key) ? prop.key.name : null;\r\n                if (key && t.isIdentifier(prop.value)) {\r\n                  // Simple: { value } or { target: { value } }\r\n                  const varName = prop.value.name;\r\n                  const accessPath = [...path, key];\r\n                  destructuringStatements.push({ varName, accessPath });\r\n                } else if (key && t.isObjectPattern(prop.value)) {\r\n                  // Nested: { target: { value } }\r\n                  extractDestructured(prop.value, [...path, key]);\r\n                }\r\n              }\r\n            }\r\n          }\r\n        }",
+  "body_templates": [
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractDestructured",
+        "functionParams": [
+          "pattern",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "50fffda7",
+      "type": "IfStatement",
+      "condition": "t.isObjectPattern(pattern)",
+      "babel_source": "if (t.isObjectPattern(pattern)) {\r\n            for (const prop of pattern.properties) {\r\n              if (t.isObjectProperty(prop)) {\r\n                const key = t.isIdentifier(prop.key) ? prop.key.name : null;\r\n                if (key && t.isIdentifier(prop.value)) {\r\n                  // Simple: { value } or { target: { value } }\r\n                  const varName = prop.value.name;\r\n                  const accessPath = [...path, key];\r\n                  destructuringStatements.push({ varName, accessPath });\r\n                } else if (key && t.isObjectPattern(prop.value)) {\r\n                  // Nested: { target: { value } }\r\n                  extractDestructured(prop.value, [...path, key]);\r\n                }\r\n              }\r\n            }\r\n          }",
+      "parentContext": {
+        "functionName": "extractDestructured",
+        "functionParams": [
+          "pattern",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ce7cae13",
+      "type": "BabelTypeCheck",
+      "method": "isObjectPattern",
+      "babel_source": "t.isObjectPattern(pattern)",
+      "parentContext": {
+        "functionName": "extractDestructured",
+        "functionParams": [
+          "pattern",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d28aca2a",
+      "type": "ForOfStatement",
+      "babel_source": "for (const prop of pattern.properties) {\r\n              if (t.isObjectProperty(prop)) {\r\n                const key = t.isIdentifier(prop.key) ? prop.key.name : null;\r\n                if (key && t.isIdentifier(prop.value)) {\r\n                  // Simple: { value } or { target: { value } }\r\n                  const varName = prop.value.name;\r\n                  const accessPath = [...path, key];\r\n                  destructuringStatements.push({ varName, accessPath });\r\n                } else if (key && t.isObjectPattern(prop.value)) {\r\n                  // Nested: { target: { value } }\r\n                  extractDestructured(prop.value, [...path, key]);\r\n                }\r\n              }\r\n            }",
+      "parentContext": {
+        "functionName": "extractDestructured",
+        "functionParams": [
+          "pattern",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "098a3cb5",
+      "type": "VariableDeclaration",
+      "babel_source": "const prop",
+      "parentContext": {
+        "functionName": "extractDestructured",
+        "functionParams": [
+          "pattern",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a3957ff8",
+      "type": "IfStatement",
+      "condition": "t.isObjectProperty(prop)",
+      "babel_source": "if (t.isObjectProperty(prop)) {\r\n                const key = t.isIdentifier(prop.key) ? prop.key.name : null;\r\n                if (key && t.isIdentifier(prop.value)) {\r\n                  // Simple: { value } or { target: { value } }\r\n                  const varName = prop.value.name;\r\n                  const accessPath = [...path, key];\r\n                  destructuringStatements.push({ varName, accessPath });\r\n                } else if (key && t.isObjectPattern(prop.value)) {\r\n                  // Nested: { target: { value } }\r\n                  extractDestructured(prop.value, [...path, key]);\r\n                }\r\n              }",
+      "parentContext": {
+        "functionName": "extractDestructured",
+        "functionParams": [
+          "pattern",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d8cb3d9e",
+      "type": "BabelTypeCheck",
+      "method": "isObjectProperty",
+      "babel_source": "t.isObjectProperty(prop)",
+      "parentContext": {
+        "functionName": "extractDestructured",
+        "functionParams": [
+          "pattern",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e689c39f",
+      "type": "VariableDeclaration",
+      "babel_source": "const key = t.isIdentifier(prop.key) ? prop.key.name : null;",
+      "parentContext": {
+        "functionName": "extractDestructured",
+        "functionParams": [
+          "pattern",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a99c1fb2",
+      "type": "ConditionalExpression",
+      "babel_source": "t.isIdentifier(prop.key) ? prop.key.name : null",
+      "parentContext": {
+        "functionName": "extractDestructured",
+        "functionParams": [
+          "pattern",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f3845e36",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(prop.key)",
+      "parentContext": {
+        "functionName": "extractDestructured",
+        "functionParams": [
+          "pattern",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e6a6ad9a",
+      "type": "IfStatement",
+      "condition": "key && t.isIdentifier(prop.value)",
+      "babel_source": "if (key && t.isIdentifier(prop.value)) {\r\n                  // Simple: { value } or { target: { value } }\r\n                  const varName = prop.value.name;\r\n                  const accessPath = [...path, key];\r\n                  destructuringStatements.push({ varName, accessPath });\r\n                } else if (key && t.isObjectPattern(prop.value)) {\r\n                  // Nested: { target: { value } }\r\n                  extractDestructured(prop.value, [...path, key]);\r\n                }",
+      "parentContext": {
+        "functionName": "extractDestructured",
+        "functionParams": [
+          "pattern",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "88949a0e",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "key && t.isIdentifier(prop.value)",
+      "parentContext": {
+        "functionName": "extractDestructured",
+        "functionParams": [
+          "pattern",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5813d283",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(prop.value)",
+      "parentContext": {
+        "functionName": "extractDestructured",
+        "functionParams": [
+          "pattern",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c7d921b5",
+      "type": "VariableDeclaration",
+      "babel_source": "const varName = prop.value.name;",
+      "parentContext": {
+        "functionName": "extractDestructured",
+        "functionParams": [
+          "pattern",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2eda9c08",
+      "type": "VariableDeclaration",
+      "babel_source": "const accessPath = [...path, key];",
+      "parentContext": {
+        "functionName": "extractDestructured",
+        "functionParams": [
+          "pattern",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c2c98744",
+      "type": "ArrayExpression",
+      "babel_source": "[...path, key]",
+      "parentContext": {
+        "functionName": "extractDestructured",
+        "functionParams": [
+          "pattern",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1d557abe",
+      "type": "SpreadElement",
+      "babel_source": "...path",
+      "parentContext": {
+        "functionName": "extractDestructured",
+        "functionParams": [
+          "pattern",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "16f52bfb",
+      "type": "ObjectExpression",
+      "babel_source": "{ varName, accessPath }",
+      "parentContext": {
+        "functionName": "extractDestructured",
+        "functionParams": [
+          "pattern",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f68be85",
+      "type": "IfStatement",
+      "condition": "key && t.isObjectPattern(prop.value)",
+      "babel_source": "if (key && t.isObjectPattern(prop.value)) {\r\n                  // Nested: { target: { value } }\r\n                  extractDestructured(prop.value, [...path, key]);\r\n                }",
+      "parentContext": {
+        "functionName": "extractDestructured",
+        "functionParams": [
+          "pattern",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "31031a6d",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "key && t.isObjectPattern(prop.value)",
+      "parentContext": {
+        "functionName": "extractDestructured",
+        "functionParams": [
+          "pattern",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e362ad73",
+      "type": "BabelTypeCheck",
+      "method": "isObjectPattern",
+      "babel_source": "t.isObjectPattern(prop.value)",
+      "parentContext": {
+        "functionName": "extractDestructured",
+        "functionParams": [
+          "pattern",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c2c98744",
+      "type": "ArrayExpression",
+      "babel_source": "[...path, key]",
+      "parentContext": {
+        "functionName": "extractDestructured",
+        "functionParams": [
+          "pattern",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1d557abe",
+      "type": "SpreadElement",
+      "babel_source": "...path",
+      "parentContext": {
+        "functionName": "extractDestructured",
+        "functionParams": [
+          "pattern",
+          "path"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/eventHandlers.cjs"
+  ]
+}

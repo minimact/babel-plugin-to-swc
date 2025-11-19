@@ -1,0 +1,69 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "transpileOperator",
+  "params": [
+    {
+      "name": "op",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function transpileOperator(op) {\r\n  const mappings = {\r\n    '===': '==',\r\n    '!==': '!=',\r\n    '&&': '&&',\r\n    '||': '||',\r\n    '!': '!',\r\n    '+': '+',\r\n    '-': '-',\r\n    '*': '*',\r\n    '/': '/',\r\n    '%': '%',\r\n    '<': '<',\r\n    '>': '>',\r\n    '<=': '<=',\r\n    '>=': '>=',\r\n    '=': '=',\r\n    '+=': '+=',\r\n    '-=': '-=',\r\n    '*=': '*=',\r\n    '/=': '/=',\r\n    '++': '++',\r\n    '--': '--'\r\n  };\r\n  return mappings[op] || op;\r\n}",
+  "body_templates": [
+    {
+      "hash": "fd88d3e2",
+      "type": "VariableDeclaration",
+      "babel_source": "const mappings = {\r\n    '===': '==',\r\n    '!==': '!=',\r\n    '&&': '&&',\r\n    '||': '||',\r\n    '!': '!',\r\n    '+': '+',\r\n    '-': '-',\r\n    '*': '*',\r\n    '/': '/',\r\n    '%': '%',\r\n    '<': '<',\r\n    '>': '>',\r\n    '<=': '<=',\r\n    '>=': '>=',\r\n    '=': '=',\r\n    '+=': '+=',\r\n    '-=': '-=',\r\n    '*=': '*=',\r\n    '/=': '/=',\r\n    '++': '++',\r\n    '--': '--'\r\n  };",
+      "parentContext": {
+        "functionName": "transpileOperator",
+        "functionParams": [
+          "op"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "677a75d5",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    '===': '==',\r\n    '!==': '!=',\r\n    '&&': '&&',\r\n    '||': '||',\r\n    '!': '!',\r\n    '+': '+',\r\n    '-': '-',\r\n    '*': '*',\r\n    '/': '/',\r\n    '%': '%',\r\n    '<': '<',\r\n    '>': '>',\r\n    '<=': '<=',\r\n    '>=': '>=',\r\n    '=': '=',\r\n    '+=': '+=',\r\n    '-=': '-=',\r\n    '*=': '*=',\r\n    '/=': '/=',\r\n    '++': '++',\r\n    '--': '--'\r\n  }",
+      "parentContext": {
+        "functionName": "transpileOperator",
+        "functionParams": [
+          "op"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "71a674c6",
+      "type": "ReturnStatement",
+      "babel_source": "return mappings[op] || op;",
+      "parentContext": {
+        "functionName": "transpileOperator",
+        "functionParams": [
+          "op"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "406fc3b1",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "mappings[op] || op",
+      "parentContext": {
+        "functionName": "transpileOperator",
+        "functionParams": [
+          "op"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "transpilers/typescriptToCSharp.cjs",
+    "transpilers/typescriptToRust.cjs"
+  ]
+}

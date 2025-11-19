@@ -1,0 +1,183 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "analyze",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "()",
+  "babel_source": "function analyze(node) {\r\n      if (t.isBinaryExpression(node)) {\r\n        const { left, operator, right } = node;\r\n\r\n        // Check if one side is our target binding\r\n        const leftIsTarget = isBindingExpression(left, targetBinding);\r\n        const rightIsTarget = isBindingExpression(right, targetBinding);\r\n\r\n        if (leftIsTarget && t.isNumericLiteral(right)) {\r\n          operations.push({ op: operator, value: right.value, side: 'right' });\r\n        } else if (rightIsTarget && t.isNumericLiteral(left)) {\r\n          operations.push({ op: operator, value: left.value, side: 'left' });\r\n        } else {\r\n          // Recurse\r\n          analyze(left);\r\n          analyze(right);\r\n        }\r\n      }\r\n    }",
+  "body_templates": [
+    {
+      "hash": "b321812e",
+      "type": "IfStatement",
+      "condition": "t.isBinaryExpression(node)",
+      "babel_source": "if (t.isBinaryExpression(node)) {\r\n        const { left, operator, right } = node;\r\n\r\n        // Check if one side is our target binding\r\n        const leftIsTarget = isBindingExpression(left, targetBinding);\r\n        const rightIsTarget = isBindingExpression(right, targetBinding);\r\n\r\n        if (leftIsTarget && t.isNumericLiteral(right)) {\r\n          operations.push({ op: operator, value: right.value, side: 'right' });\r\n        } else if (rightIsTarget && t.isNumericLiteral(left)) {\r\n          operations.push({ op: operator, value: left.value, side: 'left' });\r\n        } else {\r\n          // Recurse\r\n          analyze(left);\r\n          analyze(right);\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "analyze",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": "if let Expr::Bin(bin_expr) = node {\n    let left = &*bin_expr.left;\n    let operator = &bin_expr.op;\n    let right = &*bin_expr.right;\n    \n    let left_is_target = is_binding_expression(left, target_binding);\n    let right_is_target = is_binding_expression(right, target_binding);\n    \n    if left_is_target && matches!(right, Expr::Lit(Lit::Num(_))) {\n        if let Expr::Lit(Lit::Num(num)) = right {\n            operations.push(Operation {\n                op: format!(\"{:?}\", operator),\n                value: num.value,\n                side: \"right\".to_string(),\n            });\n        }\n    } else if right_is_target && matches!(left, Expr::Lit(Lit::Num(_))) {\n        if let Expr::Lit(Lit::Num(num)) = left {\n            operations.push(Operation {\n                op: format!(\"{:?}\", operator),\n                value: num.value,\n                side: \"left\".to_string(),\n            });\n        }\n    } else {\n        analyze(left, target_binding, operations);\n        analyze(right, target_binding, operations);\n    }\n}"
+    },
+    {
+      "hash": "ae0955e9",
+      "type": "BabelTypeCheck",
+      "method": "isBinaryExpression",
+      "babel_source": "t.isBinaryExpression(node)",
+      "parentContext": {
+        "functionName": "analyze",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": "matches!(node, Expr::Bin(_))"
+    },
+    {
+      "hash": "a613c762",
+      "type": "VariableDeclaration",
+      "babel_source": "const { left, operator, right } = node;",
+      "parentContext": {
+        "functionName": "analyze",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": "let left = &*bin_expr.left;\nlet operator = &bin_expr.op;\nlet right = &*bin_expr.right;"
+    },
+    {
+      "hash": "3a36beec",
+      "type": "VariableDeclaration",
+      "babel_source": "const leftIsTarget = isBindingExpression(left, targetBinding);",
+      "parentContext": {
+        "functionName": "analyze",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": "let left_is_target = is_binding_expression(left, target_binding);"
+    },
+    {
+      "hash": "78c9282d",
+      "type": "VariableDeclaration",
+      "babel_source": "const rightIsTarget = isBindingExpression(right, targetBinding);",
+      "parentContext": {
+        "functionName": "analyze",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": "let right_is_target = is_binding_expression(right, target_binding);"
+    },
+    {
+      "hash": "b11c62d5",
+      "type": "IfStatement",
+      "condition": "leftIsTarget && t.isNumericLiteral(right)",
+      "babel_source": "if (leftIsTarget && t.isNumericLiteral(right)) {\r\n          operations.push({ op: operator, value: right.value, side: 'right' });\r\n        } else if (rightIsTarget && t.isNumericLiteral(left)) {\r\n          operations.push({ op: operator, value: left.value, side: 'left' });\r\n        } else {\r\n          // Recurse\r\n          analyze(left);\r\n          analyze(right);\r\n        }",
+      "parentContext": {
+        "functionName": "analyze",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": "if left_is_target && matches!(right, Expr::Lit(Lit::Num(_))) {\n    // push operation with side 'right'\n} else if right_is_target && matches!(left, Expr::Lit(Lit::Num(_))) {\n    // push operation with side 'left'\n} else {\n    analyze(left, target_binding, operations);\n    analyze(right, target_binding, operations);\n}"
+    },
+    {
+      "hash": "6f2e9c23",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "leftIsTarget && t.isNumericLiteral(right)",
+      "parentContext": {
+        "functionName": "analyze",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": "left_is_target && matches!(right, Expr::Lit(Lit::Num(_)))"
+    },
+    {
+      "hash": "bf8de6a8",
+      "type": "BabelTypeCheck",
+      "method": "isNumericLiteral",
+      "babel_source": "t.isNumericLiteral(right)",
+      "parentContext": {
+        "functionName": "analyze",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": "matches!(right, Expr::Lit(Lit::Num(_)))"
+    },
+    {
+      "hash": "86f1e32a",
+      "type": "ObjectExpression",
+      "babel_source": "{ op: operator, value: right.value, side: 'right' }",
+      "parentContext": {
+        "functionName": "analyze",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": "Operation {\n    op: format!(\"{:?}\", operator),\n    value: num.value,\n    side: \"right\".to_string(),\n}"
+    },
+    {
+      "hash": "5c056df1",
+      "type": "IfStatement",
+      "condition": "rightIsTarget && t.isNumericLiteral(left)",
+      "babel_source": "if (rightIsTarget && t.isNumericLiteral(left)) {\r\n          operations.push({ op: operator, value: left.value, side: 'left' });\r\n        } else {\r\n          // Recurse\r\n          analyze(left);\r\n          analyze(right);\r\n        }",
+      "parentContext": {
+        "functionName": "analyze",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": "if right_is_target && matches!(left, Expr::Lit(Lit::Num(_))) {\n    // push operation with side 'left'\n} else {\n    analyze(left, target_binding, operations);\n    analyze(right, target_binding, operations);\n}"
+    },
+    {
+      "hash": "9521fcfa",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "rightIsTarget && t.isNumericLiteral(left)",
+      "parentContext": {
+        "functionName": "analyze",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": "right_is_target && matches!(left, Expr::Lit(Lit::Num(_)))"
+    },
+    {
+      "hash": "848670c7",
+      "type": "BabelTypeCheck",
+      "method": "isNumericLiteral",
+      "babel_source": "t.isNumericLiteral(left)",
+      "parentContext": {
+        "functionName": "analyze",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": "matches!(left, Expr::Lit(Lit::Num(_)))"
+    },
+    {
+      "hash": "b56b9fee",
+      "type": "ObjectExpression",
+      "babel_source": "{ op: operator, value: left.value, side: 'left' }",
+      "parentContext": {
+        "functionName": "analyze",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": "Operation {\n    op: format!(\"{:?}\", operator),\n    value: num.value,\n    side: \"left\".to_string(),\n}"
+    }
+  ],
+  "rust_translation": "fn analyze(node: &Expr, target_binding: &str, operations: &mut Vec<Operation>) {\n    if let Expr::Bin(bin_expr) = node {\n        let left = &*bin_expr.left;\n        let operator = &bin_expr.op;\n        let right = &*bin_expr.right;\n        \n        let left_is_target = is_binding_expression(left, target_binding);\n        let right_is_target = is_binding_expression(right, target_binding);\n        \n        if left_is_target {\n            if let Expr::Lit(Lit::Num(num)) = right {\n                operations.push(Operation {\n                    op: format!(\"{:?}\", operator),\n                    value: num.value,\n                    side: \"right\".to_string(),\n                });\n                return;\n            }\n        }\n        \n        if right_is_target {\n            if let Expr::Lit(Lit::Num(num)) = left {\n                operations.push(Operation {\n                    op: format!(\"{:?}\", operator),\n                    value: num.value,\n                    side: \"left\".to_string(),\n                });\n                return;\n            }\n        }\n        \n        // Recurse\n        analyze(left, target_binding, operations);\n        analyze(right, target_binding, operations);\n    }\n}",
+  "found_in": [
+    "extractors/expressionTemplates.cjs"
+  ]
+}

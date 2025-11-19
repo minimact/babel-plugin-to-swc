@@ -1,0 +1,259 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "inferType",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "&'static str",
+  "babel_source": "function inferType(node) {\r\n  if (t.isNumericLiteral(node)) return 'number';\r\n  if (t.isStringLiteral(node)) return 'string';\r\n  if (t.isBooleanLiteral(node)) return 'boolean';\r\n  if (t.isArrayExpression(node)) return 'any[]';\r\n  if (t.isObjectExpression(node)) return 'object';\r\n  if (t.isNullLiteral(node)) return 'object';\r\n  return 'any';\r\n}",
+  "body_templates": [
+    {
+      "hash": "2d072660",
+      "type": "IfStatement",
+      "condition": "t.isNumericLiteral(node)",
+      "babel_source": "if (t.isNumericLiteral(node)) return 'number';",
+      "parentContext": {
+        "functionName": "inferType",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ae0f901d",
+      "type": "BabelTypeCheck",
+      "method": "isNumericLiteral",
+      "babel_source": "t.isNumericLiteral(node)",
+      "parentContext": {
+        "functionName": "inferType",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1991d145",
+      "type": "ReturnStatement",
+      "babel_source": "return 'number';",
+      "parentContext": {
+        "functionName": "inferType",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d9a56898",
+      "type": "IfStatement",
+      "condition": "t.isStringLiteral(node)",
+      "babel_source": "if (t.isStringLiteral(node)) return 'string';",
+      "parentContext": {
+        "functionName": "inferType",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7173d8cd",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(node)",
+      "parentContext": {
+        "functionName": "inferType",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f83ace9b",
+      "type": "ReturnStatement",
+      "babel_source": "return 'string';",
+      "parentContext": {
+        "functionName": "inferType",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "11a30872",
+      "type": "IfStatement",
+      "condition": "t.isBooleanLiteral(node)",
+      "babel_source": "if (t.isBooleanLiteral(node)) return 'boolean';",
+      "parentContext": {
+        "functionName": "inferType",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e92ed5e3",
+      "type": "BabelTypeCheck",
+      "method": "isBooleanLiteral",
+      "babel_source": "t.isBooleanLiteral(node)",
+      "parentContext": {
+        "functionName": "inferType",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f051c3e6",
+      "type": "ReturnStatement",
+      "babel_source": "return 'boolean';",
+      "parentContext": {
+        "functionName": "inferType",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "364c225f",
+      "type": "IfStatement",
+      "condition": "t.isArrayExpression(node)",
+      "babel_source": "if (t.isArrayExpression(node)) return 'any[]';",
+      "parentContext": {
+        "functionName": "inferType",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "df02b329",
+      "type": "BabelTypeCheck",
+      "method": "isArrayExpression",
+      "babel_source": "t.isArrayExpression(node)",
+      "parentContext": {
+        "functionName": "inferType",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e0a9ce60",
+      "type": "ReturnStatement",
+      "babel_source": "return 'any[]';",
+      "parentContext": {
+        "functionName": "inferType",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "73640702",
+      "type": "IfStatement",
+      "condition": "t.isObjectExpression(node)",
+      "babel_source": "if (t.isObjectExpression(node)) return 'object';",
+      "parentContext": {
+        "functionName": "inferType",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "63339805",
+      "type": "BabelTypeCheck",
+      "method": "isObjectExpression",
+      "babel_source": "t.isObjectExpression(node)",
+      "parentContext": {
+        "functionName": "inferType",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1827bbd0",
+      "type": "ReturnStatement",
+      "babel_source": "return 'object';",
+      "parentContext": {
+        "functionName": "inferType",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "574486a0",
+      "type": "IfStatement",
+      "condition": "t.isNullLiteral(node)",
+      "babel_source": "if (t.isNullLiteral(node)) return 'object';",
+      "parentContext": {
+        "functionName": "inferType",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b7f91226",
+      "type": "BabelTypeCheck",
+      "method": "isNullLiteral",
+      "babel_source": "t.isNullLiteral(node)",
+      "parentContext": {
+        "functionName": "inferType",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1827bbd0",
+      "type": "ReturnStatement",
+      "babel_source": "return 'object';",
+      "parentContext": {
+        "functionName": "inferType",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "578ca534",
+      "type": "ReturnStatement",
+      "babel_source": "return 'any';",
+      "parentContext": {
+        "functionName": "inferType",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/hookAnalyzer.cjs"
+  ]
+}

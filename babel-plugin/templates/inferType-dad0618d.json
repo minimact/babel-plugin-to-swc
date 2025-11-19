@@ -1,0 +1,321 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "inferType",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "&'static str",
+  "babel_source": "function inferType(node) {\r\n  if (!node) return 'dynamic';\r\n\r\n  if (t.isStringLiteral(node)) return 'string';\r\n  if (t.isNumericLiteral(node)) {\r\n    // Check if the number has a decimal point\r\n    // If the value is a whole number, use int; otherwise use double\r\n    const value = node.value;\r\n    return Number.isInteger(value) ? 'int' : 'double';\r\n  }\r\n  if (t.isBooleanLiteral(node)) return 'bool';\r\n  if (t.isNullLiteral(node)) return 'dynamic';\r\n  if (t.isArrayExpression(node)) return 'List<dynamic>';\r\n  if (t.isObjectExpression(node)) return 'dynamic';\r\n\r\n  return 'dynamic';\r\n}",
+  "body_templates": [
+    {
+      "hash": "84f1ca7a",
+      "type": "IfStatement",
+      "condition": "!node",
+      "babel_source": "if (!node) return 'dynamic';",
+      "parentContext": {
+        "functionName": "inferType",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e10d47ee",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!node",
+      "parentContext": {
+        "functionName": "inferType",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d31bdf27",
+      "type": "ReturnStatement",
+      "babel_source": "return 'dynamic';",
+      "parentContext": {
+        "functionName": "inferType",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d9a56898",
+      "type": "IfStatement",
+      "condition": "t.isStringLiteral(node)",
+      "babel_source": "if (t.isStringLiteral(node)) return 'string';",
+      "parentContext": {
+        "functionName": "inferType",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7173d8cd",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(node)",
+      "parentContext": {
+        "functionName": "inferType",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f83ace9b",
+      "type": "ReturnStatement",
+      "babel_source": "return 'string';",
+      "parentContext": {
+        "functionName": "inferType",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "881a6f48",
+      "type": "IfStatement",
+      "condition": "t.isNumericLiteral(node)",
+      "babel_source": "if (t.isNumericLiteral(node)) {\r\n    // Check if the number has a decimal point\r\n    // If the value is a whole number, use int; otherwise use double\r\n    const value = node.value;\r\n    return Number.isInteger(value) ? 'int' : 'double';\r\n  }",
+      "parentContext": {
+        "functionName": "inferType",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ae0f901d",
+      "type": "BabelTypeCheck",
+      "method": "isNumericLiteral",
+      "babel_source": "t.isNumericLiteral(node)",
+      "parentContext": {
+        "functionName": "inferType",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "201bf426",
+      "type": "VariableDeclaration",
+      "babel_source": "const value = node.value;",
+      "parentContext": {
+        "functionName": "inferType",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a6fb4e95",
+      "type": "ReturnStatement",
+      "babel_source": "return Number.isInteger(value) ? 'int' : 'double';",
+      "parentContext": {
+        "functionName": "inferType",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b4132b28",
+      "type": "ConditionalExpression",
+      "babel_source": "Number.isInteger(value) ? 'int' : 'double'",
+      "parentContext": {
+        "functionName": "inferType",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "083a258e",
+      "type": "IfStatement",
+      "condition": "t.isBooleanLiteral(node)",
+      "babel_source": "if (t.isBooleanLiteral(node)) return 'bool';",
+      "parentContext": {
+        "functionName": "inferType",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e92ed5e3",
+      "type": "BabelTypeCheck",
+      "method": "isBooleanLiteral",
+      "babel_source": "t.isBooleanLiteral(node)",
+      "parentContext": {
+        "functionName": "inferType",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6655b479",
+      "type": "ReturnStatement",
+      "babel_source": "return 'bool';",
+      "parentContext": {
+        "functionName": "inferType",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7c0be129",
+      "type": "IfStatement",
+      "condition": "t.isNullLiteral(node)",
+      "babel_source": "if (t.isNullLiteral(node)) return 'dynamic';",
+      "parentContext": {
+        "functionName": "inferType",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b7f91226",
+      "type": "BabelTypeCheck",
+      "method": "isNullLiteral",
+      "babel_source": "t.isNullLiteral(node)",
+      "parentContext": {
+        "functionName": "inferType",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d31bdf27",
+      "type": "ReturnStatement",
+      "babel_source": "return 'dynamic';",
+      "parentContext": {
+        "functionName": "inferType",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "059af6a1",
+      "type": "IfStatement",
+      "condition": "t.isArrayExpression(node)",
+      "babel_source": "if (t.isArrayExpression(node)) return 'List<dynamic>';",
+      "parentContext": {
+        "functionName": "inferType",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "df02b329",
+      "type": "BabelTypeCheck",
+      "method": "isArrayExpression",
+      "babel_source": "t.isArrayExpression(node)",
+      "parentContext": {
+        "functionName": "inferType",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d0333074",
+      "type": "ReturnStatement",
+      "babel_source": "return 'List<dynamic>';",
+      "parentContext": {
+        "functionName": "inferType",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "936f1b93",
+      "type": "IfStatement",
+      "condition": "t.isObjectExpression(node)",
+      "babel_source": "if (t.isObjectExpression(node)) return 'dynamic';",
+      "parentContext": {
+        "functionName": "inferType",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "63339805",
+      "type": "BabelTypeCheck",
+      "method": "isObjectExpression",
+      "babel_source": "t.isObjectExpression(node)",
+      "parentContext": {
+        "functionName": "inferType",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d31bdf27",
+      "type": "ReturnStatement",
+      "babel_source": "return 'dynamic';",
+      "parentContext": {
+        "functionName": "inferType",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d31bdf27",
+      "type": "ReturnStatement",
+      "babel_source": "return 'dynamic';",
+      "parentContext": {
+        "functionName": "inferType",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "types/typeConversion.cjs"
+  ]
+}

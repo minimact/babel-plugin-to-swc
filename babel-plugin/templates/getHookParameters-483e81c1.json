@@ -1,0 +1,424 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "getHookParameters",
+  "params": [
+    {
+      "name": "path",
+      "inferredType": "&Path",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function getHookParameters(path) {\r\n  let params;\r\n\r\n  if (t.isFunctionDeclaration(path.node)) {\r\n    params = path.node.params;\r\n  } else if (t.isVariableDeclarator(path.node)) {\r\n    const init = path.node.init;\r\n    if (t.isArrowFunctionExpression(init) || t.isFunctionExpression(init)) {\r\n      params = init.params;\r\n    } else {\r\n      return [];\r\n    }\r\n  } else {\r\n    return [];\r\n  }\r\n\r\n  // Skip first parameter (namespace)\r\n  return params.slice(1).map(param => {\r\n    let name, type = 'any', defaultValue = null;\r\n\r\n    if (t.isIdentifier(param)) {\r\n      name = param.name;\r\n    } else if (t.isAssignmentPattern(param)) {\r\n      // Has default value: start = 0\r\n      name = param.left.name;\r\n      defaultValue = param.right;\r\n    }\r\n\r\n    // Extract TypeScript type if present\r\n    if (param.typeAnnotation && t.isTSTypeAnnotation(param.typeAnnotation)) {\r\n      type = extractTypeString(param.typeAnnotation.typeAnnotation);\r\n    }\r\n\r\n    return { name, type, defaultValue };\r\n  });\r\n}",
+  "body_templates": [
+    {
+      "hash": "814f892b",
+      "type": "VariableDeclaration",
+      "babel_source": "let params;",
+      "parentContext": {
+        "functionName": "getHookParameters",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d04d189f",
+      "type": "IfStatement",
+      "condition": "t.isFunctionDeclaration(path.node)",
+      "babel_source": "if (t.isFunctionDeclaration(path.node)) {\r\n    params = path.node.params;\r\n  } else if (t.isVariableDeclarator(path.node)) {\r\n    const init = path.node.init;\r\n    if (t.isArrowFunctionExpression(init) || t.isFunctionExpression(init)) {\r\n      params = init.params;\r\n    } else {\r\n      return [];\r\n    }\r\n  } else {\r\n    return [];\r\n  }",
+      "parentContext": {
+        "functionName": "getHookParameters",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3633f955",
+      "type": "BabelTypeCheck",
+      "method": "isFunctionDeclaration",
+      "babel_source": "t.isFunctionDeclaration(path.node)",
+      "parentContext": {
+        "functionName": "getHookParameters",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "393e9b48",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "params = path.node.params",
+      "parentContext": {
+        "functionName": "getHookParameters",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e42f806b",
+      "type": "IfStatement",
+      "condition": "t.isVariableDeclarator(path.node)",
+      "babel_source": "if (t.isVariableDeclarator(path.node)) {\r\n    const init = path.node.init;\r\n    if (t.isArrowFunctionExpression(init) || t.isFunctionExpression(init)) {\r\n      params = init.params;\r\n    } else {\r\n      return [];\r\n    }\r\n  } else {\r\n    return [];\r\n  }",
+      "parentContext": {
+        "functionName": "getHookParameters",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d06bdb04",
+      "type": "BabelTypeCheck",
+      "method": "isVariableDeclarator",
+      "babel_source": "t.isVariableDeclarator(path.node)",
+      "parentContext": {
+        "functionName": "getHookParameters",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d97ea1ee",
+      "type": "VariableDeclaration",
+      "babel_source": "const init = path.node.init;",
+      "parentContext": {
+        "functionName": "getHookParameters",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2fd72d5b",
+      "type": "IfStatement",
+      "condition": "t.isArrowFunctionExpression(init) || t.isFunctionExpression(init)",
+      "babel_source": "if (t.isArrowFunctionExpression(init) || t.isFunctionExpression(init)) {\r\n      params = init.params;\r\n    } else {\r\n      return [];\r\n    }",
+      "parentContext": {
+        "functionName": "getHookParameters",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "28364cae",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isArrowFunctionExpression(init) || t.isFunctionExpression(init)",
+      "parentContext": {
+        "functionName": "getHookParameters",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "55a4b373",
+      "type": "BabelTypeCheck",
+      "method": "isArrowFunctionExpression",
+      "babel_source": "t.isArrowFunctionExpression(init)",
+      "parentContext": {
+        "functionName": "getHookParameters",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0f3cacc8",
+      "type": "BabelTypeCheck",
+      "method": "isFunctionExpression",
+      "babel_source": "t.isFunctionExpression(init)",
+      "parentContext": {
+        "functionName": "getHookParameters",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "56f6006c",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "params = init.params",
+      "parentContext": {
+        "functionName": "getHookParameters",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c7221e11",
+      "type": "ReturnStatement",
+      "babel_source": "return [];",
+      "parentContext": {
+        "functionName": "getHookParameters",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "getHookParameters",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c7221e11",
+      "type": "ReturnStatement",
+      "babel_source": "return [];",
+      "parentContext": {
+        "functionName": "getHookParameters",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "getHookParameters",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fc7ba363",
+      "type": "ReturnStatement",
+      "babel_source": "return params.slice(1).map(param => {\r\n    let name, type = 'any', defaultValue = null;\r\n\r\n    if (t.isIdentifier(param)) {\r\n      name = param.name;\r\n    } else if (t.isAssignmentPattern(param)) {\r\n      // Has default value: start = 0\r\n      name = param.left.name;\r\n      defaultValue = param.right;\r\n    }\r\n\r\n    // Extract TypeScript type if present\r\n    if (param.typeAnnotation && t.isTSTypeAnnotation(param.typeAnnotation)) {\r\n      type = extractTypeString(param.typeAnnotation.typeAnnotation);\r\n    }\r\n\r\n    return { name, type, defaultValue };\r\n  });",
+      "parentContext": {
+        "functionName": "getHookParameters",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5ca4245d",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "param => {\r\n    let name, type = 'any', defaultValue = null;\r\n\r\n    if (t.isIdentifier(param)) {\r\n      name = param.name;\r\n    } else if (t.isAssignmentPattern(param)) {\r\n      // Has default value: start = 0\r\n      name = param.left.name;\r\n      defaultValue = param.right;\r\n    }\r\n\r\n    // Extract TypeScript type if present\r\n    if (param.typeAnnotation && t.isTSTypeAnnotation(param.typeAnnotation)) {\r\n      type = extractTypeString(param.typeAnnotation.typeAnnotation);\r\n    }\r\n\r\n    return { name, type, defaultValue };\r\n  }",
+      "parentContext": {
+        "functionName": "getHookParameters",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c5600827",
+      "type": "VariableDeclaration",
+      "babel_source": "let name, type = 'any', defaultValue = null;",
+      "parentContext": {
+        "functionName": "getHookParameters",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b21c202c",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(param)",
+      "babel_source": "if (t.isIdentifier(param)) {\r\n      name = param.name;\r\n    } else if (t.isAssignmentPattern(param)) {\r\n      // Has default value: start = 0\r\n      name = param.left.name;\r\n      defaultValue = param.right;\r\n    }",
+      "parentContext": {
+        "functionName": "getHookParameters",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9d26e740",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(param)",
+      "parentContext": {
+        "functionName": "getHookParameters",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "49bbf539",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "name = param.name",
+      "parentContext": {
+        "functionName": "getHookParameters",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "076cc9db",
+      "type": "IfStatement",
+      "condition": "t.isAssignmentPattern(param)",
+      "babel_source": "if (t.isAssignmentPattern(param)) {\r\n      // Has default value: start = 0\r\n      name = param.left.name;\r\n      defaultValue = param.right;\r\n    }",
+      "parentContext": {
+        "functionName": "getHookParameters",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "daf7a548",
+      "type": "BabelTypeCheck",
+      "method": "isAssignmentPattern",
+      "babel_source": "t.isAssignmentPattern(param)",
+      "parentContext": {
+        "functionName": "getHookParameters",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5ab40c9e",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "name = param.left.name",
+      "parentContext": {
+        "functionName": "getHookParameters",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "db749b86",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "defaultValue = param.right",
+      "parentContext": {
+        "functionName": "getHookParameters",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d9e88fde",
+      "type": "IfStatement",
+      "condition": "param.typeAnnotation && t.isTSTypeAnnotation(param.typeAnnotation)",
+      "babel_source": "if (param.typeAnnotation && t.isTSTypeAnnotation(param.typeAnnotation)) {\r\n      type = extractTypeString(param.typeAnnotation.typeAnnotation);\r\n    }",
+      "parentContext": {
+        "functionName": "getHookParameters",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "be568f5b",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "param.typeAnnotation && t.isTSTypeAnnotation(param.typeAnnotation)",
+      "parentContext": {
+        "functionName": "getHookParameters",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "85e36d29",
+      "type": "BabelTypeCheck",
+      "method": "isTSTypeAnnotation",
+      "babel_source": "t.isTSTypeAnnotation(param.typeAnnotation)",
+      "parentContext": {
+        "functionName": "getHookParameters",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "eadbd293",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "type = extractTypeString(param.typeAnnotation.typeAnnotation)",
+      "parentContext": {
+        "functionName": "getHookParameters",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5b23d15b",
+      "type": "ReturnStatement",
+      "babel_source": "return { name, type, defaultValue };",
+      "parentContext": {
+        "functionName": "getHookParameters",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "940fbceb",
+      "type": "ObjectExpression",
+      "babel_source": "{ name, type, defaultValue }",
+      "parentContext": {
+        "functionName": "getHookParameters",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/hookDetector.cjs"
+  ]
+}

@@ -1,0 +1,195 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateBooleanExpression",
+  "params": [
+    {
+      "name": "expr",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateBooleanExpression(expr) {\r\n  const generated = generateCSharpExpression(expr);\r\n\r\n  // Check if this is a member expression on dynamic object (like user.isAdmin)\r\n  if (t.isMemberExpression(expr) && !expr.computed && t.isIdentifier(expr.object)) {\r\n    // Wrap dynamic member access in MObject for proper truthiness\r\n    return `new MObject(${generated})`;\r\n  }\r\n\r\n  // Check if this is a simple identifier that might be dynamic\r\n  if (t.isIdentifier(expr)) {\r\n    // Wrap in MObject for null/truthiness handling\r\n    return `new MObject(${generated})`;\r\n  }\r\n\r\n  // For other expressions (literals, etc.), use as-is\r\n  return generated;\r\n}",
+  "body_templates": [
+    {
+      "hash": "0e572c95",
+      "type": "VariableDeclaration",
+      "babel_source": "const generated = generateCSharpExpression(expr);",
+      "parentContext": {
+        "functionName": "generateBooleanExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ae46a634",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(expr) && !expr.computed && t.isIdentifier(expr.object)",
+      "babel_source": "if (t.isMemberExpression(expr) && !expr.computed && t.isIdentifier(expr.object)) {\r\n    // Wrap dynamic member access in MObject for proper truthiness\r\n    return `new MObject(${generated})`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateBooleanExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7dbdc110",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isMemberExpression(expr) && !expr.computed && t.isIdentifier(expr.object)",
+      "parentContext": {
+        "functionName": "generateBooleanExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "85e30958",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isMemberExpression(expr) && !expr.computed",
+      "parentContext": {
+        "functionName": "generateBooleanExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c8858c63",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(expr)",
+      "parentContext": {
+        "functionName": "generateBooleanExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fc3b12dd",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!expr.computed",
+      "parentContext": {
+        "functionName": "generateBooleanExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "114a7446",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(expr.object)",
+      "parentContext": {
+        "functionName": "generateBooleanExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "060afec5",
+      "type": "ReturnStatement",
+      "babel_source": "return `new MObject(${generated})`;",
+      "parentContext": {
+        "functionName": "generateBooleanExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "31169a13",
+      "type": "TemplateLiteral",
+      "babel_source": "`new MObject(${generated})`",
+      "parentContext": {
+        "functionName": "generateBooleanExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "46a1d82e",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(expr)",
+      "babel_source": "if (t.isIdentifier(expr)) {\r\n    // Wrap in MObject for null/truthiness handling\r\n    return `new MObject(${generated})`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateBooleanExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42d26fd4",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(expr)",
+      "parentContext": {
+        "functionName": "generateBooleanExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "060afec5",
+      "type": "ReturnStatement",
+      "babel_source": "return `new MObject(${generated})`;",
+      "parentContext": {
+        "functionName": "generateBooleanExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "31169a13",
+      "type": "TemplateLiteral",
+      "babel_source": "`new MObject(${generated})`",
+      "parentContext": {
+        "functionName": "generateBooleanExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c09ead35",
+      "type": "ReturnStatement",
+      "babel_source": "return generated;",
+      "parentContext": {
+        "functionName": "generateBooleanExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/expressions.cjs"
+  ]
+}

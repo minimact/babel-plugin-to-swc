@@ -1,0 +1,99 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateShortCircuit",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "indent",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateShortCircuit(node, component, indent) {\r\n  const indentStr = '    '.repeat(indent);\r\n  const condition = generateCSharpExpression(node.left);\r\n  const element = generateJSXElement(node.right, component, indent);\r\n\r\n  return `${indentStr}if (${condition})\\n${indentStr}{\\n${indentStr}    return ${element};\\n${indentStr}}\\n${indentStr}return new VText(\"\");`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "9929f4d7",
+      "type": "VariableDeclaration",
+      "babel_source": "const indentStr = '    '.repeat(indent);",
+      "parentContext": {
+        "functionName": "generateShortCircuit",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f119f812",
+      "type": "VariableDeclaration",
+      "babel_source": "const condition = generateCSharpExpression(node.left);",
+      "parentContext": {
+        "functionName": "generateShortCircuit",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a3c04045",
+      "type": "VariableDeclaration",
+      "babel_source": "const element = generateJSXElement(node.right, component, indent);",
+      "parentContext": {
+        "functionName": "generateShortCircuit",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5dd64025",
+      "type": "ReturnStatement",
+      "babel_source": "return `${indentStr}if (${condition})\\n${indentStr}{\\n${indentStr}    return ${element};\\n${indentStr}}\\n${indentStr}return new VText(\"\");`;",
+      "parentContext": {
+        "functionName": "generateShortCircuit",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ac8e3512",
+      "type": "TemplateLiteral",
+      "babel_source": "`${indentStr}if (${condition})\\n${indentStr}{\\n${indentStr}    return ${element};\\n${indentStr}}\\n${indentStr}return new VText(\"\");`",
+      "parentContext": {
+        "functionName": "generateShortCircuit",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/expressions.cjs"
+  ]
+}

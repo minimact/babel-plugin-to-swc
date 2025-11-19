@@ -1,0 +1,170 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "containsUseState",
+  "params": [
+    {
+      "name": "path",
+      "inferredType": "&Path",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function containsUseState(path) {\r\n  const body = getHookBody(path);\r\n  if (!body) return false;\r\n\r\n  let hasUseState = false;\r\n\r\n  path.traverse({\r\n    CallExpression(callPath) {\r\n      if (t.isIdentifier(callPath.node.callee) &&\r\n          callPath.node.callee.name === 'useState') {\r\n        hasUseState = true;\r\n        callPath.stop(); // Stop traversal early\r\n      }\r\n    }\r\n  });\r\n\r\n  return hasUseState;\r\n}",
+  "body_templates": [
+    {
+      "hash": "827d62a0",
+      "type": "VariableDeclaration",
+      "babel_source": "const body = getHookBody(path);",
+      "parentContext": {
+        "functionName": "containsUseState",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "30fcce4c",
+      "type": "IfStatement",
+      "condition": "!body",
+      "babel_source": "if (!body) return false;",
+      "parentContext": {
+        "functionName": "containsUseState",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5de10c93",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!body",
+      "parentContext": {
+        "functionName": "containsUseState",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dabbdf16",
+      "type": "ReturnStatement",
+      "babel_source": "return false;",
+      "parentContext": {
+        "functionName": "containsUseState",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "05a67034",
+      "type": "VariableDeclaration",
+      "babel_source": "let hasUseState = false;",
+      "parentContext": {
+        "functionName": "containsUseState",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0a73b7e6",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    CallExpression(callPath) {\r\n      if (t.isIdentifier(callPath.node.callee) &&\r\n          callPath.node.callee.name === 'useState') {\r\n        hasUseState = true;\r\n        callPath.stop(); // Stop traversal early\r\n      }\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "containsUseState",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "71ff1e6b",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(callPath.node.callee) &&\r\n          callPath.node.callee.name === 'useState'",
+      "babel_source": "if (t.isIdentifier(callPath.node.callee) &&\r\n          callPath.node.callee.name === 'useState') {\r\n        hasUseState = true;\r\n        callPath.stop(); // Stop traversal early\r\n      }",
+      "parentContext": {
+        "functionName": "containsUseState",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "80f0a09e",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isIdentifier(callPath.node.callee) &&\r\n          callPath.node.callee.name === 'useState'",
+      "parentContext": {
+        "functionName": "containsUseState",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "eebad6fb",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(callPath.node.callee)",
+      "parentContext": {
+        "functionName": "containsUseState",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "708e41c8",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "callPath.node.callee.name === 'useState'",
+      "parentContext": {
+        "functionName": "containsUseState",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "880cb3f5",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "hasUseState = true",
+      "parentContext": {
+        "functionName": "containsUseState",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c64a1ee9",
+      "type": "ReturnStatement",
+      "babel_source": "return hasUseState;",
+      "parentContext": {
+        "functionName": "containsUseState",
+        "functionParams": [
+          "path"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/hookDetector.cjs"
+  ]
+}

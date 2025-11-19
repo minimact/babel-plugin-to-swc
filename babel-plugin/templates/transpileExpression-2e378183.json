@@ -1,0 +1,1985 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "transpileExpression",
+  "params": [
+    {
+      "name": "expr",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function transpileExpression(expr) {\r\n  if (!expr) return 'null';\r\n\r\n  if (t.isStringLiteral(expr)) {\r\n    return `\"${escapeString(expr.value)}\"`;\r\n  }\r\n\r\n  if (t.isNumericLiteral(expr)) {\r\n    return expr.value.toString();\r\n  }\r\n\r\n  if (t.isBooleanLiteral(expr)) {\r\n    return expr.value ? 'true' : 'false';\r\n  }\r\n\r\n  if (t.isNullLiteral(expr)) {\r\n    return 'null';\r\n  }\r\n\r\n  if (t.isIdentifier(expr)) {\r\n    // Special handling for progress parameter\r\n    if (expr.name === 'progress') {\r\n      return 'progress';\r\n    }\r\n    // Special handling for cancellation token\r\n    if (expr.name === 'cancellationToken' || expr.name === 'cancel') {\r\n      return 'cancellationToken';\r\n    }\r\n    return expr.name;\r\n  }\r\n\r\n  if (t.isMemberExpression(expr)) {\r\n    const object = transpileExpression(expr.object);\r\n    const property = expr.computed\r\n      ? `[${transpileExpression(expr.property)}]`\r\n      : `.${expr.property.name}`;\r\n\r\n    // Handle special member expressions\r\n    const fullExpr = `${object}${property}`;\r\n    return transpileMemberExpression(fullExpr, object, property);\r\n  }\r\n\r\n  if (t.isOptionalMemberExpression(expr)) {\r\n    const object = transpileExpression(expr.object);\r\n    const property = expr.computed\r\n      ? `[${transpileExpression(expr.property)}]`\r\n      : `.${expr.property.name}`;\r\n\r\n    // In C#, optional chaining (?.) is just ?.\r\n    const fullExpr = `${object}?${property}`;\r\n    return transpileMemberExpression(fullExpr, object, property);\r\n  }\r\n\r\n  if (t.isCallExpression(expr)) {\r\n    const callee = transpileExpression(expr.callee);\r\n    const args = expr.arguments.map(arg => transpileExpression(arg)).join(', ');\r\n\r\n    // Handle special method calls\r\n    return transpileMethodCall(callee, args);\r\n  }\r\n\r\n  if (t.isOptionalCallExpression(expr)) {\r\n    const callee = transpileExpression(expr.callee);\r\n    const args = expr.arguments.map(arg => transpileExpression(arg)).join(', ');\r\n\r\n    // In C#, optional call (?.) is handled via null-conditional operator\r\n    // The callee should already have ? from OptionalMemberExpression\r\n    return transpileMethodCall(callee, args);\r\n  }\r\n\r\n  if (t.isAwaitExpression(expr)) {\r\n    return `await ${transpileExpression(expr.argument)}`;\r\n  }\r\n\r\n  if (t.isArrayExpression(expr)) {\r\n    const elements = expr.elements.map(el => transpileExpression(el)).join(', ');\r\n    return `new[] { ${elements} }`;\r\n  }\r\n\r\n  if (t.isObjectExpression(expr)) {\r\n    const props = expr.properties.map(prop => {\r\n      if (t.isObjectProperty(prop)) {\r\n        const key = t.isIdentifier(prop.key) ? prop.key.name : transpileExpression(prop.key);\r\n        const value = transpileExpression(prop.value);\r\n        return `${capitalize(key)} = ${value}`;\r\n      }\r\n      if (t.isSpreadElement(prop)) {\r\n        // C# object spread using with expression (C# 9+)\r\n        return `/* spread: ${transpileExpression(prop.argument)} */`;\r\n      }\r\n      return '';\r\n    }).filter(Boolean).join(', ');\r\n    return `new { ${props} }`;\r\n  }\r\n\r\n  if (t.isArrowFunctionExpression(expr)) {\r\n    const params = expr.params.map(p => p.name).join(', ');\r\n    const body = t.isBlockStatement(expr.body)\r\n      ? `{\\n${indent(transpileBlockStatement(expr.body), 4)}\\n}`\r\n      : transpileExpression(expr.body);\r\n    return `(${params}) => ${body}`;\r\n  }\r\n\r\n  if (t.isParenthesizedExpression(expr)) {\r\n    // Unwrap parentheses - just transpile the inner expression\r\n    return transpileExpression(expr.expression);\r\n  }\r\n\r\n  if (t.isBinaryExpression(expr)) {\r\n    const left = transpileExpression(expr.left);\r\n    const right = transpileExpression(expr.right);\r\n    const operator = transpileOperator(expr.operator);\r\n    return `(${left} ${operator} ${right})`;\r\n  }\r\n\r\n  if (t.isLogicalExpression(expr)) {\r\n    const left = transpileExpression(expr.left);\r\n    const right = transpileExpression(expr.right);\r\n    const operator = transpileOperator(expr.operator);\r\n    return `(${left} ${operator} ${right})`;\r\n  }\r\n\r\n  if (t.isUnaryExpression(expr)) {\r\n    const operator = transpileOperator(expr.operator);\r\n    const argument = transpileExpression(expr.argument);\r\n    return expr.prefix ? `${operator}${argument}` : `${argument}${operator}`;\r\n  }\r\n\r\n  if (t.isConditionalExpression(expr)) {\r\n    const test = transpileExpression(expr.test);\r\n    const consequent = transpileExpression(expr.consequent);\r\n    const alternate = transpileExpression(expr.alternate);\r\n    return `(${test} ? ${consequent} : ${alternate})`;\r\n  }\r\n\r\n  if (t.isTemplateLiteral(expr)) {\r\n    // Convert template literal to C# interpolated string\r\n    return transpileTemplateLiteral(expr);\r\n  }\r\n\r\n  if (t.isNewExpression(expr)) {\r\n    const callee = transpileExpression(expr.callee);\r\n    const args = expr.arguments.map(arg => transpileExpression(arg)).join(', ');\r\n    return `new ${callee}(${args})`;\r\n  }\r\n\r\n  if (t.isAssignmentExpression(expr)) {\r\n    const left = transpileExpression(expr.left);\r\n    const right = transpileExpression(expr.right);\r\n    const operator = transpileOperator(expr.operator);\r\n    return `${left} ${operator} ${right}`;\r\n  }\r\n\r\n  if (t.isUpdateExpression(expr)) {\r\n    const argument = transpileExpression(expr.argument);\r\n    const operator = expr.operator;\r\n    return expr.prefix ? `${operator}${argument}` : `${argument}${operator}`;\r\n  }\r\n\r\n  console.warn(`[transpileExpression] Unknown expression type: ${expr.type}`);\r\n  return `/* TODO: ${expr.type} */`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "5823b606",
+      "type": "IfStatement",
+      "condition": "!expr",
+      "babel_source": "if (!expr) return 'null';",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d8b2830d",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!expr",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e6caf818",
+      "type": "ReturnStatement",
+      "babel_source": "return 'null';",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a7d8381d",
+      "type": "IfStatement",
+      "condition": "t.isStringLiteral(expr)",
+      "babel_source": "if (t.isStringLiteral(expr)) {\r\n    return `\"${escapeString(expr.value)}\"`;\r\n  }",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "81d695ea",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(expr)",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1f69240d",
+      "type": "ReturnStatement",
+      "babel_source": "return `\"${escapeString(expr.value)}\"`;",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f064e8b8",
+      "type": "TemplateLiteral",
+      "babel_source": "`\"${escapeString(expr.value)}\"`",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "deda041c",
+      "type": "IfStatement",
+      "condition": "t.isNumericLiteral(expr)",
+      "babel_source": "if (t.isNumericLiteral(expr)) {\r\n    return expr.value.toString();\r\n  }",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bed165a3",
+      "type": "BabelTypeCheck",
+      "method": "isNumericLiteral",
+      "babel_source": "t.isNumericLiteral(expr)",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c35b8ca5",
+      "type": "ReturnStatement",
+      "babel_source": "return expr.value.toString();",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2a9b7d87",
+      "type": "IfStatement",
+      "condition": "t.isBooleanLiteral(expr)",
+      "babel_source": "if (t.isBooleanLiteral(expr)) {\r\n    return expr.value ? 'true' : 'false';\r\n  }",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b9190750",
+      "type": "BabelTypeCheck",
+      "method": "isBooleanLiteral",
+      "babel_source": "t.isBooleanLiteral(expr)",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "03e810a4",
+      "type": "ReturnStatement",
+      "babel_source": "return expr.value ? 'true' : 'false';",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3a5b258a",
+      "type": "ConditionalExpression",
+      "babel_source": "expr.value ? 'true' : 'false'",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "15524108",
+      "type": "IfStatement",
+      "condition": "t.isNullLiteral(expr)",
+      "babel_source": "if (t.isNullLiteral(expr)) {\r\n    return 'null';\r\n  }",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "65e02bf2",
+      "type": "BabelTypeCheck",
+      "method": "isNullLiteral",
+      "babel_source": "t.isNullLiteral(expr)",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e6caf818",
+      "type": "ReturnStatement",
+      "babel_source": "return 'null';",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0d7d792a",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(expr)",
+      "babel_source": "if (t.isIdentifier(expr)) {\r\n    // Special handling for progress parameter\r\n    if (expr.name === 'progress') {\r\n      return 'progress';\r\n    }\r\n    // Special handling for cancellation token\r\n    if (expr.name === 'cancellationToken' || expr.name === 'cancel') {\r\n      return 'cancellationToken';\r\n    }\r\n    return expr.name;\r\n  }",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42d26fd4",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(expr)",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2f7d2e25",
+      "type": "IfStatement",
+      "condition": "expr.name === 'progress'",
+      "babel_source": "if (expr.name === 'progress') {\r\n      return 'progress';\r\n    }",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "11dc9b61",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "expr.name === 'progress'",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c3015097",
+      "type": "ReturnStatement",
+      "babel_source": "return 'progress';",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "94ff1f52",
+      "type": "IfStatement",
+      "condition": "expr.name === 'cancellationToken' || expr.name === 'cancel'",
+      "babel_source": "if (expr.name === 'cancellationToken' || expr.name === 'cancel') {\r\n      return 'cancellationToken';\r\n    }",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "54cd04de",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "expr.name === 'cancellationToken' || expr.name === 'cancel'",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e66e64f5",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "expr.name === 'cancellationToken'",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d785ff84",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "expr.name === 'cancel'",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "998d9830",
+      "type": "ReturnStatement",
+      "babel_source": "return 'cancellationToken';",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dc053a27",
+      "type": "ReturnStatement",
+      "babel_source": "return expr.name;",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "50dd9686",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(expr)",
+      "babel_source": "if (t.isMemberExpression(expr)) {\r\n    const object = transpileExpression(expr.object);\r\n    const property = expr.computed\r\n      ? `[${transpileExpression(expr.property)}]`\r\n      : `.${expr.property.name}`;\r\n\r\n    // Handle special member expressions\r\n    const fullExpr = `${object}${property}`;\r\n    return transpileMemberExpression(fullExpr, object, property);\r\n  }",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c8858c63",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(expr)",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "976fc911",
+      "type": "VariableDeclaration",
+      "babel_source": "const object = transpileExpression(expr.object);",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "eef3712c",
+      "type": "VariableDeclaration",
+      "babel_source": "const property = expr.computed\r\n      ? `[${transpileExpression(expr.property)}]`\r\n      : `.${expr.property.name}`;",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "71202379",
+      "type": "ConditionalExpression",
+      "babel_source": "expr.computed\r\n      ? `[${transpileExpression(expr.property)}]`\r\n      : `.${expr.property.name}`",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "79468dc4",
+      "type": "TemplateLiteral",
+      "babel_source": "`[${transpileExpression(expr.property)}]`",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6546f161",
+      "type": "TemplateLiteral",
+      "babel_source": "`.${expr.property.name}`",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e8154aa7",
+      "type": "VariableDeclaration",
+      "babel_source": "const fullExpr = `${object}${property}`;",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6e90232d",
+      "type": "TemplateLiteral",
+      "babel_source": "`${object}${property}`",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f564260d",
+      "type": "ReturnStatement",
+      "babel_source": "return transpileMemberExpression(fullExpr, object, property);",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "87a67ecf",
+      "type": "IfStatement",
+      "condition": "t.isOptionalMemberExpression(expr)",
+      "babel_source": "if (t.isOptionalMemberExpression(expr)) {\r\n    const object = transpileExpression(expr.object);\r\n    const property = expr.computed\r\n      ? `[${transpileExpression(expr.property)}]`\r\n      : `.${expr.property.name}`;\r\n\r\n    // In C#, optional chaining (?.) is just ?.\r\n    const fullExpr = `${object}?${property}`;\r\n    return transpileMemberExpression(fullExpr, object, property);\r\n  }",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "090c4d5a",
+      "type": "BabelTypeCheck",
+      "method": "isOptionalMemberExpression",
+      "babel_source": "t.isOptionalMemberExpression(expr)",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "976fc911",
+      "type": "VariableDeclaration",
+      "babel_source": "const object = transpileExpression(expr.object);",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "eef3712c",
+      "type": "VariableDeclaration",
+      "babel_source": "const property = expr.computed\r\n      ? `[${transpileExpression(expr.property)}]`\r\n      : `.${expr.property.name}`;",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "71202379",
+      "type": "ConditionalExpression",
+      "babel_source": "expr.computed\r\n      ? `[${transpileExpression(expr.property)}]`\r\n      : `.${expr.property.name}`",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "79468dc4",
+      "type": "TemplateLiteral",
+      "babel_source": "`[${transpileExpression(expr.property)}]`",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6546f161",
+      "type": "TemplateLiteral",
+      "babel_source": "`.${expr.property.name}`",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1ed76715",
+      "type": "VariableDeclaration",
+      "babel_source": "const fullExpr = `${object}?${property}`;",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ca85b52d",
+      "type": "TemplateLiteral",
+      "babel_source": "`${object}?${property}`",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f564260d",
+      "type": "ReturnStatement",
+      "babel_source": "return transpileMemberExpression(fullExpr, object, property);",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a7d66474",
+      "type": "IfStatement",
+      "condition": "t.isCallExpression(expr)",
+      "babel_source": "if (t.isCallExpression(expr)) {\r\n    const callee = transpileExpression(expr.callee);\r\n    const args = expr.arguments.map(arg => transpileExpression(arg)).join(', ');\r\n\r\n    // Handle special method calls\r\n    return transpileMethodCall(callee, args);\r\n  }",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "46479f62",
+      "type": "BabelTypeCheck",
+      "method": "isCallExpression",
+      "babel_source": "t.isCallExpression(expr)",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "903657ef",
+      "type": "VariableDeclaration",
+      "babel_source": "const callee = transpileExpression(expr.callee);",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "87892384",
+      "type": "VariableDeclaration",
+      "babel_source": "const args = expr.arguments.map(arg => transpileExpression(arg)).join(', ');",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c9f4a20e",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "arg => transpileExpression(arg)",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "25783310",
+      "type": "ReturnStatement",
+      "babel_source": "return transpileMethodCall(callee, args);",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8f9be887",
+      "type": "IfStatement",
+      "condition": "t.isOptionalCallExpression(expr)",
+      "babel_source": "if (t.isOptionalCallExpression(expr)) {\r\n    const callee = transpileExpression(expr.callee);\r\n    const args = expr.arguments.map(arg => transpileExpression(arg)).join(', ');\r\n\r\n    // In C#, optional call (?.) is handled via null-conditional operator\r\n    // The callee should already have ? from OptionalMemberExpression\r\n    return transpileMethodCall(callee, args);\r\n  }",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a0e4ba8c",
+      "type": "BabelTypeCheck",
+      "method": "isOptionalCallExpression",
+      "babel_source": "t.isOptionalCallExpression(expr)",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "903657ef",
+      "type": "VariableDeclaration",
+      "babel_source": "const callee = transpileExpression(expr.callee);",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "87892384",
+      "type": "VariableDeclaration",
+      "babel_source": "const args = expr.arguments.map(arg => transpileExpression(arg)).join(', ');",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c9f4a20e",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "arg => transpileExpression(arg)",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "25783310",
+      "type": "ReturnStatement",
+      "babel_source": "return transpileMethodCall(callee, args);",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3c89e81b",
+      "type": "IfStatement",
+      "condition": "t.isAwaitExpression(expr)",
+      "babel_source": "if (t.isAwaitExpression(expr)) {\r\n    return `await ${transpileExpression(expr.argument)}`;\r\n  }",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d46bbfd4",
+      "type": "BabelTypeCheck",
+      "method": "isAwaitExpression",
+      "babel_source": "t.isAwaitExpression(expr)",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cb30ee75",
+      "type": "ReturnStatement",
+      "babel_source": "return `await ${transpileExpression(expr.argument)}`;",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "22c8d886",
+      "type": "TemplateLiteral",
+      "babel_source": "`await ${transpileExpression(expr.argument)}`",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "005bf9e8",
+      "type": "IfStatement",
+      "condition": "t.isArrayExpression(expr)",
+      "babel_source": "if (t.isArrayExpression(expr)) {\r\n    const elements = expr.elements.map(el => transpileExpression(el)).join(', ');\r\n    return `new[] { ${elements} }`;\r\n  }",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bf6cc4d1",
+      "type": "BabelTypeCheck",
+      "method": "isArrayExpression",
+      "babel_source": "t.isArrayExpression(expr)",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "be32e2db",
+      "type": "VariableDeclaration",
+      "babel_source": "const elements = expr.elements.map(el => transpileExpression(el)).join(', ');",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b8de2dd6",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "el => transpileExpression(el)",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "53b34d4e",
+      "type": "ReturnStatement",
+      "babel_source": "return `new[] { ${elements} }`;",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0a4ccf87",
+      "type": "TemplateLiteral",
+      "babel_source": "`new[] { ${elements} }`",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ae9c327d",
+      "type": "IfStatement",
+      "condition": "t.isObjectExpression(expr)",
+      "babel_source": "if (t.isObjectExpression(expr)) {\r\n    const props = expr.properties.map(prop => {\r\n      if (t.isObjectProperty(prop)) {\r\n        const key = t.isIdentifier(prop.key) ? prop.key.name : transpileExpression(prop.key);\r\n        const value = transpileExpression(prop.value);\r\n        return `${capitalize(key)} = ${value}`;\r\n      }\r\n      if (t.isSpreadElement(prop)) {\r\n        // C# object spread using with expression (C# 9+)\r\n        return `/* spread: ${transpileExpression(prop.argument)} */`;\r\n      }\r\n      return '';\r\n    }).filter(Boolean).join(', ');\r\n    return `new { ${props} }`;\r\n  }",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "666da584",
+      "type": "BabelTypeCheck",
+      "method": "isObjectExpression",
+      "babel_source": "t.isObjectExpression(expr)",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8ffb6afd",
+      "type": "VariableDeclaration",
+      "babel_source": "const props = expr.properties.map(prop => {\r\n      if (t.isObjectProperty(prop)) {\r\n        const key = t.isIdentifier(prop.key) ? prop.key.name : transpileExpression(prop.key);\r\n        const value = transpileExpression(prop.value);\r\n        return `${capitalize(key)} = ${value}`;\r\n      }\r\n      if (t.isSpreadElement(prop)) {\r\n        // C# object spread using with expression (C# 9+)\r\n        return `/* spread: ${transpileExpression(prop.argument)} */`;\r\n      }\r\n      return '';\r\n    }).filter(Boolean).join(', ');",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6b4691b4",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "prop => {\r\n      if (t.isObjectProperty(prop)) {\r\n        const key = t.isIdentifier(prop.key) ? prop.key.name : transpileExpression(prop.key);\r\n        const value = transpileExpression(prop.value);\r\n        return `${capitalize(key)} = ${value}`;\r\n      }\r\n      if (t.isSpreadElement(prop)) {\r\n        // C# object spread using with expression (C# 9+)\r\n        return `/* spread: ${transpileExpression(prop.argument)} */`;\r\n      }\r\n      return '';\r\n    }",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1dea3179",
+      "type": "IfStatement",
+      "condition": "t.isObjectProperty(prop)",
+      "babel_source": "if (t.isObjectProperty(prop)) {\r\n        const key = t.isIdentifier(prop.key) ? prop.key.name : transpileExpression(prop.key);\r\n        const value = transpileExpression(prop.value);\r\n        return `${capitalize(key)} = ${value}`;\r\n      }",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d8cb3d9e",
+      "type": "BabelTypeCheck",
+      "method": "isObjectProperty",
+      "babel_source": "t.isObjectProperty(prop)",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "93c4b7ff",
+      "type": "VariableDeclaration",
+      "babel_source": "const key = t.isIdentifier(prop.key) ? prop.key.name : transpileExpression(prop.key);",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e4599800",
+      "type": "ConditionalExpression",
+      "babel_source": "t.isIdentifier(prop.key) ? prop.key.name : transpileExpression(prop.key)",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f3845e36",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(prop.key)",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c5a99301",
+      "type": "VariableDeclaration",
+      "babel_source": "const value = transpileExpression(prop.value);",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a7bad342",
+      "type": "ReturnStatement",
+      "babel_source": "return `${capitalize(key)} = ${value}`;",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "10420448",
+      "type": "TemplateLiteral",
+      "babel_source": "`${capitalize(key)} = ${value}`",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bdc8fd85",
+      "type": "IfStatement",
+      "condition": "t.isSpreadElement(prop)",
+      "babel_source": "if (t.isSpreadElement(prop)) {\r\n        // C# object spread using with expression (C# 9+)\r\n        return `/* spread: ${transpileExpression(prop.argument)} */`;\r\n      }",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "67acb282",
+      "type": "BabelTypeCheck",
+      "method": "isSpreadElement",
+      "babel_source": "t.isSpreadElement(prop)",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a13f7d47",
+      "type": "ReturnStatement",
+      "babel_source": "return `/* spread: ${transpileExpression(prop.argument)} */`;",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4271ec68",
+      "type": "TemplateLiteral",
+      "babel_source": "`/* spread: ${transpileExpression(prop.argument)} */`",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7be478c8",
+      "type": "ReturnStatement",
+      "babel_source": "return '';",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "eca79340",
+      "type": "ReturnStatement",
+      "babel_source": "return `new { ${props} }`;",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c60564cc",
+      "type": "TemplateLiteral",
+      "babel_source": "`new { ${props} }`",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "21724b28",
+      "type": "IfStatement",
+      "condition": "t.isArrowFunctionExpression(expr)",
+      "babel_source": "if (t.isArrowFunctionExpression(expr)) {\r\n    const params = expr.params.map(p => p.name).join(', ');\r\n    const body = t.isBlockStatement(expr.body)\r\n      ? `{\\n${indent(transpileBlockStatement(expr.body), 4)}\\n}`\r\n      : transpileExpression(expr.body);\r\n    return `(${params}) => ${body}`;\r\n  }",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bdd21b2b",
+      "type": "BabelTypeCheck",
+      "method": "isArrowFunctionExpression",
+      "babel_source": "t.isArrowFunctionExpression(expr)",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "155f30c1",
+      "type": "VariableDeclaration",
+      "babel_source": "const params = expr.params.map(p => p.name).join(', ');",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "722f041e",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "p => p.name",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fcf89389",
+      "type": "VariableDeclaration",
+      "babel_source": "const body = t.isBlockStatement(expr.body)\r\n      ? `{\\n${indent(transpileBlockStatement(expr.body), 4)}\\n}`\r\n      : transpileExpression(expr.body);",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "327c3ebd",
+      "type": "ConditionalExpression",
+      "babel_source": "t.isBlockStatement(expr.body)\r\n      ? `{\\n${indent(transpileBlockStatement(expr.body), 4)}\\n}`\r\n      : transpileExpression(expr.body)",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e53b76de",
+      "type": "BabelTypeCheck",
+      "method": "isBlockStatement",
+      "babel_source": "t.isBlockStatement(expr.body)",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "315e1828",
+      "type": "TemplateLiteral",
+      "babel_source": "`{\\n${indent(transpileBlockStatement(expr.body), 4)}\\n}`",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dd65f87f",
+      "type": "ReturnStatement",
+      "babel_source": "return `(${params}) => ${body}`;",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "06fc25f4",
+      "type": "TemplateLiteral",
+      "babel_source": "`(${params}) => ${body}`",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ae4821b8",
+      "type": "IfStatement",
+      "condition": "t.isParenthesizedExpression(expr)",
+      "babel_source": "if (t.isParenthesizedExpression(expr)) {\r\n    // Unwrap parentheses - just transpile the inner expression\r\n    return transpileExpression(expr.expression);\r\n  }",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "99a17efb",
+      "type": "BabelTypeCheck",
+      "method": "isParenthesizedExpression",
+      "babel_source": "t.isParenthesizedExpression(expr)",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fc5e48b3",
+      "type": "ReturnStatement",
+      "babel_source": "return transpileExpression(expr.expression);",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1f98767c",
+      "type": "IfStatement",
+      "condition": "t.isBinaryExpression(expr)",
+      "babel_source": "if (t.isBinaryExpression(expr)) {\r\n    const left = transpileExpression(expr.left);\r\n    const right = transpileExpression(expr.right);\r\n    const operator = transpileOperator(expr.operator);\r\n    return `(${left} ${operator} ${right})`;\r\n  }",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8db0ee56",
+      "type": "BabelTypeCheck",
+      "method": "isBinaryExpression",
+      "babel_source": "t.isBinaryExpression(expr)",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f4da4e2a",
+      "type": "VariableDeclaration",
+      "babel_source": "const left = transpileExpression(expr.left);",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cdac0f03",
+      "type": "VariableDeclaration",
+      "babel_source": "const right = transpileExpression(expr.right);",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "327f10fb",
+      "type": "VariableDeclaration",
+      "babel_source": "const operator = transpileOperator(expr.operator);",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "712470a0",
+      "type": "ReturnStatement",
+      "babel_source": "return `(${left} ${operator} ${right})`;",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "50833285",
+      "type": "TemplateLiteral",
+      "babel_source": "`(${left} ${operator} ${right})`",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d243255e",
+      "type": "IfStatement",
+      "condition": "t.isLogicalExpression(expr)",
+      "babel_source": "if (t.isLogicalExpression(expr)) {\r\n    const left = transpileExpression(expr.left);\r\n    const right = transpileExpression(expr.right);\r\n    const operator = transpileOperator(expr.operator);\r\n    return `(${left} ${operator} ${right})`;\r\n  }",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c20dd732",
+      "type": "BabelTypeCheck",
+      "method": "isLogicalExpression",
+      "babel_source": "t.isLogicalExpression(expr)",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f4da4e2a",
+      "type": "VariableDeclaration",
+      "babel_source": "const left = transpileExpression(expr.left);",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cdac0f03",
+      "type": "VariableDeclaration",
+      "babel_source": "const right = transpileExpression(expr.right);",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "327f10fb",
+      "type": "VariableDeclaration",
+      "babel_source": "const operator = transpileOperator(expr.operator);",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "712470a0",
+      "type": "ReturnStatement",
+      "babel_source": "return `(${left} ${operator} ${right})`;",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "50833285",
+      "type": "TemplateLiteral",
+      "babel_source": "`(${left} ${operator} ${right})`",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "266cfeee",
+      "type": "IfStatement",
+      "condition": "t.isUnaryExpression(expr)",
+      "babel_source": "if (t.isUnaryExpression(expr)) {\r\n    const operator = transpileOperator(expr.operator);\r\n    const argument = transpileExpression(expr.argument);\r\n    return expr.prefix ? `${operator}${argument}` : `${argument}${operator}`;\r\n  }",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4b2e045a",
+      "type": "BabelTypeCheck",
+      "method": "isUnaryExpression",
+      "babel_source": "t.isUnaryExpression(expr)",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "327f10fb",
+      "type": "VariableDeclaration",
+      "babel_source": "const operator = transpileOperator(expr.operator);",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "33c7f394",
+      "type": "VariableDeclaration",
+      "babel_source": "const argument = transpileExpression(expr.argument);",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2a802e39",
+      "type": "ReturnStatement",
+      "babel_source": "return expr.prefix ? `${operator}${argument}` : `${argument}${operator}`;",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "002f88e8",
+      "type": "ConditionalExpression",
+      "babel_source": "expr.prefix ? `${operator}${argument}` : `${argument}${operator}`",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9ac92da5",
+      "type": "TemplateLiteral",
+      "babel_source": "`${operator}${argument}`",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b5da5e32",
+      "type": "TemplateLiteral",
+      "babel_source": "`${argument}${operator}`",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "90bab747",
+      "type": "IfStatement",
+      "condition": "t.isConditionalExpression(expr)",
+      "babel_source": "if (t.isConditionalExpression(expr)) {\r\n    const test = transpileExpression(expr.test);\r\n    const consequent = transpileExpression(expr.consequent);\r\n    const alternate = transpileExpression(expr.alternate);\r\n    return `(${test} ? ${consequent} : ${alternate})`;\r\n  }",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5574ecc1",
+      "type": "BabelTypeCheck",
+      "method": "isConditionalExpression",
+      "babel_source": "t.isConditionalExpression(expr)",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ba42d473",
+      "type": "VariableDeclaration",
+      "babel_source": "const test = transpileExpression(expr.test);",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8e8d5064",
+      "type": "VariableDeclaration",
+      "babel_source": "const consequent = transpileExpression(expr.consequent);",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "238e57ff",
+      "type": "VariableDeclaration",
+      "babel_source": "const alternate = transpileExpression(expr.alternate);",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "af687af7",
+      "type": "ReturnStatement",
+      "babel_source": "return `(${test} ? ${consequent} : ${alternate})`;",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dc02dd4d",
+      "type": "TemplateLiteral",
+      "babel_source": "`(${test} ? ${consequent} : ${alternate})`",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ffd05dda",
+      "type": "IfStatement",
+      "condition": "t.isTemplateLiteral(expr)",
+      "babel_source": "if (t.isTemplateLiteral(expr)) {\r\n    // Convert template literal to C# interpolated string\r\n    return transpileTemplateLiteral(expr);\r\n  }",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5d9a6de7",
+      "type": "BabelTypeCheck",
+      "method": "isTemplateLiteral",
+      "babel_source": "t.isTemplateLiteral(expr)",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b06318e4",
+      "type": "ReturnStatement",
+      "babel_source": "return transpileTemplateLiteral(expr);",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "869c5fae",
+      "type": "IfStatement",
+      "condition": "t.isNewExpression(expr)",
+      "babel_source": "if (t.isNewExpression(expr)) {\r\n    const callee = transpileExpression(expr.callee);\r\n    const args = expr.arguments.map(arg => transpileExpression(arg)).join(', ');\r\n    return `new ${callee}(${args})`;\r\n  }",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a8f73d2e",
+      "type": "BabelTypeCheck",
+      "method": "isNewExpression",
+      "babel_source": "t.isNewExpression(expr)",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "903657ef",
+      "type": "VariableDeclaration",
+      "babel_source": "const callee = transpileExpression(expr.callee);",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "87892384",
+      "type": "VariableDeclaration",
+      "babel_source": "const args = expr.arguments.map(arg => transpileExpression(arg)).join(', ');",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c9f4a20e",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "arg => transpileExpression(arg)",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "622b11f9",
+      "type": "ReturnStatement",
+      "babel_source": "return `new ${callee}(${args})`;",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7230bbc5",
+      "type": "TemplateLiteral",
+      "babel_source": "`new ${callee}(${args})`",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b0ab7ddd",
+      "type": "IfStatement",
+      "condition": "t.isAssignmentExpression(expr)",
+      "babel_source": "if (t.isAssignmentExpression(expr)) {\r\n    const left = transpileExpression(expr.left);\r\n    const right = transpileExpression(expr.right);\r\n    const operator = transpileOperator(expr.operator);\r\n    return `${left} ${operator} ${right}`;\r\n  }",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a374714e",
+      "type": "BabelTypeCheck",
+      "method": "isAssignmentExpression",
+      "babel_source": "t.isAssignmentExpression(expr)",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f4da4e2a",
+      "type": "VariableDeclaration",
+      "babel_source": "const left = transpileExpression(expr.left);",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cdac0f03",
+      "type": "VariableDeclaration",
+      "babel_source": "const right = transpileExpression(expr.right);",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "327f10fb",
+      "type": "VariableDeclaration",
+      "babel_source": "const operator = transpileOperator(expr.operator);",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "06f3a837",
+      "type": "ReturnStatement",
+      "babel_source": "return `${left} ${operator} ${right}`;",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f4fdaca8",
+      "type": "TemplateLiteral",
+      "babel_source": "`${left} ${operator} ${right}`",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5c98a833",
+      "type": "IfStatement",
+      "condition": "t.isUpdateExpression(expr)",
+      "babel_source": "if (t.isUpdateExpression(expr)) {\r\n    const argument = transpileExpression(expr.argument);\r\n    const operator = expr.operator;\r\n    return expr.prefix ? `${operator}${argument}` : `${argument}${operator}`;\r\n  }",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2a725f31",
+      "type": "BabelTypeCheck",
+      "method": "isUpdateExpression",
+      "babel_source": "t.isUpdateExpression(expr)",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "33c7f394",
+      "type": "VariableDeclaration",
+      "babel_source": "const argument = transpileExpression(expr.argument);",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0463d3f6",
+      "type": "VariableDeclaration",
+      "babel_source": "const operator = expr.operator;",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2a802e39",
+      "type": "ReturnStatement",
+      "babel_source": "return expr.prefix ? `${operator}${argument}` : `${argument}${operator}`;",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "002f88e8",
+      "type": "ConditionalExpression",
+      "babel_source": "expr.prefix ? `${operator}${argument}` : `${argument}${operator}`",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9ac92da5",
+      "type": "TemplateLiteral",
+      "babel_source": "`${operator}${argument}`",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b5da5e32",
+      "type": "TemplateLiteral",
+      "babel_source": "`${argument}${operator}`",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bb221a89",
+      "type": "TemplateLiteral",
+      "babel_source": "`[transpileExpression] Unknown expression type: ${expr.type}`",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "df1e43b4",
+      "type": "ReturnStatement",
+      "babel_source": "return `/* TODO: ${expr.type} */`;",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "689b9ca2",
+      "type": "TemplateLiteral",
+      "babel_source": "`/* TODO: ${expr.type} */`",
+      "parentContext": {
+        "functionName": "transpileExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "transpilers/typescriptToCSharp.cjs"
+  ]
+}

@@ -1,0 +1,900 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "assignPathsToExpression",
+  "params": [
+    {
+      "name": "expr",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    },
+    {
+      "name": "parentPath",
+      "inferredType": "&Path",
+      "defaultValue": null
+    },
+    {
+      "name": "pathGen",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "t",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "structuralChanges",
+      "inferredType": "unknown",
+      "defaultValue": "[]"
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function assignPathsToExpression(expr, parentPath, pathGen, t, structuralChanges = []) {\r\n  if (!expr) return;\r\n\r\n  if (t.isLogicalExpression(expr) && expr.operator === '&&') {\r\n    // Logical AND: {isAdmin && <div>Admin Panel</div>}\r\n    if (t.isJSXElement(expr.right)) {\r\n      assignPathsToJSX(expr.right, parentPath, pathGen, t, null, null, structuralChanges);\r\n    } else if (t.isJSXExpressionContainer(expr.right)) {\r\n      assignPathsToExpression(expr.right.expression, parentPath, pathGen, t, structuralChanges);\r\n    }\r\n  } else if (t.isConditionalExpression(expr)) {\r\n    // Ternary: {isAdmin ? <AdminPanel/> : <UserPanel/>}\r\n\r\n    // Assign paths to consequent (true branch)\r\n    if (t.isJSXElement(expr.consequent)) {\r\n      assignPathsToJSX(expr.consequent, parentPath, pathGen, t, null, null, structuralChanges);\r\n    } else if (t.isJSXExpressionContainer(expr.consequent)) {\r\n      assignPathsToExpression(expr.consequent.expression, parentPath, pathGen, t, structuralChanges);\r\n    }\r\n\r\n    // Assign paths to alternate (false branch)\r\n    if (expr.alternate) {\r\n      if (t.isJSXElement(expr.alternate)) {\r\n        assignPathsToJSX(expr.alternate, parentPath, pathGen, t, null, null, structuralChanges);\r\n      } else if (t.isJSXExpressionContainer(expr.alternate)) {\r\n        assignPathsToExpression(expr.alternate.expression, parentPath, pathGen, t, structuralChanges);\r\n      }\r\n    }\r\n  } else if (t.isCallExpression(expr) &&\r\n             t.isMemberExpression(expr.callee) &&\r\n             t.isIdentifier(expr.callee.property) &&\r\n             expr.callee.property.name === 'map') {\r\n    // Array.map: {items.map(item => <li>{item}</li>)}\r\n\r\n    const callback = expr.arguments[0];\r\n    if (t.isArrowFunctionExpression(callback) || t.isFunctionExpression(callback)) {\r\n      const body = callback.body;\r\n\r\n      if (t.isJSXElement(body)) {\r\n        // Arrow function with JSX body: item => <li>{item}</li>\r\n        assignPathsToJSX(body, parentPath, pathGen, t, null, null, structuralChanges);\r\n      } else if (t.isBlockStatement(body)) {\r\n        // Arrow function with block: item => { return <li>{item}</li>; }\r\n        const returnStmt = body.body.find(stmt => t.isReturnStatement(stmt));\r\n        if (returnStmt && t.isJSXElement(returnStmt.argument)) {\r\n          assignPathsToJSX(returnStmt.argument, parentPath, pathGen, t, null, null, structuralChanges);\r\n        }\r\n      }\r\n    }\r\n  } else if (t.isJSXFragment(expr)) {\r\n    // Fragment\r\n    assignPathsToJSX(expr, parentPath, pathGen, t, null, null, structuralChanges);\r\n  } else if (t.isJSXElement(expr)) {\r\n    // Direct JSX element\r\n    assignPathsToJSX(expr, parentPath, pathGen, t, null, null, structuralChanges);\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3411041a",
+      "type": "IfStatement",
+      "condition": "!expr",
+      "babel_source": "if (!expr) return;",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d8b2830d",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!expr",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8beaabe2",
+      "type": "ReturnStatement",
+      "babel_source": "return;",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "72b7d76e",
+      "type": "IfStatement",
+      "condition": "t.isLogicalExpression(expr) && expr.operator === '&&'",
+      "babel_source": "if (t.isLogicalExpression(expr) && expr.operator === '&&') {\r\n    // Logical AND: {isAdmin && <div>Admin Panel</div>}\r\n    if (t.isJSXElement(expr.right)) {\r\n      assignPathsToJSX(expr.right, parentPath, pathGen, t, null, null, structuralChanges);\r\n    } else if (t.isJSXExpressionContainer(expr.right)) {\r\n      assignPathsToExpression(expr.right.expression, parentPath, pathGen, t, structuralChanges);\r\n    }\r\n  } else if (t.isConditionalExpression(expr)) {\r\n    // Ternary: {isAdmin ? <AdminPanel/> : <UserPanel/>}\r\n\r\n    // Assign paths to consequent (true branch)\r\n    if (t.isJSXElement(expr.consequent)) {\r\n      assignPathsToJSX(expr.consequent, parentPath, pathGen, t, null, null, structuralChanges);\r\n    } else if (t.isJSXExpressionContainer(expr.consequent)) {\r\n      assignPathsToExpression(expr.consequent.expression, parentPath, pathGen, t, structuralChanges);\r\n    }\r\n\r\n    // Assign paths to alternate (false branch)\r\n    if (expr.alternate) {\r\n      if (t.isJSXElement(expr.alternate)) {\r\n        assignPathsToJSX(expr.alternate, parentPath, pathGen, t, null, null, structuralChanges);\r\n      } else if (t.isJSXExpressionContainer(expr.alternate)) {\r\n        assignPathsToExpression(expr.alternate.expression, parentPath, pathGen, t, structuralChanges);\r\n      }\r\n    }\r\n  } else if (t.isCallExpression(expr) &&\r\n             t.isMemberExpression(expr.callee) &&\r\n             t.isIdentifier(expr.callee.property) &&\r\n             expr.callee.property.name === 'map') {\r\n    // Array.map: {items.map(item => <li>{item}</li>)}\r\n\r\n    const callback = expr.arguments[0];\r\n    if (t.isArrowFunctionExpression(callback) || t.isFunctionExpression(callback)) {\r\n      const body = callback.body;\r\n\r\n      if (t.isJSXElement(body)) {\r\n        // Arrow function with JSX body: item => <li>{item}</li>\r\n        assignPathsToJSX(body, parentPath, pathGen, t, null, null, structuralChanges);\r\n      } else if (t.isBlockStatement(body)) {\r\n        // Arrow function with block: item => { return <li>{item}</li>; }\r\n        const returnStmt = body.body.find(stmt => t.isReturnStatement(stmt));\r\n        if (returnStmt && t.isJSXElement(returnStmt.argument)) {\r\n          assignPathsToJSX(returnStmt.argument, parentPath, pathGen, t, null, null, structuralChanges);\r\n        }\r\n      }\r\n    }\r\n  } else if (t.isJSXFragment(expr)) {\r\n    // Fragment\r\n    assignPathsToJSX(expr, parentPath, pathGen, t, null, null, structuralChanges);\r\n  } else if (t.isJSXElement(expr)) {\r\n    // Direct JSX element\r\n    assignPathsToJSX(expr, parentPath, pathGen, t, null, null, structuralChanges);\r\n  }",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "295b4c4d",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isLogicalExpression(expr) && expr.operator === '&&'",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c20dd732",
+      "type": "BabelTypeCheck",
+      "method": "isLogicalExpression",
+      "babel_source": "t.isLogicalExpression(expr)",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "312ae3e2",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "expr.operator === '&&'",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "176d2112",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(expr.right)",
+      "babel_source": "if (t.isJSXElement(expr.right)) {\r\n      assignPathsToJSX(expr.right, parentPath, pathGen, t, null, null, structuralChanges);\r\n    } else if (t.isJSXExpressionContainer(expr.right)) {\r\n      assignPathsToExpression(expr.right.expression, parentPath, pathGen, t, structuralChanges);\r\n    }",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bd996365",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(expr.right)",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "de52ea32",
+      "type": "IfStatement",
+      "condition": "t.isJSXExpressionContainer(expr.right)",
+      "babel_source": "if (t.isJSXExpressionContainer(expr.right)) {\r\n      assignPathsToExpression(expr.right.expression, parentPath, pathGen, t, structuralChanges);\r\n    }",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2275b3b0",
+      "type": "BabelTypeCheck",
+      "method": "isJSXExpressionContainer",
+      "babel_source": "t.isJSXExpressionContainer(expr.right)",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "35fb67c0",
+      "type": "IfStatement",
+      "condition": "t.isConditionalExpression(expr)",
+      "babel_source": "if (t.isConditionalExpression(expr)) {\r\n    // Ternary: {isAdmin ? <AdminPanel/> : <UserPanel/>}\r\n\r\n    // Assign paths to consequent (true branch)\r\n    if (t.isJSXElement(expr.consequent)) {\r\n      assignPathsToJSX(expr.consequent, parentPath, pathGen, t, null, null, structuralChanges);\r\n    } else if (t.isJSXExpressionContainer(expr.consequent)) {\r\n      assignPathsToExpression(expr.consequent.expression, parentPath, pathGen, t, structuralChanges);\r\n    }\r\n\r\n    // Assign paths to alternate (false branch)\r\n    if (expr.alternate) {\r\n      if (t.isJSXElement(expr.alternate)) {\r\n        assignPathsToJSX(expr.alternate, parentPath, pathGen, t, null, null, structuralChanges);\r\n      } else if (t.isJSXExpressionContainer(expr.alternate)) {\r\n        assignPathsToExpression(expr.alternate.expression, parentPath, pathGen, t, structuralChanges);\r\n      }\r\n    }\r\n  } else if (t.isCallExpression(expr) &&\r\n             t.isMemberExpression(expr.callee) &&\r\n             t.isIdentifier(expr.callee.property) &&\r\n             expr.callee.property.name === 'map') {\r\n    // Array.map: {items.map(item => <li>{item}</li>)}\r\n\r\n    const callback = expr.arguments[0];\r\n    if (t.isArrowFunctionExpression(callback) || t.isFunctionExpression(callback)) {\r\n      const body = callback.body;\r\n\r\n      if (t.isJSXElement(body)) {\r\n        // Arrow function with JSX body: item => <li>{item}</li>\r\n        assignPathsToJSX(body, parentPath, pathGen, t, null, null, structuralChanges);\r\n      } else if (t.isBlockStatement(body)) {\r\n        // Arrow function with block: item => { return <li>{item}</li>; }\r\n        const returnStmt = body.body.find(stmt => t.isReturnStatement(stmt));\r\n        if (returnStmt && t.isJSXElement(returnStmt.argument)) {\r\n          assignPathsToJSX(returnStmt.argument, parentPath, pathGen, t, null, null, structuralChanges);\r\n        }\r\n      }\r\n    }\r\n  } else if (t.isJSXFragment(expr)) {\r\n    // Fragment\r\n    assignPathsToJSX(expr, parentPath, pathGen, t, null, null, structuralChanges);\r\n  } else if (t.isJSXElement(expr)) {\r\n    // Direct JSX element\r\n    assignPathsToJSX(expr, parentPath, pathGen, t, null, null, structuralChanges);\r\n  }",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5574ecc1",
+      "type": "BabelTypeCheck",
+      "method": "isConditionalExpression",
+      "babel_source": "t.isConditionalExpression(expr)",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "66577b70",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(expr.consequent)",
+      "babel_source": "if (t.isJSXElement(expr.consequent)) {\r\n      assignPathsToJSX(expr.consequent, parentPath, pathGen, t, null, null, structuralChanges);\r\n    } else if (t.isJSXExpressionContainer(expr.consequent)) {\r\n      assignPathsToExpression(expr.consequent.expression, parentPath, pathGen, t, structuralChanges);\r\n    }",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fe57f7c7",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(expr.consequent)",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6e497653",
+      "type": "IfStatement",
+      "condition": "t.isJSXExpressionContainer(expr.consequent)",
+      "babel_source": "if (t.isJSXExpressionContainer(expr.consequent)) {\r\n      assignPathsToExpression(expr.consequent.expression, parentPath, pathGen, t, structuralChanges);\r\n    }",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fd650f59",
+      "type": "BabelTypeCheck",
+      "method": "isJSXExpressionContainer",
+      "babel_source": "t.isJSXExpressionContainer(expr.consequent)",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "689afc46",
+      "type": "IfStatement",
+      "condition": "expr.alternate",
+      "babel_source": "if (expr.alternate) {\r\n      if (t.isJSXElement(expr.alternate)) {\r\n        assignPathsToJSX(expr.alternate, parentPath, pathGen, t, null, null, structuralChanges);\r\n      } else if (t.isJSXExpressionContainer(expr.alternate)) {\r\n        assignPathsToExpression(expr.alternate.expression, parentPath, pathGen, t, structuralChanges);\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "79ecb71b",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(expr.alternate)",
+      "babel_source": "if (t.isJSXElement(expr.alternate)) {\r\n        assignPathsToJSX(expr.alternate, parentPath, pathGen, t, null, null, structuralChanges);\r\n      } else if (t.isJSXExpressionContainer(expr.alternate)) {\r\n        assignPathsToExpression(expr.alternate.expression, parentPath, pathGen, t, structuralChanges);\r\n      }",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8d091804",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(expr.alternate)",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c9c4cf31",
+      "type": "IfStatement",
+      "condition": "t.isJSXExpressionContainer(expr.alternate)",
+      "babel_source": "if (t.isJSXExpressionContainer(expr.alternate)) {\r\n        assignPathsToExpression(expr.alternate.expression, parentPath, pathGen, t, structuralChanges);\r\n      }",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "91821bf6",
+      "type": "BabelTypeCheck",
+      "method": "isJSXExpressionContainer",
+      "babel_source": "t.isJSXExpressionContainer(expr.alternate)",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cbf9e72a",
+      "type": "IfStatement",
+      "condition": "t.isCallExpression(expr) &&\r\n             t.isMemberExpression(expr.callee) &&\r\n             t.isIdentifier(expr.callee.property) &&\r\n             expr.callee.property.name === 'map'",
+      "babel_source": "if (t.isCallExpression(expr) &&\r\n             t.isMemberExpression(expr.callee) &&\r\n             t.isIdentifier(expr.callee.property) &&\r\n             expr.callee.property.name === 'map') {\r\n    // Array.map: {items.map(item => <li>{item}</li>)}\r\n\r\n    const callback = expr.arguments[0];\r\n    if (t.isArrowFunctionExpression(callback) || t.isFunctionExpression(callback)) {\r\n      const body = callback.body;\r\n\r\n      if (t.isJSXElement(body)) {\r\n        // Arrow function with JSX body: item => <li>{item}</li>\r\n        assignPathsToJSX(body, parentPath, pathGen, t, null, null, structuralChanges);\r\n      } else if (t.isBlockStatement(body)) {\r\n        // Arrow function with block: item => { return <li>{item}</li>; }\r\n        const returnStmt = body.body.find(stmt => t.isReturnStatement(stmt));\r\n        if (returnStmt && t.isJSXElement(returnStmt.argument)) {\r\n          assignPathsToJSX(returnStmt.argument, parentPath, pathGen, t, null, null, structuralChanges);\r\n        }\r\n      }\r\n    }\r\n  } else if (t.isJSXFragment(expr)) {\r\n    // Fragment\r\n    assignPathsToJSX(expr, parentPath, pathGen, t, null, null, structuralChanges);\r\n  } else if (t.isJSXElement(expr)) {\r\n    // Direct JSX element\r\n    assignPathsToJSX(expr, parentPath, pathGen, t, null, null, structuralChanges);\r\n  }",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a6adb837",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isCallExpression(expr) &&\r\n             t.isMemberExpression(expr.callee) &&\r\n             t.isIdentifier(expr.callee.property) &&\r\n             expr.callee.property.name === 'map'",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e79605bb",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isCallExpression(expr) &&\r\n             t.isMemberExpression(expr.callee) &&\r\n             t.isIdentifier(expr.callee.property)",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "39508f85",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isCallExpression(expr) &&\r\n             t.isMemberExpression(expr.callee)",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "46479f62",
+      "type": "BabelTypeCheck",
+      "method": "isCallExpression",
+      "babel_source": "t.isCallExpression(expr)",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d6c41024",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(expr.callee)",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "583415b7",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(expr.callee.property)",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "029bdfda",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "expr.callee.property.name === 'map'",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b5ab3892",
+      "type": "VariableDeclaration",
+      "babel_source": "const callback = expr.arguments[0];",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "79e0ecc7",
+      "type": "IfStatement",
+      "condition": "t.isArrowFunctionExpression(callback) || t.isFunctionExpression(callback)",
+      "babel_source": "if (t.isArrowFunctionExpression(callback) || t.isFunctionExpression(callback)) {\r\n      const body = callback.body;\r\n\r\n      if (t.isJSXElement(body)) {\r\n        // Arrow function with JSX body: item => <li>{item}</li>\r\n        assignPathsToJSX(body, parentPath, pathGen, t, null, null, structuralChanges);\r\n      } else if (t.isBlockStatement(body)) {\r\n        // Arrow function with block: item => { return <li>{item}</li>; }\r\n        const returnStmt = body.body.find(stmt => t.isReturnStatement(stmt));\r\n        if (returnStmt && t.isJSXElement(returnStmt.argument)) {\r\n          assignPathsToJSX(returnStmt.argument, parentPath, pathGen, t, null, null, structuralChanges);\r\n        }\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dbbc4c25",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isArrowFunctionExpression(callback) || t.isFunctionExpression(callback)",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c04c3b2e",
+      "type": "BabelTypeCheck",
+      "method": "isArrowFunctionExpression",
+      "babel_source": "t.isArrowFunctionExpression(callback)",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "03226c61",
+      "type": "BabelTypeCheck",
+      "method": "isFunctionExpression",
+      "babel_source": "t.isFunctionExpression(callback)",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0649097a",
+      "type": "VariableDeclaration",
+      "babel_source": "const body = callback.body;",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c2953bff",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(body)",
+      "babel_source": "if (t.isJSXElement(body)) {\r\n        // Arrow function with JSX body: item => <li>{item}</li>\r\n        assignPathsToJSX(body, parentPath, pathGen, t, null, null, structuralChanges);\r\n      } else if (t.isBlockStatement(body)) {\r\n        // Arrow function with block: item => { return <li>{item}</li>; }\r\n        const returnStmt = body.body.find(stmt => t.isReturnStatement(stmt));\r\n        if (returnStmt && t.isJSXElement(returnStmt.argument)) {\r\n          assignPathsToJSX(returnStmt.argument, parentPath, pathGen, t, null, null, structuralChanges);\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ebec8e7a",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(body)",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "35d52aac",
+      "type": "IfStatement",
+      "condition": "t.isBlockStatement(body)",
+      "babel_source": "if (t.isBlockStatement(body)) {\r\n        // Arrow function with block: item => { return <li>{item}</li>; }\r\n        const returnStmt = body.body.find(stmt => t.isReturnStatement(stmt));\r\n        if (returnStmt && t.isJSXElement(returnStmt.argument)) {\r\n          assignPathsToJSX(returnStmt.argument, parentPath, pathGen, t, null, null, structuralChanges);\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8f74e258",
+      "type": "BabelTypeCheck",
+      "method": "isBlockStatement",
+      "babel_source": "t.isBlockStatement(body)",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "102a918c",
+      "type": "VariableDeclaration",
+      "babel_source": "const returnStmt = body.body.find(stmt => t.isReturnStatement(stmt));",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "08b50688",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "stmt => t.isReturnStatement(stmt)",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5841e02a",
+      "type": "BabelTypeCheck",
+      "method": "isReturnStatement",
+      "babel_source": "t.isReturnStatement(stmt)",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e73f4e4d",
+      "type": "IfStatement",
+      "condition": "returnStmt && t.isJSXElement(returnStmt.argument)",
+      "babel_source": "if (returnStmt && t.isJSXElement(returnStmt.argument)) {\r\n          assignPathsToJSX(returnStmt.argument, parentPath, pathGen, t, null, null, structuralChanges);\r\n        }",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "003e5442",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "returnStmt && t.isJSXElement(returnStmt.argument)",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "05baab8c",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(returnStmt.argument)",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "03dc4f6f",
+      "type": "IfStatement",
+      "condition": "t.isJSXFragment(expr)",
+      "babel_source": "if (t.isJSXFragment(expr)) {\r\n    // Fragment\r\n    assignPathsToJSX(expr, parentPath, pathGen, t, null, null, structuralChanges);\r\n  } else if (t.isJSXElement(expr)) {\r\n    // Direct JSX element\r\n    assignPathsToJSX(expr, parentPath, pathGen, t, null, null, structuralChanges);\r\n  }",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7f0adb11",
+      "type": "BabelTypeCheck",
+      "method": "isJSXFragment",
+      "babel_source": "t.isJSXFragment(expr)",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "82cfa405",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(expr)",
+      "babel_source": "if (t.isJSXElement(expr)) {\r\n    // Direct JSX element\r\n    assignPathsToJSX(expr, parentPath, pathGen, t, null, null, structuralChanges);\r\n  }",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fa747faa",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(expr)",
+      "parentContext": {
+        "functionName": "assignPathsToExpression",
+        "functionParams": [
+          "expr",
+          "parentPath",
+          "pathGen",
+          "t",
+          "structuralChanges"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "utils/pathAssignment.cjs"
+  ]
+}

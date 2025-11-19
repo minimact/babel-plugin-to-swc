@@ -1,0 +1,56 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "hasSpreadProps",
+  "params": [
+    {
+      "name": "attributes",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "bool",
+  "babel_source": "function hasSpreadProps(attributes) {\r\n  return attributes.some(attr => t.isJSXSpreadAttribute(attr));\r\n}",
+  "body_templates": [
+    {
+      "hash": "8c909a49",
+      "type": "ReturnStatement",
+      "babel_source": "return attributes.some(attr => t.isJSXSpreadAttribute(attr));",
+      "parentContext": {
+        "functionName": "hasSpreadProps",
+        "functionParams": [
+          "attributes"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c9b3f6a5",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "attr => t.isJSXSpreadAttribute(attr)",
+      "parentContext": {
+        "functionName": "hasSpreadProps",
+        "functionParams": [
+          "attributes"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b9aac526",
+      "type": "BabelTypeCheck",
+      "method": "isJSXSpreadAttribute",
+      "babel_source": "t.isJSXSpreadAttribute(attr)",
+      "parentContext": {
+        "functionName": "hasSpreadProps",
+        "functionParams": [
+          "attributes"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/detection.cjs"
+  ]
+}

@@ -1,0 +1,443 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateTimelineAttributes",
+  "params": [
+    {
+      "name": "timeline",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateTimelineAttributes(timeline) {\r\n  const attributes = [];\r\n\r\n  // 1. Generate [Timeline] attribute\r\n  const timelineAttrParts = [\r\n    `[Timeline(\"${timeline.timelineId}\", ${timeline.duration}`\r\n  ];\r\n\r\n  if (timeline.repeat) {\r\n    timelineAttrParts.push(', Repeat = true');\r\n  }\r\n\r\n  if (timeline.repeatCount && timeline.repeatCount !== -1) {\r\n    timelineAttrParts.push(`, RepeatCount = ${timeline.repeatCount}`);\r\n  }\r\n\r\n  if (timeline.easing && timeline.easing !== 'linear') {\r\n    timelineAttrParts.push(`, Easing = \"${timeline.easing}\"`);\r\n  }\r\n\r\n  timelineAttrParts.push(')]');\r\n  attributes.push(timelineAttrParts.join(''));\r\n\r\n  // 2. Generate [TimelineKeyframe] attributes\r\n  timeline.keyframes.forEach(kf => {\r\n    Object.entries(kf.state).forEach(([stateKey, value]) => {\r\n      const valueStr = formatCSharpValue(value);\r\n      let keyframeAttr = `[TimelineKeyframe(${kf.time}, \"${stateKey}\", ${valueStr}`;\r\n\r\n      if (kf.label) {\r\n        keyframeAttr += `, Label = \"${kf.label}\"`;\r\n      }\r\n\r\n      if (kf.easing) {\r\n        keyframeAttr += `, Easing = \"${kf.easing}\"`;\r\n      }\r\n\r\n      keyframeAttr += ')]';\r\n      attributes.push(keyframeAttr);\r\n    });\r\n  });\r\n\r\n  // 3. Generate [TimelineStateBinding] attributes\r\n  timeline.stateBindings.forEach((binding, stateKey) => {\r\n    let bindingAttr = `[TimelineStateBinding(\"${stateKey}\"`;\r\n\r\n    if (binding.interpolate) {\r\n      bindingAttr += ', Interpolate = true';\r\n    }\r\n\r\n    bindingAttr += ')]';\r\n    attributes.push(bindingAttr);\r\n  });\r\n\r\n  return attributes;\r\n}",
+  "body_templates": [
+    {
+      "hash": "d89ee535",
+      "type": "VariableDeclaration",
+      "babel_source": "const attributes = [];",
+      "parentContext": {
+        "functionName": "generateTimelineAttributes",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "generateTimelineAttributes",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "771e2afa",
+      "type": "VariableDeclaration",
+      "babel_source": "const timelineAttrParts = [\r\n    `[Timeline(\"${timeline.timelineId}\", ${timeline.duration}`\r\n  ];",
+      "parentContext": {
+        "functionName": "generateTimelineAttributes",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "496724fb",
+      "type": "ArrayExpression",
+      "babel_source": "[\r\n    `[Timeline(\"${timeline.timelineId}\", ${timeline.duration}`\r\n  ]",
+      "parentContext": {
+        "functionName": "generateTimelineAttributes",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "53f55642",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Timeline(\"${timeline.timelineId}\", ${timeline.duration}`",
+      "parentContext": {
+        "functionName": "generateTimelineAttributes",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c1e993d1",
+      "type": "IfStatement",
+      "condition": "timeline.repeat",
+      "babel_source": "if (timeline.repeat) {\r\n    timelineAttrParts.push(', Repeat = true');\r\n  }",
+      "parentContext": {
+        "functionName": "generateTimelineAttributes",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "db82e086",
+      "type": "IfStatement",
+      "condition": "timeline.repeatCount && timeline.repeatCount !== -1",
+      "babel_source": "if (timeline.repeatCount && timeline.repeatCount !== -1) {\r\n    timelineAttrParts.push(`, RepeatCount = ${timeline.repeatCount}`);\r\n  }",
+      "parentContext": {
+        "functionName": "generateTimelineAttributes",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f1ac326e",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "timeline.repeatCount && timeline.repeatCount !== -1",
+      "parentContext": {
+        "functionName": "generateTimelineAttributes",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "06159f36",
+      "type": "BinaryExpression",
+      "operator": "!==",
+      "babel_source": "timeline.repeatCount !== -1",
+      "parentContext": {
+        "functionName": "generateTimelineAttributes",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1bad6b8c",
+      "type": "UnaryExpression",
+      "operator": "-",
+      "babel_source": "-1",
+      "parentContext": {
+        "functionName": "generateTimelineAttributes",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3588f03c",
+      "type": "TemplateLiteral",
+      "babel_source": "`, RepeatCount = ${timeline.repeatCount}`",
+      "parentContext": {
+        "functionName": "generateTimelineAttributes",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ae8295d0",
+      "type": "IfStatement",
+      "condition": "timeline.easing && timeline.easing !== 'linear'",
+      "babel_source": "if (timeline.easing && timeline.easing !== 'linear') {\r\n    timelineAttrParts.push(`, Easing = \"${timeline.easing}\"`);\r\n  }",
+      "parentContext": {
+        "functionName": "generateTimelineAttributes",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "34ec037c",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "timeline.easing && timeline.easing !== 'linear'",
+      "parentContext": {
+        "functionName": "generateTimelineAttributes",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "024dab83",
+      "type": "BinaryExpression",
+      "operator": "!==",
+      "babel_source": "timeline.easing !== 'linear'",
+      "parentContext": {
+        "functionName": "generateTimelineAttributes",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bcbacb90",
+      "type": "TemplateLiteral",
+      "babel_source": "`, Easing = \"${timeline.easing}\"`",
+      "parentContext": {
+        "functionName": "generateTimelineAttributes",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "64116d62",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "kf => {\r\n    Object.entries(kf.state).forEach(([stateKey, value]) => {\r\n      const valueStr = formatCSharpValue(value);\r\n      let keyframeAttr = `[TimelineKeyframe(${kf.time}, \"${stateKey}\", ${valueStr}`;\r\n\r\n      if (kf.label) {\r\n        keyframeAttr += `, Label = \"${kf.label}\"`;\r\n      }\r\n\r\n      if (kf.easing) {\r\n        keyframeAttr += `, Easing = \"${kf.easing}\"`;\r\n      }\r\n\r\n      keyframeAttr += ')]';\r\n      attributes.push(keyframeAttr);\r\n    });\r\n  }",
+      "parentContext": {
+        "functionName": "generateTimelineAttributes",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2fe8f9d5",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "([stateKey, value]) => {\r\n      const valueStr = formatCSharpValue(value);\r\n      let keyframeAttr = `[TimelineKeyframe(${kf.time}, \"${stateKey}\", ${valueStr}`;\r\n\r\n      if (kf.label) {\r\n        keyframeAttr += `, Label = \"${kf.label}\"`;\r\n      }\r\n\r\n      if (kf.easing) {\r\n        keyframeAttr += `, Easing = \"${kf.easing}\"`;\r\n      }\r\n\r\n      keyframeAttr += ')]';\r\n      attributes.push(keyframeAttr);\r\n    }",
+      "parentContext": {
+        "functionName": "generateTimelineAttributes",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ad300084",
+      "type": "VariableDeclaration",
+      "babel_source": "const valueStr = formatCSharpValue(value);",
+      "parentContext": {
+        "functionName": "generateTimelineAttributes",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e57ce510",
+      "type": "VariableDeclaration",
+      "babel_source": "let keyframeAttr = `[TimelineKeyframe(${kf.time}, \"${stateKey}\", ${valueStr}`;",
+      "parentContext": {
+        "functionName": "generateTimelineAttributes",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "eed48035",
+      "type": "TemplateLiteral",
+      "babel_source": "`[TimelineKeyframe(${kf.time}, \"${stateKey}\", ${valueStr}`",
+      "parentContext": {
+        "functionName": "generateTimelineAttributes",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ba462536",
+      "type": "IfStatement",
+      "condition": "kf.label",
+      "babel_source": "if (kf.label) {\r\n        keyframeAttr += `, Label = \"${kf.label}\"`;\r\n      }",
+      "parentContext": {
+        "functionName": "generateTimelineAttributes",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "98ec736c",
+      "type": "AssignmentExpression",
+      "operator": "+=",
+      "babel_source": "keyframeAttr += `, Label = \"${kf.label}\"`",
+      "parentContext": {
+        "functionName": "generateTimelineAttributes",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "de0ed629",
+      "type": "TemplateLiteral",
+      "babel_source": "`, Label = \"${kf.label}\"`",
+      "parentContext": {
+        "functionName": "generateTimelineAttributes",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fd98acc6",
+      "type": "IfStatement",
+      "condition": "kf.easing",
+      "babel_source": "if (kf.easing) {\r\n        keyframeAttr += `, Easing = \"${kf.easing}\"`;\r\n      }",
+      "parentContext": {
+        "functionName": "generateTimelineAttributes",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "441f83a4",
+      "type": "AssignmentExpression",
+      "operator": "+=",
+      "babel_source": "keyframeAttr += `, Easing = \"${kf.easing}\"`",
+      "parentContext": {
+        "functionName": "generateTimelineAttributes",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d2941451",
+      "type": "TemplateLiteral",
+      "babel_source": "`, Easing = \"${kf.easing}\"`",
+      "parentContext": {
+        "functionName": "generateTimelineAttributes",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c1ba1d70",
+      "type": "AssignmentExpression",
+      "operator": "+=",
+      "babel_source": "keyframeAttr += ')]'",
+      "parentContext": {
+        "functionName": "generateTimelineAttributes",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f27f4641",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "(binding, stateKey) => {\r\n    let bindingAttr = `[TimelineStateBinding(\"${stateKey}\"`;\r\n\r\n    if (binding.interpolate) {\r\n      bindingAttr += ', Interpolate = true';\r\n    }\r\n\r\n    bindingAttr += ')]';\r\n    attributes.push(bindingAttr);\r\n  }",
+      "parentContext": {
+        "functionName": "generateTimelineAttributes",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "da084f75",
+      "type": "VariableDeclaration",
+      "babel_source": "let bindingAttr = `[TimelineStateBinding(\"${stateKey}\"`;",
+      "parentContext": {
+        "functionName": "generateTimelineAttributes",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a106de6e",
+      "type": "TemplateLiteral",
+      "babel_source": "`[TimelineStateBinding(\"${stateKey}\"`",
+      "parentContext": {
+        "functionName": "generateTimelineAttributes",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fb0ec653",
+      "type": "IfStatement",
+      "condition": "binding.interpolate",
+      "babel_source": "if (binding.interpolate) {\r\n      bindingAttr += ', Interpolate = true';\r\n    }",
+      "parentContext": {
+        "functionName": "generateTimelineAttributes",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "19c2aeef",
+      "type": "AssignmentExpression",
+      "operator": "+=",
+      "babel_source": "bindingAttr += ', Interpolate = true'",
+      "parentContext": {
+        "functionName": "generateTimelineAttributes",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "540e0236",
+      "type": "AssignmentExpression",
+      "operator": "+=",
+      "babel_source": "bindingAttr += ')]'",
+      "parentContext": {
+        "functionName": "generateTimelineAttributes",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8e3757e7",
+      "type": "ReturnStatement",
+      "babel_source": "return attributes;",
+      "parentContext": {
+        "functionName": "generateTimelineAttributes",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/timelineGenerator.cjs"
+  ]
+}

@@ -1,0 +1,171 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "transpileTemplateLiteral",
+  "params": [
+    {
+      "name": "expr",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function transpileTemplateLiteral(expr) {\r\n  let result = '$\"';\r\n\r\n  for (let i = 0; i < expr.quasis.length; i++) {\r\n    result += expr.quasis[i].value.cooked;\r\n\r\n    if (i < expr.expressions.length) {\r\n      result += `{${transpileExpression(expr.expressions[i])}}`;\r\n    }\r\n  }\r\n\r\n  result += '\"';\r\n  return result;\r\n}",
+  "body_templates": [
+    {
+      "hash": "dc55ddeb",
+      "type": "VariableDeclaration",
+      "babel_source": "let result = '$\"';",
+      "parentContext": {
+        "functionName": "transpileTemplateLiteral",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "67901b50",
+      "type": "ForStatement",
+      "babel_source": "for (let i = 0; i < expr.quasis.length; i++) {\r\n    result += expr.quasis[i].value.cooked;\r\n\r\n    if (i < expr.expressions.length) {\r\n      result += `{${transpileExpression(expr.expressions[i])}}`;\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "transpileTemplateLiteral",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ecb911a1",
+      "type": "VariableDeclaration",
+      "babel_source": "let i = 0",
+      "parentContext": {
+        "functionName": "transpileTemplateLiteral",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5276d941",
+      "type": "BinaryExpression",
+      "operator": "<",
+      "babel_source": "i < expr.quasis.length",
+      "parentContext": {
+        "functionName": "transpileTemplateLiteral",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e8dee0e1",
+      "type": "UpdateExpression",
+      "operator": "++",
+      "prefix": false,
+      "babel_source": "i++",
+      "parentContext": {
+        "functionName": "transpileTemplateLiteral",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "accd2952",
+      "type": "AssignmentExpression",
+      "operator": "+=",
+      "babel_source": "result += expr.quasis[i].value.cooked",
+      "parentContext": {
+        "functionName": "transpileTemplateLiteral",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "16cfd00c",
+      "type": "IfStatement",
+      "condition": "i < expr.expressions.length",
+      "babel_source": "if (i < expr.expressions.length) {\r\n      result += `{${transpileExpression(expr.expressions[i])}}`;\r\n    }",
+      "parentContext": {
+        "functionName": "transpileTemplateLiteral",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d57c8bfe",
+      "type": "BinaryExpression",
+      "operator": "<",
+      "babel_source": "i < expr.expressions.length",
+      "parentContext": {
+        "functionName": "transpileTemplateLiteral",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "edbac05e",
+      "type": "AssignmentExpression",
+      "operator": "+=",
+      "babel_source": "result += `{${transpileExpression(expr.expressions[i])}}`",
+      "parentContext": {
+        "functionName": "transpileTemplateLiteral",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "84cf1403",
+      "type": "TemplateLiteral",
+      "babel_source": "`{${transpileExpression(expr.expressions[i])}}`",
+      "parentContext": {
+        "functionName": "transpileTemplateLiteral",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f7b1edd3",
+      "type": "AssignmentExpression",
+      "operator": "+=",
+      "babel_source": "result += '\"'",
+      "parentContext": {
+        "functionName": "transpileTemplateLiteral",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "882101dd",
+      "type": "ReturnStatement",
+      "babel_source": "return result;",
+      "parentContext": {
+        "functionName": "transpileTemplateLiteral",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "transpilers/typescriptToCSharp.cjs"
+  ]
+}

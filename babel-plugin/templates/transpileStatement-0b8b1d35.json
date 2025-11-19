@@ -1,0 +1,1132 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "transpileStatement",
+  "params": [
+    {
+      "name": "statement",
+      "inferredType": "&Stmt",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function transpileStatement(statement) {\r\n  if (t.isVariableDeclaration(statement)) {\r\n    const declarations = statement.declarations.map(decl => {\r\n      const name = decl.id.name;\r\n      const init = decl.init ? transpileExpression(decl.init) : 'null';\r\n      if (name === 'chartData') {\r\n        console.log(`[DEBUG chartData] init type: ${decl.init?.type}, result: ${init}`);\r\n      }\r\n      return `var ${name} = ${init};`;\r\n    });\r\n    return declarations.join('\\n');\r\n  }\r\n\r\n  if (t.isReturnStatement(statement)) {\r\n    return `return ${transpileExpression(statement.argument)};`;\r\n  }\r\n\r\n  if (t.isExpressionStatement(statement)) {\r\n    // Check for yield expression (streaming)\r\n    if (t.isYieldExpression(statement.expression)) {\r\n      return `yield return ${transpileExpression(statement.expression.argument)};`;\r\n    }\r\n    return `${transpileExpression(statement.expression)};`;\r\n  }\r\n\r\n  if (t.isForStatement(statement)) {\r\n    const init = statement.init ? transpileStatement(statement.init).replace(/;$/, '') : '';\r\n    const test = statement.test ? transpileExpression(statement.test) : 'true';\r\n    const update = statement.update ? transpileExpression(statement.update) : '';\r\n    const body = transpileStatement(statement.body);\r\n    return `for (${init}; ${test}; ${update})\\n{\\n${indent(body, 4)}\\n}`;\r\n  }\r\n\r\n  if (t.isForOfStatement(statement)) {\r\n    const left = t.isVariableDeclaration(statement.left)\r\n      ? statement.left.declarations[0].id.name\r\n      : statement.left.name;\r\n    const right = transpileExpression(statement.right);\r\n    const body = transpileStatement(statement.body);\r\n\r\n    // Check if it's for await of (streaming)\r\n    if (statement.await) {\r\n      return `await foreach (var ${left} in ${right})\\n{\\n${indent(body, 4)}\\n}`;\r\n    }\r\n\r\n    return `foreach (var ${left} in ${right})\\n{\\n${indent(body, 4)}\\n}`;\r\n  }\r\n\r\n  if (t.isWhileStatement(statement)) {\r\n    const test = transpileExpression(statement.test);\r\n    const body = transpileStatement(statement.body);\r\n    return `while (${test})\\n{\\n${indent(body, 4)}\\n}`;\r\n  }\r\n\r\n  if (t.isIfStatement(statement)) {\r\n    let test = transpileExpression(statement.test);\r\n\r\n    // Convert string truthy checks to proper C# boolean expressions\r\n    test = convertStringToBool(test, statement.test);\r\n\r\n    const consequent = transpileStatement(statement.consequent);\r\n    const alternate = statement.alternate\r\n      ? `\\nelse\\n{\\n${indent(transpileStatement(statement.alternate), 4)}\\n}`\r\n      : '';\r\n    return `if (${test})\\n{\\n${indent(consequent, 4)}\\n}${alternate}`;\r\n  }\r\n\r\n  if (t.isBlockStatement(statement)) {\r\n    return transpileBlockStatement(statement);\r\n  }\r\n\r\n  if (t.isTryStatement(statement)) {\r\n    const block = transpileBlockStatement(statement.block);\r\n    const handler = statement.handler ? transpileCatchClause(statement.handler) : '';\r\n    const finalizer = statement.finalizer\r\n      ? `\\nfinally\\n{\\n${indent(transpileBlockStatement(statement.finalizer), 4)}\\n}`\r\n      : '';\r\n    return `try\\n{\\n${indent(block, 4)}\\n}${handler}${finalizer}`;\r\n  }\r\n\r\n  if (t.isThrowStatement(statement)) {\r\n    return `throw ${transpileExpression(statement.argument)};`;\r\n  }\r\n\r\n  if (t.isBreakStatement(statement)) {\r\n    return 'break;';\r\n  }\r\n\r\n  if (t.isContinueStatement(statement)) {\r\n    return 'continue;';\r\n  }\r\n\r\n  // Default: convert to string (may need refinement)\r\n  return `/* TODO: Transpile ${statement.type} */`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "fc851c00",
+      "type": "IfStatement",
+      "condition": "t.isVariableDeclaration(statement)",
+      "babel_source": "if (t.isVariableDeclaration(statement)) {\r\n    const declarations = statement.declarations.map(decl => {\r\n      const name = decl.id.name;\r\n      const init = decl.init ? transpileExpression(decl.init) : 'null';\r\n      if (name === 'chartData') {\r\n        console.log(`[DEBUG chartData] init type: ${decl.init?.type}, result: ${init}`);\r\n      }\r\n      return `var ${name} = ${init};`;\r\n    });\r\n    return declarations.join('\\n');\r\n  }",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "80813906",
+      "type": "BabelTypeCheck",
+      "method": "isVariableDeclaration",
+      "babel_source": "t.isVariableDeclaration(statement)",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4505629a",
+      "type": "VariableDeclaration",
+      "babel_source": "const declarations = statement.declarations.map(decl => {\r\n      const name = decl.id.name;\r\n      const init = decl.init ? transpileExpression(decl.init) : 'null';\r\n      if (name === 'chartData') {\r\n        console.log(`[DEBUG chartData] init type: ${decl.init?.type}, result: ${init}`);\r\n      }\r\n      return `var ${name} = ${init};`;\r\n    });",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b8e980c1",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "decl => {\r\n      const name = decl.id.name;\r\n      const init = decl.init ? transpileExpression(decl.init) : 'null';\r\n      if (name === 'chartData') {\r\n        console.log(`[DEBUG chartData] init type: ${decl.init?.type}, result: ${init}`);\r\n      }\r\n      return `var ${name} = ${init};`;\r\n    }",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0302c645",
+      "type": "VariableDeclaration",
+      "babel_source": "const name = decl.id.name;",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3477c6f7",
+      "type": "VariableDeclaration",
+      "babel_source": "const init = decl.init ? transpileExpression(decl.init) : 'null';",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8d23d629",
+      "type": "ConditionalExpression",
+      "babel_source": "decl.init ? transpileExpression(decl.init) : 'null'",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "09f4c958",
+      "type": "IfStatement",
+      "condition": "name === 'chartData'",
+      "babel_source": "if (name === 'chartData') {\r\n        console.log(`[DEBUG chartData] init type: ${decl.init?.type}, result: ${init}`);\r\n      }",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "17e95761",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "name === 'chartData'",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d779dfa1",
+      "type": "TemplateLiteral",
+      "babel_source": "`[DEBUG chartData] init type: ${decl.init?.type}, result: ${init}`",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "63adc557",
+      "type": "ReturnStatement",
+      "babel_source": "return `var ${name} = ${init};`;",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "53e91e9b",
+      "type": "TemplateLiteral",
+      "babel_source": "`var ${name} = ${init};`",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "820233e3",
+      "type": "ReturnStatement",
+      "babel_source": "return declarations.join('\\n');",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "de7344a3",
+      "type": "IfStatement",
+      "condition": "t.isReturnStatement(statement)",
+      "babel_source": "if (t.isReturnStatement(statement)) {\r\n    return `return ${transpileExpression(statement.argument)};`;\r\n  }",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6147733e",
+      "type": "BabelTypeCheck",
+      "method": "isReturnStatement",
+      "babel_source": "t.isReturnStatement(statement)",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d1f3597b",
+      "type": "ReturnStatement",
+      "babel_source": "return `return ${transpileExpression(statement.argument)};`;",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a4936c87",
+      "type": "TemplateLiteral",
+      "babel_source": "`return ${transpileExpression(statement.argument)};`",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "64519841",
+      "type": "IfStatement",
+      "condition": "t.isExpressionStatement(statement)",
+      "babel_source": "if (t.isExpressionStatement(statement)) {\r\n    // Check for yield expression (streaming)\r\n    if (t.isYieldExpression(statement.expression)) {\r\n      return `yield return ${transpileExpression(statement.expression.argument)};`;\r\n    }\r\n    return `${transpileExpression(statement.expression)};`;\r\n  }",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c179fd6d",
+      "type": "BabelTypeCheck",
+      "method": "isExpressionStatement",
+      "babel_source": "t.isExpressionStatement(statement)",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a9eba639",
+      "type": "IfStatement",
+      "condition": "t.isYieldExpression(statement.expression)",
+      "babel_source": "if (t.isYieldExpression(statement.expression)) {\r\n      return `yield return ${transpileExpression(statement.expression.argument)};`;\r\n    }",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f5b3b1b0",
+      "type": "BabelTypeCheck",
+      "method": "isYieldExpression",
+      "babel_source": "t.isYieldExpression(statement.expression)",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0b087fa3",
+      "type": "ReturnStatement",
+      "babel_source": "return `yield return ${transpileExpression(statement.expression.argument)};`;",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0f85b9f3",
+      "type": "TemplateLiteral",
+      "babel_source": "`yield return ${transpileExpression(statement.expression.argument)};`",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3b0a9366",
+      "type": "ReturnStatement",
+      "babel_source": "return `${transpileExpression(statement.expression)};`;",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c0afb897",
+      "type": "TemplateLiteral",
+      "babel_source": "`${transpileExpression(statement.expression)};`",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7e6b8b6b",
+      "type": "IfStatement",
+      "condition": "t.isForStatement(statement)",
+      "babel_source": "if (t.isForStatement(statement)) {\r\n    const init = statement.init ? transpileStatement(statement.init).replace(/;$/, '') : '';\r\n    const test = statement.test ? transpileExpression(statement.test) : 'true';\r\n    const update = statement.update ? transpileExpression(statement.update) : '';\r\n    const body = transpileStatement(statement.body);\r\n    return `for (${init}; ${test}; ${update})\\n{\\n${indent(body, 4)}\\n}`;\r\n  }",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c8a243ec",
+      "type": "BabelTypeCheck",
+      "method": "isForStatement",
+      "babel_source": "t.isForStatement(statement)",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ce32b0f7",
+      "type": "VariableDeclaration",
+      "babel_source": "const init = statement.init ? transpileStatement(statement.init).replace(/;$/, '') : '';",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3f7c8cc1",
+      "type": "ConditionalExpression",
+      "babel_source": "statement.init ? transpileStatement(statement.init).replace(/;$/, '') : ''",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b78f8296",
+      "type": "RegExpLiteral",
+      "pattern": ";$",
+      "flags": "",
+      "babel_source": "/;$/",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7c078913",
+      "type": "VariableDeclaration",
+      "babel_source": "const test = statement.test ? transpileExpression(statement.test) : 'true';",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6604d6b5",
+      "type": "ConditionalExpression",
+      "babel_source": "statement.test ? transpileExpression(statement.test) : 'true'",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dd9073d6",
+      "type": "VariableDeclaration",
+      "babel_source": "const update = statement.update ? transpileExpression(statement.update) : '';",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cbcaa14f",
+      "type": "ConditionalExpression",
+      "babel_source": "statement.update ? transpileExpression(statement.update) : ''",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6a8c9907",
+      "type": "VariableDeclaration",
+      "babel_source": "const body = transpileStatement(statement.body);",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1bfea0e2",
+      "type": "ReturnStatement",
+      "babel_source": "return `for (${init}; ${test}; ${update})\\n{\\n${indent(body, 4)}\\n}`;",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "60acb0c3",
+      "type": "TemplateLiteral",
+      "babel_source": "`for (${init}; ${test}; ${update})\\n{\\n${indent(body, 4)}\\n}`",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "89281807",
+      "type": "IfStatement",
+      "condition": "t.isForOfStatement(statement)",
+      "babel_source": "if (t.isForOfStatement(statement)) {\r\n    const left = t.isVariableDeclaration(statement.left)\r\n      ? statement.left.declarations[0].id.name\r\n      : statement.left.name;\r\n    const right = transpileExpression(statement.right);\r\n    const body = transpileStatement(statement.body);\r\n\r\n    // Check if it's for await of (streaming)\r\n    if (statement.await) {\r\n      return `await foreach (var ${left} in ${right})\\n{\\n${indent(body, 4)}\\n}`;\r\n    }\r\n\r\n    return `foreach (var ${left} in ${right})\\n{\\n${indent(body, 4)}\\n}`;\r\n  }",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9fa4b487",
+      "type": "BabelTypeCheck",
+      "method": "isForOfStatement",
+      "babel_source": "t.isForOfStatement(statement)",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "61c5acf1",
+      "type": "VariableDeclaration",
+      "babel_source": "const left = t.isVariableDeclaration(statement.left)\r\n      ? statement.left.declarations[0].id.name\r\n      : statement.left.name;",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "011f3d59",
+      "type": "ConditionalExpression",
+      "babel_source": "t.isVariableDeclaration(statement.left)\r\n      ? statement.left.declarations[0].id.name\r\n      : statement.left.name",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "451c25a7",
+      "type": "BabelTypeCheck",
+      "method": "isVariableDeclaration",
+      "babel_source": "t.isVariableDeclaration(statement.left)",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a856c86c",
+      "type": "VariableDeclaration",
+      "babel_source": "const right = transpileExpression(statement.right);",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6a8c9907",
+      "type": "VariableDeclaration",
+      "babel_source": "const body = transpileStatement(statement.body);",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42d5034c",
+      "type": "IfStatement",
+      "condition": "statement.await",
+      "babel_source": "if (statement.await) {\r\n      return `await foreach (var ${left} in ${right})\\n{\\n${indent(body, 4)}\\n}`;\r\n    }",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "66ae701e",
+      "type": "ReturnStatement",
+      "babel_source": "return `await foreach (var ${left} in ${right})\\n{\\n${indent(body, 4)}\\n}`;",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "775169be",
+      "type": "TemplateLiteral",
+      "babel_source": "`await foreach (var ${left} in ${right})\\n{\\n${indent(body, 4)}\\n}`",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "50936336",
+      "type": "ReturnStatement",
+      "babel_source": "return `foreach (var ${left} in ${right})\\n{\\n${indent(body, 4)}\\n}`;",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "70628206",
+      "type": "TemplateLiteral",
+      "babel_source": "`foreach (var ${left} in ${right})\\n{\\n${indent(body, 4)}\\n}`",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9589a1bb",
+      "type": "IfStatement",
+      "condition": "t.isWhileStatement(statement)",
+      "babel_source": "if (t.isWhileStatement(statement)) {\r\n    const test = transpileExpression(statement.test);\r\n    const body = transpileStatement(statement.body);\r\n    return `while (${test})\\n{\\n${indent(body, 4)}\\n}`;\r\n  }",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "abb5bafb",
+      "type": "BabelTypeCheck",
+      "method": "isWhileStatement",
+      "babel_source": "t.isWhileStatement(statement)",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1285a963",
+      "type": "VariableDeclaration",
+      "babel_source": "const test = transpileExpression(statement.test);",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6a8c9907",
+      "type": "VariableDeclaration",
+      "babel_source": "const body = transpileStatement(statement.body);",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2cd0a0df",
+      "type": "ReturnStatement",
+      "babel_source": "return `while (${test})\\n{\\n${indent(body, 4)}\\n}`;",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c6fa21ba",
+      "type": "TemplateLiteral",
+      "babel_source": "`while (${test})\\n{\\n${indent(body, 4)}\\n}`",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2ce6f486",
+      "type": "IfStatement",
+      "condition": "t.isIfStatement(statement)",
+      "babel_source": "if (t.isIfStatement(statement)) {\r\n    let test = transpileExpression(statement.test);\r\n\r\n    // Convert string truthy checks to proper C# boolean expressions\r\n    test = convertStringToBool(test, statement.test);\r\n\r\n    const consequent = transpileStatement(statement.consequent);\r\n    const alternate = statement.alternate\r\n      ? `\\nelse\\n{\\n${indent(transpileStatement(statement.alternate), 4)}\\n}`\r\n      : '';\r\n    return `if (${test})\\n{\\n${indent(consequent, 4)}\\n}${alternate}`;\r\n  }",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "16c02796",
+      "type": "BabelTypeCheck",
+      "method": "isIfStatement",
+      "babel_source": "t.isIfStatement(statement)",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5ed9ae66",
+      "type": "VariableDeclaration",
+      "babel_source": "let test = transpileExpression(statement.test);",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "08d814a6",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "test = convertStringToBool(test, statement.test)",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "be902868",
+      "type": "VariableDeclaration",
+      "babel_source": "const consequent = transpileStatement(statement.consequent);",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0b676300",
+      "type": "VariableDeclaration",
+      "babel_source": "const alternate = statement.alternate\r\n      ? `\\nelse\\n{\\n${indent(transpileStatement(statement.alternate), 4)}\\n}`\r\n      : '';",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cf9f1716",
+      "type": "ConditionalExpression",
+      "babel_source": "statement.alternate\r\n      ? `\\nelse\\n{\\n${indent(transpileStatement(statement.alternate), 4)}\\n}`\r\n      : ''",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "014b917e",
+      "type": "TemplateLiteral",
+      "babel_source": "`\\nelse\\n{\\n${indent(transpileStatement(statement.alternate), 4)}\\n}`",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8813b458",
+      "type": "ReturnStatement",
+      "babel_source": "return `if (${test})\\n{\\n${indent(consequent, 4)}\\n}${alternate}`;",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c5b4540e",
+      "type": "TemplateLiteral",
+      "babel_source": "`if (${test})\\n{\\n${indent(consequent, 4)}\\n}${alternate}`",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7b54f413",
+      "type": "IfStatement",
+      "condition": "t.isBlockStatement(statement)",
+      "babel_source": "if (t.isBlockStatement(statement)) {\r\n    return transpileBlockStatement(statement);\r\n  }",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b83c240f",
+      "type": "BabelTypeCheck",
+      "method": "isBlockStatement",
+      "babel_source": "t.isBlockStatement(statement)",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "53bf2e95",
+      "type": "ReturnStatement",
+      "babel_source": "return transpileBlockStatement(statement);",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a50deb13",
+      "type": "IfStatement",
+      "condition": "t.isTryStatement(statement)",
+      "babel_source": "if (t.isTryStatement(statement)) {\r\n    const block = transpileBlockStatement(statement.block);\r\n    const handler = statement.handler ? transpileCatchClause(statement.handler) : '';\r\n    const finalizer = statement.finalizer\r\n      ? `\\nfinally\\n{\\n${indent(transpileBlockStatement(statement.finalizer), 4)}\\n}`\r\n      : '';\r\n    return `try\\n{\\n${indent(block, 4)}\\n}${handler}${finalizer}`;\r\n  }",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8fef93b9",
+      "type": "BabelTypeCheck",
+      "method": "isTryStatement",
+      "babel_source": "t.isTryStatement(statement)",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f3b20cd7",
+      "type": "VariableDeclaration",
+      "babel_source": "const block = transpileBlockStatement(statement.block);",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2ca16d77",
+      "type": "VariableDeclaration",
+      "babel_source": "const handler = statement.handler ? transpileCatchClause(statement.handler) : '';",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9deaf8e4",
+      "type": "ConditionalExpression",
+      "babel_source": "statement.handler ? transpileCatchClause(statement.handler) : ''",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "efbfb6e3",
+      "type": "VariableDeclaration",
+      "babel_source": "const finalizer = statement.finalizer\r\n      ? `\\nfinally\\n{\\n${indent(transpileBlockStatement(statement.finalizer), 4)}\\n}`\r\n      : '';",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e7bf7898",
+      "type": "ConditionalExpression",
+      "babel_source": "statement.finalizer\r\n      ? `\\nfinally\\n{\\n${indent(transpileBlockStatement(statement.finalizer), 4)}\\n}`\r\n      : ''",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5cde8673",
+      "type": "TemplateLiteral",
+      "babel_source": "`\\nfinally\\n{\\n${indent(transpileBlockStatement(statement.finalizer), 4)}\\n}`",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e670d3e8",
+      "type": "ReturnStatement",
+      "babel_source": "return `try\\n{\\n${indent(block, 4)}\\n}${handler}${finalizer}`;",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c2061c2d",
+      "type": "TemplateLiteral",
+      "babel_source": "`try\\n{\\n${indent(block, 4)}\\n}${handler}${finalizer}`",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "895aba68",
+      "type": "IfStatement",
+      "condition": "t.isThrowStatement(statement)",
+      "babel_source": "if (t.isThrowStatement(statement)) {\r\n    return `throw ${transpileExpression(statement.argument)};`;\r\n  }",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fa65aa37",
+      "type": "BabelTypeCheck",
+      "method": "isThrowStatement",
+      "babel_source": "t.isThrowStatement(statement)",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1f9d9922",
+      "type": "ReturnStatement",
+      "babel_source": "return `throw ${transpileExpression(statement.argument)};`;",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a4687d99",
+      "type": "TemplateLiteral",
+      "babel_source": "`throw ${transpileExpression(statement.argument)};`",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7a10a089",
+      "type": "IfStatement",
+      "condition": "t.isBreakStatement(statement)",
+      "babel_source": "if (t.isBreakStatement(statement)) {\r\n    return 'break;';\r\n  }",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "da57af8c",
+      "type": "BabelTypeCheck",
+      "method": "isBreakStatement",
+      "babel_source": "t.isBreakStatement(statement)",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5093f197",
+      "type": "ReturnStatement",
+      "babel_source": "return 'break;';",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d5b93633",
+      "type": "IfStatement",
+      "condition": "t.isContinueStatement(statement)",
+      "babel_source": "if (t.isContinueStatement(statement)) {\r\n    return 'continue;';\r\n  }",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bb0338a6",
+      "type": "BabelTypeCheck",
+      "method": "isContinueStatement",
+      "babel_source": "t.isContinueStatement(statement)",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c3fab8e5",
+      "type": "ReturnStatement",
+      "babel_source": "return 'continue;';",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e6049e4a",
+      "type": "ReturnStatement",
+      "babel_source": "return `/* TODO: Transpile ${statement.type} */`;",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0cd16eb8",
+      "type": "TemplateLiteral",
+      "babel_source": "`/* TODO: Transpile ${statement.type} */`",
+      "parentContext": {
+        "functionName": "transpileStatement",
+        "functionParams": [
+          "statement"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "transpilers/typescriptToCSharp.cjs"
+  ]
+}

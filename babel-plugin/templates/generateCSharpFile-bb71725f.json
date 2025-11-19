@@ -1,0 +1,210 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateCSharpFile",
+  "params": [
+    {
+      "name": "components",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "state",
+      "inferredType": "&mut State",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateCSharpFile(components, state) {\r\n  const lines = [];\r\n\r\n  // Check if any component uses plugins\r\n  const hasPlugins = components.some(c => usesPlugins(c));\r\n\r\n  // Usings\r\n  lines.push('using Minimact.AspNetCore.Core;');\r\n  lines.push('using Minimact.AspNetCore.Extensions;');\r\n  lines.push('using MinimactHelpers = Minimact.AspNetCore.Core.Minimact;');\r\n  lines.push('using System.Collections.Generic;');\r\n  lines.push('using System.Linq;');\r\n  lines.push('using System.Threading.Tasks;');\r\n\r\n  // Add plugin using directives if any component uses plugins\r\n  if (hasPlugins) {\r\n    lines.push('using Minimact.AspNetCore.Plugins;');\r\n  }\r\n\r\n  lines.push('');\r\n\r\n  // Namespace (extract from file path or use default)\r\n  const namespace = state.opts.namespace || 'Minimact.Components';\r\n  lines.push(`namespace ${namespace};`);\r\n  lines.push('');\r\n\r\n  // Generate each component\r\n  for (const component of components) {\r\n    // Check if this is a custom hook with pre-generated code\r\n    if (component.isHook && component.hookData) {\r\n      // Use the pre-generated hook class code\r\n      lines.push(component.hookData);\r\n    } else {\r\n      // Normal component generation\r\n      lines.push(...generateComponent(component));\r\n    }\r\n    lines.push('');\r\n  }\r\n\r\n  return lines.join('\\n');\r\n}",
+  "body_templates": [
+    {
+      "hash": "87b71d01",
+      "type": "VariableDeclaration",
+      "babel_source": "const lines = [];",
+      "parentContext": {
+        "functionName": "generateCSharpFile",
+        "functionParams": [
+          "components",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "generateCSharpFile",
+        "functionParams": [
+          "components",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "113a21f1",
+      "type": "VariableDeclaration",
+      "babel_source": "const hasPlugins = components.some(c => usesPlugins(c));",
+      "parentContext": {
+        "functionName": "generateCSharpFile",
+        "functionParams": [
+          "components",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "75b4abd3",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "c => usesPlugins(c)",
+      "parentContext": {
+        "functionName": "generateCSharpFile",
+        "functionParams": [
+          "components",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cf779363",
+      "type": "IfStatement",
+      "condition": "hasPlugins",
+      "babel_source": "if (hasPlugins) {\r\n    lines.push('using Minimact.AspNetCore.Plugins;');\r\n  }",
+      "parentContext": {
+        "functionName": "generateCSharpFile",
+        "functionParams": [
+          "components",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c1592690",
+      "type": "VariableDeclaration",
+      "babel_source": "const namespace = state.opts.namespace || 'Minimact.Components';",
+      "parentContext": {
+        "functionName": "generateCSharpFile",
+        "functionParams": [
+          "components",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "024ceaeb",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "state.opts.namespace || 'Minimact.Components'",
+      "parentContext": {
+        "functionName": "generateCSharpFile",
+        "functionParams": [
+          "components",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "550c6572",
+      "type": "TemplateLiteral",
+      "babel_source": "`namespace ${namespace};`",
+      "parentContext": {
+        "functionName": "generateCSharpFile",
+        "functionParams": [
+          "components",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b3e602fc",
+      "type": "ForOfStatement",
+      "babel_source": "for (const component of components) {\r\n    // Check if this is a custom hook with pre-generated code\r\n    if (component.isHook && component.hookData) {\r\n      // Use the pre-generated hook class code\r\n      lines.push(component.hookData);\r\n    } else {\r\n      // Normal component generation\r\n      lines.push(...generateComponent(component));\r\n    }\r\n    lines.push('');\r\n  }",
+      "parentContext": {
+        "functionName": "generateCSharpFile",
+        "functionParams": [
+          "components",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "efd216a8",
+      "type": "VariableDeclaration",
+      "babel_source": "const component",
+      "parentContext": {
+        "functionName": "generateCSharpFile",
+        "functionParams": [
+          "components",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "96d0cfa5",
+      "type": "IfStatement",
+      "condition": "component.isHook && component.hookData",
+      "babel_source": "if (component.isHook && component.hookData) {\r\n      // Use the pre-generated hook class code\r\n      lines.push(component.hookData);\r\n    } else {\r\n      // Normal component generation\r\n      lines.push(...generateComponent(component));\r\n    }",
+      "parentContext": {
+        "functionName": "generateCSharpFile",
+        "functionParams": [
+          "components",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e2e0e138",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "component.isHook && component.hookData",
+      "parentContext": {
+        "functionName": "generateCSharpFile",
+        "functionParams": [
+          "components",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7284beec",
+      "type": "SpreadElement",
+      "babel_source": "...generateComponent(component)",
+      "parentContext": {
+        "functionName": "generateCSharpFile",
+        "functionParams": [
+          "components",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ea8c77e3",
+      "type": "ReturnStatement",
+      "babel_source": "return lines.join('\\n');",
+      "parentContext": {
+        "functionName": "generateCSharpFile",
+        "functionParams": [
+          "components",
+          "state"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/csharpFile.cjs"
+  ]
+}

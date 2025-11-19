@@ -1,0 +1,940 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractUseServerTask",
+  "params": [
+    {
+      "name": "path",
+      "inferredType": "&Path",
+      "defaultValue": null
+    },
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractUseServerTask(path, component) {\r\n  const parent = path.parent;\r\n\r\n  if (!t.isVariableDeclarator(parent)) return;\r\n\r\n  const taskName = parent.id.name;\r\n  const asyncFunction = path.node.arguments[0];\r\n  const options = path.node.arguments[1];\r\n\r\n  // Validate async function\r\n  if (!asyncFunction || (!t.isArrowFunctionExpression(asyncFunction) && !t.isFunctionExpression(asyncFunction))) {\r\n    console.warn('[useServerTask] First argument must be an async function');\r\n    return;\r\n  }\r\n\r\n  if (!asyncFunction.async) {\r\n    console.warn('[useServerTask] Function must be async');\r\n    return;\r\n  }\r\n\r\n  // Check if streaming (async function*)\r\n  const isStreaming = asyncFunction.generator === true;\r\n\r\n  // Extract parameters\r\n  const parameters = asyncFunction.params.map(param => {\r\n    if (t.isIdentifier(param)) {\r\n      return {\r\n        name: param.name,\r\n        type: param.typeAnnotation ? extractTypeAnnotation(param.typeAnnotation) : 'object'\r\n      };\r\n    }\r\n    return null;\r\n  }).filter(Boolean);\r\n\r\n  // Extract options\r\n  let streamingEnabled = isStreaming;\r\n  let estimatedChunks = null;\r\n  let runtime = 'csharp'; // Default to C#\r\n  let parallel = false;\r\n\r\n  if (options && t.isObjectExpression(options)) {\r\n    for (const prop of options.properties) {\r\n      if (t.isObjectProperty(prop) && t.isIdentifier(prop.key)) {\r\n        if (prop.key.name === 'stream' && t.isBooleanLiteral(prop.value)) {\r\n          streamingEnabled = prop.value.value;\r\n        }\r\n        if (prop.key.name === 'estimatedChunks' && t.isNumericLiteral(prop.value)) {\r\n          estimatedChunks = prop.value.value;\r\n        }\r\n        if (prop.key.name === 'runtime' && t.isStringLiteral(prop.value)) {\r\n          runtime = prop.value.value; // 'csharp' | 'rust' | 'auto'\r\n        }\r\n        if (prop.key.name === 'parallel' && t.isBooleanLiteral(prop.value)) {\r\n          parallel = prop.value.value;\r\n        }\r\n      }\r\n    }\r\n  }\r\n\r\n  // Initialize component.useServerTask if needed\r\n  component.useServerTask = component.useServerTask || [];\r\n\r\n  // Store server task info\r\n  component.useServerTask.push({\r\n    name: taskName,\r\n    asyncFunction: asyncFunction,\r\n    parameters: parameters,\r\n    isStreaming: streamingEnabled,\r\n    estimatedChunks: estimatedChunks,\r\n    returnType: extractReturnType(asyncFunction),\r\n    runtime: runtime, // 'csharp' | 'rust' | 'auto'\r\n    parallel: parallel // Enable Rayon parallel processing\r\n  });\r\n}",
+  "body_templates": [
+    {
+      "hash": "356fe96c",
+      "type": "VariableDeclaration",
+      "babel_source": "const parent = path.parent;",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1cfe78c4",
+      "type": "IfStatement",
+      "condition": "!t.isVariableDeclarator(parent)",
+      "babel_source": "if (!t.isVariableDeclarator(parent)) return;",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dc772752",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isVariableDeclarator(parent)",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "27a39ea7",
+      "type": "BabelTypeCheck",
+      "method": "isVariableDeclarator",
+      "babel_source": "t.isVariableDeclarator(parent)",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8beaabe2",
+      "type": "ReturnStatement",
+      "babel_source": "return;",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "33c92811",
+      "type": "VariableDeclaration",
+      "babel_source": "const taskName = parent.id.name;",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8484fcbe",
+      "type": "VariableDeclaration",
+      "babel_source": "const asyncFunction = path.node.arguments[0];",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5dda9e19",
+      "type": "VariableDeclaration",
+      "babel_source": "const options = path.node.arguments[1];",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4d95c0d2",
+      "type": "IfStatement",
+      "condition": "!asyncFunction || (!t.isArrowFunctionExpression(asyncFunction) && !t.isFunctionExpression(asyncFunction))",
+      "babel_source": "if (!asyncFunction || (!t.isArrowFunctionExpression(asyncFunction) && !t.isFunctionExpression(asyncFunction))) {\r\n    console.warn('[useServerTask] First argument must be an async function');\r\n    return;\r\n  }",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "114f548c",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "!asyncFunction || (!t.isArrowFunctionExpression(asyncFunction) && !t.isFunctionExpression(asyncFunction))",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8b16bfae",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!asyncFunction",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "99c5d9d8",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "!t.isArrowFunctionExpression(asyncFunction) && !t.isFunctionExpression(asyncFunction)",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bbfbc448",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isArrowFunctionExpression(asyncFunction)",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b14f2784",
+      "type": "BabelTypeCheck",
+      "method": "isArrowFunctionExpression",
+      "babel_source": "t.isArrowFunctionExpression(asyncFunction)",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e8998080",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isFunctionExpression(asyncFunction)",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "753ef36b",
+      "type": "BabelTypeCheck",
+      "method": "isFunctionExpression",
+      "babel_source": "t.isFunctionExpression(asyncFunction)",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8beaabe2",
+      "type": "ReturnStatement",
+      "babel_source": "return;",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bbdccc34",
+      "type": "IfStatement",
+      "condition": "!asyncFunction.async",
+      "babel_source": "if (!asyncFunction.async) {\r\n    console.warn('[useServerTask] Function must be async');\r\n    return;\r\n  }",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d4d4333f",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!asyncFunction.async",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8beaabe2",
+      "type": "ReturnStatement",
+      "babel_source": "return;",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0d630d9a",
+      "type": "VariableDeclaration",
+      "babel_source": "const isStreaming = asyncFunction.generator === true;",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "757b1cb2",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "asyncFunction.generator === true",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "87bc4d24",
+      "type": "VariableDeclaration",
+      "babel_source": "const parameters = asyncFunction.params.map(param => {\r\n    if (t.isIdentifier(param)) {\r\n      return {\r\n        name: param.name,\r\n        type: param.typeAnnotation ? extractTypeAnnotation(param.typeAnnotation) : 'object'\r\n      };\r\n    }\r\n    return null;\r\n  }).filter(Boolean);",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "664cacff",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "param => {\r\n    if (t.isIdentifier(param)) {\r\n      return {\r\n        name: param.name,\r\n        type: param.typeAnnotation ? extractTypeAnnotation(param.typeAnnotation) : 'object'\r\n      };\r\n    }\r\n    return null;\r\n  }",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6f2bd46d",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(param)",
+      "babel_source": "if (t.isIdentifier(param)) {\r\n      return {\r\n        name: param.name,\r\n        type: param.typeAnnotation ? extractTypeAnnotation(param.typeAnnotation) : 'object'\r\n      };\r\n    }",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9d26e740",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(param)",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "651732d9",
+      "type": "ReturnStatement",
+      "babel_source": "return {\r\n        name: param.name,\r\n        type: param.typeAnnotation ? extractTypeAnnotation(param.typeAnnotation) : 'object'\r\n      };",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dd1f9659",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n        name: param.name,\r\n        type: param.typeAnnotation ? extractTypeAnnotation(param.typeAnnotation) : 'object'\r\n      }",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8d43b650",
+      "type": "ConditionalExpression",
+      "babel_source": "param.typeAnnotation ? extractTypeAnnotation(param.typeAnnotation) : 'object'",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "492191a0",
+      "type": "VariableDeclaration",
+      "babel_source": "let streamingEnabled = isStreaming;",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "76a647ef",
+      "type": "VariableDeclaration",
+      "babel_source": "let estimatedChunks = null;",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a6aa79a0",
+      "type": "VariableDeclaration",
+      "babel_source": "let runtime = 'csharp';",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e3a182e2",
+      "type": "VariableDeclaration",
+      "babel_source": "let parallel = false;",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7a01fcfc",
+      "type": "IfStatement",
+      "condition": "options && t.isObjectExpression(options)",
+      "babel_source": "if (options && t.isObjectExpression(options)) {\r\n    for (const prop of options.properties) {\r\n      if (t.isObjectProperty(prop) && t.isIdentifier(prop.key)) {\r\n        if (prop.key.name === 'stream' && t.isBooleanLiteral(prop.value)) {\r\n          streamingEnabled = prop.value.value;\r\n        }\r\n        if (prop.key.name === 'estimatedChunks' && t.isNumericLiteral(prop.value)) {\r\n          estimatedChunks = prop.value.value;\r\n        }\r\n        if (prop.key.name === 'runtime' && t.isStringLiteral(prop.value)) {\r\n          runtime = prop.value.value; // 'csharp' | 'rust' | 'auto'\r\n        }\r\n        if (prop.key.name === 'parallel' && t.isBooleanLiteral(prop.value)) {\r\n          parallel = prop.value.value;\r\n        }\r\n      }\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bdff1edf",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "options && t.isObjectExpression(options)",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f5a5b8a5",
+      "type": "BabelTypeCheck",
+      "method": "isObjectExpression",
+      "babel_source": "t.isObjectExpression(options)",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3176f18e",
+      "type": "ForOfStatement",
+      "babel_source": "for (const prop of options.properties) {\r\n      if (t.isObjectProperty(prop) && t.isIdentifier(prop.key)) {\r\n        if (prop.key.name === 'stream' && t.isBooleanLiteral(prop.value)) {\r\n          streamingEnabled = prop.value.value;\r\n        }\r\n        if (prop.key.name === 'estimatedChunks' && t.isNumericLiteral(prop.value)) {\r\n          estimatedChunks = prop.value.value;\r\n        }\r\n        if (prop.key.name === 'runtime' && t.isStringLiteral(prop.value)) {\r\n          runtime = prop.value.value; // 'csharp' | 'rust' | 'auto'\r\n        }\r\n        if (prop.key.name === 'parallel' && t.isBooleanLiteral(prop.value)) {\r\n          parallel = prop.value.value;\r\n        }\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "098a3cb5",
+      "type": "VariableDeclaration",
+      "babel_source": "const prop",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d275d547",
+      "type": "IfStatement",
+      "condition": "t.isObjectProperty(prop) && t.isIdentifier(prop.key)",
+      "babel_source": "if (t.isObjectProperty(prop) && t.isIdentifier(prop.key)) {\r\n        if (prop.key.name === 'stream' && t.isBooleanLiteral(prop.value)) {\r\n          streamingEnabled = prop.value.value;\r\n        }\r\n        if (prop.key.name === 'estimatedChunks' && t.isNumericLiteral(prop.value)) {\r\n          estimatedChunks = prop.value.value;\r\n        }\r\n        if (prop.key.name === 'runtime' && t.isStringLiteral(prop.value)) {\r\n          runtime = prop.value.value; // 'csharp' | 'rust' | 'auto'\r\n        }\r\n        if (prop.key.name === 'parallel' && t.isBooleanLiteral(prop.value)) {\r\n          parallel = prop.value.value;\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "192fdbdf",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isObjectProperty(prop) && t.isIdentifier(prop.key)",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d8cb3d9e",
+      "type": "BabelTypeCheck",
+      "method": "isObjectProperty",
+      "babel_source": "t.isObjectProperty(prop)",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f3845e36",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(prop.key)",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "394854da",
+      "type": "IfStatement",
+      "condition": "prop.key.name === 'stream' && t.isBooleanLiteral(prop.value)",
+      "babel_source": "if (prop.key.name === 'stream' && t.isBooleanLiteral(prop.value)) {\r\n          streamingEnabled = prop.value.value;\r\n        }",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "85146e3d",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "prop.key.name === 'stream' && t.isBooleanLiteral(prop.value)",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5bbd614f",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "prop.key.name === 'stream'",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e824223e",
+      "type": "BabelTypeCheck",
+      "method": "isBooleanLiteral",
+      "babel_source": "t.isBooleanLiteral(prop.value)",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ce64f080",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "streamingEnabled = prop.value.value",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "500992ba",
+      "type": "IfStatement",
+      "condition": "prop.key.name === 'estimatedChunks' && t.isNumericLiteral(prop.value)",
+      "babel_source": "if (prop.key.name === 'estimatedChunks' && t.isNumericLiteral(prop.value)) {\r\n          estimatedChunks = prop.value.value;\r\n        }",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c462853d",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "prop.key.name === 'estimatedChunks' && t.isNumericLiteral(prop.value)",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "407d8183",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "prop.key.name === 'estimatedChunks'",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9f30200d",
+      "type": "BabelTypeCheck",
+      "method": "isNumericLiteral",
+      "babel_source": "t.isNumericLiteral(prop.value)",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3a47d5a7",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "estimatedChunks = prop.value.value",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3b10b109",
+      "type": "IfStatement",
+      "condition": "prop.key.name === 'runtime' && t.isStringLiteral(prop.value)",
+      "babel_source": "if (prop.key.name === 'runtime' && t.isStringLiteral(prop.value)) {\r\n          runtime = prop.value.value; // 'csharp' | 'rust' | 'auto'\r\n        }",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e43238c0",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "prop.key.name === 'runtime' && t.isStringLiteral(prop.value)",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9da6e29d",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "prop.key.name === 'runtime'",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f158ce2a",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(prop.value)",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f3c162b4",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "runtime = prop.value.value",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "31fa04ed",
+      "type": "IfStatement",
+      "condition": "prop.key.name === 'parallel' && t.isBooleanLiteral(prop.value)",
+      "babel_source": "if (prop.key.name === 'parallel' && t.isBooleanLiteral(prop.value)) {\r\n          parallel = prop.value.value;\r\n        }",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f00599c1",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "prop.key.name === 'parallel' && t.isBooleanLiteral(prop.value)",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5f65314e",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "prop.key.name === 'parallel'",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e824223e",
+      "type": "BabelTypeCheck",
+      "method": "isBooleanLiteral",
+      "babel_source": "t.isBooleanLiteral(prop.value)",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5cbcfd85",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "parallel = prop.value.value",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0d851239",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "component.useServerTask = component.useServerTask || []",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "46a99f17",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "component.useServerTask || []",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "40a51266",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    name: taskName,\r\n    asyncFunction: asyncFunction,\r\n    parameters: parameters,\r\n    isStreaming: streamingEnabled,\r\n    estimatedChunks: estimatedChunks,\r\n    returnType: extractReturnType(asyncFunction),\r\n    runtime: runtime, // 'csharp' | 'rust' | 'auto'\r\n    parallel: parallel // Enable Rayon parallel processing\r\n  }",
+      "parentContext": {
+        "functionName": "extractUseServerTask",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/hooks.cjs"
+  ]
+}

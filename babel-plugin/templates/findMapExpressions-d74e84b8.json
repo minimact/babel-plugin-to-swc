@@ -1,0 +1,329 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "findMapExpressions",
+  "params": [
+    {
+      "name": "expr",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function findMapExpressions(expr) {\r\n    if (!expr) return;\r\n\r\n    // Direct .map() call: items.map(...)\r\n    if (t.isCallExpression(expr) &&\r\n        t.isMemberExpression(expr.callee) &&\r\n        t.isIdentifier(expr.callee.property) &&\r\n        expr.callee.property.name === 'map') {\r\n\r\n      const loopTemplate = extractLoopTemplate(expr);\r\n      if (loopTemplate) {\r\n        loopTemplates.push(loopTemplate);\r\n      }\r\n    }\r\n\r\n    // Chained operations: items.filter(...).map(...)\r\n    if (t.isCallExpression(expr) &&\r\n        t.isMemberExpression(expr.callee)) {\r\n      findMapExpressions(expr.callee.object);\r\n    }\r\n\r\n    // Wrapped in other expressions\r\n    if (t.isLogicalExpression(expr) || t.isConditionalExpression(expr)) {\r\n      findMapExpressions(expr.left || expr.test);\r\n      findMapExpressions(expr.right || expr.consequent);\r\n      if (expr.alternate) findMapExpressions(expr.alternate);\r\n    }\r\n  }",
+  "body_templates": [
+    {
+      "hash": "3411041a",
+      "type": "IfStatement",
+      "condition": "!expr",
+      "babel_source": "if (!expr) return;",
+      "parentContext": {
+        "functionName": "findMapExpressions",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d8b2830d",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!expr",
+      "parentContext": {
+        "functionName": "findMapExpressions",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8beaabe2",
+      "type": "ReturnStatement",
+      "babel_source": "return;",
+      "parentContext": {
+        "functionName": "findMapExpressions",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "be2d7c86",
+      "type": "IfStatement",
+      "condition": "t.isCallExpression(expr) &&\r\n        t.isMemberExpression(expr.callee) &&\r\n        t.isIdentifier(expr.callee.property) &&\r\n        expr.callee.property.name === 'map'",
+      "babel_source": "if (t.isCallExpression(expr) &&\r\n        t.isMemberExpression(expr.callee) &&\r\n        t.isIdentifier(expr.callee.property) &&\r\n        expr.callee.property.name === 'map') {\r\n\r\n      const loopTemplate = extractLoopTemplate(expr);\r\n      if (loopTemplate) {\r\n        loopTemplates.push(loopTemplate);\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "findMapExpressions",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f0a9af7d",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isCallExpression(expr) &&\r\n        t.isMemberExpression(expr.callee) &&\r\n        t.isIdentifier(expr.callee.property) &&\r\n        expr.callee.property.name === 'map'",
+      "parentContext": {
+        "functionName": "findMapExpressions",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "298b6c46",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isCallExpression(expr) &&\r\n        t.isMemberExpression(expr.callee) &&\r\n        t.isIdentifier(expr.callee.property)",
+      "parentContext": {
+        "functionName": "findMapExpressions",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cefcb6c3",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isCallExpression(expr) &&\r\n        t.isMemberExpression(expr.callee)",
+      "parentContext": {
+        "functionName": "findMapExpressions",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "46479f62",
+      "type": "BabelTypeCheck",
+      "method": "isCallExpression",
+      "babel_source": "t.isCallExpression(expr)",
+      "parentContext": {
+        "functionName": "findMapExpressions",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d6c41024",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(expr.callee)",
+      "parentContext": {
+        "functionName": "findMapExpressions",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "583415b7",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(expr.callee.property)",
+      "parentContext": {
+        "functionName": "findMapExpressions",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "029bdfda",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "expr.callee.property.name === 'map'",
+      "parentContext": {
+        "functionName": "findMapExpressions",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "47270167",
+      "type": "VariableDeclaration",
+      "babel_source": "const loopTemplate = extractLoopTemplate(expr);",
+      "parentContext": {
+        "functionName": "findMapExpressions",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4cfd9d6f",
+      "type": "IfStatement",
+      "condition": "loopTemplate",
+      "babel_source": "if (loopTemplate) {\r\n        loopTemplates.push(loopTemplate);\r\n      }",
+      "parentContext": {
+        "functionName": "findMapExpressions",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8022c87a",
+      "type": "IfStatement",
+      "condition": "t.isCallExpression(expr) &&\r\n        t.isMemberExpression(expr.callee)",
+      "babel_source": "if (t.isCallExpression(expr) &&\r\n        t.isMemberExpression(expr.callee)) {\r\n      findMapExpressions(expr.callee.object);\r\n    }",
+      "parentContext": {
+        "functionName": "findMapExpressions",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cefcb6c3",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isCallExpression(expr) &&\r\n        t.isMemberExpression(expr.callee)",
+      "parentContext": {
+        "functionName": "findMapExpressions",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "46479f62",
+      "type": "BabelTypeCheck",
+      "method": "isCallExpression",
+      "babel_source": "t.isCallExpression(expr)",
+      "parentContext": {
+        "functionName": "findMapExpressions",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d6c41024",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(expr.callee)",
+      "parentContext": {
+        "functionName": "findMapExpressions",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dffd47d7",
+      "type": "IfStatement",
+      "condition": "t.isLogicalExpression(expr) || t.isConditionalExpression(expr)",
+      "babel_source": "if (t.isLogicalExpression(expr) || t.isConditionalExpression(expr)) {\r\n      findMapExpressions(expr.left || expr.test);\r\n      findMapExpressions(expr.right || expr.consequent);\r\n      if (expr.alternate) findMapExpressions(expr.alternate);\r\n    }",
+      "parentContext": {
+        "functionName": "findMapExpressions",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3869385c",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isLogicalExpression(expr) || t.isConditionalExpression(expr)",
+      "parentContext": {
+        "functionName": "findMapExpressions",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c20dd732",
+      "type": "BabelTypeCheck",
+      "method": "isLogicalExpression",
+      "babel_source": "t.isLogicalExpression(expr)",
+      "parentContext": {
+        "functionName": "findMapExpressions",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5574ecc1",
+      "type": "BabelTypeCheck",
+      "method": "isConditionalExpression",
+      "babel_source": "t.isConditionalExpression(expr)",
+      "parentContext": {
+        "functionName": "findMapExpressions",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e58675c7",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "expr.left || expr.test",
+      "parentContext": {
+        "functionName": "findMapExpressions",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d01443e1",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "expr.right || expr.consequent",
+      "parentContext": {
+        "functionName": "findMapExpressions",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "808c8959",
+      "type": "IfStatement",
+      "condition": "expr.alternate",
+      "babel_source": "if (expr.alternate) findMapExpressions(expr.alternate);",
+      "parentContext": {
+        "functionName": "findMapExpressions",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/loopTemplates.cjs"
+  ]
+}

@@ -1,0 +1,131 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractUsePredictHint",
+  "params": [
+    {
+      "name": "path",
+      "inferredType": "&Path",
+      "defaultValue": null
+    },
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractUsePredictHint(path, component) {\r\n  const hintId = path.node.arguments[0];\r\n  const predictedState = path.node.arguments[1];\r\n\r\n  component.usePredictHint = component.usePredictHint || [];\r\n  component.usePredictHint.push({\r\n    hintId: t.isStringLiteral(hintId) ? hintId.value : null,\r\n    predictedState: predictedState\r\n  });\r\n}",
+  "body_templates": [
+    {
+      "hash": "3ce68197",
+      "type": "VariableDeclaration",
+      "babel_source": "const hintId = path.node.arguments[0];",
+      "parentContext": {
+        "functionName": "extractUsePredictHint",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "db4ae6a7",
+      "type": "VariableDeclaration",
+      "babel_source": "const predictedState = path.node.arguments[1];",
+      "parentContext": {
+        "functionName": "extractUsePredictHint",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e52d8c50",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "component.usePredictHint = component.usePredictHint || []",
+      "parentContext": {
+        "functionName": "extractUsePredictHint",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "10ac0e1a",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "component.usePredictHint || []",
+      "parentContext": {
+        "functionName": "extractUsePredictHint",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractUsePredictHint",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "271f5f20",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    hintId: t.isStringLiteral(hintId) ? hintId.value : null,\r\n    predictedState: predictedState\r\n  }",
+      "parentContext": {
+        "functionName": "extractUsePredictHint",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "85905819",
+      "type": "ConditionalExpression",
+      "babel_source": "t.isStringLiteral(hintId) ? hintId.value : null",
+      "parentContext": {
+        "functionName": "extractUsePredictHint",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c2e72665",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(hintId)",
+      "parentContext": {
+        "functionName": "extractUsePredictHint",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/hooks.cjs"
+  ]
+}

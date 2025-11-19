@@ -1,0 +1,351 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "convertSwitchBlocks",
+  "params": [
+    {
+      "name": "markdown",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function convertSwitchBlocks(markdown) {\r\n  const switchPattern = /@switch\\s*\\(([^)]+)\\)\\s*\\{([\\s\\S]*?)\\}/g;\r\n\r\n  return markdown.replace(switchPattern, (match, expr, cases) => {\r\n    const switchCases = [];\r\n\r\n    // Match case patterns: case pattern: body break;\r\n    const casePattern = /case\\s+(.*?):([\\s\\S]*?)(?=break;)/g;\r\n    const caseMatches = [...cases.matchAll(casePattern)];\r\n\r\n    for (const caseMatch of caseMatches) {\r\n      const pattern = caseMatch[1].trim();\r\n      const body = caseMatch[2].trim();\r\n\r\n      // Recursively convert nested Razor in body\r\n      const convertedBody = convertNestedRazor(body);\r\n\r\n      // Check if pattern contains 'var' (pattern guard)\r\n      // e.g., \"var q when q < 5\"\r\n      if (pattern.startsWith('var ')) {\r\n        // Pattern guard - use $@\"...\" for interpolation\r\n        switchCases.push(`${pattern} => $@\"${convertedBody}\"`);\r\n      } else {\r\n        // Simple pattern - use @\"...\" (no interpolation needed unless body has @)\r\n        switchCases.push(`${pattern} => @\"${convertedBody}\"`);\r\n      }\r\n    }\r\n\r\n    // Match default case: default: body break;\r\n    const defaultMatch = cases.match(/default:([\\s\\S]*?)(?=break;)/);\r\n    if (defaultMatch) {\r\n      const body = defaultMatch[1].trim();\r\n      const convertedBody = convertNestedRazor(body);\r\n      switchCases.push(`_ => @\"${convertedBody}\"`);\r\n    }\r\n\r\n    return `{${expr} switch { ${switchCases.join(', ')} }}`;\r\n  });\r\n}",
+  "body_templates": [
+    {
+      "hash": "1846f8f2",
+      "type": "VariableDeclaration",
+      "babel_source": "const switchPattern = /@switch\\s*\\(([^)]+)\\)\\s*\\{([\\s\\S]*?)\\}/g;",
+      "parentContext": {
+        "functionName": "convertSwitchBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0593310a",
+      "type": "RegExpLiteral",
+      "pattern": "@switch\\s*\\(([^)]+)\\)\\s*\\{([\\s\\S]*?)\\}",
+      "flags": "g",
+      "babel_source": "/@switch\\s*\\(([^)]+)\\)\\s*\\{([\\s\\S]*?)\\}/g",
+      "parentContext": {
+        "functionName": "convertSwitchBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "19148150",
+      "type": "ReturnStatement",
+      "babel_source": "return markdown.replace(switchPattern, (match, expr, cases) => {\r\n    const switchCases = [];\r\n\r\n    // Match case patterns: case pattern: body break;\r\n    const casePattern = /case\\s+(.*?):([\\s\\S]*?)(?=break;)/g;\r\n    const caseMatches = [...cases.matchAll(casePattern)];\r\n\r\n    for (const caseMatch of caseMatches) {\r\n      const pattern = caseMatch[1].trim();\r\n      const body = caseMatch[2].trim();\r\n\r\n      // Recursively convert nested Razor in body\r\n      const convertedBody = convertNestedRazor(body);\r\n\r\n      // Check if pattern contains 'var' (pattern guard)\r\n      // e.g., \"var q when q < 5\"\r\n      if (pattern.startsWith('var ')) {\r\n        // Pattern guard - use $@\"...\" for interpolation\r\n        switchCases.push(`${pattern} => $@\"${convertedBody}\"`);\r\n      } else {\r\n        // Simple pattern - use @\"...\" (no interpolation needed unless body has @)\r\n        switchCases.push(`${pattern} => @\"${convertedBody}\"`);\r\n      }\r\n    }\r\n\r\n    // Match default case: default: body break;\r\n    const defaultMatch = cases.match(/default:([\\s\\S]*?)(?=break;)/);\r\n    if (defaultMatch) {\r\n      const body = defaultMatch[1].trim();\r\n      const convertedBody = convertNestedRazor(body);\r\n      switchCases.push(`_ => @\"${convertedBody}\"`);\r\n    }\r\n\r\n    return `{${expr} switch { ${switchCases.join(', ')} }}`;\r\n  });",
+      "parentContext": {
+        "functionName": "convertSwitchBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "51eb24de",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "(match, expr, cases) => {\r\n    const switchCases = [];\r\n\r\n    // Match case patterns: case pattern: body break;\r\n    const casePattern = /case\\s+(.*?):([\\s\\S]*?)(?=break;)/g;\r\n    const caseMatches = [...cases.matchAll(casePattern)];\r\n\r\n    for (const caseMatch of caseMatches) {\r\n      const pattern = caseMatch[1].trim();\r\n      const body = caseMatch[2].trim();\r\n\r\n      // Recursively convert nested Razor in body\r\n      const convertedBody = convertNestedRazor(body);\r\n\r\n      // Check if pattern contains 'var' (pattern guard)\r\n      // e.g., \"var q when q < 5\"\r\n      if (pattern.startsWith('var ')) {\r\n        // Pattern guard - use $@\"...\" for interpolation\r\n        switchCases.push(`${pattern} => $@\"${convertedBody}\"`);\r\n      } else {\r\n        // Simple pattern - use @\"...\" (no interpolation needed unless body has @)\r\n        switchCases.push(`${pattern} => @\"${convertedBody}\"`);\r\n      }\r\n    }\r\n\r\n    // Match default case: default: body break;\r\n    const defaultMatch = cases.match(/default:([\\s\\S]*?)(?=break;)/);\r\n    if (defaultMatch) {\r\n      const body = defaultMatch[1].trim();\r\n      const convertedBody = convertNestedRazor(body);\r\n      switchCases.push(`_ => @\"${convertedBody}\"`);\r\n    }\r\n\r\n    return `{${expr} switch { ${switchCases.join(', ')} }}`;\r\n  }",
+      "parentContext": {
+        "functionName": "convertSwitchBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0ea9bc29",
+      "type": "VariableDeclaration",
+      "babel_source": "const switchCases = [];",
+      "parentContext": {
+        "functionName": "convertSwitchBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "convertSwitchBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "91fcd2ae",
+      "type": "VariableDeclaration",
+      "babel_source": "const casePattern = /case\\s+(.*?):([\\s\\S]*?)(?=break;)/g;",
+      "parentContext": {
+        "functionName": "convertSwitchBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cd53efc6",
+      "type": "RegExpLiteral",
+      "pattern": "case\\s+(.*?):([\\s\\S]*?)(?=break;)",
+      "flags": "g",
+      "babel_source": "/case\\s+(.*?):([\\s\\S]*?)(?=break;)/g",
+      "parentContext": {
+        "functionName": "convertSwitchBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b4104d09",
+      "type": "VariableDeclaration",
+      "babel_source": "const caseMatches = [...cases.matchAll(casePattern)];",
+      "parentContext": {
+        "functionName": "convertSwitchBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9c4871f6",
+      "type": "ArrayExpression",
+      "babel_source": "[...cases.matchAll(casePattern)]",
+      "parentContext": {
+        "functionName": "convertSwitchBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "24401514",
+      "type": "SpreadElement",
+      "babel_source": "...cases.matchAll(casePattern)",
+      "parentContext": {
+        "functionName": "convertSwitchBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f5852ddf",
+      "type": "ForOfStatement",
+      "babel_source": "for (const caseMatch of caseMatches) {\r\n      const pattern = caseMatch[1].trim();\r\n      const body = caseMatch[2].trim();\r\n\r\n      // Recursively convert nested Razor in body\r\n      const convertedBody = convertNestedRazor(body);\r\n\r\n      // Check if pattern contains 'var' (pattern guard)\r\n      // e.g., \"var q when q < 5\"\r\n      if (pattern.startsWith('var ')) {\r\n        // Pattern guard - use $@\"...\" for interpolation\r\n        switchCases.push(`${pattern} => $@\"${convertedBody}\"`);\r\n      } else {\r\n        // Simple pattern - use @\"...\" (no interpolation needed unless body has @)\r\n        switchCases.push(`${pattern} => @\"${convertedBody}\"`);\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "convertSwitchBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c0cdb5af",
+      "type": "VariableDeclaration",
+      "babel_source": "const caseMatch",
+      "parentContext": {
+        "functionName": "convertSwitchBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "aa06e10d",
+      "type": "VariableDeclaration",
+      "babel_source": "const pattern = caseMatch[1].trim();",
+      "parentContext": {
+        "functionName": "convertSwitchBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b4890bba",
+      "type": "VariableDeclaration",
+      "babel_source": "const body = caseMatch[2].trim();",
+      "parentContext": {
+        "functionName": "convertSwitchBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f1cafaad",
+      "type": "VariableDeclaration",
+      "babel_source": "const convertedBody = convertNestedRazor(body);",
+      "parentContext": {
+        "functionName": "convertSwitchBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c55c1e38",
+      "type": "IfStatement",
+      "condition": "pattern.startsWith('var ')",
+      "babel_source": "if (pattern.startsWith('var ')) {\r\n        // Pattern guard - use $@\"...\" for interpolation\r\n        switchCases.push(`${pattern} => $@\"${convertedBody}\"`);\r\n      } else {\r\n        // Simple pattern - use @\"...\" (no interpolation needed unless body has @)\r\n        switchCases.push(`${pattern} => @\"${convertedBody}\"`);\r\n      }",
+      "parentContext": {
+        "functionName": "convertSwitchBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "78c6c53f",
+      "type": "TemplateLiteral",
+      "babel_source": "`${pattern} => $@\"${convertedBody}\"`",
+      "parentContext": {
+        "functionName": "convertSwitchBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c1545092",
+      "type": "TemplateLiteral",
+      "babel_source": "`${pattern} => @\"${convertedBody}\"`",
+      "parentContext": {
+        "functionName": "convertSwitchBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2f73907f",
+      "type": "VariableDeclaration",
+      "babel_source": "const defaultMatch = cases.match(/default:([\\s\\S]*?)(?=break;)/);",
+      "parentContext": {
+        "functionName": "convertSwitchBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8350637b",
+      "type": "RegExpLiteral",
+      "pattern": "default:([\\s\\S]*?)(?=break;)",
+      "flags": "",
+      "babel_source": "/default:([\\s\\S]*?)(?=break;)/",
+      "parentContext": {
+        "functionName": "convertSwitchBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "529e78e0",
+      "type": "IfStatement",
+      "condition": "defaultMatch",
+      "babel_source": "if (defaultMatch) {\r\n      const body = defaultMatch[1].trim();\r\n      const convertedBody = convertNestedRazor(body);\r\n      switchCases.push(`_ => @\"${convertedBody}\"`);\r\n    }",
+      "parentContext": {
+        "functionName": "convertSwitchBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "99a98810",
+      "type": "VariableDeclaration",
+      "babel_source": "const body = defaultMatch[1].trim();",
+      "parentContext": {
+        "functionName": "convertSwitchBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f1cafaad",
+      "type": "VariableDeclaration",
+      "babel_source": "const convertedBody = convertNestedRazor(body);",
+      "parentContext": {
+        "functionName": "convertSwitchBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2dbadca2",
+      "type": "TemplateLiteral",
+      "babel_source": "`_ => @\"${convertedBody}\"`",
+      "parentContext": {
+        "functionName": "convertSwitchBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1da55e57",
+      "type": "ReturnStatement",
+      "babel_source": "return `{${expr} switch { ${switchCases.join(', ')} }}`;",
+      "parentContext": {
+        "functionName": "convertSwitchBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cba75233",
+      "type": "TemplateLiteral",
+      "babel_source": "`{${expr} switch { ${switchCases.join(', ')} }}`",
+      "parentContext": {
+        "functionName": "convertSwitchBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/razorMarkdown.cjs"
+  ]
+}

@@ -1,0 +1,603 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractSimpleElementTemplate",
+  "params": [
+    {
+      "name": "jsxElement",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractSimpleElementTemplate(jsxElement, component) {\r\n    const tagName = jsxElement.openingElement.name.name;\r\n    const attributes = jsxElement.openingElement.attributes;\r\n\r\n    // Extract static props only (complex props handled separately)\r\n    const props = {};\r\n    for (const attr of attributes) {\r\n      if (t.isJSXAttribute(attr)) {\r\n        const propName = attr.name.name;\r\n        const propValue = attr.value;\r\n\r\n        if (t.isStringLiteral(propValue)) {\r\n          props[propName] = propValue.value;\r\n        } else if (t.isJSXExpressionContainer(propValue)) {\r\n          // Mark as dynamic (will be re-evaluated)\r\n          const expr = propValue.expression;\r\n          if (t.isIdentifier(expr)) {\r\n            props[propName] = { binding: expr.name };\r\n          } else {\r\n            props[propName] = { expression: true };\r\n          }\r\n        }\r\n      }\r\n    }\r\n\r\n    // Extract children (simplified)\r\n    const children = jsxElement.children\r\n      .filter(child => t.isJSXElement(child) || t.isJSXText(child))\r\n      .map(child => {\r\n        if (t.isJSXElement(child)) {\r\n          return extractSimpleElementTemplate(child, component);\r\n        } else if (t.isJSXText(child)) {\r\n          const text = child.value.trim();\r\n          return text ? { type: 'Text', content: text } : null;\r\n        }\r\n      })\r\n      .filter(Boolean);\r\n\r\n    return {\r\n      type: 'Element',\r\n      tag: tagName,\r\n      props: Object.keys(props).length > 0 ? props : null,\r\n      children: children.length > 0 ? children : null\r\n    };\r\n  }",
+  "body_templates": [
+    {
+      "hash": "ba4ebc27",
+      "type": "VariableDeclaration",
+      "babel_source": "const tagName = jsxElement.openingElement.name.name;",
+      "parentContext": {
+        "functionName": "extractSimpleElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "68b20f04",
+      "type": "VariableDeclaration",
+      "babel_source": "const attributes = jsxElement.openingElement.attributes;",
+      "parentContext": {
+        "functionName": "extractSimpleElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a6ed2909",
+      "type": "VariableDeclaration",
+      "babel_source": "const props = {};",
+      "parentContext": {
+        "functionName": "extractSimpleElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "44136fa3",
+      "type": "ObjectExpression",
+      "babel_source": "{}",
+      "parentContext": {
+        "functionName": "extractSimpleElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0ada5bfd",
+      "type": "ForOfStatement",
+      "babel_source": "for (const attr of attributes) {\r\n      if (t.isJSXAttribute(attr)) {\r\n        const propName = attr.name.name;\r\n        const propValue = attr.value;\r\n\r\n        if (t.isStringLiteral(propValue)) {\r\n          props[propName] = propValue.value;\r\n        } else if (t.isJSXExpressionContainer(propValue)) {\r\n          // Mark as dynamic (will be re-evaluated)\r\n          const expr = propValue.expression;\r\n          if (t.isIdentifier(expr)) {\r\n            props[propName] = { binding: expr.name };\r\n          } else {\r\n            props[propName] = { expression: true };\r\n          }\r\n        }\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "extractSimpleElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "02ca2e7f",
+      "type": "VariableDeclaration",
+      "babel_source": "const attr",
+      "parentContext": {
+        "functionName": "extractSimpleElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "113a0f7e",
+      "type": "IfStatement",
+      "condition": "t.isJSXAttribute(attr)",
+      "babel_source": "if (t.isJSXAttribute(attr)) {\r\n        const propName = attr.name.name;\r\n        const propValue = attr.value;\r\n\r\n        if (t.isStringLiteral(propValue)) {\r\n          props[propName] = propValue.value;\r\n        } else if (t.isJSXExpressionContainer(propValue)) {\r\n          // Mark as dynamic (will be re-evaluated)\r\n          const expr = propValue.expression;\r\n          if (t.isIdentifier(expr)) {\r\n            props[propName] = { binding: expr.name };\r\n          } else {\r\n            props[propName] = { expression: true };\r\n          }\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "extractSimpleElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7468026c",
+      "type": "BabelTypeCheck",
+      "method": "isJSXAttribute",
+      "babel_source": "t.isJSXAttribute(attr)",
+      "parentContext": {
+        "functionName": "extractSimpleElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7ec4be49",
+      "type": "VariableDeclaration",
+      "babel_source": "const propName = attr.name.name;",
+      "parentContext": {
+        "functionName": "extractSimpleElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "36298b97",
+      "type": "VariableDeclaration",
+      "babel_source": "const propValue = attr.value;",
+      "parentContext": {
+        "functionName": "extractSimpleElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "691c407b",
+      "type": "IfStatement",
+      "condition": "t.isStringLiteral(propValue)",
+      "babel_source": "if (t.isStringLiteral(propValue)) {\r\n          props[propName] = propValue.value;\r\n        } else if (t.isJSXExpressionContainer(propValue)) {\r\n          // Mark as dynamic (will be re-evaluated)\r\n          const expr = propValue.expression;\r\n          if (t.isIdentifier(expr)) {\r\n            props[propName] = { binding: expr.name };\r\n          } else {\r\n            props[propName] = { expression: true };\r\n          }\r\n        }",
+      "parentContext": {
+        "functionName": "extractSimpleElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d5e588e0",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(propValue)",
+      "parentContext": {
+        "functionName": "extractSimpleElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "412d7483",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "props[propName] = propValue.value",
+      "parentContext": {
+        "functionName": "extractSimpleElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "12bf8752",
+      "type": "IfStatement",
+      "condition": "t.isJSXExpressionContainer(propValue)",
+      "babel_source": "if (t.isJSXExpressionContainer(propValue)) {\r\n          // Mark as dynamic (will be re-evaluated)\r\n          const expr = propValue.expression;\r\n          if (t.isIdentifier(expr)) {\r\n            props[propName] = { binding: expr.name };\r\n          } else {\r\n            props[propName] = { expression: true };\r\n          }\r\n        }",
+      "parentContext": {
+        "functionName": "extractSimpleElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c1bf261c",
+      "type": "BabelTypeCheck",
+      "method": "isJSXExpressionContainer",
+      "babel_source": "t.isJSXExpressionContainer(propValue)",
+      "parentContext": {
+        "functionName": "extractSimpleElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2a180b1f",
+      "type": "VariableDeclaration",
+      "babel_source": "const expr = propValue.expression;",
+      "parentContext": {
+        "functionName": "extractSimpleElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "61ea0b14",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(expr)",
+      "babel_source": "if (t.isIdentifier(expr)) {\r\n            props[propName] = { binding: expr.name };\r\n          } else {\r\n            props[propName] = { expression: true };\r\n          }",
+      "parentContext": {
+        "functionName": "extractSimpleElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42d26fd4",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(expr)",
+      "parentContext": {
+        "functionName": "extractSimpleElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "558459fa",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "props[propName] = { binding: expr.name }",
+      "parentContext": {
+        "functionName": "extractSimpleElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ef0fafa",
+      "type": "ObjectExpression",
+      "babel_source": "{ binding: expr.name }",
+      "parentContext": {
+        "functionName": "extractSimpleElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "782eab92",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "props[propName] = { expression: true }",
+      "parentContext": {
+        "functionName": "extractSimpleElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "452bd73c",
+      "type": "ObjectExpression",
+      "babel_source": "{ expression: true }",
+      "parentContext": {
+        "functionName": "extractSimpleElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2a0b8c3e",
+      "type": "VariableDeclaration",
+      "babel_source": "const children = jsxElement.children\r\n      .filter(child => t.isJSXElement(child) || t.isJSXText(child))\r\n      .map(child => {\r\n        if (t.isJSXElement(child)) {\r\n          return extractSimpleElementTemplate(child, component);\r\n        } else if (t.isJSXText(child)) {\r\n          const text = child.value.trim();\r\n          return text ? { type: 'Text', content: text } : null;\r\n        }\r\n      })\r\n      .filter(Boolean);",
+      "parentContext": {
+        "functionName": "extractSimpleElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "41793b8b",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "child => t.isJSXElement(child) || t.isJSXText(child)",
+      "parentContext": {
+        "functionName": "extractSimpleElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8598027d",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isJSXElement(child) || t.isJSXText(child)",
+      "parentContext": {
+        "functionName": "extractSimpleElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d44bd174",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(child)",
+      "parentContext": {
+        "functionName": "extractSimpleElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8cc41c4e",
+      "type": "BabelTypeCheck",
+      "method": "isJSXText",
+      "babel_source": "t.isJSXText(child)",
+      "parentContext": {
+        "functionName": "extractSimpleElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4eec7b89",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "child => {\r\n        if (t.isJSXElement(child)) {\r\n          return extractSimpleElementTemplate(child, component);\r\n        } else if (t.isJSXText(child)) {\r\n          const text = child.value.trim();\r\n          return text ? { type: 'Text', content: text } : null;\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "extractSimpleElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "37e6dd40",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(child)",
+      "babel_source": "if (t.isJSXElement(child)) {\r\n          return extractSimpleElementTemplate(child, component);\r\n        } else if (t.isJSXText(child)) {\r\n          const text = child.value.trim();\r\n          return text ? { type: 'Text', content: text } : null;\r\n        }",
+      "parentContext": {
+        "functionName": "extractSimpleElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d44bd174",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(child)",
+      "parentContext": {
+        "functionName": "extractSimpleElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bee3fc7c",
+      "type": "ReturnStatement",
+      "babel_source": "return extractSimpleElementTemplate(child, component);",
+      "parentContext": {
+        "functionName": "extractSimpleElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9ae550c6",
+      "type": "IfStatement",
+      "condition": "t.isJSXText(child)",
+      "babel_source": "if (t.isJSXText(child)) {\r\n          const text = child.value.trim();\r\n          return text ? { type: 'Text', content: text } : null;\r\n        }",
+      "parentContext": {
+        "functionName": "extractSimpleElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8cc41c4e",
+      "type": "BabelTypeCheck",
+      "method": "isJSXText",
+      "babel_source": "t.isJSXText(child)",
+      "parentContext": {
+        "functionName": "extractSimpleElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9fb13957",
+      "type": "VariableDeclaration",
+      "babel_source": "const text = child.value.trim();",
+      "parentContext": {
+        "functionName": "extractSimpleElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cafc00ee",
+      "type": "ReturnStatement",
+      "babel_source": "return text ? { type: 'Text', content: text } : null;",
+      "parentContext": {
+        "functionName": "extractSimpleElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e92cb068",
+      "type": "ConditionalExpression",
+      "babel_source": "text ? { type: 'Text', content: text } : null",
+      "parentContext": {
+        "functionName": "extractSimpleElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d5b99f90",
+      "type": "ObjectExpression",
+      "babel_source": "{ type: 'Text', content: text }",
+      "parentContext": {
+        "functionName": "extractSimpleElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "48a5d0e5",
+      "type": "ReturnStatement",
+      "babel_source": "return {\r\n      type: 'Element',\r\n      tag: tagName,\r\n      props: Object.keys(props).length > 0 ? props : null,\r\n      children: children.length > 0 ? children : null\r\n    };",
+      "parentContext": {
+        "functionName": "extractSimpleElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bdd8a018",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n      type: 'Element',\r\n      tag: tagName,\r\n      props: Object.keys(props).length > 0 ? props : null,\r\n      children: children.length > 0 ? children : null\r\n    }",
+      "parentContext": {
+        "functionName": "extractSimpleElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fc099d79",
+      "type": "ConditionalExpression",
+      "babel_source": "Object.keys(props).length > 0 ? props : null",
+      "parentContext": {
+        "functionName": "extractSimpleElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b8dc4081",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "Object.keys(props).length > 0",
+      "parentContext": {
+        "functionName": "extractSimpleElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c50e380d",
+      "type": "ConditionalExpression",
+      "babel_source": "children.length > 0 ? children : null",
+      "parentContext": {
+        "functionName": "extractSimpleElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0a6f5294",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "children.length > 0",
+      "parentContext": {
+        "functionName": "extractSimpleElementTemplate",
+        "functionParams": [
+          "jsxElement",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/structuralTemplates.cjs"
+  ]
+}

@@ -1,0 +1,319 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractStateBinding",
+  "params": [
+    {
+      "name": "stateAttr",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "componentState",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractStateBinding(stateAttr, componentState) {\r\n  const value = stateAttr.value;\r\n\r\n  if (!t.isJSXExpressionContainer(value)) {\r\n    throw new Error('Plugin \"state\" attribute must be a JSX expression (e.g., state={currentTime})');\r\n  }\r\n\r\n  const expression = value.expression;\r\n\r\n  // Simple identifier: state={currentTime}\r\n  if (t.isIdentifier(expression)) {\r\n    return {\r\n      type: 'identifier',\r\n      name: expression.name,\r\n      binding: expression.name,\r\n      stateType: inferStateType(expression.name, componentState)\r\n    };\r\n  }\r\n\r\n  // Member expression: state={this.state.time}\r\n  if (t.isMemberExpression(expression)) {\r\n    const binding = generateBindingPath(expression);\r\n    return {\r\n      type: 'memberExpression',\r\n      binding,\r\n      expression: expression,\r\n      stateType: inferStateType(binding, componentState)\r\n    };\r\n  }\r\n\r\n  // Object expression: state={{ hours: h, minutes: m }}\r\n  if (t.isObjectExpression(expression)) {\r\n    return {\r\n      type: 'objectExpression',\r\n      binding: '__inline_object__',\r\n      properties: expression.properties,\r\n      expression: expression\r\n    };\r\n  }\r\n\r\n  // Any other expression (will be evaluated at runtime)\r\n  return {\r\n    type: 'complexExpression',\r\n    binding: '__complex__',\r\n    expression: expression\r\n  };\r\n}",
+  "body_templates": [
+    {
+      "hash": "701d4edc",
+      "type": "VariableDeclaration",
+      "babel_source": "const value = stateAttr.value;",
+      "parentContext": {
+        "functionName": "extractStateBinding",
+        "functionParams": [
+          "stateAttr",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1fbfd425",
+      "type": "IfStatement",
+      "condition": "!t.isJSXExpressionContainer(value)",
+      "babel_source": "if (!t.isJSXExpressionContainer(value)) {\r\n    throw new Error('Plugin \"state\" attribute must be a JSX expression (e.g., state={currentTime})');\r\n  }",
+      "parentContext": {
+        "functionName": "extractStateBinding",
+        "functionParams": [
+          "stateAttr",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9cfddb10",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isJSXExpressionContainer(value)",
+      "parentContext": {
+        "functionName": "extractStateBinding",
+        "functionParams": [
+          "stateAttr",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "846bea62",
+      "type": "BabelTypeCheck",
+      "method": "isJSXExpressionContainer",
+      "babel_source": "t.isJSXExpressionContainer(value)",
+      "parentContext": {
+        "functionName": "extractStateBinding",
+        "functionParams": [
+          "stateAttr",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0e47e49a",
+      "type": "ThrowStatement",
+      "babel_source": "throw new Error('Plugin \"state\" attribute must be a JSX expression (e.g., state={currentTime})');",
+      "parentContext": {
+        "functionName": "extractStateBinding",
+        "functionParams": [
+          "stateAttr",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c3bbd8d3",
+      "type": "NewExpression",
+      "babel_source": "new Error('Plugin \"state\" attribute must be a JSX expression (e.g., state={currentTime})')",
+      "parentContext": {
+        "functionName": "extractStateBinding",
+        "functionParams": [
+          "stateAttr",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fc4ed2a3",
+      "type": "VariableDeclaration",
+      "babel_source": "const expression = value.expression;",
+      "parentContext": {
+        "functionName": "extractStateBinding",
+        "functionParams": [
+          "stateAttr",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a390dc19",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(expression)",
+      "babel_source": "if (t.isIdentifier(expression)) {\r\n    return {\r\n      type: 'identifier',\r\n      name: expression.name,\r\n      binding: expression.name,\r\n      stateType: inferStateType(expression.name, componentState)\r\n    };\r\n  }",
+      "parentContext": {
+        "functionName": "extractStateBinding",
+        "functionParams": [
+          "stateAttr",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c0031c49",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(expression)",
+      "parentContext": {
+        "functionName": "extractStateBinding",
+        "functionParams": [
+          "stateAttr",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "937e203a",
+      "type": "ReturnStatement",
+      "babel_source": "return {\r\n      type: 'identifier',\r\n      name: expression.name,\r\n      binding: expression.name,\r\n      stateType: inferStateType(expression.name, componentState)\r\n    };",
+      "parentContext": {
+        "functionName": "extractStateBinding",
+        "functionParams": [
+          "stateAttr",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "72be1cc5",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n      type: 'identifier',\r\n      name: expression.name,\r\n      binding: expression.name,\r\n      stateType: inferStateType(expression.name, componentState)\r\n    }",
+      "parentContext": {
+        "functionName": "extractStateBinding",
+        "functionParams": [
+          "stateAttr",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7df712a3",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(expression)",
+      "babel_source": "if (t.isMemberExpression(expression)) {\r\n    const binding = generateBindingPath(expression);\r\n    return {\r\n      type: 'memberExpression',\r\n      binding,\r\n      expression: expression,\r\n      stateType: inferStateType(binding, componentState)\r\n    };\r\n  }",
+      "parentContext": {
+        "functionName": "extractStateBinding",
+        "functionParams": [
+          "stateAttr",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "66e9df39",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(expression)",
+      "parentContext": {
+        "functionName": "extractStateBinding",
+        "functionParams": [
+          "stateAttr",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2b8dda33",
+      "type": "VariableDeclaration",
+      "babel_source": "const binding = generateBindingPath(expression);",
+      "parentContext": {
+        "functionName": "extractStateBinding",
+        "functionParams": [
+          "stateAttr",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3bcec39e",
+      "type": "ReturnStatement",
+      "babel_source": "return {\r\n      type: 'memberExpression',\r\n      binding,\r\n      expression: expression,\r\n      stateType: inferStateType(binding, componentState)\r\n    };",
+      "parentContext": {
+        "functionName": "extractStateBinding",
+        "functionParams": [
+          "stateAttr",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2503067d",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n      type: 'memberExpression',\r\n      binding,\r\n      expression: expression,\r\n      stateType: inferStateType(binding, componentState)\r\n    }",
+      "parentContext": {
+        "functionName": "extractStateBinding",
+        "functionParams": [
+          "stateAttr",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1cc0873d",
+      "type": "IfStatement",
+      "condition": "t.isObjectExpression(expression)",
+      "babel_source": "if (t.isObjectExpression(expression)) {\r\n    return {\r\n      type: 'objectExpression',\r\n      binding: '__inline_object__',\r\n      properties: expression.properties,\r\n      expression: expression\r\n    };\r\n  }",
+      "parentContext": {
+        "functionName": "extractStateBinding",
+        "functionParams": [
+          "stateAttr",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "661d5fc0",
+      "type": "BabelTypeCheck",
+      "method": "isObjectExpression",
+      "babel_source": "t.isObjectExpression(expression)",
+      "parentContext": {
+        "functionName": "extractStateBinding",
+        "functionParams": [
+          "stateAttr",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7b91a9f7",
+      "type": "ReturnStatement",
+      "babel_source": "return {\r\n      type: 'objectExpression',\r\n      binding: '__inline_object__',\r\n      properties: expression.properties,\r\n      expression: expression\r\n    };",
+      "parentContext": {
+        "functionName": "extractStateBinding",
+        "functionParams": [
+          "stateAttr",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a1951cc8",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n      type: 'objectExpression',\r\n      binding: '__inline_object__',\r\n      properties: expression.properties,\r\n      expression: expression\r\n    }",
+      "parentContext": {
+        "functionName": "extractStateBinding",
+        "functionParams": [
+          "stateAttr",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b82b648a",
+      "type": "ReturnStatement",
+      "babel_source": "return {\r\n    type: 'complexExpression',\r\n    binding: '__complex__',\r\n    expression: expression\r\n  };",
+      "parentContext": {
+        "functionName": "extractStateBinding",
+        "functionParams": [
+          "stateAttr",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f297c224",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    type: 'complexExpression',\r\n    binding: '__complex__',\r\n    expression: expression\r\n  }",
+      "parentContext": {
+        "functionName": "extractStateBinding",
+        "functionParams": [
+          "stateAttr",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/analyzePluginUsage.cjs"
+  ]
+}

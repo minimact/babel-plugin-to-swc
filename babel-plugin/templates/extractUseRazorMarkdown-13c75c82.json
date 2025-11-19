@@ -1,0 +1,364 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractUseRazorMarkdown",
+  "params": [
+    {
+      "name": "path",
+      "inferredType": "&Path",
+      "defaultValue": null
+    },
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractUseRazorMarkdown(path, component) {\r\n  const parent = path.parent;\r\n\r\n  if (!t.isVariableDeclarator(parent)) return;\r\n  if (!t.isArrayPattern(parent.id)) return;\r\n\r\n  const [contentVar, setterVar] = parent.id.elements;\r\n  const initialValue = path.node.arguments[0];\r\n\r\n  // Initialize useRazorMarkdown array if it doesn't exist\r\n  if (!component.useRazorMarkdown) {\r\n    component.useRazorMarkdown = [];\r\n  }\r\n\r\n  // Extract raw markdown string (for Razor conversion)\r\n  let rawMarkdown = '';\r\n  if (t.isStringLiteral(initialValue)) {\r\n    rawMarkdown = initialValue.value;\r\n  } else if (t.isTemplateLiteral(initialValue)) {\r\n    // Template literal - extract raw string\r\n    rawMarkdown = initialValue.quasis.map(q => q.value.raw).join('');\r\n  }\r\n\r\n  component.useRazorMarkdown.push({\r\n    name: contentVar.name,\r\n    setter: setterVar.name,\r\n    initialValue: rawMarkdown, // Store raw markdown for Razor conversion\r\n    hasRazorSyntax: true, // Will be determined by Razor detection later\r\n    referencedVariables: [] // Will be populated by Razor variable extraction\r\n  });\r\n\r\n  // Track as razor-markdown state type\r\n  component.stateTypes.set(contentVar.name, 'razor-markdown');\r\n}",
+  "body_templates": [
+    {
+      "hash": "356fe96c",
+      "type": "VariableDeclaration",
+      "babel_source": "const parent = path.parent;",
+      "parentContext": {
+        "functionName": "extractUseRazorMarkdown",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1cfe78c4",
+      "type": "IfStatement",
+      "condition": "!t.isVariableDeclarator(parent)",
+      "babel_source": "if (!t.isVariableDeclarator(parent)) return;",
+      "parentContext": {
+        "functionName": "extractUseRazorMarkdown",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dc772752",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isVariableDeclarator(parent)",
+      "parentContext": {
+        "functionName": "extractUseRazorMarkdown",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "27a39ea7",
+      "type": "BabelTypeCheck",
+      "method": "isVariableDeclarator",
+      "babel_source": "t.isVariableDeclarator(parent)",
+      "parentContext": {
+        "functionName": "extractUseRazorMarkdown",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8beaabe2",
+      "type": "ReturnStatement",
+      "babel_source": "return;",
+      "parentContext": {
+        "functionName": "extractUseRazorMarkdown",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a5d71bd4",
+      "type": "IfStatement",
+      "condition": "!t.isArrayPattern(parent.id)",
+      "babel_source": "if (!t.isArrayPattern(parent.id)) return;",
+      "parentContext": {
+        "functionName": "extractUseRazorMarkdown",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8b6a1332",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isArrayPattern(parent.id)",
+      "parentContext": {
+        "functionName": "extractUseRazorMarkdown",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ac18b505",
+      "type": "BabelTypeCheck",
+      "method": "isArrayPattern",
+      "babel_source": "t.isArrayPattern(parent.id)",
+      "parentContext": {
+        "functionName": "extractUseRazorMarkdown",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8beaabe2",
+      "type": "ReturnStatement",
+      "babel_source": "return;",
+      "parentContext": {
+        "functionName": "extractUseRazorMarkdown",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "83a37b64",
+      "type": "VariableDeclaration",
+      "babel_source": "const [contentVar, setterVar] = parent.id.elements;",
+      "parentContext": {
+        "functionName": "extractUseRazorMarkdown",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "32d467fb",
+      "type": "VariableDeclaration",
+      "babel_source": "const initialValue = path.node.arguments[0];",
+      "parentContext": {
+        "functionName": "extractUseRazorMarkdown",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8b453561",
+      "type": "IfStatement",
+      "condition": "!component.useRazorMarkdown",
+      "babel_source": "if (!component.useRazorMarkdown) {\r\n    component.useRazorMarkdown = [];\r\n  }",
+      "parentContext": {
+        "functionName": "extractUseRazorMarkdown",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f6819310",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!component.useRazorMarkdown",
+      "parentContext": {
+        "functionName": "extractUseRazorMarkdown",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d44e9051",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "component.useRazorMarkdown = []",
+      "parentContext": {
+        "functionName": "extractUseRazorMarkdown",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractUseRazorMarkdown",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fc4fd3a3",
+      "type": "VariableDeclaration",
+      "babel_source": "let rawMarkdown = '';",
+      "parentContext": {
+        "functionName": "extractUseRazorMarkdown",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6b75bbca",
+      "type": "IfStatement",
+      "condition": "t.isStringLiteral(initialValue)",
+      "babel_source": "if (t.isStringLiteral(initialValue)) {\r\n    rawMarkdown = initialValue.value;\r\n  } else if (t.isTemplateLiteral(initialValue)) {\r\n    // Template literal - extract raw string\r\n    rawMarkdown = initialValue.quasis.map(q => q.value.raw).join('');\r\n  }",
+      "parentContext": {
+        "functionName": "extractUseRazorMarkdown",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "792735b3",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(initialValue)",
+      "parentContext": {
+        "functionName": "extractUseRazorMarkdown",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dae8dfb6",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "rawMarkdown = initialValue.value",
+      "parentContext": {
+        "functionName": "extractUseRazorMarkdown",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e4b6e6af",
+      "type": "IfStatement",
+      "condition": "t.isTemplateLiteral(initialValue)",
+      "babel_source": "if (t.isTemplateLiteral(initialValue)) {\r\n    // Template literal - extract raw string\r\n    rawMarkdown = initialValue.quasis.map(q => q.value.raw).join('');\r\n  }",
+      "parentContext": {
+        "functionName": "extractUseRazorMarkdown",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1f143151",
+      "type": "BabelTypeCheck",
+      "method": "isTemplateLiteral",
+      "babel_source": "t.isTemplateLiteral(initialValue)",
+      "parentContext": {
+        "functionName": "extractUseRazorMarkdown",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "180c68e1",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "rawMarkdown = initialValue.quasis.map(q => q.value.raw).join('')",
+      "parentContext": {
+        "functionName": "extractUseRazorMarkdown",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c1797c4d",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "q => q.value.raw",
+      "parentContext": {
+        "functionName": "extractUseRazorMarkdown",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2d9ebd99",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    name: contentVar.name,\r\n    setter: setterVar.name,\r\n    initialValue: rawMarkdown, // Store raw markdown for Razor conversion\r\n    hasRazorSyntax: true, // Will be determined by Razor detection later\r\n    referencedVariables: [] // Will be populated by Razor variable extraction\r\n  }",
+      "parentContext": {
+        "functionName": "extractUseRazorMarkdown",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractUseRazorMarkdown",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/hooks.cjs"
+  ]
+}

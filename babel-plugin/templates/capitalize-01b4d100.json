@@ -1,0 +1,45 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "capitalize",
+  "params": [
+    {
+      "name": "str",
+      "inferredType": "&str",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function capitalize(str) {\r\n  return str.charAt(0).toUpperCase() + str.slice(1);\r\n}",
+  "body_templates": [
+    {
+      "hash": "7c61cea8",
+      "type": "ReturnStatement",
+      "babel_source": "return str.charAt(0).toUpperCase() + str.slice(1);",
+      "parentContext": {
+        "functionName": "capitalize",
+        "functionParams": [
+          "str"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3810e981",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "str.charAt(0).toUpperCase() + str.slice(1)",
+      "parentContext": {
+        "functionName": "capitalize",
+        "functionParams": [
+          "str"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/hookAnalyzer.cjs",
+    "extractors/hooks.cjs"
+  ]
+}

@@ -1,0 +1,249 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractPluginMetadata",
+  "params": [
+    {
+      "name": "openingElement",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "componentState",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractPluginMetadata(openingElement, componentState) {\r\n  const nameAttr = findAttribute(openingElement.attributes, 'name');\r\n  const stateAttr = findAttribute(openingElement.attributes, 'state');\r\n  const versionAttr = findAttribute(openingElement.attributes, 'version');\r\n\r\n  // Validate required attributes\r\n  if (!nameAttr) {\r\n    throw new Error('Plugin element requires \"name\" attribute');\r\n  }\r\n\r\n  if (!stateAttr) {\r\n    throw new Error('Plugin element requires \"state\" attribute');\r\n  }\r\n\r\n  // Extract plugin name (must be a string literal)\r\n  const pluginName = extractPluginName(nameAttr);\r\n\r\n  // Extract state binding (can be expression or identifier)\r\n  const stateBinding = extractStateBinding(stateAttr, componentState);\r\n\r\n  // Extract optional version\r\n  const version = versionAttr ? extractVersion(versionAttr) : null;\r\n\r\n  return {\r\n    pluginName,\r\n    stateBinding,\r\n    version,\r\n    // Store original JSX for reference\r\n    jsxElement: openingElement\r\n  };\r\n}",
+  "body_templates": [
+    {
+      "hash": "1e2b1e59",
+      "type": "VariableDeclaration",
+      "babel_source": "const nameAttr = findAttribute(openingElement.attributes, 'name');",
+      "parentContext": {
+        "functionName": "extractPluginMetadata",
+        "functionParams": [
+          "openingElement",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8f5d4799",
+      "type": "VariableDeclaration",
+      "babel_source": "const stateAttr = findAttribute(openingElement.attributes, 'state');",
+      "parentContext": {
+        "functionName": "extractPluginMetadata",
+        "functionParams": [
+          "openingElement",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7b4a2d3c",
+      "type": "VariableDeclaration",
+      "babel_source": "const versionAttr = findAttribute(openingElement.attributes, 'version');",
+      "parentContext": {
+        "functionName": "extractPluginMetadata",
+        "functionParams": [
+          "openingElement",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "43119169",
+      "type": "IfStatement",
+      "condition": "!nameAttr",
+      "babel_source": "if (!nameAttr) {\r\n    throw new Error('Plugin element requires \"name\" attribute');\r\n  }",
+      "parentContext": {
+        "functionName": "extractPluginMetadata",
+        "functionParams": [
+          "openingElement",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e7df6a33",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!nameAttr",
+      "parentContext": {
+        "functionName": "extractPluginMetadata",
+        "functionParams": [
+          "openingElement",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e215d19c",
+      "type": "ThrowStatement",
+      "babel_source": "throw new Error('Plugin element requires \"name\" attribute');",
+      "parentContext": {
+        "functionName": "extractPluginMetadata",
+        "functionParams": [
+          "openingElement",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "14633e3d",
+      "type": "NewExpression",
+      "babel_source": "new Error('Plugin element requires \"name\" attribute')",
+      "parentContext": {
+        "functionName": "extractPluginMetadata",
+        "functionParams": [
+          "openingElement",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0aa7c633",
+      "type": "IfStatement",
+      "condition": "!stateAttr",
+      "babel_source": "if (!stateAttr) {\r\n    throw new Error('Plugin element requires \"state\" attribute');\r\n  }",
+      "parentContext": {
+        "functionName": "extractPluginMetadata",
+        "functionParams": [
+          "openingElement",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cd89e539",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!stateAttr",
+      "parentContext": {
+        "functionName": "extractPluginMetadata",
+        "functionParams": [
+          "openingElement",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4b21d80b",
+      "type": "ThrowStatement",
+      "babel_source": "throw new Error('Plugin element requires \"state\" attribute');",
+      "parentContext": {
+        "functionName": "extractPluginMetadata",
+        "functionParams": [
+          "openingElement",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5ef71102",
+      "type": "NewExpression",
+      "babel_source": "new Error('Plugin element requires \"state\" attribute')",
+      "parentContext": {
+        "functionName": "extractPluginMetadata",
+        "functionParams": [
+          "openingElement",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7941a475",
+      "type": "VariableDeclaration",
+      "babel_source": "const pluginName = extractPluginName(nameAttr);",
+      "parentContext": {
+        "functionName": "extractPluginMetadata",
+        "functionParams": [
+          "openingElement",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "814f69d8",
+      "type": "VariableDeclaration",
+      "babel_source": "const stateBinding = extractStateBinding(stateAttr, componentState);",
+      "parentContext": {
+        "functionName": "extractPluginMetadata",
+        "functionParams": [
+          "openingElement",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a17c903f",
+      "type": "VariableDeclaration",
+      "babel_source": "const version = versionAttr ? extractVersion(versionAttr) : null;",
+      "parentContext": {
+        "functionName": "extractPluginMetadata",
+        "functionParams": [
+          "openingElement",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e9cbb50b",
+      "type": "ConditionalExpression",
+      "babel_source": "versionAttr ? extractVersion(versionAttr) : null",
+      "parentContext": {
+        "functionName": "extractPluginMetadata",
+        "functionParams": [
+          "openingElement",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "058af1f4",
+      "type": "ReturnStatement",
+      "babel_source": "return {\r\n    pluginName,\r\n    stateBinding,\r\n    version,\r\n    // Store original JSX for reference\r\n    jsxElement: openingElement\r\n  };",
+      "parentContext": {
+        "functionName": "extractPluginMetadata",
+        "functionParams": [
+          "openingElement",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "685484bc",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    pluginName,\r\n    stateBinding,\r\n    version,\r\n    // Store original JSX for reference\r\n    jsxElement: openingElement\r\n  }",
+      "parentContext": {
+        "functionName": "extractPluginMetadata",
+        "functionParams": [
+          "openingElement",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/analyzePluginUsage.cjs"
+  ]
+}

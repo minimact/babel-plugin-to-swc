@@ -1,0 +1,248 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "getImportedName",
+  "params": [
+    {
+      "name": "importNode",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "isDefault",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "originalName",
+      "inferredType": "&str",
+      "defaultValue": "null"
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function getImportedName(importNode, isDefault, originalName = null) {\r\n  for (const spec of importNode.specifiers) {\r\n    if (isDefault && t.isImportDefaultSpecifier(spec)) {\r\n      return spec.local.name;\r\n    }\r\n    if (!isDefault && t.isImportSpecifier(spec)) {\r\n      // Check if this is the right named import\r\n      const importedName = spec.imported.name;\r\n      if (importedName === originalName) {\r\n        return spec.local.name; // Might be renamed\r\n      }\r\n    }\r\n  }\r\n\r\n  return null;\r\n}",
+  "body_templates": [
+    {
+      "hash": "d7bd1b1d",
+      "type": "ForOfStatement",
+      "babel_source": "for (const spec of importNode.specifiers) {\r\n    if (isDefault && t.isImportDefaultSpecifier(spec)) {\r\n      return spec.local.name;\r\n    }\r\n    if (!isDefault && t.isImportSpecifier(spec)) {\r\n      // Check if this is the right named import\r\n      const importedName = spec.imported.name;\r\n      if (importedName === originalName) {\r\n        return spec.local.name; // Might be renamed\r\n      }\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "getImportedName",
+        "functionParams": [
+          "importNode",
+          "isDefault",
+          "originalName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "011fa8e6",
+      "type": "VariableDeclaration",
+      "babel_source": "const spec",
+      "parentContext": {
+        "functionName": "getImportedName",
+        "functionParams": [
+          "importNode",
+          "isDefault",
+          "originalName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3ddb4d26",
+      "type": "IfStatement",
+      "condition": "isDefault && t.isImportDefaultSpecifier(spec)",
+      "babel_source": "if (isDefault && t.isImportDefaultSpecifier(spec)) {\r\n      return spec.local.name;\r\n    }",
+      "parentContext": {
+        "functionName": "getImportedName",
+        "functionParams": [
+          "importNode",
+          "isDefault",
+          "originalName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5394f77d",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "isDefault && t.isImportDefaultSpecifier(spec)",
+      "parentContext": {
+        "functionName": "getImportedName",
+        "functionParams": [
+          "importNode",
+          "isDefault",
+          "originalName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "84c978b2",
+      "type": "BabelTypeCheck",
+      "method": "isImportDefaultSpecifier",
+      "babel_source": "t.isImportDefaultSpecifier(spec)",
+      "parentContext": {
+        "functionName": "getImportedName",
+        "functionParams": [
+          "importNode",
+          "isDefault",
+          "originalName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42714343",
+      "type": "ReturnStatement",
+      "babel_source": "return spec.local.name;",
+      "parentContext": {
+        "functionName": "getImportedName",
+        "functionParams": [
+          "importNode",
+          "isDefault",
+          "originalName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dc2672b4",
+      "type": "IfStatement",
+      "condition": "!isDefault && t.isImportSpecifier(spec)",
+      "babel_source": "if (!isDefault && t.isImportSpecifier(spec)) {\r\n      // Check if this is the right named import\r\n      const importedName = spec.imported.name;\r\n      if (importedName === originalName) {\r\n        return spec.local.name; // Might be renamed\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "getImportedName",
+        "functionParams": [
+          "importNode",
+          "isDefault",
+          "originalName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4b00827d",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "!isDefault && t.isImportSpecifier(spec)",
+      "parentContext": {
+        "functionName": "getImportedName",
+        "functionParams": [
+          "importNode",
+          "isDefault",
+          "originalName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "20aaa361",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!isDefault",
+      "parentContext": {
+        "functionName": "getImportedName",
+        "functionParams": [
+          "importNode",
+          "isDefault",
+          "originalName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d39ff499",
+      "type": "BabelTypeCheck",
+      "method": "isImportSpecifier",
+      "babel_source": "t.isImportSpecifier(spec)",
+      "parentContext": {
+        "functionName": "getImportedName",
+        "functionParams": [
+          "importNode",
+          "isDefault",
+          "originalName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1ac17e6a",
+      "type": "VariableDeclaration",
+      "babel_source": "const importedName = spec.imported.name;",
+      "parentContext": {
+        "functionName": "getImportedName",
+        "functionParams": [
+          "importNode",
+          "isDefault",
+          "originalName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "04263a67",
+      "type": "IfStatement",
+      "condition": "importedName === originalName",
+      "babel_source": "if (importedName === originalName) {\r\n        return spec.local.name; // Might be renamed\r\n      }",
+      "parentContext": {
+        "functionName": "getImportedName",
+        "functionParams": [
+          "importNode",
+          "isDefault",
+          "originalName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "708a07ae",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "importedName === originalName",
+      "parentContext": {
+        "functionName": "getImportedName",
+        "functionParams": [
+          "importNode",
+          "isDefault",
+          "originalName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42714343",
+      "type": "ReturnStatement",
+      "babel_source": "return spec.local.name;",
+      "parentContext": {
+        "functionName": "getImportedName",
+        "functionParams": [
+          "importNode",
+          "isDefault",
+          "originalName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "getImportedName",
+        "functionParams": [
+          "importNode",
+          "isDefault",
+          "originalName"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/hookImports.cjs"
+  ]
+}

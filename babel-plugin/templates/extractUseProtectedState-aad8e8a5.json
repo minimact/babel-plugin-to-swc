@@ -1,0 +1,443 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractUseProtectedState",
+  "params": [
+    {
+      "name": "path",
+      "inferredType": "&Path",
+      "defaultValue": null
+    },
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractUseProtectedState(path, component) {\r\n  const parent = path.parent;\r\n\r\n  if (!t.isVariableDeclarator(parent)) return;\r\n  if (!t.isArrayPattern(parent.id)) return;\r\n\r\n  const [stateVar, setterVar] = parent.id.elements;\r\n  const initialValue = path.node.arguments[0];\r\n\r\n  // Handle read-only state (no setter): const [value] = useProtectedState(...)\r\n  if (!stateVar) {\r\n    console.log(`[useProtectedState] Skipping invalid destructuring (no state variable)`);\r\n    return;\r\n  }\r\n\r\n  // Check if there's a generic type parameter (e.g., useProtectedState<decimal>(0))\r\n  let explicitType = null;\r\n  if (path.node.typeParameters && path.node.typeParameters.params.length > 0) {\r\n    const typeParam = path.node.typeParameters.params[0];\r\n    explicitType = tsTypeToCSharpType(typeParam);\r\n    console.log(`[useProtectedState] Found explicit type parameter for '${stateVar.name}': ${explicitType}`);\r\n  }\r\n\r\n  const stateInfo = {\r\n    name: stateVar.name,\r\n    setter: setterVar ? setterVar.name : null,\r\n    initialValue: generateCSharpExpression(initialValue),\r\n    type: explicitType || inferType(initialValue),\r\n    isProtected: true  // ← Key flag marking this as protected\r\n  };\r\n\r\n  // Initialize useProtectedState array if it doesn't exist\r\n  if (!component.useProtectedState) {\r\n    component.useProtectedState = [];\r\n  }\r\n\r\n  component.useProtectedState.push(stateInfo);\r\n\r\n  // Track state type (protected is a special kind of server state)\r\n  component.stateTypes.set(stateVar.name, 'protected');\r\n\r\n  console.log(`[useProtectedState] ✅ Extracted protected state: ${stateVar.name} (type: ${stateInfo.type})`);\r\n}",
+  "body_templates": [
+    {
+      "hash": "356fe96c",
+      "type": "VariableDeclaration",
+      "babel_source": "const parent = path.parent;",
+      "parentContext": {
+        "functionName": "extractUseProtectedState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1cfe78c4",
+      "type": "IfStatement",
+      "condition": "!t.isVariableDeclarator(parent)",
+      "babel_source": "if (!t.isVariableDeclarator(parent)) return;",
+      "parentContext": {
+        "functionName": "extractUseProtectedState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dc772752",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isVariableDeclarator(parent)",
+      "parentContext": {
+        "functionName": "extractUseProtectedState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "27a39ea7",
+      "type": "BabelTypeCheck",
+      "method": "isVariableDeclarator",
+      "babel_source": "t.isVariableDeclarator(parent)",
+      "parentContext": {
+        "functionName": "extractUseProtectedState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8beaabe2",
+      "type": "ReturnStatement",
+      "babel_source": "return;",
+      "parentContext": {
+        "functionName": "extractUseProtectedState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a5d71bd4",
+      "type": "IfStatement",
+      "condition": "!t.isArrayPattern(parent.id)",
+      "babel_source": "if (!t.isArrayPattern(parent.id)) return;",
+      "parentContext": {
+        "functionName": "extractUseProtectedState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8b6a1332",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isArrayPattern(parent.id)",
+      "parentContext": {
+        "functionName": "extractUseProtectedState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ac18b505",
+      "type": "BabelTypeCheck",
+      "method": "isArrayPattern",
+      "babel_source": "t.isArrayPattern(parent.id)",
+      "parentContext": {
+        "functionName": "extractUseProtectedState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8beaabe2",
+      "type": "ReturnStatement",
+      "babel_source": "return;",
+      "parentContext": {
+        "functionName": "extractUseProtectedState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bb68605f",
+      "type": "VariableDeclaration",
+      "babel_source": "const [stateVar, setterVar] = parent.id.elements;",
+      "parentContext": {
+        "functionName": "extractUseProtectedState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "32d467fb",
+      "type": "VariableDeclaration",
+      "babel_source": "const initialValue = path.node.arguments[0];",
+      "parentContext": {
+        "functionName": "extractUseProtectedState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3d6f6c58",
+      "type": "IfStatement",
+      "condition": "!stateVar",
+      "babel_source": "if (!stateVar) {\r\n    console.log(`[useProtectedState] Skipping invalid destructuring (no state variable)`);\r\n    return;\r\n  }",
+      "parentContext": {
+        "functionName": "extractUseProtectedState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0947582b",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!stateVar",
+      "parentContext": {
+        "functionName": "extractUseProtectedState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "607ed14f",
+      "type": "TemplateLiteral",
+      "babel_source": "`[useProtectedState] Skipping invalid destructuring (no state variable)`",
+      "parentContext": {
+        "functionName": "extractUseProtectedState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8beaabe2",
+      "type": "ReturnStatement",
+      "babel_source": "return;",
+      "parentContext": {
+        "functionName": "extractUseProtectedState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b254e550",
+      "type": "VariableDeclaration",
+      "babel_source": "let explicitType = null;",
+      "parentContext": {
+        "functionName": "extractUseProtectedState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "eaf703ef",
+      "type": "IfStatement",
+      "condition": "path.node.typeParameters && path.node.typeParameters.params.length > 0",
+      "babel_source": "if (path.node.typeParameters && path.node.typeParameters.params.length > 0) {\r\n    const typeParam = path.node.typeParameters.params[0];\r\n    explicitType = tsTypeToCSharpType(typeParam);\r\n    console.log(`[useProtectedState] Found explicit type parameter for '${stateVar.name}': ${explicitType}`);\r\n  }",
+      "parentContext": {
+        "functionName": "extractUseProtectedState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "883d54ed",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "path.node.typeParameters && path.node.typeParameters.params.length > 0",
+      "parentContext": {
+        "functionName": "extractUseProtectedState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "110a668d",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "path.node.typeParameters.params.length > 0",
+      "parentContext": {
+        "functionName": "extractUseProtectedState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3fb8f745",
+      "type": "VariableDeclaration",
+      "babel_source": "const typeParam = path.node.typeParameters.params[0];",
+      "parentContext": {
+        "functionName": "extractUseProtectedState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e199dc4f",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "explicitType = tsTypeToCSharpType(typeParam)",
+      "parentContext": {
+        "functionName": "extractUseProtectedState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "73de780e",
+      "type": "TemplateLiteral",
+      "babel_source": "`[useProtectedState] Found explicit type parameter for '${stateVar.name}': ${explicitType}`",
+      "parentContext": {
+        "functionName": "extractUseProtectedState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9a66befd",
+      "type": "VariableDeclaration",
+      "babel_source": "const stateInfo = {\r\n    name: stateVar.name,\r\n    setter: setterVar ? setterVar.name : null,\r\n    initialValue: generateCSharpExpression(initialValue),\r\n    type: explicitType || inferType(initialValue),\r\n    isProtected: true  // ← Key flag marking this as protected\r\n  };",
+      "parentContext": {
+        "functionName": "extractUseProtectedState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ed11c225",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    name: stateVar.name,\r\n    setter: setterVar ? setterVar.name : null,\r\n    initialValue: generateCSharpExpression(initialValue),\r\n    type: explicitType || inferType(initialValue),\r\n    isProtected: true  // ← Key flag marking this as protected\r\n  }",
+      "parentContext": {
+        "functionName": "extractUseProtectedState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "93334bfc",
+      "type": "ConditionalExpression",
+      "babel_source": "setterVar ? setterVar.name : null",
+      "parentContext": {
+        "functionName": "extractUseProtectedState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "248bc370",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "explicitType || inferType(initialValue)",
+      "parentContext": {
+        "functionName": "extractUseProtectedState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e5f438d1",
+      "type": "IfStatement",
+      "condition": "!component.useProtectedState",
+      "babel_source": "if (!component.useProtectedState) {\r\n    component.useProtectedState = [];\r\n  }",
+      "parentContext": {
+        "functionName": "extractUseProtectedState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "73dd90ef",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!component.useProtectedState",
+      "parentContext": {
+        "functionName": "extractUseProtectedState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f3db25c0",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "component.useProtectedState = []",
+      "parentContext": {
+        "functionName": "extractUseProtectedState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractUseProtectedState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9416ec31",
+      "type": "TemplateLiteral",
+      "babel_source": "`[useProtectedState] ✅ Extracted protected state: ${stateVar.name} (type: ${stateInfo.type})`",
+      "parentContext": {
+        "functionName": "extractUseProtectedState",
+        "functionParams": [
+          "path",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/hooks.cjs"
+  ]
+}

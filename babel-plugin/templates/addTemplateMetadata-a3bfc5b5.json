@@ -1,0 +1,158 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "addTemplateMetadata",
+  "params": [
+    {
+      "name": "component",
+      "inferredType": "&mut Component",
+      "defaultValue": null
+    },
+    {
+      "name": "templates",
+      "inferredType": "HashMap<String, Template>",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "()",
+  "babel_source": "function addTemplateMetadata(component, templates) {\r\n  component.templates = templates;\r\n\r\n  // Add template bindings to track which state affects which templates\r\n  component.templateBindings = new Map();\r\n\r\n  for (const [path, template] of Object.entries(templates)) {\r\n    for (const binding of template.bindings) {\r\n      if (!component.templateBindings.has(binding)) {\r\n        component.templateBindings.set(binding, []);\r\n      }\r\n      component.templateBindings.get(binding).push(path);\r\n    }\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "d6c378af",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "component.templates = templates",
+      "parentContext": {
+        "functionName": "addTemplateMetadata",
+        "functionParams": [
+          "component",
+          "templates"
+        ]
+      },
+      "rust_translation": "component.templates = templates.clone();"
+    },
+    {
+      "hash": "79514ce6",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "component.templateBindings = new Map()",
+      "parentContext": {
+        "functionName": "addTemplateMetadata",
+        "functionParams": [
+          "component",
+          "templates"
+        ]
+      },
+      "rust_translation": "component.template_bindings = HashMap::new();"
+    },
+    {
+      "hash": "cc227fdc",
+      "type": "NewExpression",
+      "babel_source": "new Map()",
+      "parentContext": {
+        "functionName": "addTemplateMetadata",
+        "functionParams": [
+          "component",
+          "templates"
+        ]
+      },
+      "rust_translation": "HashMap::new()"
+    },
+    {
+      "hash": "424122a7",
+      "type": "ForOfStatement",
+      "babel_source": "for (const [path, template] of Object.entries(templates)) {\r\n    for (const binding of template.bindings) {\r\n      if (!component.templateBindings.has(binding)) {\r\n        component.templateBindings.set(binding, []);\r\n      }\r\n      component.templateBindings.get(binding).push(path);\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "addTemplateMetadata",
+        "functionParams": [
+          "component",
+          "templates"
+        ]
+      },
+      "rust_translation": "for (path, template) in &templates {\n    for binding in &template.bindings {\n        component.template_bindings\n            .entry(binding.clone())\n            .or_insert_with(Vec::new)\n            .push(path.clone());\n    }\n}"
+    },
+    {
+      "hash": "ee73ac21",
+      "type": "VariableDeclaration",
+      "babel_source": "const [path, template]",
+      "parentContext": {
+        "functionName": "addTemplateMetadata",
+        "functionParams": [
+          "component",
+          "templates"
+        ]
+      },
+      "rust_translation": "(path, template)"
+    },
+    {
+      "hash": "e0d2bfa6",
+      "type": "ForOfStatement",
+      "babel_source": "for (const binding of template.bindings) {\r\n      if (!component.templateBindings.has(binding)) {\r\n        component.templateBindings.set(binding, []);\r\n      }\r\n      component.templateBindings.get(binding).push(path);\r\n    }",
+      "parentContext": {
+        "functionName": "addTemplateMetadata",
+        "functionParams": [
+          "component",
+          "templates"
+        ]
+      },
+      "rust_translation": "for binding in &template.bindings {\n    component.template_bindings\n        .entry(binding.clone())\n        .or_insert_with(Vec::new)\n        .push(path.clone());\n}"
+    },
+    {
+      "hash": "8d286714",
+      "type": "VariableDeclaration",
+      "babel_source": "const binding",
+      "parentContext": {
+        "functionName": "addTemplateMetadata",
+        "functionParams": [
+          "component",
+          "templates"
+        ]
+      },
+      "rust_translation": "binding"
+    },
+    {
+      "hash": "c05e3ea3",
+      "type": "IfStatement",
+      "condition": "!component.templateBindings.has(binding)",
+      "babel_source": "if (!component.templateBindings.has(binding)) {\r\n        component.templateBindings.set(binding, []);\r\n      }",
+      "parentContext": {
+        "functionName": "addTemplateMetadata",
+        "functionParams": [
+          "component",
+          "templates"
+        ]
+      },
+      "rust_translation": "// Handled by entry().or_insert_with() pattern"
+    },
+    {
+      "hash": "454a8cb0",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!component.templateBindings.has(binding)",
+      "parentContext": {
+        "functionName": "addTemplateMetadata",
+        "functionParams": [
+          "component",
+          "templates"
+        ]
+      },
+      "rust_translation": "!component.template_bindings.contains_key(binding)"
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "addTemplateMetadata",
+        "functionParams": [
+          "component",
+          "templates"
+        ]
+      },
+      "rust_translation": "Vec::new()"
+    }
+  ],
+  "rust_translation": "fn add_template_metadata(component: &mut Component, templates: HashMap<String, Template>) {\n    component.templates = templates.clone();\n\n    // Add template bindings to track which state affects which templates\n    component.template_bindings = HashMap::new();\n\n    for (path, template) in &templates {\n        for binding in &template.bindings {\n            component.template_bindings\n                .entry(binding.clone())\n                .or_insert_with(Vec::new)\n                .push(path.clone());\n        }\n    }\n}",
+  "found_in": [
+    "extractors/templates.cjs"
+  ]
+}

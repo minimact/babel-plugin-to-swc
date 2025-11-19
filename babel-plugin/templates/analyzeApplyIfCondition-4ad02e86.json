@@ -1,0 +1,115 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "analyzeApplyIfCondition",
+  "params": [
+    {
+      "name": "arrowFn",
+      "inferredType": "&ArrowExpr",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "ApplyIfResult",
+  "babel_source": "function analyzeApplyIfCondition(arrowFn) {\r\n  const param = arrowFn.params[0]; // 'ctx'\r\n  const paramName = param ? param.name : 'ctx';\r\n  const body = arrowFn.body;\r\n\r\n  const csharpCondition = generateCSharpFromExpression(body, paramName);\r\n\r\n  return {\r\n    csharpCode: `${paramName} => ${csharpCondition}`,\r\n    type: 'arrow'\r\n  };\r\n}",
+  "body_templates": [
+    {
+      "hash": "d8450e56",
+      "type": "VariableDeclaration",
+      "babel_source": "const param = arrowFn.params[0];",
+      "parentContext": {
+        "functionName": "analyzeApplyIfCondition",
+        "functionParams": [
+          "arrowFn"
+        ]
+      },
+      "rust_translation": "let param = arrow_fn.params.get(0);"
+    },
+    {
+      "hash": "27668f4a",
+      "type": "VariableDeclaration",
+      "babel_source": "const paramName = param ? param.name : 'ctx';",
+      "parentContext": {
+        "functionName": "analyzeApplyIfCondition",
+        "functionParams": [
+          "arrowFn"
+        ]
+      },
+      "rust_translation": "let param_name = param\n    .and_then(|p| match p {\n        Pat::Ident(ident) => Some(ident.id.sym.to_string()),\n        _ => None,\n    })\n    .unwrap_or_else(|| \"ctx\".to_string());"
+    },
+    {
+      "hash": "5f8ac017",
+      "type": "ConditionalExpression",
+      "babel_source": "param ? param.name : 'ctx'",
+      "parentContext": {
+        "functionName": "analyzeApplyIfCondition",
+        "functionParams": [
+          "arrowFn"
+        ]
+      },
+      "rust_translation": "param.map(|p| /* get name */).unwrap_or(\"ctx\".to_string())"
+    },
+    {
+      "hash": "eb16d2c0",
+      "type": "VariableDeclaration",
+      "babel_source": "const body = arrowFn.body;",
+      "parentContext": {
+        "functionName": "analyzeApplyIfCondition",
+        "functionParams": [
+          "arrowFn"
+        ]
+      },
+      "rust_translation": "let body = &arrow_fn.body;"
+    },
+    {
+      "hash": "2a4299f6",
+      "type": "VariableDeclaration",
+      "babel_source": "const csharpCondition = generateCSharpFromExpression(body, paramName);",
+      "parentContext": {
+        "functionName": "analyzeApplyIfCondition",
+        "functionParams": [
+          "arrowFn"
+        ]
+      },
+      "rust_translation": "let csharp_condition = match body {\n    BlockStmtOrExpr::Expr(expr) => self.generate_csharp_from_expression(expr, &param_name),\n    BlockStmtOrExpr::BlockStmt(block) => self.generate_csharp_from_block(block, &param_name),\n};"
+    },
+    {
+      "hash": "7c63a228",
+      "type": "ReturnStatement",
+      "babel_source": "return {\r\n    csharpCode: `${paramName} => ${csharpCondition}`,\r\n    type: 'arrow'\r\n  };",
+      "parentContext": {
+        "functionName": "analyzeApplyIfCondition",
+        "functionParams": [
+          "arrowFn"
+        ]
+      },
+      "rust_translation": "ApplyIfResult {\n    csharp_code: format!(\"{} => {}\", param_name, csharp_condition),\n    result_type: \"arrow\".to_string(),\n}"
+    },
+    {
+      "hash": "c1ad3017",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    csharpCode: `${paramName} => ${csharpCondition}`,\r\n    type: 'arrow'\r\n  }",
+      "parentContext": {
+        "functionName": "analyzeApplyIfCondition",
+        "functionParams": [
+          "arrowFn"
+        ]
+      },
+      "rust_translation": "ApplyIfResult {\n    csharp_code: format!(\"{} => {}\", param_name, csharp_condition),\n    result_type: \"arrow\".to_string(),\n}"
+    },
+    {
+      "hash": "ef39a76d",
+      "type": "TemplateLiteral",
+      "babel_source": "`${paramName} => ${csharpCondition}`",
+      "parentContext": {
+        "functionName": "analyzeApplyIfCondition",
+        "functionParams": [
+          "arrowFn"
+        ]
+      },
+      "rust_translation": "format!(\"{} => {}\", param_name, csharp_condition)"
+    }
+  ],
+  "rust_translation": "fn analyze_apply_if_condition(&self, arrow_fn: &ArrowExpr) -> ApplyIfResult {\n    // Get first param name, default to 'ctx'\n    let param = arrow_fn.params.get(0);\n    let param_name = param\n        .and_then(|p| match p {\n            Pat::Ident(ident) => Some(ident.id.sym.to_string()),\n            _ => None,\n        })\n        .unwrap_or_else(|| \"ctx\".to_string());\n    \n    // Generate C# from body\n    let csharp_condition = match &*arrow_fn.body {\n        BlockStmtOrExpr::Expr(expr) => self.generate_csharp_from_expression(expr, &param_name),\n        BlockStmtOrExpr::BlockStmt(block) => self.generate_csharp_from_block(block, &param_name),\n    };\n    \n    ApplyIfResult {\n        csharp_code: format!(\"{} => {}\", param_name, csharp_condition),\n        result_type: \"arrow\".to_string(),\n    }\n}",
+  "found_in": [
+    "extractors/useStateX.cjs"
+  ]
+}

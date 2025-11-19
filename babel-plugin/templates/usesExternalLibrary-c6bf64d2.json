@@ -1,0 +1,836 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "usesExternalLibrary",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "externalImports",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "visited",
+      "inferredType": "unknown",
+      "defaultValue": "new WeakSet()"
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function usesExternalLibrary(node, externalImports, visited = new WeakSet()) {\r\n  if (!node || visited.has(node)) return false;\r\n  visited.add(node);\r\n\r\n  // Direct identifier match\r\n  if (t.isIdentifier(node) && externalImports.has(node.name)) {\r\n    return true;\r\n  }\r\n\r\n  // Member expression (_.sortBy, moment().format)\r\n  if (t.isMemberExpression(node)) {\r\n    return usesExternalLibrary(node.object, externalImports, visited);\r\n  }\r\n\r\n  // Call expression (_.sortBy(...), moment(...))\r\n  if (t.isCallExpression(node)) {\r\n    return usesExternalLibrary(node.callee, externalImports, visited) ||\r\n           node.arguments.some(arg => usesExternalLibrary(arg, externalImports, visited));\r\n  }\r\n\r\n  // Binary/Logical expressions\r\n  if (t.isBinaryExpression(node) || t.isLogicalExpression(node)) {\r\n    return usesExternalLibrary(node.left, externalImports, visited) ||\r\n           usesExternalLibrary(node.right, externalImports, visited);\r\n  }\r\n\r\n  // Conditional expression\r\n  if (t.isConditionalExpression(node)) {\r\n    return usesExternalLibrary(node.test, externalImports, visited) ||\r\n           usesExternalLibrary(node.consequent, externalImports, visited) ||\r\n           usesExternalLibrary(node.alternate, externalImports, visited);\r\n  }\r\n\r\n  // Array expressions\r\n  if (t.isArrayExpression(node)) {\r\n    return node.elements.some(el => el && usesExternalLibrary(el, externalImports, visited));\r\n  }\r\n\r\n  // Object expressions\r\n  if (t.isObjectExpression(node)) {\r\n    return node.properties.some(prop =>\r\n      t.isObjectProperty(prop) && usesExternalLibrary(prop.value, externalImports, visited)\r\n    );\r\n  }\r\n\r\n  // Arrow functions and function expressions\r\n  if (t.isArrowFunctionExpression(node) || t.isFunctionExpression(node)) {\r\n    return usesExternalLibrary(node.body, externalImports, visited);\r\n  }\r\n\r\n  // Block statement\r\n  if (t.isBlockStatement(node)) {\r\n    return node.body.some(stmt => usesExternalLibrary(stmt, externalImports, visited));\r\n  }\r\n\r\n  // Return statement\r\n  if (t.isReturnStatement(node)) {\r\n    return usesExternalLibrary(node.argument, externalImports, visited);\r\n  }\r\n\r\n  // Expression statement\r\n  if (t.isExpressionStatement(node)) {\r\n    return usesExternalLibrary(node.expression, externalImports, visited);\r\n  }\r\n\r\n  return false;\r\n}",
+  "body_templates": [
+    {
+      "hash": "f9211b6d",
+      "type": "NewExpression",
+      "babel_source": "new WeakSet()",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5563420b",
+      "type": "IfStatement",
+      "condition": "!node || visited.has(node)",
+      "babel_source": "if (!node || visited.has(node)) return false;",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c8be031f",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "!node || visited.has(node)",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e10d47ee",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!node",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dabbdf16",
+      "type": "ReturnStatement",
+      "babel_source": "return false;",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "10bc0156",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(node) && externalImports.has(node.name)",
+      "babel_source": "if (t.isIdentifier(node) && externalImports.has(node.name)) {\r\n    return true;\r\n  }",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cc5970b5",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isIdentifier(node) && externalImports.has(node.name)",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "458e4c81",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node)",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "10e0fa08",
+      "type": "ReturnStatement",
+      "babel_source": "return true;",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e4399348",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(node)",
+      "babel_source": "if (t.isMemberExpression(node)) {\r\n    return usesExternalLibrary(node.object, externalImports, visited);\r\n  }",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e4025d71",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(node)",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d81e4897",
+      "type": "ReturnStatement",
+      "babel_source": "return usesExternalLibrary(node.object, externalImports, visited);",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4fc38cfb",
+      "type": "IfStatement",
+      "condition": "t.isCallExpression(node)",
+      "babel_source": "if (t.isCallExpression(node)) {\r\n    return usesExternalLibrary(node.callee, externalImports, visited) ||\r\n           node.arguments.some(arg => usesExternalLibrary(arg, externalImports, visited));\r\n  }",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1088dc62",
+      "type": "BabelTypeCheck",
+      "method": "isCallExpression",
+      "babel_source": "t.isCallExpression(node)",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "954de443",
+      "type": "ReturnStatement",
+      "babel_source": "return usesExternalLibrary(node.callee, externalImports, visited) ||\r\n           node.arguments.some(arg => usesExternalLibrary(arg, externalImports, visited));",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "851b153c",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "usesExternalLibrary(node.callee, externalImports, visited) ||\r\n           node.arguments.some(arg => usesExternalLibrary(arg, externalImports, visited))",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6e241fcc",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "arg => usesExternalLibrary(arg, externalImports, visited)",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f041039f",
+      "type": "IfStatement",
+      "condition": "t.isBinaryExpression(node) || t.isLogicalExpression(node)",
+      "babel_source": "if (t.isBinaryExpression(node) || t.isLogicalExpression(node)) {\r\n    return usesExternalLibrary(node.left, externalImports, visited) ||\r\n           usesExternalLibrary(node.right, externalImports, visited);\r\n  }",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "505fe14e",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isBinaryExpression(node) || t.isLogicalExpression(node)",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ae0955e9",
+      "type": "BabelTypeCheck",
+      "method": "isBinaryExpression",
+      "babel_source": "t.isBinaryExpression(node)",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "00fb4fd3",
+      "type": "BabelTypeCheck",
+      "method": "isLogicalExpression",
+      "babel_source": "t.isLogicalExpression(node)",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7caafaab",
+      "type": "ReturnStatement",
+      "babel_source": "return usesExternalLibrary(node.left, externalImports, visited) ||\r\n           usesExternalLibrary(node.right, externalImports, visited);",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "525f9c17",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "usesExternalLibrary(node.left, externalImports, visited) ||\r\n           usesExternalLibrary(node.right, externalImports, visited)",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1683cf2e",
+      "type": "IfStatement",
+      "condition": "t.isConditionalExpression(node)",
+      "babel_source": "if (t.isConditionalExpression(node)) {\r\n    return usesExternalLibrary(node.test, externalImports, visited) ||\r\n           usesExternalLibrary(node.consequent, externalImports, visited) ||\r\n           usesExternalLibrary(node.alternate, externalImports, visited);\r\n  }",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1459577d",
+      "type": "BabelTypeCheck",
+      "method": "isConditionalExpression",
+      "babel_source": "t.isConditionalExpression(node)",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b7de0b19",
+      "type": "ReturnStatement",
+      "babel_source": "return usesExternalLibrary(node.test, externalImports, visited) ||\r\n           usesExternalLibrary(node.consequent, externalImports, visited) ||\r\n           usesExternalLibrary(node.alternate, externalImports, visited);",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "87378f1b",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "usesExternalLibrary(node.test, externalImports, visited) ||\r\n           usesExternalLibrary(node.consequent, externalImports, visited) ||\r\n           usesExternalLibrary(node.alternate, externalImports, visited)",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1bca3e2c",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "usesExternalLibrary(node.test, externalImports, visited) ||\r\n           usesExternalLibrary(node.consequent, externalImports, visited)",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7a28363e",
+      "type": "IfStatement",
+      "condition": "t.isArrayExpression(node)",
+      "babel_source": "if (t.isArrayExpression(node)) {\r\n    return node.elements.some(el => el && usesExternalLibrary(el, externalImports, visited));\r\n  }",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "df02b329",
+      "type": "BabelTypeCheck",
+      "method": "isArrayExpression",
+      "babel_source": "t.isArrayExpression(node)",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6cc586bf",
+      "type": "ReturnStatement",
+      "babel_source": "return node.elements.some(el => el && usesExternalLibrary(el, externalImports, visited));",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ffb67760",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "el => el && usesExternalLibrary(el, externalImports, visited)",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ff92f06f",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "el && usesExternalLibrary(el, externalImports, visited)",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6601d7fd",
+      "type": "IfStatement",
+      "condition": "t.isObjectExpression(node)",
+      "babel_source": "if (t.isObjectExpression(node)) {\r\n    return node.properties.some(prop =>\r\n      t.isObjectProperty(prop) && usesExternalLibrary(prop.value, externalImports, visited)\r\n    );\r\n  }",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "63339805",
+      "type": "BabelTypeCheck",
+      "method": "isObjectExpression",
+      "babel_source": "t.isObjectExpression(node)",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5e4da728",
+      "type": "ReturnStatement",
+      "babel_source": "return node.properties.some(prop =>\r\n      t.isObjectProperty(prop) && usesExternalLibrary(prop.value, externalImports, visited)\r\n    );",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "847d0f1a",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "prop =>\r\n      t.isObjectProperty(prop) && usesExternalLibrary(prop.value, externalImports, visited)",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b1ebdafe",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isObjectProperty(prop) && usesExternalLibrary(prop.value, externalImports, visited)",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d8cb3d9e",
+      "type": "BabelTypeCheck",
+      "method": "isObjectProperty",
+      "babel_source": "t.isObjectProperty(prop)",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f5a14dfb",
+      "type": "IfStatement",
+      "condition": "t.isArrowFunctionExpression(node) || t.isFunctionExpression(node)",
+      "babel_source": "if (t.isArrowFunctionExpression(node) || t.isFunctionExpression(node)) {\r\n    return usesExternalLibrary(node.body, externalImports, visited);\r\n  }",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0909c72d",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isArrowFunctionExpression(node) || t.isFunctionExpression(node)",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4d2a5749",
+      "type": "BabelTypeCheck",
+      "method": "isArrowFunctionExpression",
+      "babel_source": "t.isArrowFunctionExpression(node)",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "630f2645",
+      "type": "BabelTypeCheck",
+      "method": "isFunctionExpression",
+      "babel_source": "t.isFunctionExpression(node)",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2fbf2d50",
+      "type": "ReturnStatement",
+      "babel_source": "return usesExternalLibrary(node.body, externalImports, visited);",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1eecdddb",
+      "type": "IfStatement",
+      "condition": "t.isBlockStatement(node)",
+      "babel_source": "if (t.isBlockStatement(node)) {\r\n    return node.body.some(stmt => usesExternalLibrary(stmt, externalImports, visited));\r\n  }",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c0ed7533",
+      "type": "BabelTypeCheck",
+      "method": "isBlockStatement",
+      "babel_source": "t.isBlockStatement(node)",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "28d7d931",
+      "type": "ReturnStatement",
+      "babel_source": "return node.body.some(stmt => usesExternalLibrary(stmt, externalImports, visited));",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9ff1629b",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "stmt => usesExternalLibrary(stmt, externalImports, visited)",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e5b41f29",
+      "type": "IfStatement",
+      "condition": "t.isReturnStatement(node)",
+      "babel_source": "if (t.isReturnStatement(node)) {\r\n    return usesExternalLibrary(node.argument, externalImports, visited);\r\n  }",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "515bcc68",
+      "type": "BabelTypeCheck",
+      "method": "isReturnStatement",
+      "babel_source": "t.isReturnStatement(node)",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "114fee3e",
+      "type": "ReturnStatement",
+      "babel_source": "return usesExternalLibrary(node.argument, externalImports, visited);",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a09505cb",
+      "type": "IfStatement",
+      "condition": "t.isExpressionStatement(node)",
+      "babel_source": "if (t.isExpressionStatement(node)) {\r\n    return usesExternalLibrary(node.expression, externalImports, visited);\r\n  }",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "68148a6d",
+      "type": "BabelTypeCheck",
+      "method": "isExpressionStatement",
+      "babel_source": "t.isExpressionStatement(node)",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d7da5e11",
+      "type": "ReturnStatement",
+      "babel_source": "return usesExternalLibrary(node.expression, externalImports, visited);",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dabbdf16",
+      "type": "ReturnStatement",
+      "babel_source": "return false;",
+      "parentContext": {
+        "functionName": "usesExternalLibrary",
+        "functionParams": [
+          "node",
+          "externalImports",
+          "visited"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/localVariables.cjs"
+  ]
+}

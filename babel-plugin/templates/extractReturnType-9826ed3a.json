@@ -1,0 +1,197 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractReturnType",
+  "params": [
+    {
+      "name": "asyncFunction",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractReturnType(asyncFunction) {\r\n  // Check for explicit return type annotation\r\n  if (asyncFunction.returnType) {\r\n    const returnType = asyncFunction.returnType.typeAnnotation;\r\n\r\n    // Promise<T> → T\r\n    if (t.isTSTypeReference(returnType) &&\r\n        t.isIdentifier(returnType.typeName) &&\r\n        returnType.typeName.name === 'Promise') {\r\n      if (returnType.typeParameters && returnType.typeParameters.params.length > 0) {\r\n        return extractTypeAnnotation(returnType.typeParameters.params[0]);\r\n      }\r\n    }\r\n\r\n    return extractTypeAnnotation(returnType);\r\n  }\r\n\r\n  // Try to infer from return statements\r\n  // For now, default to object\r\n  return 'object';\r\n}",
+  "body_templates": [
+    {
+      "hash": "28337bd6",
+      "type": "IfStatement",
+      "condition": "asyncFunction.returnType",
+      "babel_source": "if (asyncFunction.returnType) {\r\n    const returnType = asyncFunction.returnType.typeAnnotation;\r\n\r\n    // Promise<T> → T\r\n    if (t.isTSTypeReference(returnType) &&\r\n        t.isIdentifier(returnType.typeName) &&\r\n        returnType.typeName.name === 'Promise') {\r\n      if (returnType.typeParameters && returnType.typeParameters.params.length > 0) {\r\n        return extractTypeAnnotation(returnType.typeParameters.params[0]);\r\n      }\r\n    }\r\n\r\n    return extractTypeAnnotation(returnType);\r\n  }",
+      "parentContext": {
+        "functionName": "extractReturnType",
+        "functionParams": [
+          "asyncFunction"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2dad0547",
+      "type": "VariableDeclaration",
+      "babel_source": "const returnType = asyncFunction.returnType.typeAnnotation;",
+      "parentContext": {
+        "functionName": "extractReturnType",
+        "functionParams": [
+          "asyncFunction"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "88f20cff",
+      "type": "IfStatement",
+      "condition": "t.isTSTypeReference(returnType) &&\r\n        t.isIdentifier(returnType.typeName) &&\r\n        returnType.typeName.name === 'Promise'",
+      "babel_source": "if (t.isTSTypeReference(returnType) &&\r\n        t.isIdentifier(returnType.typeName) &&\r\n        returnType.typeName.name === 'Promise') {\r\n      if (returnType.typeParameters && returnType.typeParameters.params.length > 0) {\r\n        return extractTypeAnnotation(returnType.typeParameters.params[0]);\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "extractReturnType",
+        "functionParams": [
+          "asyncFunction"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dcf2aff0",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isTSTypeReference(returnType) &&\r\n        t.isIdentifier(returnType.typeName) &&\r\n        returnType.typeName.name === 'Promise'",
+      "parentContext": {
+        "functionName": "extractReturnType",
+        "functionParams": [
+          "asyncFunction"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9051b4ca",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isTSTypeReference(returnType) &&\r\n        t.isIdentifier(returnType.typeName)",
+      "parentContext": {
+        "functionName": "extractReturnType",
+        "functionParams": [
+          "asyncFunction"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "80085afe",
+      "type": "BabelTypeCheck",
+      "method": "isTSTypeReference",
+      "babel_source": "t.isTSTypeReference(returnType)",
+      "parentContext": {
+        "functionName": "extractReturnType",
+        "functionParams": [
+          "asyncFunction"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c7eae125",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(returnType.typeName)",
+      "parentContext": {
+        "functionName": "extractReturnType",
+        "functionParams": [
+          "asyncFunction"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "46797031",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "returnType.typeName.name === 'Promise'",
+      "parentContext": {
+        "functionName": "extractReturnType",
+        "functionParams": [
+          "asyncFunction"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "76b03793",
+      "type": "IfStatement",
+      "condition": "returnType.typeParameters && returnType.typeParameters.params.length > 0",
+      "babel_source": "if (returnType.typeParameters && returnType.typeParameters.params.length > 0) {\r\n        return extractTypeAnnotation(returnType.typeParameters.params[0]);\r\n      }",
+      "parentContext": {
+        "functionName": "extractReturnType",
+        "functionParams": [
+          "asyncFunction"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6386e984",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "returnType.typeParameters && returnType.typeParameters.params.length > 0",
+      "parentContext": {
+        "functionName": "extractReturnType",
+        "functionParams": [
+          "asyncFunction"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "54c0e6ca",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "returnType.typeParameters.params.length > 0",
+      "parentContext": {
+        "functionName": "extractReturnType",
+        "functionParams": [
+          "asyncFunction"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bba3b832",
+      "type": "ReturnStatement",
+      "babel_source": "return extractTypeAnnotation(returnType.typeParameters.params[0]);",
+      "parentContext": {
+        "functionName": "extractReturnType",
+        "functionParams": [
+          "asyncFunction"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2b20ecb8",
+      "type": "ReturnStatement",
+      "babel_source": "return extractTypeAnnotation(returnType);",
+      "parentContext": {
+        "functionName": "extractReturnType",
+        "functionParams": [
+          "asyncFunction"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1827bbd0",
+      "type": "ReturnStatement",
+      "babel_source": "return 'object';",
+      "parentContext": {
+        "functionName": "extractReturnType",
+        "functionParams": [
+          "asyncFunction"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/hooks.cjs"
+  ]
+}

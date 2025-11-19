@@ -1,0 +1,201 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractSingleKeyframe",
+  "params": [
+    {
+      "name": "callExpr",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    },
+    {
+      "name": "timeline",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractSingleKeyframe(callExpr, timeline) {\r\n  const args = callExpr.arguments;\r\n\r\n  if (args.length >= 2) {\r\n    const timeArg = args[0];\r\n    const stateArg = args[1];\r\n\r\n    if (t.isNumericLiteral(timeArg) && t.isObjectExpression(stateArg)) {\r\n      const keyframe = parseKeyframeObject(stateArg);\r\n      if (keyframe) {\r\n        keyframe.time = timeArg.value;\r\n        timeline.keyframes.push(keyframe);\r\n        console.log(`[Timeline] Keyframe at ${keyframe.time}ms with state:`, Object.keys(keyframe.state).join(', '));\r\n      }\r\n    }\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "197b5cd7",
+      "type": "VariableDeclaration",
+      "babel_source": "const args = callExpr.arguments;",
+      "parentContext": {
+        "functionName": "extractSingleKeyframe",
+        "functionParams": [
+          "callExpr",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9ba84fbd",
+      "type": "IfStatement",
+      "condition": "args.length >= 2",
+      "babel_source": "if (args.length >= 2) {\r\n    const timeArg = args[0];\r\n    const stateArg = args[1];\r\n\r\n    if (t.isNumericLiteral(timeArg) && t.isObjectExpression(stateArg)) {\r\n      const keyframe = parseKeyframeObject(stateArg);\r\n      if (keyframe) {\r\n        keyframe.time = timeArg.value;\r\n        timeline.keyframes.push(keyframe);\r\n        console.log(`[Timeline] Keyframe at ${keyframe.time}ms with state:`, Object.keys(keyframe.state).join(', '));\r\n      }\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "extractSingleKeyframe",
+        "functionParams": [
+          "callExpr",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fe51b60b",
+      "type": "BinaryExpression",
+      "operator": ">=",
+      "babel_source": "args.length >= 2",
+      "parentContext": {
+        "functionName": "extractSingleKeyframe",
+        "functionParams": [
+          "callExpr",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "de9c6082",
+      "type": "VariableDeclaration",
+      "babel_source": "const timeArg = args[0];",
+      "parentContext": {
+        "functionName": "extractSingleKeyframe",
+        "functionParams": [
+          "callExpr",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bab95921",
+      "type": "VariableDeclaration",
+      "babel_source": "const stateArg = args[1];",
+      "parentContext": {
+        "functionName": "extractSingleKeyframe",
+        "functionParams": [
+          "callExpr",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "616179dd",
+      "type": "IfStatement",
+      "condition": "t.isNumericLiteral(timeArg) && t.isObjectExpression(stateArg)",
+      "babel_source": "if (t.isNumericLiteral(timeArg) && t.isObjectExpression(stateArg)) {\r\n      const keyframe = parseKeyframeObject(stateArg);\r\n      if (keyframe) {\r\n        keyframe.time = timeArg.value;\r\n        timeline.keyframes.push(keyframe);\r\n        console.log(`[Timeline] Keyframe at ${keyframe.time}ms with state:`, Object.keys(keyframe.state).join(', '));\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "extractSingleKeyframe",
+        "functionParams": [
+          "callExpr",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab970722",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isNumericLiteral(timeArg) && t.isObjectExpression(stateArg)",
+      "parentContext": {
+        "functionName": "extractSingleKeyframe",
+        "functionParams": [
+          "callExpr",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8402ca7c",
+      "type": "BabelTypeCheck",
+      "method": "isNumericLiteral",
+      "babel_source": "t.isNumericLiteral(timeArg)",
+      "parentContext": {
+        "functionName": "extractSingleKeyframe",
+        "functionParams": [
+          "callExpr",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c2e5c044",
+      "type": "BabelTypeCheck",
+      "method": "isObjectExpression",
+      "babel_source": "t.isObjectExpression(stateArg)",
+      "parentContext": {
+        "functionName": "extractSingleKeyframe",
+        "functionParams": [
+          "callExpr",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ff26a79a",
+      "type": "VariableDeclaration",
+      "babel_source": "const keyframe = parseKeyframeObject(stateArg);",
+      "parentContext": {
+        "functionName": "extractSingleKeyframe",
+        "functionParams": [
+          "callExpr",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a56843a1",
+      "type": "IfStatement",
+      "condition": "keyframe",
+      "babel_source": "if (keyframe) {\r\n        keyframe.time = timeArg.value;\r\n        timeline.keyframes.push(keyframe);\r\n        console.log(`[Timeline] Keyframe at ${keyframe.time}ms with state:`, Object.keys(keyframe.state).join(', '));\r\n      }",
+      "parentContext": {
+        "functionName": "extractSingleKeyframe",
+        "functionParams": [
+          "callExpr",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "80e7c477",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "keyframe.time = timeArg.value",
+      "parentContext": {
+        "functionName": "extractSingleKeyframe",
+        "functionParams": [
+          "callExpr",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c7be1a6c",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Timeline] Keyframe at ${keyframe.time}ms with state:`",
+      "parentContext": {
+        "functionName": "extractSingleKeyframe",
+        "functionParams": [
+          "callExpr",
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/timelineAnalyzer.cjs"
+  ]
+}

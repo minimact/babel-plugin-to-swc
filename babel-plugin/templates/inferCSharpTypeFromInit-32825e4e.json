@@ -1,0 +1,647 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "inferCSharpTypeFromInit",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "&'static str",
+  "babel_source": "function inferCSharpTypeFromInit(node) {\r\n  if (!node) return 'dynamic';\r\n\r\n  // Array types\r\n  if (t.isArrayExpression(node)) {\r\n    return 'List<dynamic>';\r\n  }\r\n\r\n  // Call expressions - try to infer from method name\r\n  if (t.isCallExpression(node)) {\r\n    const callee = node.callee;\r\n\r\n    if (t.isMemberExpression(callee) && t.isIdentifier(callee.property)) {\r\n      const method = callee.property.name;\r\n\r\n      // Common array methods return arrays\r\n      if (['map', 'filter', 'sort', 'sortBy', 'orderBy', 'slice', 'concat'].includes(method)) {\r\n        return 'List<dynamic>';\r\n      }\r\n\r\n      // Aggregation methods return numbers\r\n      if (['reduce', 'sum', 'sumBy', 'mean', 'meanBy', 'average', 'count', 'size'].includes(method)) {\r\n        return 'double';\r\n      }\r\n\r\n      // Find methods return single item\r\n      if (['find', 'minBy', 'maxBy', 'first', 'last'].includes(method)) {\r\n        return 'dynamic';\r\n      }\r\n\r\n      // String methods\r\n      if (['format', 'toString', 'join'].includes(method)) {\r\n        return 'string';\r\n      }\r\n    }\r\n\r\n    // Direct function calls (moment(), _.chain(), etc.)\r\n    return 'dynamic';\r\n  }\r\n\r\n  // String operations\r\n  if (t.isTemplateLiteral(node) || t.isStringLiteral(node)) {\r\n    return 'string';\r\n  }\r\n\r\n  // Numbers\r\n  if (t.isNumericLiteral(node)) {\r\n    return 'double';\r\n  }\r\n\r\n  // Booleans\r\n  if (t.isBooleanLiteral(node)) {\r\n    return 'bool';\r\n  }\r\n\r\n  // Binary expressions - try to infer from operation\r\n  if (t.isBinaryExpression(node)) {\r\n    if (['+', '-', '*', '/', '%'].includes(node.operator)) {\r\n      return 'double';\r\n    }\r\n    if (['==', '===', '!=', '!==', '<', '>', '<=', '>='].includes(node.operator)) {\r\n      return 'bool';\r\n    }\r\n  }\r\n\r\n  // Logical expressions\r\n  if (t.isLogicalExpression(node)) {\r\n    return 'bool';\r\n  }\r\n\r\n  // Default to dynamic\r\n  return 'dynamic';\r\n}",
+  "body_templates": [
+    {
+      "hash": "84f1ca7a",
+      "type": "IfStatement",
+      "condition": "!node",
+      "babel_source": "if (!node) return 'dynamic';",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e10d47ee",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!node",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d31bdf27",
+      "type": "ReturnStatement",
+      "babel_source": "return 'dynamic';",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "44b3f9e3",
+      "type": "IfStatement",
+      "condition": "t.isArrayExpression(node)",
+      "babel_source": "if (t.isArrayExpression(node)) {\r\n    return 'List<dynamic>';\r\n  }",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "df02b329",
+      "type": "BabelTypeCheck",
+      "method": "isArrayExpression",
+      "babel_source": "t.isArrayExpression(node)",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d0333074",
+      "type": "ReturnStatement",
+      "babel_source": "return 'List<dynamic>';",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "72e18401",
+      "type": "IfStatement",
+      "condition": "t.isCallExpression(node)",
+      "babel_source": "if (t.isCallExpression(node)) {\r\n    const callee = node.callee;\r\n\r\n    if (t.isMemberExpression(callee) && t.isIdentifier(callee.property)) {\r\n      const method = callee.property.name;\r\n\r\n      // Common array methods return arrays\r\n      if (['map', 'filter', 'sort', 'sortBy', 'orderBy', 'slice', 'concat'].includes(method)) {\r\n        return 'List<dynamic>';\r\n      }\r\n\r\n      // Aggregation methods return numbers\r\n      if (['reduce', 'sum', 'sumBy', 'mean', 'meanBy', 'average', 'count', 'size'].includes(method)) {\r\n        return 'double';\r\n      }\r\n\r\n      // Find methods return single item\r\n      if (['find', 'minBy', 'maxBy', 'first', 'last'].includes(method)) {\r\n        return 'dynamic';\r\n      }\r\n\r\n      // String methods\r\n      if (['format', 'toString', 'join'].includes(method)) {\r\n        return 'string';\r\n      }\r\n    }\r\n\r\n    // Direct function calls (moment(), _.chain(), etc.)\r\n    return 'dynamic';\r\n  }",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1088dc62",
+      "type": "BabelTypeCheck",
+      "method": "isCallExpression",
+      "babel_source": "t.isCallExpression(node)",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "41649f9c",
+      "type": "VariableDeclaration",
+      "babel_source": "const callee = node.callee;",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "db159639",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(callee) && t.isIdentifier(callee.property)",
+      "babel_source": "if (t.isMemberExpression(callee) && t.isIdentifier(callee.property)) {\r\n      const method = callee.property.name;\r\n\r\n      // Common array methods return arrays\r\n      if (['map', 'filter', 'sort', 'sortBy', 'orderBy', 'slice', 'concat'].includes(method)) {\r\n        return 'List<dynamic>';\r\n      }\r\n\r\n      // Aggregation methods return numbers\r\n      if (['reduce', 'sum', 'sumBy', 'mean', 'meanBy', 'average', 'count', 'size'].includes(method)) {\r\n        return 'double';\r\n      }\r\n\r\n      // Find methods return single item\r\n      if (['find', 'minBy', 'maxBy', 'first', 'last'].includes(method)) {\r\n        return 'dynamic';\r\n      }\r\n\r\n      // String methods\r\n      if (['format', 'toString', 'join'].includes(method)) {\r\n        return 'string';\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "704524cf",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isMemberExpression(callee) && t.isIdentifier(callee.property)",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "20d9afa3",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(callee)",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0adf570d",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(callee.property)",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f03f2bcc",
+      "type": "VariableDeclaration",
+      "babel_source": "const method = callee.property.name;",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "875c7eef",
+      "type": "IfStatement",
+      "condition": "['map', 'filter', 'sort', 'sortBy', 'orderBy', 'slice', 'concat'].includes(method)",
+      "babel_source": "if (['map', 'filter', 'sort', 'sortBy', 'orderBy', 'slice', 'concat'].includes(method)) {\r\n        return 'List<dynamic>';\r\n      }",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1a4ee973",
+      "type": "ArrayExpression",
+      "babel_source": "['map', 'filter', 'sort', 'sortBy', 'orderBy', 'slice', 'concat']",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d0333074",
+      "type": "ReturnStatement",
+      "babel_source": "return 'List<dynamic>';",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7f82f730",
+      "type": "IfStatement",
+      "condition": "['reduce', 'sum', 'sumBy', 'mean', 'meanBy', 'average', 'count', 'size'].includes(method)",
+      "babel_source": "if (['reduce', 'sum', 'sumBy', 'mean', 'meanBy', 'average', 'count', 'size'].includes(method)) {\r\n        return 'double';\r\n      }",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7e8f058e",
+      "type": "ArrayExpression",
+      "babel_source": "['reduce', 'sum', 'sumBy', 'mean', 'meanBy', 'average', 'count', 'size']",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f086ee1a",
+      "type": "ReturnStatement",
+      "babel_source": "return 'double';",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fe9a6cbc",
+      "type": "IfStatement",
+      "condition": "['find', 'minBy', 'maxBy', 'first', 'last'].includes(method)",
+      "babel_source": "if (['find', 'minBy', 'maxBy', 'first', 'last'].includes(method)) {\r\n        return 'dynamic';\r\n      }",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e8ce98ee",
+      "type": "ArrayExpression",
+      "babel_source": "['find', 'minBy', 'maxBy', 'first', 'last']",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d31bdf27",
+      "type": "ReturnStatement",
+      "babel_source": "return 'dynamic';",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9afd70fb",
+      "type": "IfStatement",
+      "condition": "['format', 'toString', 'join'].includes(method)",
+      "babel_source": "if (['format', 'toString', 'join'].includes(method)) {\r\n        return 'string';\r\n      }",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2c41e40a",
+      "type": "ArrayExpression",
+      "babel_source": "['format', 'toString', 'join']",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f83ace9b",
+      "type": "ReturnStatement",
+      "babel_source": "return 'string';",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d31bdf27",
+      "type": "ReturnStatement",
+      "babel_source": "return 'dynamic';",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3cd0402a",
+      "type": "IfStatement",
+      "condition": "t.isTemplateLiteral(node) || t.isStringLiteral(node)",
+      "babel_source": "if (t.isTemplateLiteral(node) || t.isStringLiteral(node)) {\r\n    return 'string';\r\n  }",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bd80ca26",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isTemplateLiteral(node) || t.isStringLiteral(node)",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f523b775",
+      "type": "BabelTypeCheck",
+      "method": "isTemplateLiteral",
+      "babel_source": "t.isTemplateLiteral(node)",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7173d8cd",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(node)",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f83ace9b",
+      "type": "ReturnStatement",
+      "babel_source": "return 'string';",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f0a21b06",
+      "type": "IfStatement",
+      "condition": "t.isNumericLiteral(node)",
+      "babel_source": "if (t.isNumericLiteral(node)) {\r\n    return 'double';\r\n  }",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ae0f901d",
+      "type": "BabelTypeCheck",
+      "method": "isNumericLiteral",
+      "babel_source": "t.isNumericLiteral(node)",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f086ee1a",
+      "type": "ReturnStatement",
+      "babel_source": "return 'double';",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "289ed725",
+      "type": "IfStatement",
+      "condition": "t.isBooleanLiteral(node)",
+      "babel_source": "if (t.isBooleanLiteral(node)) {\r\n    return 'bool';\r\n  }",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e92ed5e3",
+      "type": "BabelTypeCheck",
+      "method": "isBooleanLiteral",
+      "babel_source": "t.isBooleanLiteral(node)",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6655b479",
+      "type": "ReturnStatement",
+      "babel_source": "return 'bool';",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e52af5b7",
+      "type": "IfStatement",
+      "condition": "t.isBinaryExpression(node)",
+      "babel_source": "if (t.isBinaryExpression(node)) {\r\n    if (['+', '-', '*', '/', '%'].includes(node.operator)) {\r\n      return 'double';\r\n    }\r\n    if (['==', '===', '!=', '!==', '<', '>', '<=', '>='].includes(node.operator)) {\r\n      return 'bool';\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ae0955e9",
+      "type": "BabelTypeCheck",
+      "method": "isBinaryExpression",
+      "babel_source": "t.isBinaryExpression(node)",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9c5c84f7",
+      "type": "IfStatement",
+      "condition": "['+', '-', '*', '/', '%'].includes(node.operator)",
+      "babel_source": "if (['+', '-', '*', '/', '%'].includes(node.operator)) {\r\n      return 'double';\r\n    }",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "24178eda",
+      "type": "ArrayExpression",
+      "babel_source": "['+', '-', '*', '/', '%']",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f086ee1a",
+      "type": "ReturnStatement",
+      "babel_source": "return 'double';",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2e344365",
+      "type": "IfStatement",
+      "condition": "['==', '===', '!=', '!==', '<', '>', '<=', '>='].includes(node.operator)",
+      "babel_source": "if (['==', '===', '!=', '!==', '<', '>', '<=', '>='].includes(node.operator)) {\r\n      return 'bool';\r\n    }",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8d074ad2",
+      "type": "ArrayExpression",
+      "babel_source": "['==', '===', '!=', '!==', '<', '>', '<=', '>=']",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6655b479",
+      "type": "ReturnStatement",
+      "babel_source": "return 'bool';",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "315f4a2c",
+      "type": "IfStatement",
+      "condition": "t.isLogicalExpression(node)",
+      "babel_source": "if (t.isLogicalExpression(node)) {\r\n    return 'bool';\r\n  }",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "00fb4fd3",
+      "type": "BabelTypeCheck",
+      "method": "isLogicalExpression",
+      "babel_source": "t.isLogicalExpression(node)",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6655b479",
+      "type": "ReturnStatement",
+      "babel_source": "return 'bool';",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d31bdf27",
+      "type": "ReturnStatement",
+      "babel_source": "return 'dynamic';",
+      "parentContext": {
+        "functionName": "inferCSharpTypeFromInit",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/component.cjs"
+  ]
+}

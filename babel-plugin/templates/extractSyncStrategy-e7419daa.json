@@ -1,0 +1,171 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractSyncStrategy",
+  "params": [
+    {
+      "name": "configObject",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractSyncStrategy(configObject) {\r\n  const syncProp = configObject.properties.find(\r\n    p => t.isIdentifier(p.key) && p.key.name === 'sync'\r\n  );\r\n\r\n  if (!syncProp || !t.isStringLiteral(syncProp.value)) {\r\n    return 'immediate';\r\n  }\r\n\r\n  return syncProp.value.value;\r\n}",
+  "body_templates": [
+    {
+      "hash": "32a874aa",
+      "type": "VariableDeclaration",
+      "babel_source": "const syncProp = configObject.properties.find(\r\n    p => t.isIdentifier(p.key) && p.key.name === 'sync'\r\n  );",
+      "parentContext": {
+        "functionName": "extractSyncStrategy",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42fec84c",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "p => t.isIdentifier(p.key) && p.key.name === 'sync'",
+      "parentContext": {
+        "functionName": "extractSyncStrategy",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "446023aa",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isIdentifier(p.key) && p.key.name === 'sync'",
+      "parentContext": {
+        "functionName": "extractSyncStrategy",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e2889dd8",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(p.key)",
+      "parentContext": {
+        "functionName": "extractSyncStrategy",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "94eae89b",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "p.key.name === 'sync'",
+      "parentContext": {
+        "functionName": "extractSyncStrategy",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "83b78245",
+      "type": "IfStatement",
+      "condition": "!syncProp || !t.isStringLiteral(syncProp.value)",
+      "babel_source": "if (!syncProp || !t.isStringLiteral(syncProp.value)) {\r\n    return 'immediate';\r\n  }",
+      "parentContext": {
+        "functionName": "extractSyncStrategy",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "02952917",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "!syncProp || !t.isStringLiteral(syncProp.value)",
+      "parentContext": {
+        "functionName": "extractSyncStrategy",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "43e25290",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!syncProp",
+      "parentContext": {
+        "functionName": "extractSyncStrategy",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8343e281",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isStringLiteral(syncProp.value)",
+      "parentContext": {
+        "functionName": "extractSyncStrategy",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7e00ba99",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(syncProp.value)",
+      "parentContext": {
+        "functionName": "extractSyncStrategy",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6a713ad6",
+      "type": "ReturnStatement",
+      "babel_source": "return 'immediate';",
+      "parentContext": {
+        "functionName": "extractSyncStrategy",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "055047fb",
+      "type": "ReturnStatement",
+      "babel_source": "return syncProp.value.value;",
+      "parentContext": {
+        "functionName": "extractSyncStrategy",
+        "functionParams": [
+          "configObject"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/useStateX.cjs"
+  ]
+}

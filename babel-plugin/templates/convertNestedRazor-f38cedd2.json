@@ -1,0 +1,323 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "convertNestedRazor",
+  "params": [
+    {
+      "name": "body",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "itemVar",
+      "inferredType": "unknown",
+      "defaultValue": "null"
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function convertNestedRazor(body, itemVar = null) {\r\n  let result = body;\r\n\r\n  // Step 1: Convert @(expression)\r\n  result = result.replace(/@\\(([^)]+)\\)/g, '{($1)}');\r\n\r\n  // Step 2: If itemVar provided, convert @itemVar references\r\n  if (itemVar) {\r\n    // Convert @itemVar.property or @itemVar\r\n    const itemPattern = new RegExp(`@${itemVar}(\\\\.[a-zA-Z_][a-zA-Z0-9_]*|\\\\([^)]*\\\\))*`, 'g');\r\n    result = result.replace(itemPattern, (match) => {\r\n      return `{${match.substring(1)}}`; // Remove @ and wrap in {}\r\n    });\r\n  }\r\n\r\n  // Step 3: Convert other @variable references\r\n  result = result.replace(/@([a-zA-Z_][a-zA-Z0-9_]*(?:\\.[a-zA-Z_][a-zA-Z0-9_]*|\\([^)]*\\))*)/g, (match, varPath) => {\r\n    // Don't double-convert itemVar (already done above)\r\n    if (itemVar && varPath.startsWith(itemVar)) {\r\n      return match;\r\n    }\r\n\r\n    return `{${varPath}}`;\r\n  });\r\n\r\n  // Step 4: Escape quotes in the body for C# verbatim strings\r\n  // Replace \" with \"\" for @\"...\" strings\r\n  result = result.replace(/\"/g, '\"\"');\r\n\r\n  return result;\r\n}",
+  "body_templates": [
+    {
+      "hash": "3ff3361d",
+      "type": "VariableDeclaration",
+      "babel_source": "let result = body;",
+      "parentContext": {
+        "functionName": "convertNestedRazor",
+        "functionParams": [
+          "body",
+          "itemVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "99d76004",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "result = result.replace(/@\\(([^)]+)\\)/g, '{($1)}')",
+      "parentContext": {
+        "functionName": "convertNestedRazor",
+        "functionParams": [
+          "body",
+          "itemVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c4dbce8b",
+      "type": "RegExpLiteral",
+      "pattern": "@\\(([^)]+)\\)",
+      "flags": "g",
+      "babel_source": "/@\\(([^)]+)\\)/g",
+      "parentContext": {
+        "functionName": "convertNestedRazor",
+        "functionParams": [
+          "body",
+          "itemVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0cae8b12",
+      "type": "IfStatement",
+      "condition": "itemVar",
+      "babel_source": "if (itemVar) {\r\n    // Convert @itemVar.property or @itemVar\r\n    const itemPattern = new RegExp(`@${itemVar}(\\\\.[a-zA-Z_][a-zA-Z0-9_]*|\\\\([^)]*\\\\))*`, 'g');\r\n    result = result.replace(itemPattern, (match) => {\r\n      return `{${match.substring(1)}}`; // Remove @ and wrap in {}\r\n    });\r\n  }",
+      "parentContext": {
+        "functionName": "convertNestedRazor",
+        "functionParams": [
+          "body",
+          "itemVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d6cfa9fe",
+      "type": "VariableDeclaration",
+      "babel_source": "const itemPattern = new RegExp(`@${itemVar}(\\\\.[a-zA-Z_][a-zA-Z0-9_]*|\\\\([^)]*\\\\))*`, 'g');",
+      "parentContext": {
+        "functionName": "convertNestedRazor",
+        "functionParams": [
+          "body",
+          "itemVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8e96fdcd",
+      "type": "NewExpression",
+      "babel_source": "new RegExp(`@${itemVar}(\\\\.[a-zA-Z_][a-zA-Z0-9_]*|\\\\([^)]*\\\\))*`, 'g')",
+      "parentContext": {
+        "functionName": "convertNestedRazor",
+        "functionParams": [
+          "body",
+          "itemVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "950996a9",
+      "type": "TemplateLiteral",
+      "babel_source": "`@${itemVar}(\\\\.[a-zA-Z_][a-zA-Z0-9_]*|\\\\([^)]*\\\\))*`",
+      "parentContext": {
+        "functionName": "convertNestedRazor",
+        "functionParams": [
+          "body",
+          "itemVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42a45645",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "result = result.replace(itemPattern, (match) => {\r\n      return `{${match.substring(1)}}`; // Remove @ and wrap in {}\r\n    })",
+      "parentContext": {
+        "functionName": "convertNestedRazor",
+        "functionParams": [
+          "body",
+          "itemVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "45e4d2b1",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "(match) => {\r\n      return `{${match.substring(1)}}`; // Remove @ and wrap in {}\r\n    }",
+      "parentContext": {
+        "functionName": "convertNestedRazor",
+        "functionParams": [
+          "body",
+          "itemVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9d7ac122",
+      "type": "ReturnStatement",
+      "babel_source": "return `{${match.substring(1)}}`;",
+      "parentContext": {
+        "functionName": "convertNestedRazor",
+        "functionParams": [
+          "body",
+          "itemVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "aed3b00e",
+      "type": "TemplateLiteral",
+      "babel_source": "`{${match.substring(1)}}`",
+      "parentContext": {
+        "functionName": "convertNestedRazor",
+        "functionParams": [
+          "body",
+          "itemVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "baa19dbe",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "result = result.replace(/@([a-zA-Z_][a-zA-Z0-9_]*(?:\\.[a-zA-Z_][a-zA-Z0-9_]*|\\([^)]*\\))*)/g, (match, varPath) => {\r\n    // Don't double-convert itemVar (already done above)\r\n    if (itemVar && varPath.startsWith(itemVar)) {\r\n      return match;\r\n    }\r\n\r\n    return `{${varPath}}`;\r\n  })",
+      "parentContext": {
+        "functionName": "convertNestedRazor",
+        "functionParams": [
+          "body",
+          "itemVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4a31e9d3",
+      "type": "RegExpLiteral",
+      "pattern": "@([a-zA-Z_][a-zA-Z0-9_]*(?:\\.[a-zA-Z_][a-zA-Z0-9_]*|\\([^)]*\\))*)",
+      "flags": "g",
+      "babel_source": "/@([a-zA-Z_][a-zA-Z0-9_]*(?:\\.[a-zA-Z_][a-zA-Z0-9_]*|\\([^)]*\\))*)/g",
+      "parentContext": {
+        "functionName": "convertNestedRazor",
+        "functionParams": [
+          "body",
+          "itemVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5b57e0d1",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "(match, varPath) => {\r\n    // Don't double-convert itemVar (already done above)\r\n    if (itemVar && varPath.startsWith(itemVar)) {\r\n      return match;\r\n    }\r\n\r\n    return `{${varPath}}`;\r\n  }",
+      "parentContext": {
+        "functionName": "convertNestedRazor",
+        "functionParams": [
+          "body",
+          "itemVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "77799896",
+      "type": "IfStatement",
+      "condition": "itemVar && varPath.startsWith(itemVar)",
+      "babel_source": "if (itemVar && varPath.startsWith(itemVar)) {\r\n      return match;\r\n    }",
+      "parentContext": {
+        "functionName": "convertNestedRazor",
+        "functionParams": [
+          "body",
+          "itemVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "039c59c1",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "itemVar && varPath.startsWith(itemVar)",
+      "parentContext": {
+        "functionName": "convertNestedRazor",
+        "functionParams": [
+          "body",
+          "itemVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6fbe4b8d",
+      "type": "ReturnStatement",
+      "babel_source": "return match;",
+      "parentContext": {
+        "functionName": "convertNestedRazor",
+        "functionParams": [
+          "body",
+          "itemVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "933a571b",
+      "type": "ReturnStatement",
+      "babel_source": "return `{${varPath}}`;",
+      "parentContext": {
+        "functionName": "convertNestedRazor",
+        "functionParams": [
+          "body",
+          "itemVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "be1e307d",
+      "type": "TemplateLiteral",
+      "babel_source": "`{${varPath}}`",
+      "parentContext": {
+        "functionName": "convertNestedRazor",
+        "functionParams": [
+          "body",
+          "itemVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c3c85274",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "result = result.replace(/\"/g, '\"\"')",
+      "parentContext": {
+        "functionName": "convertNestedRazor",
+        "functionParams": [
+          "body",
+          "itemVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab9aeb8a",
+      "type": "RegExpLiteral",
+      "pattern": "\"",
+      "flags": "g",
+      "babel_source": "/\"/g",
+      "parentContext": {
+        "functionName": "convertNestedRazor",
+        "functionParams": [
+          "body",
+          "itemVar"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "882101dd",
+      "type": "ReturnStatement",
+      "babel_source": "return result;",
+      "parentContext": {
+        "functionName": "convertNestedRazor",
+        "functionParams": [
+          "body",
+          "itemVar"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/razorMarkdown.cjs"
+  ]
+}

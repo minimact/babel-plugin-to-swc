@@ -1,0 +1,123 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "traverse",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function traverse(node) {\r\n    if (t.isIdentifier(node)) {\r\n      // Skip 'this' prefix\r\n      if (node.name !== 'this') {\r\n        parts.unshift(node.name);\r\n      }\r\n    } else if (t.isMemberExpression(node)) {\r\n      if (t.isIdentifier(node.property)) {\r\n        parts.unshift(node.property.name);\r\n      }\r\n      traverse(node.object);\r\n    }\r\n  }",
+  "body_templates": [
+    {
+      "hash": "fa1b4d49",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(node)",
+      "babel_source": "if (t.isIdentifier(node)) {\r\n      // Skip 'this' prefix\r\n      if (node.name !== 'this') {\r\n        parts.unshift(node.name);\r\n      }\r\n    } else if (t.isMemberExpression(node)) {\r\n      if (t.isIdentifier(node.property)) {\r\n        parts.unshift(node.property.name);\r\n      }\r\n      traverse(node.object);\r\n    }",
+      "parentContext": {
+        "functionName": "traverse",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "458e4c81",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node)",
+      "parentContext": {
+        "functionName": "traverse",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8e82efc6",
+      "type": "IfStatement",
+      "condition": "node.name !== 'this'",
+      "babel_source": "if (node.name !== 'this') {\r\n        parts.unshift(node.name);\r\n      }",
+      "parentContext": {
+        "functionName": "traverse",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "00ac7bb8",
+      "type": "BinaryExpression",
+      "operator": "!==",
+      "babel_source": "node.name !== 'this'",
+      "parentContext": {
+        "functionName": "traverse",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "301e0cd3",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(node)",
+      "babel_source": "if (t.isMemberExpression(node)) {\r\n      if (t.isIdentifier(node.property)) {\r\n        parts.unshift(node.property.name);\r\n      }\r\n      traverse(node.object);\r\n    }",
+      "parentContext": {
+        "functionName": "traverse",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e4025d71",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(node)",
+      "parentContext": {
+        "functionName": "traverse",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "549fcb67",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(node.property)",
+      "babel_source": "if (t.isIdentifier(node.property)) {\r\n        parts.unshift(node.property.name);\r\n      }",
+      "parentContext": {
+        "functionName": "traverse",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a42af9c4",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.property)",
+      "parentContext": {
+        "functionName": "traverse",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/analyzePluginUsage.cjs"
+  ]
+}

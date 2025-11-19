@@ -1,0 +1,916 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractJSXFromReturn",
+  "params": [
+    {
+      "name": "returnArg",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "analysis",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "hookPath",
+      "inferredType": "&Path",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractJSXFromReturn(returnArg, analysis, hookPath) {\r\n  // Pattern 1: return ui; (where ui = <div>...</div>)\r\n  if (t.isIdentifier(returnArg)) {\r\n    const varName = returnArg.name;\r\n    // Find the JSX node by traversing the hook body\r\n    const jsxNode = findJSXVariable(varName, hookPath);\r\n    return jsxNode ? { type: 'variable', varName: varName, node: jsxNode } : null;\r\n  }\r\n\r\n  // Pattern 2: const ui = <div>...</div>; return [value, ui];\r\n  if (t.isArrayExpression(returnArg)) {\r\n    for (const element of returnArg.elements) {\r\n      if (t.isJSXElement(element) || t.isJSXFragment(element)) {\r\n        return { type: 'inline', node: element };\r\n      }\r\n      if (t.isIdentifier(element)) {\r\n        const varName = element.name;\r\n        const jsxNode = findJSXVariable(varName, hookPath);\r\n        if (jsxNode) {\r\n          return { type: 'variable', varName: varName, node: jsxNode };\r\n        }\r\n      }\r\n      // Pattern: loading && <div>...</div>\r\n      if (t.isLogicalExpression(element)) {\r\n        const right = element.right;\r\n        if (t.isJSXElement(right) || t.isJSXFragment(right)) {\r\n          return { type: 'conditional', node: element };\r\n        }\r\n        // Find JSX in variable: loading && ui\r\n        if (t.isIdentifier(right)) {\r\n          const jsxNode = findJSXVariable(right.name, hookPath);\r\n          if (jsxNode) {\r\n            return { type: 'conditional', node: element };\r\n          }\r\n        }\r\n      }\r\n    }\r\n  }\r\n\r\n  // Pattern 3: Conditional JSX: isOpen && <div>...</div>\r\n  if (t.isLogicalExpression(returnArg)) {\r\n    const right = returnArg.right;\r\n    if (t.isJSXElement(right) || t.isJSXFragment(right)) {\r\n      return { type: 'conditional', node: returnArg };\r\n    }\r\n    // loading && ui (where ui is JSX variable)\r\n    if (t.isIdentifier(right)) {\r\n      const jsxNode = findJSXVariable(right.name, hookPath);\r\n      if (jsxNode) {\r\n        return { type: 'conditional', node: returnArg };\r\n      }\r\n    }\r\n  }\r\n\r\n  // Pattern 4: Direct JSX: return <div>...</div>\r\n  if (t.isJSXElement(returnArg) || t.isJSXFragment(returnArg)) {\r\n    return { type: 'inline', node: returnArg };\r\n  }\r\n\r\n  return null;\r\n}",
+  "body_templates": [
+    {
+      "hash": "d53a97f6",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(returnArg)",
+      "babel_source": "if (t.isIdentifier(returnArg)) {\r\n    const varName = returnArg.name;\r\n    // Find the JSX node by traversing the hook body\r\n    const jsxNode = findJSXVariable(varName, hookPath);\r\n    return jsxNode ? { type: 'variable', varName: varName, node: jsxNode } : null;\r\n  }",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fa057057",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(returnArg)",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "aa138b08",
+      "type": "VariableDeclaration",
+      "babel_source": "const varName = returnArg.name;",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "df9c123c",
+      "type": "VariableDeclaration",
+      "babel_source": "const jsxNode = findJSXVariable(varName, hookPath);",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9b7ecab1",
+      "type": "ReturnStatement",
+      "babel_source": "return jsxNode ? { type: 'variable', varName: varName, node: jsxNode } : null;",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2e01f3b4",
+      "type": "ConditionalExpression",
+      "babel_source": "jsxNode ? { type: 'variable', varName: varName, node: jsxNode } : null",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3a29dd9e",
+      "type": "ObjectExpression",
+      "babel_source": "{ type: 'variable', varName: varName, node: jsxNode }",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3e55016e",
+      "type": "IfStatement",
+      "condition": "t.isArrayExpression(returnArg)",
+      "babel_source": "if (t.isArrayExpression(returnArg)) {\r\n    for (const element of returnArg.elements) {\r\n      if (t.isJSXElement(element) || t.isJSXFragment(element)) {\r\n        return { type: 'inline', node: element };\r\n      }\r\n      if (t.isIdentifier(element)) {\r\n        const varName = element.name;\r\n        const jsxNode = findJSXVariable(varName, hookPath);\r\n        if (jsxNode) {\r\n          return { type: 'variable', varName: varName, node: jsxNode };\r\n        }\r\n      }\r\n      // Pattern: loading && <div>...</div>\r\n      if (t.isLogicalExpression(element)) {\r\n        const right = element.right;\r\n        if (t.isJSXElement(right) || t.isJSXFragment(right)) {\r\n          return { type: 'conditional', node: element };\r\n        }\r\n        // Find JSX in variable: loading && ui\r\n        if (t.isIdentifier(right)) {\r\n          const jsxNode = findJSXVariable(right.name, hookPath);\r\n          if (jsxNode) {\r\n            return { type: 'conditional', node: element };\r\n          }\r\n        }\r\n      }\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d24551ca",
+      "type": "BabelTypeCheck",
+      "method": "isArrayExpression",
+      "babel_source": "t.isArrayExpression(returnArg)",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "97788afc",
+      "type": "ForOfStatement",
+      "babel_source": "for (const element of returnArg.elements) {\r\n      if (t.isJSXElement(element) || t.isJSXFragment(element)) {\r\n        return { type: 'inline', node: element };\r\n      }\r\n      if (t.isIdentifier(element)) {\r\n        const varName = element.name;\r\n        const jsxNode = findJSXVariable(varName, hookPath);\r\n        if (jsxNode) {\r\n          return { type: 'variable', varName: varName, node: jsxNode };\r\n        }\r\n      }\r\n      // Pattern: loading && <div>...</div>\r\n      if (t.isLogicalExpression(element)) {\r\n        const right = element.right;\r\n        if (t.isJSXElement(right) || t.isJSXFragment(right)) {\r\n          return { type: 'conditional', node: element };\r\n        }\r\n        // Find JSX in variable: loading && ui\r\n        if (t.isIdentifier(right)) {\r\n          const jsxNode = findJSXVariable(right.name, hookPath);\r\n          if (jsxNode) {\r\n            return { type: 'conditional', node: element };\r\n          }\r\n        }\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "854a2b81",
+      "type": "VariableDeclaration",
+      "babel_source": "const element",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5de97abb",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(element) || t.isJSXFragment(element)",
+      "babel_source": "if (t.isJSXElement(element) || t.isJSXFragment(element)) {\r\n        return { type: 'inline', node: element };\r\n      }",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4a8d62e3",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isJSXElement(element) || t.isJSXFragment(element)",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b44453fe",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(element)",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f9ce509c",
+      "type": "BabelTypeCheck",
+      "method": "isJSXFragment",
+      "babel_source": "t.isJSXFragment(element)",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c9ce4c3d",
+      "type": "ReturnStatement",
+      "babel_source": "return { type: 'inline', node: element };",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "44a3854f",
+      "type": "ObjectExpression",
+      "babel_source": "{ type: 'inline', node: element }",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3d3a04a8",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(element)",
+      "babel_source": "if (t.isIdentifier(element)) {\r\n        const varName = element.name;\r\n        const jsxNode = findJSXVariable(varName, hookPath);\r\n        if (jsxNode) {\r\n          return { type: 'variable', varName: varName, node: jsxNode };\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "def088ee",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(element)",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0db56bca",
+      "type": "VariableDeclaration",
+      "babel_source": "const varName = element.name;",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "df9c123c",
+      "type": "VariableDeclaration",
+      "babel_source": "const jsxNode = findJSXVariable(varName, hookPath);",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cf688a9e",
+      "type": "IfStatement",
+      "condition": "jsxNode",
+      "babel_source": "if (jsxNode) {\r\n          return { type: 'variable', varName: varName, node: jsxNode };\r\n        }",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "877a4955",
+      "type": "ReturnStatement",
+      "babel_source": "return { type: 'variable', varName: varName, node: jsxNode };",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3a29dd9e",
+      "type": "ObjectExpression",
+      "babel_source": "{ type: 'variable', varName: varName, node: jsxNode }",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a3baef87",
+      "type": "IfStatement",
+      "condition": "t.isLogicalExpression(element)",
+      "babel_source": "if (t.isLogicalExpression(element)) {\r\n        const right = element.right;\r\n        if (t.isJSXElement(right) || t.isJSXFragment(right)) {\r\n          return { type: 'conditional', node: element };\r\n        }\r\n        // Find JSX in variable: loading && ui\r\n        if (t.isIdentifier(right)) {\r\n          const jsxNode = findJSXVariable(right.name, hookPath);\r\n          if (jsxNode) {\r\n            return { type: 'conditional', node: element };\r\n          }\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "32283969",
+      "type": "BabelTypeCheck",
+      "method": "isLogicalExpression",
+      "babel_source": "t.isLogicalExpression(element)",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3a0bf902",
+      "type": "VariableDeclaration",
+      "babel_source": "const right = element.right;",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1c3deaa1",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(right) || t.isJSXFragment(right)",
+      "babel_source": "if (t.isJSXElement(right) || t.isJSXFragment(right)) {\r\n          return { type: 'conditional', node: element };\r\n        }",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cc438cb5",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isJSXElement(right) || t.isJSXFragment(right)",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ea961854",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(right)",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e9149293",
+      "type": "BabelTypeCheck",
+      "method": "isJSXFragment",
+      "babel_source": "t.isJSXFragment(right)",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "09467ab5",
+      "type": "ReturnStatement",
+      "babel_source": "return { type: 'conditional', node: element };",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5f203844",
+      "type": "ObjectExpression",
+      "babel_source": "{ type: 'conditional', node: element }",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "962bc21c",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(right)",
+      "babel_source": "if (t.isIdentifier(right)) {\r\n          const jsxNode = findJSXVariable(right.name, hookPath);\r\n          if (jsxNode) {\r\n            return { type: 'conditional', node: element };\r\n          }\r\n        }",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bdaff7a0",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(right)",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3d214224",
+      "type": "VariableDeclaration",
+      "babel_source": "const jsxNode = findJSXVariable(right.name, hookPath);",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1ff524a3",
+      "type": "IfStatement",
+      "condition": "jsxNode",
+      "babel_source": "if (jsxNode) {\r\n            return { type: 'conditional', node: element };\r\n          }",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "09467ab5",
+      "type": "ReturnStatement",
+      "babel_source": "return { type: 'conditional', node: element };",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5f203844",
+      "type": "ObjectExpression",
+      "babel_source": "{ type: 'conditional', node: element }",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ee6499f5",
+      "type": "IfStatement",
+      "condition": "t.isLogicalExpression(returnArg)",
+      "babel_source": "if (t.isLogicalExpression(returnArg)) {\r\n    const right = returnArg.right;\r\n    if (t.isJSXElement(right) || t.isJSXFragment(right)) {\r\n      return { type: 'conditional', node: returnArg };\r\n    }\r\n    // loading && ui (where ui is JSX variable)\r\n    if (t.isIdentifier(right)) {\r\n      const jsxNode = findJSXVariable(right.name, hookPath);\r\n      if (jsxNode) {\r\n        return { type: 'conditional', node: returnArg };\r\n      }\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "360cd64d",
+      "type": "BabelTypeCheck",
+      "method": "isLogicalExpression",
+      "babel_source": "t.isLogicalExpression(returnArg)",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e9ac4b96",
+      "type": "VariableDeclaration",
+      "babel_source": "const right = returnArg.right;",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0534b750",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(right) || t.isJSXFragment(right)",
+      "babel_source": "if (t.isJSXElement(right) || t.isJSXFragment(right)) {\r\n      return { type: 'conditional', node: returnArg };\r\n    }",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cc438cb5",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isJSXElement(right) || t.isJSXFragment(right)",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ea961854",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(right)",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e9149293",
+      "type": "BabelTypeCheck",
+      "method": "isJSXFragment",
+      "babel_source": "t.isJSXFragment(right)",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9e6a9c5a",
+      "type": "ReturnStatement",
+      "babel_source": "return { type: 'conditional', node: returnArg };",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6e583941",
+      "type": "ObjectExpression",
+      "babel_source": "{ type: 'conditional', node: returnArg }",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dd64164b",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(right)",
+      "babel_source": "if (t.isIdentifier(right)) {\r\n      const jsxNode = findJSXVariable(right.name, hookPath);\r\n      if (jsxNode) {\r\n        return { type: 'conditional', node: returnArg };\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bdaff7a0",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(right)",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3d214224",
+      "type": "VariableDeclaration",
+      "babel_source": "const jsxNode = findJSXVariable(right.name, hookPath);",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e6b1de42",
+      "type": "IfStatement",
+      "condition": "jsxNode",
+      "babel_source": "if (jsxNode) {\r\n        return { type: 'conditional', node: returnArg };\r\n      }",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9e6a9c5a",
+      "type": "ReturnStatement",
+      "babel_source": "return { type: 'conditional', node: returnArg };",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6e583941",
+      "type": "ObjectExpression",
+      "babel_source": "{ type: 'conditional', node: returnArg }",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b9a563c4",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(returnArg) || t.isJSXFragment(returnArg)",
+      "babel_source": "if (t.isJSXElement(returnArg) || t.isJSXFragment(returnArg)) {\r\n    return { type: 'inline', node: returnArg };\r\n  }",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ac5890a5",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isJSXElement(returnArg) || t.isJSXFragment(returnArg)",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7a8ed980",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(returnArg)",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8cf098ae",
+      "type": "BabelTypeCheck",
+      "method": "isJSXFragment",
+      "babel_source": "t.isJSXFragment(returnArg)",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e85c1a85",
+      "type": "ReturnStatement",
+      "babel_source": "return { type: 'inline', node: returnArg };",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e19ec3c8",
+      "type": "ObjectExpression",
+      "babel_source": "{ type: 'inline', node: returnArg }",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractJSXFromReturn",
+        "functionParams": [
+          "returnArg",
+          "analysis",
+          "hookPath"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/hookAnalyzer.cjs"
+  ]
+}

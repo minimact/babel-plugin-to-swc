@@ -1,0 +1,184 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractLeftSideOfAnd",
+  "params": [
+    {
+      "name": "expr",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractLeftSideOfAnd(expr) {\r\n    if (!t.isLogicalExpression(expr) || expr.operator !== '&&') {\r\n      return expr;\r\n    }\r\n\r\n    const right = expr.right;\r\n\r\n    // If right is JSX, left is the condition\r\n    if (t.isJSXElement(right) || t.isJSXFragment(right)) {\r\n      return expr.left;\r\n    }\r\n\r\n    // Otherwise, keep recursing\r\n    return expr;\r\n  }",
+  "body_templates": [
+    {
+      "hash": "eeb89ce8",
+      "type": "IfStatement",
+      "condition": "!t.isLogicalExpression(expr) || expr.operator !== '&&'",
+      "babel_source": "if (!t.isLogicalExpression(expr) || expr.operator !== '&&') {\r\n      return expr;\r\n    }",
+      "parentContext": {
+        "functionName": "extractLeftSideOfAnd",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "525d1a89",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "!t.isLogicalExpression(expr) || expr.operator !== '&&'",
+      "parentContext": {
+        "functionName": "extractLeftSideOfAnd",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "572db5f9",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isLogicalExpression(expr)",
+      "parentContext": {
+        "functionName": "extractLeftSideOfAnd",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c20dd732",
+      "type": "BabelTypeCheck",
+      "method": "isLogicalExpression",
+      "babel_source": "t.isLogicalExpression(expr)",
+      "parentContext": {
+        "functionName": "extractLeftSideOfAnd",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a61e13f9",
+      "type": "BinaryExpression",
+      "operator": "!==",
+      "babel_source": "expr.operator !== '&&'",
+      "parentContext": {
+        "functionName": "extractLeftSideOfAnd",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6e7ad6d5",
+      "type": "ReturnStatement",
+      "babel_source": "return expr;",
+      "parentContext": {
+        "functionName": "extractLeftSideOfAnd",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6ee5d651",
+      "type": "VariableDeclaration",
+      "babel_source": "const right = expr.right;",
+      "parentContext": {
+        "functionName": "extractLeftSideOfAnd",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bc4eee01",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(right) || t.isJSXFragment(right)",
+      "babel_source": "if (t.isJSXElement(right) || t.isJSXFragment(right)) {\r\n      return expr.left;\r\n    }",
+      "parentContext": {
+        "functionName": "extractLeftSideOfAnd",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cc438cb5",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isJSXElement(right) || t.isJSXFragment(right)",
+      "parentContext": {
+        "functionName": "extractLeftSideOfAnd",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ea961854",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(right)",
+      "parentContext": {
+        "functionName": "extractLeftSideOfAnd",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e9149293",
+      "type": "BabelTypeCheck",
+      "method": "isJSXFragment",
+      "babel_source": "t.isJSXFragment(right)",
+      "parentContext": {
+        "functionName": "extractLeftSideOfAnd",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e860394e",
+      "type": "ReturnStatement",
+      "babel_source": "return expr.left;",
+      "parentContext": {
+        "functionName": "extractLeftSideOfAnd",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6e7ad6d5",
+      "type": "ReturnStatement",
+      "babel_source": "return expr;",
+      "parentContext": {
+        "functionName": "extractLeftSideOfAnd",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/conditionalElementTemplates.cjs"
+  ]
+}

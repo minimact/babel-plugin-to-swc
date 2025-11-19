@@ -1,0 +1,221 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "transpileMemberExpression",
+  "params": [
+    {
+      "name": "fullExpr",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    },
+    {
+      "name": "object",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "property",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function transpileMemberExpression(fullExpr, object, property) {\r\n  // progress.report() → progress.Report()\r\n  if (object === 'progress' && property === '.report') {\r\n    return 'progress.Report';\r\n  }\r\n\r\n  // cancellationToken.requested → cancellationToken.IsCancellationRequested\r\n  if ((object === 'cancellationToken' || object === 'cancel') && property === '.requested') {\r\n    return 'cancellationToken.IsCancellationRequested';\r\n  }\r\n\r\n  return fullExpr;\r\n}",
+  "body_templates": [
+    {
+      "hash": "1b93d8d9",
+      "type": "IfStatement",
+      "condition": "object === 'progress' && property === '.report'",
+      "babel_source": "if (object === 'progress' && property === '.report') {\r\n    return 'progress.Report';\r\n  }",
+      "parentContext": {
+        "functionName": "transpileMemberExpression",
+        "functionParams": [
+          "fullExpr",
+          "object",
+          "property"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2107954b",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "object === 'progress' && property === '.report'",
+      "parentContext": {
+        "functionName": "transpileMemberExpression",
+        "functionParams": [
+          "fullExpr",
+          "object",
+          "property"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e428baf3",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "object === 'progress'",
+      "parentContext": {
+        "functionName": "transpileMemberExpression",
+        "functionParams": [
+          "fullExpr",
+          "object",
+          "property"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1be3e0a8",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "property === '.report'",
+      "parentContext": {
+        "functionName": "transpileMemberExpression",
+        "functionParams": [
+          "fullExpr",
+          "object",
+          "property"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e445f69c",
+      "type": "ReturnStatement",
+      "babel_source": "return 'progress.Report';",
+      "parentContext": {
+        "functionName": "transpileMemberExpression",
+        "functionParams": [
+          "fullExpr",
+          "object",
+          "property"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dda6ed3e",
+      "type": "IfStatement",
+      "condition": "(object === 'cancellationToken' || object === 'cancel') && property === '.requested'",
+      "babel_source": "if ((object === 'cancellationToken' || object === 'cancel') && property === '.requested') {\r\n    return 'cancellationToken.IsCancellationRequested';\r\n  }",
+      "parentContext": {
+        "functionName": "transpileMemberExpression",
+        "functionParams": [
+          "fullExpr",
+          "object",
+          "property"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bab6a7c1",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "(object === 'cancellationToken' || object === 'cancel') && property === '.requested'",
+      "parentContext": {
+        "functionName": "transpileMemberExpression",
+        "functionParams": [
+          "fullExpr",
+          "object",
+          "property"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "aef9f1b3",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "object === 'cancellationToken' || object === 'cancel'",
+      "parentContext": {
+        "functionName": "transpileMemberExpression",
+        "functionParams": [
+          "fullExpr",
+          "object",
+          "property"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b9d2b80a",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "object === 'cancellationToken'",
+      "parentContext": {
+        "functionName": "transpileMemberExpression",
+        "functionParams": [
+          "fullExpr",
+          "object",
+          "property"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a6df8eb4",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "object === 'cancel'",
+      "parentContext": {
+        "functionName": "transpileMemberExpression",
+        "functionParams": [
+          "fullExpr",
+          "object",
+          "property"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1380408d",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "property === '.requested'",
+      "parentContext": {
+        "functionName": "transpileMemberExpression",
+        "functionParams": [
+          "fullExpr",
+          "object",
+          "property"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c54d9ad7",
+      "type": "ReturnStatement",
+      "babel_source": "return 'cancellationToken.IsCancellationRequested';",
+      "parentContext": {
+        "functionName": "transpileMemberExpression",
+        "functionParams": [
+          "fullExpr",
+          "object",
+          "property"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fe625a65",
+      "type": "ReturnStatement",
+      "babel_source": "return fullExpr;",
+      "parentContext": {
+        "functionName": "transpileMemberExpression",
+        "functionParams": [
+          "fullExpr",
+          "object",
+          "property"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "transpilers/typescriptToCSharp.cjs"
+  ]
+}

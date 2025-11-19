@@ -1,0 +1,81 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "getPathSegmentsFromNode",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function getPathSegmentsFromNode(node) {\r\n  if (!node.__minimactPathSegments) {\r\n    throw new Error('[Minimact] Path segments not assigned to node! Did you forget to run assignPathsToJSX?');\r\n  }\r\n  return node.__minimactPathSegments;\r\n}",
+  "body_templates": [
+    {
+      "hash": "02456a2e",
+      "type": "IfStatement",
+      "condition": "!node.__minimactPathSegments",
+      "babel_source": "if (!node.__minimactPathSegments) {\r\n    throw new Error('[Minimact] Path segments not assigned to node! Did you forget to run assignPathsToJSX?');\r\n  }",
+      "parentContext": {
+        "functionName": "getPathSegmentsFromNode",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9f120b6b",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!node.__minimactPathSegments",
+      "parentContext": {
+        "functionName": "getPathSegmentsFromNode",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2870d57f",
+      "type": "ThrowStatement",
+      "babel_source": "throw new Error('[Minimact] Path segments not assigned to node! Did you forget to run assignPathsToJSX?');",
+      "parentContext": {
+        "functionName": "getPathSegmentsFromNode",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "95617e09",
+      "type": "NewExpression",
+      "babel_source": "new Error('[Minimact] Path segments not assigned to node! Did you forget to run assignPathsToJSX?')",
+      "parentContext": {
+        "functionName": "getPathSegmentsFromNode",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "575b809c",
+      "type": "ReturnStatement",
+      "babel_source": "return node.__minimactPathSegments;",
+      "parentContext": {
+        "functionName": "getPathSegmentsFromNode",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "utils/pathAssignment.cjs"
+  ]
+}

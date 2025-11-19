@@ -1,0 +1,337 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractBinding",
+  "params": [
+    {
+      "name": "expr",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    },
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractBinding(expr, component) {\r\n    if (t.isIdentifier(expr)) {\r\n      return expr.name;\r\n    } else if (t.isMemberExpression(expr)) {\r\n      return buildMemberPath(expr);\r\n    } else if (t.isOptionalMemberExpression(expr)) {\r\n      // Phase 2: Optional chaining (viewModel?.userEmail)\r\n      return extractOptionalChainBinding(expr);\r\n    } else if (t.isCallExpression(expr)) {\r\n      // Phase 1: Method calls (price.toFixed(2))\r\n      return extractMethodCallBinding(expr);\r\n    } else if (t.isBinaryExpression(expr) || t.isUnaryExpression(expr)) {\r\n      // Simple operations - extract all identifiers\r\n      const identifiers = [];\r\n      extractIdentifiers(expr, identifiers);\r\n      return identifiers.join('.');\r\n    } else if (t.isConditionalExpression(expr)) {\r\n      // Ternary expression: {isExpanded ? 'Hide' : 'Show'}\r\n      // Return special marker that will be processed into conditional template\r\n      return extractConditionalBinding(expr);\r\n    } else {\r\n      // Complex expression\r\n      return null;\r\n    }\r\n  }",
+  "body_templates": [
+    {
+      "hash": "3ab1f2e1",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(expr)",
+      "babel_source": "if (t.isIdentifier(expr)) {\r\n      return expr.name;\r\n    } else if (t.isMemberExpression(expr)) {\r\n      return buildMemberPath(expr);\r\n    } else if (t.isOptionalMemberExpression(expr)) {\r\n      // Phase 2: Optional chaining (viewModel?.userEmail)\r\n      return extractOptionalChainBinding(expr);\r\n    } else if (t.isCallExpression(expr)) {\r\n      // Phase 1: Method calls (price.toFixed(2))\r\n      return extractMethodCallBinding(expr);\r\n    } else if (t.isBinaryExpression(expr) || t.isUnaryExpression(expr)) {\r\n      // Simple operations - extract all identifiers\r\n      const identifiers = [];\r\n      extractIdentifiers(expr, identifiers);\r\n      return identifiers.join('.');\r\n    } else if (t.isConditionalExpression(expr)) {\r\n      // Ternary expression: {isExpanded ? 'Hide' : 'Show'}\r\n      // Return special marker that will be processed into conditional template\r\n      return extractConditionalBinding(expr);\r\n    } else {\r\n      // Complex expression\r\n      return null;\r\n    }",
+      "parentContext": {
+        "functionName": "extractBinding",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42d26fd4",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(expr)",
+      "parentContext": {
+        "functionName": "extractBinding",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dc053a27",
+      "type": "ReturnStatement",
+      "babel_source": "return expr.name;",
+      "parentContext": {
+        "functionName": "extractBinding",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c477dd26",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(expr)",
+      "babel_source": "if (t.isMemberExpression(expr)) {\r\n      return buildMemberPath(expr);\r\n    } else if (t.isOptionalMemberExpression(expr)) {\r\n      // Phase 2: Optional chaining (viewModel?.userEmail)\r\n      return extractOptionalChainBinding(expr);\r\n    } else if (t.isCallExpression(expr)) {\r\n      // Phase 1: Method calls (price.toFixed(2))\r\n      return extractMethodCallBinding(expr);\r\n    } else if (t.isBinaryExpression(expr) || t.isUnaryExpression(expr)) {\r\n      // Simple operations - extract all identifiers\r\n      const identifiers = [];\r\n      extractIdentifiers(expr, identifiers);\r\n      return identifiers.join('.');\r\n    } else if (t.isConditionalExpression(expr)) {\r\n      // Ternary expression: {isExpanded ? 'Hide' : 'Show'}\r\n      // Return special marker that will be processed into conditional template\r\n      return extractConditionalBinding(expr);\r\n    } else {\r\n      // Complex expression\r\n      return null;\r\n    }",
+      "parentContext": {
+        "functionName": "extractBinding",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c8858c63",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(expr)",
+      "parentContext": {
+        "functionName": "extractBinding",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "555e4b1f",
+      "type": "ReturnStatement",
+      "babel_source": "return buildMemberPath(expr);",
+      "parentContext": {
+        "functionName": "extractBinding",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d0bb7e4f",
+      "type": "IfStatement",
+      "condition": "t.isOptionalMemberExpression(expr)",
+      "babel_source": "if (t.isOptionalMemberExpression(expr)) {\r\n      // Phase 2: Optional chaining (viewModel?.userEmail)\r\n      return extractOptionalChainBinding(expr);\r\n    } else if (t.isCallExpression(expr)) {\r\n      // Phase 1: Method calls (price.toFixed(2))\r\n      return extractMethodCallBinding(expr);\r\n    } else if (t.isBinaryExpression(expr) || t.isUnaryExpression(expr)) {\r\n      // Simple operations - extract all identifiers\r\n      const identifiers = [];\r\n      extractIdentifiers(expr, identifiers);\r\n      return identifiers.join('.');\r\n    } else if (t.isConditionalExpression(expr)) {\r\n      // Ternary expression: {isExpanded ? 'Hide' : 'Show'}\r\n      // Return special marker that will be processed into conditional template\r\n      return extractConditionalBinding(expr);\r\n    } else {\r\n      // Complex expression\r\n      return null;\r\n    }",
+      "parentContext": {
+        "functionName": "extractBinding",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "090c4d5a",
+      "type": "BabelTypeCheck",
+      "method": "isOptionalMemberExpression",
+      "babel_source": "t.isOptionalMemberExpression(expr)",
+      "parentContext": {
+        "functionName": "extractBinding",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "eacc8ebe",
+      "type": "ReturnStatement",
+      "babel_source": "return extractOptionalChainBinding(expr);",
+      "parentContext": {
+        "functionName": "extractBinding",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7170567c",
+      "type": "IfStatement",
+      "condition": "t.isCallExpression(expr)",
+      "babel_source": "if (t.isCallExpression(expr)) {\r\n      // Phase 1: Method calls (price.toFixed(2))\r\n      return extractMethodCallBinding(expr);\r\n    } else if (t.isBinaryExpression(expr) || t.isUnaryExpression(expr)) {\r\n      // Simple operations - extract all identifiers\r\n      const identifiers = [];\r\n      extractIdentifiers(expr, identifiers);\r\n      return identifiers.join('.');\r\n    } else if (t.isConditionalExpression(expr)) {\r\n      // Ternary expression: {isExpanded ? 'Hide' : 'Show'}\r\n      // Return special marker that will be processed into conditional template\r\n      return extractConditionalBinding(expr);\r\n    } else {\r\n      // Complex expression\r\n      return null;\r\n    }",
+      "parentContext": {
+        "functionName": "extractBinding",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "46479f62",
+      "type": "BabelTypeCheck",
+      "method": "isCallExpression",
+      "babel_source": "t.isCallExpression(expr)",
+      "parentContext": {
+        "functionName": "extractBinding",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5ceb3eba",
+      "type": "ReturnStatement",
+      "babel_source": "return extractMethodCallBinding(expr);",
+      "parentContext": {
+        "functionName": "extractBinding",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d243d7f1",
+      "type": "IfStatement",
+      "condition": "t.isBinaryExpression(expr) || t.isUnaryExpression(expr)",
+      "babel_source": "if (t.isBinaryExpression(expr) || t.isUnaryExpression(expr)) {\r\n      // Simple operations - extract all identifiers\r\n      const identifiers = [];\r\n      extractIdentifiers(expr, identifiers);\r\n      return identifiers.join('.');\r\n    } else if (t.isConditionalExpression(expr)) {\r\n      // Ternary expression: {isExpanded ? 'Hide' : 'Show'}\r\n      // Return special marker that will be processed into conditional template\r\n      return extractConditionalBinding(expr);\r\n    } else {\r\n      // Complex expression\r\n      return null;\r\n    }",
+      "parentContext": {
+        "functionName": "extractBinding",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bfd8d95d",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isBinaryExpression(expr) || t.isUnaryExpression(expr)",
+      "parentContext": {
+        "functionName": "extractBinding",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8db0ee56",
+      "type": "BabelTypeCheck",
+      "method": "isBinaryExpression",
+      "babel_source": "t.isBinaryExpression(expr)",
+      "parentContext": {
+        "functionName": "extractBinding",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4b2e045a",
+      "type": "BabelTypeCheck",
+      "method": "isUnaryExpression",
+      "babel_source": "t.isUnaryExpression(expr)",
+      "parentContext": {
+        "functionName": "extractBinding",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6b6132bd",
+      "type": "VariableDeclaration",
+      "babel_source": "const identifiers = [];",
+      "parentContext": {
+        "functionName": "extractBinding",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractBinding",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8458c2b4",
+      "type": "ReturnStatement",
+      "babel_source": "return identifiers.join('.');",
+      "parentContext": {
+        "functionName": "extractBinding",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7a2f2c56",
+      "type": "IfStatement",
+      "condition": "t.isConditionalExpression(expr)",
+      "babel_source": "if (t.isConditionalExpression(expr)) {\r\n      // Ternary expression: {isExpanded ? 'Hide' : 'Show'}\r\n      // Return special marker that will be processed into conditional template\r\n      return extractConditionalBinding(expr);\r\n    } else {\r\n      // Complex expression\r\n      return null;\r\n    }",
+      "parentContext": {
+        "functionName": "extractBinding",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5574ecc1",
+      "type": "BabelTypeCheck",
+      "method": "isConditionalExpression",
+      "babel_source": "t.isConditionalExpression(expr)",
+      "parentContext": {
+        "functionName": "extractBinding",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "226b92b3",
+      "type": "ReturnStatement",
+      "babel_source": "return extractConditionalBinding(expr);",
+      "parentContext": {
+        "functionName": "extractBinding",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractBinding",
+        "functionParams": [
+          "expr",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/templates.cjs"
+  ]
+}

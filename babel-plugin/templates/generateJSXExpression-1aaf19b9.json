@@ -1,0 +1,876 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateJSXExpression",
+  "params": [
+    {
+      "name": "expr",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    },
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "indent",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateJSXExpression(expr, component, indent) {\r\n  // Analyze dependencies\r\n  const deps = analyzeDependencies(expr, component);\r\n  const zone = classifyNode(deps);\r\n\r\n  // For hybrid zones, we need to split\r\n  if (zone === 'hybrid') {\r\n    return generateHybridExpression(expr, component, deps, indent);\r\n  }\r\n\r\n  // Add zone attribute if needed\r\n  const zoneAttr = zone === 'client'\r\n    ? 'data-minimact-client-scope'\r\n    : zone === 'server'\r\n      ? 'data-minimact-server-scope'\r\n      : '';\r\n\r\n  // Handle special JSX expression types\r\n  if (t.isConditionalExpression(expr)) {\r\n    // Ternary with JSX: condition ? <A/> : <B/>\r\n    // Force runtime helpers for JSX in conditionals\r\n    const condition = generateBooleanExpression(expr.test);\r\n    const consequent = t.isJSXElement(expr.consequent) || t.isJSXFragment(expr.consequent)\r\n      ? generateRuntimeHelperForJSXNode(expr.consequent, component, indent)\r\n      : generateCSharpExpression(expr.consequent, false); // Normal C# expression context\r\n\r\n    // Handle alternate - if null literal, use VNull with path\r\n    let alternate;\r\n    if (!expr.alternate || t.isNullLiteral(expr.alternate)) {\r\n      const exprPath = expr.__minimactPath || '';\r\n      alternate = `new VNull(\"${exprPath}\")`;\r\n    } else if (t.isJSXElement(expr.alternate) || t.isJSXFragment(expr.alternate)) {\r\n      alternate = generateRuntimeHelperForJSXNode(expr.alternate, component, indent);\r\n    } else {\r\n      alternate = generateCSharpExpression(expr.alternate, false); // Normal C# expression context\r\n    }\r\n\r\n    return `(${condition}) ? ${consequent} : ${alternate}`;\r\n  }\r\n\r\n  if (t.isLogicalExpression(expr) && expr.operator === '&&') {\r\n    // Short-circuit with JSX: condition && <Element/>\r\n    // Force runtime helpers for JSX in logical expressions\r\n    const left = generateBooleanExpression(expr.left);\r\n    const right = t.isJSXElement(expr.right) || t.isJSXFragment(expr.right)\r\n      ? generateRuntimeHelperForJSXNode(expr.right, component, indent)\r\n      : generateCSharpExpression(expr.right);\r\n    // Get path for VNull (use the expression container's path)\r\n    const exprPath = expr.__minimactPath || '';\r\n    return `(${left}) ? ${right} : new VNull(\"${exprPath}\")`;\r\n  }\r\n\r\n  if (t.isCallExpression(expr) &&\r\n      t.isMemberExpression(expr.callee) &&\r\n      t.isIdentifier(expr.callee.property, { name: 'map' })) {\r\n    // Array.map() with JSX callback\r\n    return generateMapExpression(expr, component, indent);\r\n  }\r\n\r\n  // Generate C# expression\r\n  return generateCSharpExpression(expr);\r\n}",
+  "body_templates": [
+    {
+      "hash": "8fa8821b",
+      "type": "VariableDeclaration",
+      "babel_source": "const deps = analyzeDependencies(expr, component);",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2a7d2529",
+      "type": "VariableDeclaration",
+      "babel_source": "const zone = classifyNode(deps);",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6e2a522c",
+      "type": "IfStatement",
+      "condition": "zone === 'hybrid'",
+      "babel_source": "if (zone === 'hybrid') {\r\n    return generateHybridExpression(expr, component, deps, indent);\r\n  }",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "97730ad2",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "zone === 'hybrid'",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3a09a581",
+      "type": "ReturnStatement",
+      "babel_source": "return generateHybridExpression(expr, component, deps, indent);",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "523f6700",
+      "type": "VariableDeclaration",
+      "babel_source": "const zoneAttr = zone === 'client'\r\n    ? 'data-minimact-client-scope'\r\n    : zone === 'server'\r\n      ? 'data-minimact-server-scope'\r\n      : '';",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "78e8921c",
+      "type": "ConditionalExpression",
+      "babel_source": "zone === 'client'\r\n    ? 'data-minimact-client-scope'\r\n    : zone === 'server'\r\n      ? 'data-minimact-server-scope'\r\n      : ''",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dcf318b7",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "zone === 'client'",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cccb9fe8",
+      "type": "ConditionalExpression",
+      "babel_source": "zone === 'server'\r\n      ? 'data-minimact-server-scope'\r\n      : ''",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "221df54b",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "zone === 'server'",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f39222b6",
+      "type": "IfStatement",
+      "condition": "t.isConditionalExpression(expr)",
+      "babel_source": "if (t.isConditionalExpression(expr)) {\r\n    // Ternary with JSX: condition ? <A/> : <B/>\r\n    // Force runtime helpers for JSX in conditionals\r\n    const condition = generateBooleanExpression(expr.test);\r\n    const consequent = t.isJSXElement(expr.consequent) || t.isJSXFragment(expr.consequent)\r\n      ? generateRuntimeHelperForJSXNode(expr.consequent, component, indent)\r\n      : generateCSharpExpression(expr.consequent, false); // Normal C# expression context\r\n\r\n    // Handle alternate - if null literal, use VNull with path\r\n    let alternate;\r\n    if (!expr.alternate || t.isNullLiteral(expr.alternate)) {\r\n      const exprPath = expr.__minimactPath || '';\r\n      alternate = `new VNull(\"${exprPath}\")`;\r\n    } else if (t.isJSXElement(expr.alternate) || t.isJSXFragment(expr.alternate)) {\r\n      alternate = generateRuntimeHelperForJSXNode(expr.alternate, component, indent);\r\n    } else {\r\n      alternate = generateCSharpExpression(expr.alternate, false); // Normal C# expression context\r\n    }\r\n\r\n    return `(${condition}) ? ${consequent} : ${alternate}`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5574ecc1",
+      "type": "BabelTypeCheck",
+      "method": "isConditionalExpression",
+      "babel_source": "t.isConditionalExpression(expr)",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a1d065bd",
+      "type": "VariableDeclaration",
+      "babel_source": "const condition = generateBooleanExpression(expr.test);",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6119c088",
+      "type": "VariableDeclaration",
+      "babel_source": "const consequent = t.isJSXElement(expr.consequent) || t.isJSXFragment(expr.consequent)\r\n      ? generateRuntimeHelperForJSXNode(expr.consequent, component, indent)\r\n      : generateCSharpExpression(expr.consequent, false);",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9d945796",
+      "type": "ConditionalExpression",
+      "babel_source": "t.isJSXElement(expr.consequent) || t.isJSXFragment(expr.consequent)\r\n      ? generateRuntimeHelperForJSXNode(expr.consequent, component, indent)\r\n      : generateCSharpExpression(expr.consequent, false)",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4a438690",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isJSXElement(expr.consequent) || t.isJSXFragment(expr.consequent)",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fe57f7c7",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(expr.consequent)",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7367ca38",
+      "type": "BabelTypeCheck",
+      "method": "isJSXFragment",
+      "babel_source": "t.isJSXFragment(expr.consequent)",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7343feee",
+      "type": "VariableDeclaration",
+      "babel_source": "let alternate;",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f2082263",
+      "type": "IfStatement",
+      "condition": "!expr.alternate || t.isNullLiteral(expr.alternate)",
+      "babel_source": "if (!expr.alternate || t.isNullLiteral(expr.alternate)) {\r\n      const exprPath = expr.__minimactPath || '';\r\n      alternate = `new VNull(\"${exprPath}\")`;\r\n    } else if (t.isJSXElement(expr.alternate) || t.isJSXFragment(expr.alternate)) {\r\n      alternate = generateRuntimeHelperForJSXNode(expr.alternate, component, indent);\r\n    } else {\r\n      alternate = generateCSharpExpression(expr.alternate, false); // Normal C# expression context\r\n    }",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "79f2d1b8",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "!expr.alternate || t.isNullLiteral(expr.alternate)",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2781b663",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!expr.alternate",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "66998acf",
+      "type": "BabelTypeCheck",
+      "method": "isNullLiteral",
+      "babel_source": "t.isNullLiteral(expr.alternate)",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "92b8f913",
+      "type": "VariableDeclaration",
+      "babel_source": "const exprPath = expr.__minimactPath || '';",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d701b83f",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "expr.__minimactPath || ''",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c64e5769",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "alternate = `new VNull(\"${exprPath}\")`",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b4012b95",
+      "type": "TemplateLiteral",
+      "babel_source": "`new VNull(\"${exprPath}\")`",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d9a2e385",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(expr.alternate) || t.isJSXFragment(expr.alternate)",
+      "babel_source": "if (t.isJSXElement(expr.alternate) || t.isJSXFragment(expr.alternate)) {\r\n      alternate = generateRuntimeHelperForJSXNode(expr.alternate, component, indent);\r\n    } else {\r\n      alternate = generateCSharpExpression(expr.alternate, false); // Normal C# expression context\r\n    }",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "85c188f0",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isJSXElement(expr.alternate) || t.isJSXFragment(expr.alternate)",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8d091804",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(expr.alternate)",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1bc44162",
+      "type": "BabelTypeCheck",
+      "method": "isJSXFragment",
+      "babel_source": "t.isJSXFragment(expr.alternate)",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b613b17c",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "alternate = generateRuntimeHelperForJSXNode(expr.alternate, component, indent)",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ca7227ab",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "alternate = generateCSharpExpression(expr.alternate, false)",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d37367f3",
+      "type": "ReturnStatement",
+      "babel_source": "return `(${condition}) ? ${consequent} : ${alternate}`;",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "44d4a7e8",
+      "type": "TemplateLiteral",
+      "babel_source": "`(${condition}) ? ${consequent} : ${alternate}`",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "90c8a1cc",
+      "type": "IfStatement",
+      "condition": "t.isLogicalExpression(expr) && expr.operator === '&&'",
+      "babel_source": "if (t.isLogicalExpression(expr) && expr.operator === '&&') {\r\n    // Short-circuit with JSX: condition && <Element/>\r\n    // Force runtime helpers for JSX in logical expressions\r\n    const left = generateBooleanExpression(expr.left);\r\n    const right = t.isJSXElement(expr.right) || t.isJSXFragment(expr.right)\r\n      ? generateRuntimeHelperForJSXNode(expr.right, component, indent)\r\n      : generateCSharpExpression(expr.right);\r\n    // Get path for VNull (use the expression container's path)\r\n    const exprPath = expr.__minimactPath || '';\r\n    return `(${left}) ? ${right} : new VNull(\"${exprPath}\")`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "295b4c4d",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isLogicalExpression(expr) && expr.operator === '&&'",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c20dd732",
+      "type": "BabelTypeCheck",
+      "method": "isLogicalExpression",
+      "babel_source": "t.isLogicalExpression(expr)",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "312ae3e2",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "expr.operator === '&&'",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2b492b48",
+      "type": "VariableDeclaration",
+      "babel_source": "const left = generateBooleanExpression(expr.left);",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "710c8b9d",
+      "type": "VariableDeclaration",
+      "babel_source": "const right = t.isJSXElement(expr.right) || t.isJSXFragment(expr.right)\r\n      ? generateRuntimeHelperForJSXNode(expr.right, component, indent)\r\n      : generateCSharpExpression(expr.right);",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b00f3a47",
+      "type": "ConditionalExpression",
+      "babel_source": "t.isJSXElement(expr.right) || t.isJSXFragment(expr.right)\r\n      ? generateRuntimeHelperForJSXNode(expr.right, component, indent)\r\n      : generateCSharpExpression(expr.right)",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e01c732e",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isJSXElement(expr.right) || t.isJSXFragment(expr.right)",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bd996365",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(expr.right)",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e9fbc5da",
+      "type": "BabelTypeCheck",
+      "method": "isJSXFragment",
+      "babel_source": "t.isJSXFragment(expr.right)",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "92b8f913",
+      "type": "VariableDeclaration",
+      "babel_source": "const exprPath = expr.__minimactPath || '';",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d701b83f",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "expr.__minimactPath || ''",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0f6494aa",
+      "type": "ReturnStatement",
+      "babel_source": "return `(${left}) ? ${right} : new VNull(\"${exprPath}\")`;",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "849c5220",
+      "type": "TemplateLiteral",
+      "babel_source": "`(${left}) ? ${right} : new VNull(\"${exprPath}\")`",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d529f43e",
+      "type": "IfStatement",
+      "condition": "t.isCallExpression(expr) &&\r\n      t.isMemberExpression(expr.callee) &&\r\n      t.isIdentifier(expr.callee.property, { name: 'map' })",
+      "babel_source": "if (t.isCallExpression(expr) &&\r\n      t.isMemberExpression(expr.callee) &&\r\n      t.isIdentifier(expr.callee.property, { name: 'map' })) {\r\n    // Array.map() with JSX callback\r\n    return generateMapExpression(expr, component, indent);\r\n  }",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9e127e81",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isCallExpression(expr) &&\r\n      t.isMemberExpression(expr.callee) &&\r\n      t.isIdentifier(expr.callee.property, { name: 'map' })",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "33d81c33",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isCallExpression(expr) &&\r\n      t.isMemberExpression(expr.callee)",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "46479f62",
+      "type": "BabelTypeCheck",
+      "method": "isCallExpression",
+      "babel_source": "t.isCallExpression(expr)",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d6c41024",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(expr.callee)",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3ae7e467",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(expr.callee.property, { name: 'map' })",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "66886116",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'map' }",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c77d2006",
+      "type": "ReturnStatement",
+      "babel_source": "return generateMapExpression(expr, component, indent);",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a8a7a0a6",
+      "type": "ReturnStatement",
+      "babel_source": "return generateCSharpExpression(expr);",
+      "parentContext": {
+        "functionName": "generateJSXExpression",
+        "functionParams": [
+          "expr",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/expressions.cjs"
+  ]
+}

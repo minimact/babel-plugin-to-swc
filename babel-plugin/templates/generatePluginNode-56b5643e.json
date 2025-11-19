@@ -1,0 +1,116 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generatePluginNode",
+  "params": [
+    {
+      "name": "pluginMetadata",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "componentState",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generatePluginNode(pluginMetadata, componentState) {\r\n  const { pluginName, stateBinding, version } = pluginMetadata;\r\n\r\n  // Generate state expression\r\n  const stateCode = generateStateExpression(stateBinding, componentState);\r\n\r\n  // Generate PluginNode constructor call\r\n  if (version) {\r\n    // Future: Support version-specific plugin loading\r\n    // For now, version is informational only\r\n    return `new PluginNode(\"${pluginName}\", ${stateCode}) /* v${version} */`;\r\n  }\r\n\r\n  return `new PluginNode(\"${pluginName}\", ${stateCode})`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "e7cf9c59",
+      "type": "VariableDeclaration",
+      "babel_source": "const { pluginName, stateBinding, version } = pluginMetadata;",
+      "parentContext": {
+        "functionName": "generatePluginNode",
+        "functionParams": [
+          "pluginMetadata",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "aa1375a3",
+      "type": "VariableDeclaration",
+      "babel_source": "const stateCode = generateStateExpression(stateBinding, componentState);",
+      "parentContext": {
+        "functionName": "generatePluginNode",
+        "functionParams": [
+          "pluginMetadata",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fd52bc99",
+      "type": "IfStatement",
+      "condition": "version",
+      "babel_source": "if (version) {\r\n    // Future: Support version-specific plugin loading\r\n    // For now, version is informational only\r\n    return `new PluginNode(\"${pluginName}\", ${stateCode}) /* v${version} */`;\r\n  }",
+      "parentContext": {
+        "functionName": "generatePluginNode",
+        "functionParams": [
+          "pluginMetadata",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "59d7d128",
+      "type": "ReturnStatement",
+      "babel_source": "return `new PluginNode(\"${pluginName}\", ${stateCode}) /* v${version} */`;",
+      "parentContext": {
+        "functionName": "generatePluginNode",
+        "functionParams": [
+          "pluginMetadata",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b2f32a1a",
+      "type": "TemplateLiteral",
+      "babel_source": "`new PluginNode(\"${pluginName}\", ${stateCode}) /* v${version} */`",
+      "parentContext": {
+        "functionName": "generatePluginNode",
+        "functionParams": [
+          "pluginMetadata",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1b7547e6",
+      "type": "ReturnStatement",
+      "babel_source": "return `new PluginNode(\"${pluginName}\", ${stateCode})`;",
+      "parentContext": {
+        "functionName": "generatePluginNode",
+        "functionParams": [
+          "pluginMetadata",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7e744587",
+      "type": "TemplateLiteral",
+      "babel_source": "`new PluginNode(\"${pluginName}\", ${stateCode})`",
+      "parentContext": {
+        "functionName": "generatePluginNode",
+        "functionParams": [
+          "pluginMetadata",
+          "componentState"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/plugin.cjs"
+  ]
+}

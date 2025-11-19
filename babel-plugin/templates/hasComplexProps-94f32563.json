@@ -1,0 +1,245 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "hasComplexProps",
+  "params": [
+    {
+      "name": "attributes",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "bool",
+  "babel_source": "function hasComplexProps(attributes) {\r\n  return attributes.some(attr => {\r\n    if (!t.isJSXAttribute(attr)) return false;\r\n    const value = attr.value;\r\n\r\n    if (!t.isJSXExpressionContainer(value)) return false;\r\n    const expr = value.expression;\r\n\r\n    // Check for conditional spread: {...(condition && { prop: value })}\r\n    if (t.isConditionalExpression(expr) || t.isLogicalExpression(expr)) {\r\n      return true;\r\n    }\r\n\r\n    return false;\r\n  });\r\n}",
+  "body_templates": [
+    {
+      "hash": "3a822154",
+      "type": "ReturnStatement",
+      "babel_source": "return attributes.some(attr => {\r\n    if (!t.isJSXAttribute(attr)) return false;\r\n    const value = attr.value;\r\n\r\n    if (!t.isJSXExpressionContainer(value)) return false;\r\n    const expr = value.expression;\r\n\r\n    // Check for conditional spread: {...(condition && { prop: value })}\r\n    if (t.isConditionalExpression(expr) || t.isLogicalExpression(expr)) {\r\n      return true;\r\n    }\r\n\r\n    return false;\r\n  });",
+      "parentContext": {
+        "functionName": "hasComplexProps",
+        "functionParams": [
+          "attributes"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "01ed498b",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "attr => {\r\n    if (!t.isJSXAttribute(attr)) return false;\r\n    const value = attr.value;\r\n\r\n    if (!t.isJSXExpressionContainer(value)) return false;\r\n    const expr = value.expression;\r\n\r\n    // Check for conditional spread: {...(condition && { prop: value })}\r\n    if (t.isConditionalExpression(expr) || t.isLogicalExpression(expr)) {\r\n      return true;\r\n    }\r\n\r\n    return false;\r\n  }",
+      "parentContext": {
+        "functionName": "hasComplexProps",
+        "functionParams": [
+          "attributes"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "586a7b62",
+      "type": "IfStatement",
+      "condition": "!t.isJSXAttribute(attr)",
+      "babel_source": "if (!t.isJSXAttribute(attr)) return false;",
+      "parentContext": {
+        "functionName": "hasComplexProps",
+        "functionParams": [
+          "attributes"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bb6c8d4f",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isJSXAttribute(attr)",
+      "parentContext": {
+        "functionName": "hasComplexProps",
+        "functionParams": [
+          "attributes"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7468026c",
+      "type": "BabelTypeCheck",
+      "method": "isJSXAttribute",
+      "babel_source": "t.isJSXAttribute(attr)",
+      "parentContext": {
+        "functionName": "hasComplexProps",
+        "functionParams": [
+          "attributes"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dabbdf16",
+      "type": "ReturnStatement",
+      "babel_source": "return false;",
+      "parentContext": {
+        "functionName": "hasComplexProps",
+        "functionParams": [
+          "attributes"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a2fae401",
+      "type": "VariableDeclaration",
+      "babel_source": "const value = attr.value;",
+      "parentContext": {
+        "functionName": "hasComplexProps",
+        "functionParams": [
+          "attributes"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8e87f2c9",
+      "type": "IfStatement",
+      "condition": "!t.isJSXExpressionContainer(value)",
+      "babel_source": "if (!t.isJSXExpressionContainer(value)) return false;",
+      "parentContext": {
+        "functionName": "hasComplexProps",
+        "functionParams": [
+          "attributes"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9cfddb10",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isJSXExpressionContainer(value)",
+      "parentContext": {
+        "functionName": "hasComplexProps",
+        "functionParams": [
+          "attributes"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "846bea62",
+      "type": "BabelTypeCheck",
+      "method": "isJSXExpressionContainer",
+      "babel_source": "t.isJSXExpressionContainer(value)",
+      "parentContext": {
+        "functionName": "hasComplexProps",
+        "functionParams": [
+          "attributes"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dabbdf16",
+      "type": "ReturnStatement",
+      "babel_source": "return false;",
+      "parentContext": {
+        "functionName": "hasComplexProps",
+        "functionParams": [
+          "attributes"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "77208ca7",
+      "type": "VariableDeclaration",
+      "babel_source": "const expr = value.expression;",
+      "parentContext": {
+        "functionName": "hasComplexProps",
+        "functionParams": [
+          "attributes"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "50ae77d7",
+      "type": "IfStatement",
+      "condition": "t.isConditionalExpression(expr) || t.isLogicalExpression(expr)",
+      "babel_source": "if (t.isConditionalExpression(expr) || t.isLogicalExpression(expr)) {\r\n      return true;\r\n    }",
+      "parentContext": {
+        "functionName": "hasComplexProps",
+        "functionParams": [
+          "attributes"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1a0e00de",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isConditionalExpression(expr) || t.isLogicalExpression(expr)",
+      "parentContext": {
+        "functionName": "hasComplexProps",
+        "functionParams": [
+          "attributes"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5574ecc1",
+      "type": "BabelTypeCheck",
+      "method": "isConditionalExpression",
+      "babel_source": "t.isConditionalExpression(expr)",
+      "parentContext": {
+        "functionName": "hasComplexProps",
+        "functionParams": [
+          "attributes"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c20dd732",
+      "type": "BabelTypeCheck",
+      "method": "isLogicalExpression",
+      "babel_source": "t.isLogicalExpression(expr)",
+      "parentContext": {
+        "functionName": "hasComplexProps",
+        "functionParams": [
+          "attributes"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "10e0fa08",
+      "type": "ReturnStatement",
+      "babel_source": "return true;",
+      "parentContext": {
+        "functionName": "hasComplexProps",
+        "functionParams": [
+          "attributes"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dabbdf16",
+      "type": "ReturnStatement",
+      "babel_source": "return false;",
+      "parentContext": {
+        "functionName": "hasComplexProps",
+        "functionParams": [
+          "attributes"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/detection.cjs"
+  ]
+}

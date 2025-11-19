@@ -1,0 +1,457 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateCSharpFromExpression",
+  "params": [
+    {
+      "name": "expr",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    },
+    {
+      "name": "paramName",
+      "inferredType": "&str",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateCSharpFromExpression(expr, paramName) {\r\n  if (t.isIdentifier(expr)) {\r\n    return expr.name === paramName || expr.name === 'v' ? 'v' : expr.name;\r\n  }\r\n\r\n  if (t.isStringLiteral(expr)) {\r\n    return `\"${expr.value}\"`;\r\n  }\r\n\r\n  if (t.isNumericLiteral(expr)) {\r\n    return expr.value.toString();\r\n  }\r\n\r\n  if (t.isBooleanLiteral(expr)) {\r\n    return expr.value ? 'true' : 'false';\r\n  }\r\n\r\n  if (t.isMemberExpression(expr)) {\r\n    return generateCSharpFromMemberExpression(expr, paramName);\r\n  }\r\n\r\n  if (t.isCallExpression(expr)) {\r\n    return generateCSharpFromMethodCall(expr, paramName);\r\n  }\r\n\r\n  if (t.isBinaryExpression(expr)) {\r\n    const left = generateCSharpFromExpression(expr.left, paramName);\r\n    const right = generateCSharpFromExpression(expr.right, paramName);\r\n    const operator = expr.operator;\r\n    return `${left} ${operator} ${right}`;\r\n  }\r\n\r\n  return 'null';\r\n}",
+  "body_templates": [
+    {
+      "hash": "bc1a8d96",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(expr)",
+      "babel_source": "if (t.isIdentifier(expr)) {\r\n    return expr.name === paramName || expr.name === 'v' ? 'v' : expr.name;\r\n  }",
+      "parentContext": {
+        "functionName": "generateCSharpFromExpression",
+        "functionParams": [
+          "expr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42d26fd4",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(expr)",
+      "parentContext": {
+        "functionName": "generateCSharpFromExpression",
+        "functionParams": [
+          "expr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e61c8183",
+      "type": "ReturnStatement",
+      "babel_source": "return expr.name === paramName || expr.name === 'v' ? 'v' : expr.name;",
+      "parentContext": {
+        "functionName": "generateCSharpFromExpression",
+        "functionParams": [
+          "expr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d53ef65a",
+      "type": "ConditionalExpression",
+      "babel_source": "expr.name === paramName || expr.name === 'v' ? 'v' : expr.name",
+      "parentContext": {
+        "functionName": "generateCSharpFromExpression",
+        "functionParams": [
+          "expr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bc345b82",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "expr.name === paramName || expr.name === 'v'",
+      "parentContext": {
+        "functionName": "generateCSharpFromExpression",
+        "functionParams": [
+          "expr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2d61e04f",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "expr.name === paramName",
+      "parentContext": {
+        "functionName": "generateCSharpFromExpression",
+        "functionParams": [
+          "expr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "35e843de",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "expr.name === 'v'",
+      "parentContext": {
+        "functionName": "generateCSharpFromExpression",
+        "functionParams": [
+          "expr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c8cd8430",
+      "type": "IfStatement",
+      "condition": "t.isStringLiteral(expr)",
+      "babel_source": "if (t.isStringLiteral(expr)) {\r\n    return `\"${expr.value}\"`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateCSharpFromExpression",
+        "functionParams": [
+          "expr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "81d695ea",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(expr)",
+      "parentContext": {
+        "functionName": "generateCSharpFromExpression",
+        "functionParams": [
+          "expr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c5e37a59",
+      "type": "ReturnStatement",
+      "babel_source": "return `\"${expr.value}\"`;",
+      "parentContext": {
+        "functionName": "generateCSharpFromExpression",
+        "functionParams": [
+          "expr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b863bcfa",
+      "type": "TemplateLiteral",
+      "babel_source": "`\"${expr.value}\"`",
+      "parentContext": {
+        "functionName": "generateCSharpFromExpression",
+        "functionParams": [
+          "expr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "deda041c",
+      "type": "IfStatement",
+      "condition": "t.isNumericLiteral(expr)",
+      "babel_source": "if (t.isNumericLiteral(expr)) {\r\n    return expr.value.toString();\r\n  }",
+      "parentContext": {
+        "functionName": "generateCSharpFromExpression",
+        "functionParams": [
+          "expr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bed165a3",
+      "type": "BabelTypeCheck",
+      "method": "isNumericLiteral",
+      "babel_source": "t.isNumericLiteral(expr)",
+      "parentContext": {
+        "functionName": "generateCSharpFromExpression",
+        "functionParams": [
+          "expr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c35b8ca5",
+      "type": "ReturnStatement",
+      "babel_source": "return expr.value.toString();",
+      "parentContext": {
+        "functionName": "generateCSharpFromExpression",
+        "functionParams": [
+          "expr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2a9b7d87",
+      "type": "IfStatement",
+      "condition": "t.isBooleanLiteral(expr)",
+      "babel_source": "if (t.isBooleanLiteral(expr)) {\r\n    return expr.value ? 'true' : 'false';\r\n  }",
+      "parentContext": {
+        "functionName": "generateCSharpFromExpression",
+        "functionParams": [
+          "expr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b9190750",
+      "type": "BabelTypeCheck",
+      "method": "isBooleanLiteral",
+      "babel_source": "t.isBooleanLiteral(expr)",
+      "parentContext": {
+        "functionName": "generateCSharpFromExpression",
+        "functionParams": [
+          "expr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "03e810a4",
+      "type": "ReturnStatement",
+      "babel_source": "return expr.value ? 'true' : 'false';",
+      "parentContext": {
+        "functionName": "generateCSharpFromExpression",
+        "functionParams": [
+          "expr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3a5b258a",
+      "type": "ConditionalExpression",
+      "babel_source": "expr.value ? 'true' : 'false'",
+      "parentContext": {
+        "functionName": "generateCSharpFromExpression",
+        "functionParams": [
+          "expr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "204dd2df",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(expr)",
+      "babel_source": "if (t.isMemberExpression(expr)) {\r\n    return generateCSharpFromMemberExpression(expr, paramName);\r\n  }",
+      "parentContext": {
+        "functionName": "generateCSharpFromExpression",
+        "functionParams": [
+          "expr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c8858c63",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(expr)",
+      "parentContext": {
+        "functionName": "generateCSharpFromExpression",
+        "functionParams": [
+          "expr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "91d83923",
+      "type": "ReturnStatement",
+      "babel_source": "return generateCSharpFromMemberExpression(expr, paramName);",
+      "parentContext": {
+        "functionName": "generateCSharpFromExpression",
+        "functionParams": [
+          "expr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2b56a838",
+      "type": "IfStatement",
+      "condition": "t.isCallExpression(expr)",
+      "babel_source": "if (t.isCallExpression(expr)) {\r\n    return generateCSharpFromMethodCall(expr, paramName);\r\n  }",
+      "parentContext": {
+        "functionName": "generateCSharpFromExpression",
+        "functionParams": [
+          "expr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "46479f62",
+      "type": "BabelTypeCheck",
+      "method": "isCallExpression",
+      "babel_source": "t.isCallExpression(expr)",
+      "parentContext": {
+        "functionName": "generateCSharpFromExpression",
+        "functionParams": [
+          "expr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "16ba67ec",
+      "type": "ReturnStatement",
+      "babel_source": "return generateCSharpFromMethodCall(expr, paramName);",
+      "parentContext": {
+        "functionName": "generateCSharpFromExpression",
+        "functionParams": [
+          "expr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6d5c24e0",
+      "type": "IfStatement",
+      "condition": "t.isBinaryExpression(expr)",
+      "babel_source": "if (t.isBinaryExpression(expr)) {\r\n    const left = generateCSharpFromExpression(expr.left, paramName);\r\n    const right = generateCSharpFromExpression(expr.right, paramName);\r\n    const operator = expr.operator;\r\n    return `${left} ${operator} ${right}`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateCSharpFromExpression",
+        "functionParams": [
+          "expr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8db0ee56",
+      "type": "BabelTypeCheck",
+      "method": "isBinaryExpression",
+      "babel_source": "t.isBinaryExpression(expr)",
+      "parentContext": {
+        "functionName": "generateCSharpFromExpression",
+        "functionParams": [
+          "expr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9d41c27c",
+      "type": "VariableDeclaration",
+      "babel_source": "const left = generateCSharpFromExpression(expr.left, paramName);",
+      "parentContext": {
+        "functionName": "generateCSharpFromExpression",
+        "functionParams": [
+          "expr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "644d2a5b",
+      "type": "VariableDeclaration",
+      "babel_source": "const right = generateCSharpFromExpression(expr.right, paramName);",
+      "parentContext": {
+        "functionName": "generateCSharpFromExpression",
+        "functionParams": [
+          "expr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0463d3f6",
+      "type": "VariableDeclaration",
+      "babel_source": "const operator = expr.operator;",
+      "parentContext": {
+        "functionName": "generateCSharpFromExpression",
+        "functionParams": [
+          "expr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "06f3a837",
+      "type": "ReturnStatement",
+      "babel_source": "return `${left} ${operator} ${right}`;",
+      "parentContext": {
+        "functionName": "generateCSharpFromExpression",
+        "functionParams": [
+          "expr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f4fdaca8",
+      "type": "TemplateLiteral",
+      "babel_source": "`${left} ${operator} ${right}`",
+      "parentContext": {
+        "functionName": "generateCSharpFromExpression",
+        "functionParams": [
+          "expr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e6caf818",
+      "type": "ReturnStatement",
+      "babel_source": "return 'null';",
+      "parentContext": {
+        "functionName": "generateCSharpFromExpression",
+        "functionParams": [
+          "expr",
+          "paramName"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/useStateX.cjs"
+  ]
+}

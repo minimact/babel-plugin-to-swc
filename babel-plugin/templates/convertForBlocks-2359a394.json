@@ -1,0 +1,205 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "convertForBlocks",
+  "params": [
+    {
+      "name": "markdown",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function convertForBlocks(markdown) {\r\n  // Pattern: @for ( var indexVar = start; indexVar <= end; indexVar++ ) { body }\r\n  // Using [\\s\\S] to match any character including newlines\r\n  // End can be either a number or a variable name\r\n  const forPattern = /@for\\s*\\(\\s*var\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s*=\\s*(\\d+)\\s*;\\s*\\1\\s*<=?\\s*([a-zA-Z_0-9][a-zA-Z0-9_.]*)\\s*;\\s*\\1\\+\\+\\s*\\)\\s*\\{([\\s\\S]*?)\\}/g;\r\n\r\n  return markdown.replace(forPattern, (match, indexVar, start, end, body) => {\r\n    const bodyTrimmed = body.trim();\r\n    const convertedBody = convertNestedRazor(bodyTrimmed, indexVar);\r\n\r\n    // Enumerable.Range(start, count) where count = end - start + 1\r\n    // But if end is a variable, we need: Enumerable.Range(start, end - start + 1)\r\n    const isEndNumeric = /^\\d+$/.test(end);\r\n    const count = isEndNumeric\r\n      ? (parseInt(end) - parseInt(start) + 1).toString()\r\n      : `${end} - ${start} + 1`;\r\n\r\n    return `{string.Join(\"\\\\n\", Enumerable.Range(${start}, ${count}).Select(${indexVar} => $@\"${convertedBody}\"))}`;\r\n  });\r\n}",
+  "body_templates": [
+    {
+      "hash": "f6343bd8",
+      "type": "VariableDeclaration",
+      "babel_source": "const forPattern = /@for\\s*\\(\\s*var\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s*=\\s*(\\d+)\\s*;\\s*\\1\\s*<=?\\s*([a-zA-Z_0-9][a-zA-Z0-9_.]*)\\s*;\\s*\\1\\+\\+\\s*\\)\\s*\\{([\\s\\S]*?)\\}/g;",
+      "parentContext": {
+        "functionName": "convertForBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7e2f1ae6",
+      "type": "RegExpLiteral",
+      "pattern": "@for\\s*\\(\\s*var\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s*=\\s*(\\d+)\\s*;\\s*\\1\\s*<=?\\s*([a-zA-Z_0-9][a-zA-Z0-9_.]*)\\s*;\\s*\\1\\+\\+\\s*\\)\\s*\\{([\\s\\S]*?)\\}",
+      "flags": "g",
+      "babel_source": "/@for\\s*\\(\\s*var\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s*=\\s*(\\d+)\\s*;\\s*\\1\\s*<=?\\s*([a-zA-Z_0-9][a-zA-Z0-9_.]*)\\s*;\\s*\\1\\+\\+\\s*\\)\\s*\\{([\\s\\S]*?)\\}/g",
+      "parentContext": {
+        "functionName": "convertForBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "884314c9",
+      "type": "ReturnStatement",
+      "babel_source": "return markdown.replace(forPattern, (match, indexVar, start, end, body) => {\r\n    const bodyTrimmed = body.trim();\r\n    const convertedBody = convertNestedRazor(bodyTrimmed, indexVar);\r\n\r\n    // Enumerable.Range(start, count) where count = end - start + 1\r\n    // But if end is a variable, we need: Enumerable.Range(start, end - start + 1)\r\n    const isEndNumeric = /^\\d+$/.test(end);\r\n    const count = isEndNumeric\r\n      ? (parseInt(end) - parseInt(start) + 1).toString()\r\n      : `${end} - ${start} + 1`;\r\n\r\n    return `{string.Join(\"\\\\n\", Enumerable.Range(${start}, ${count}).Select(${indexVar} => $@\"${convertedBody}\"))}`;\r\n  });",
+      "parentContext": {
+        "functionName": "convertForBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "523e2a9a",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "(match, indexVar, start, end, body) => {\r\n    const bodyTrimmed = body.trim();\r\n    const convertedBody = convertNestedRazor(bodyTrimmed, indexVar);\r\n\r\n    // Enumerable.Range(start, count) where count = end - start + 1\r\n    // But if end is a variable, we need: Enumerable.Range(start, end - start + 1)\r\n    const isEndNumeric = /^\\d+$/.test(end);\r\n    const count = isEndNumeric\r\n      ? (parseInt(end) - parseInt(start) + 1).toString()\r\n      : `${end} - ${start} + 1`;\r\n\r\n    return `{string.Join(\"\\\\n\", Enumerable.Range(${start}, ${count}).Select(${indexVar} => $@\"${convertedBody}\"))}`;\r\n  }",
+      "parentContext": {
+        "functionName": "convertForBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "21cfe318",
+      "type": "VariableDeclaration",
+      "babel_source": "const bodyTrimmed = body.trim();",
+      "parentContext": {
+        "functionName": "convertForBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d28b946a",
+      "type": "VariableDeclaration",
+      "babel_source": "const convertedBody = convertNestedRazor(bodyTrimmed, indexVar);",
+      "parentContext": {
+        "functionName": "convertForBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f9a5f883",
+      "type": "VariableDeclaration",
+      "babel_source": "const isEndNumeric = /^\\d+$/.test(end);",
+      "parentContext": {
+        "functionName": "convertForBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b4a4eea5",
+      "type": "RegExpLiteral",
+      "pattern": "^\\d+$",
+      "flags": "",
+      "babel_source": "/^\\d+$/",
+      "parentContext": {
+        "functionName": "convertForBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "89a4fe08",
+      "type": "VariableDeclaration",
+      "babel_source": "const count = isEndNumeric\r\n      ? (parseInt(end) - parseInt(start) + 1).toString()\r\n      : `${end} - ${start} + 1`;",
+      "parentContext": {
+        "functionName": "convertForBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "46d030dd",
+      "type": "ConditionalExpression",
+      "babel_source": "isEndNumeric\r\n      ? (parseInt(end) - parseInt(start) + 1).toString()\r\n      : `${end} - ${start} + 1`",
+      "parentContext": {
+        "functionName": "convertForBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0de1a499",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "parseInt(end) - parseInt(start) + 1",
+      "parentContext": {
+        "functionName": "convertForBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "73413911",
+      "type": "BinaryExpression",
+      "operator": "-",
+      "babel_source": "parseInt(end) - parseInt(start)",
+      "parentContext": {
+        "functionName": "convertForBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c3556a5f",
+      "type": "TemplateLiteral",
+      "babel_source": "`${end} - ${start} + 1`",
+      "parentContext": {
+        "functionName": "convertForBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "77864af9",
+      "type": "ReturnStatement",
+      "babel_source": "return `{string.Join(\"\\\\n\", Enumerable.Range(${start}, ${count}).Select(${indexVar} => $@\"${convertedBody}\"))}`;",
+      "parentContext": {
+        "functionName": "convertForBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f1493eb6",
+      "type": "TemplateLiteral",
+      "babel_source": "`{string.Join(\"\\\\n\", Enumerable.Range(${start}, ${count}).Select(${indexVar} => $@\"${convertedBody}\"))}`",
+      "parentContext": {
+        "functionName": "convertForBlocks",
+        "functionParams": [
+          "markdown"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/razorMarkdown.cjs"
+  ]
+}

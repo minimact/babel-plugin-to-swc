@@ -1,0 +1,105 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "getDefaultValue",
+  "params": [
+    {
+      "name": "csharpType",
+      "inferredType": "&TsType",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function getDefaultValue(csharpType) {\r\n  const defaults = {\r\n    'int': '0',\r\n    'bool': 'false',\r\n    'string': '\"\"',\r\n    'dynamic': 'null',\r\n    'object': 'null'\r\n  };\r\n\r\n  // Handle List types\r\n  if (csharpType.startsWith('List<')) {\r\n    return `new ${csharpType}()`;\r\n  }\r\n\r\n  return defaults[csharpType] || 'null';\r\n}",
+  "body_templates": [
+    {
+      "hash": "12e98a41",
+      "type": "VariableDeclaration",
+      "babel_source": "const defaults = {\r\n    'int': '0',\r\n    'bool': 'false',\r\n    'string': '\"\"',\r\n    'dynamic': 'null',\r\n    'object': 'null'\r\n  };",
+      "parentContext": {
+        "functionName": "getDefaultValue",
+        "functionParams": [
+          "csharpType"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e2d7de99",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    'int': '0',\r\n    'bool': 'false',\r\n    'string': '\"\"',\r\n    'dynamic': 'null',\r\n    'object': 'null'\r\n  }",
+      "parentContext": {
+        "functionName": "getDefaultValue",
+        "functionParams": [
+          "csharpType"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f978a3ad",
+      "type": "IfStatement",
+      "condition": "csharpType.startsWith('List<')",
+      "babel_source": "if (csharpType.startsWith('List<')) {\r\n    return `new ${csharpType}()`;\r\n  }",
+      "parentContext": {
+        "functionName": "getDefaultValue",
+        "functionParams": [
+          "csharpType"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "92fd42af",
+      "type": "ReturnStatement",
+      "babel_source": "return `new ${csharpType}()`;",
+      "parentContext": {
+        "functionName": "getDefaultValue",
+        "functionParams": [
+          "csharpType"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a78a2fce",
+      "type": "TemplateLiteral",
+      "babel_source": "`new ${csharpType}()`",
+      "parentContext": {
+        "functionName": "getDefaultValue",
+        "functionParams": [
+          "csharpType"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "46ac6921",
+      "type": "ReturnStatement",
+      "babel_source": "return defaults[csharpType] || 'null';",
+      "parentContext": {
+        "functionName": "getDefaultValue",
+        "functionParams": [
+          "csharpType"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fb43c810",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "defaults[csharpType] || 'null'",
+      "parentContext": {
+        "functionName": "getDefaultValue",
+        "functionParams": [
+          "csharpType"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/hookClassGenerator.cjs"
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "capitalize",
+  "params": [
+    {
+      "name": "str",
+      "inferredType": "&str",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function capitalize(str) {\r\n  return str.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join('');\r\n}",
+  "body_templates": [
+    {
+      "hash": "2e35cf88",
+      "type": "ReturnStatement",
+      "babel_source": "return str.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join('');",
+      "parentContext": {
+        "functionName": "capitalize",
+        "functionParams": [
+          "str"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a8392590",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "word => word.charAt(0).toUpperCase() + word.slice(1)",
+      "parentContext": {
+        "functionName": "capitalize",
+        "functionParams": [
+          "str"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3db80fb3",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "word.charAt(0).toUpperCase() + word.slice(1)",
+      "parentContext": {
+        "functionName": "capitalize",
+        "functionParams": [
+          "str"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/rustTask.cjs"
+  ]
+}

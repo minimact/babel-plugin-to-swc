@@ -1,0 +1,349 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractJSXFromCallback",
+  "params": [
+    {
+      "name": "callback",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractJSXFromCallback(callback) {\r\n    const body = callback.body;\r\n\r\n    // Arrow function with direct JSX return: (...) => <li>...</li>\r\n    if (t.isJSXElement(body)) {\r\n      return body;\r\n    }\r\n\r\n    // Arrow function or function expression with block body\r\n    if (t.isBlockStatement(body)) {\r\n      // Find return statement\r\n      for (const stmt of body.body) {\r\n        if (t.isReturnStatement(stmt) && t.isJSXElement(stmt.argument)) {\r\n          return stmt.argument;\r\n        }\r\n      }\r\n    }\r\n\r\n    // Expression wrapped in parentheses or conditional\r\n    if (t.isConditionalExpression(body)) {\r\n      // Handle ternary: condition ? <div/> : <span/>\r\n      // For now, just take the consequent (true branch)\r\n      if (t.isJSXElement(body.consequent)) {\r\n        return body.consequent;\r\n      }\r\n    }\r\n\r\n    if (t.isLogicalExpression(body) && body.operator === '&&') {\r\n      // Handle logical AND: condition && <div/>\r\n      if (t.isJSXElement(body.right)) {\r\n        return body.right;\r\n      }\r\n    }\r\n\r\n    return null;\r\n  }",
+  "body_templates": [
+    {
+      "hash": "0649097a",
+      "type": "VariableDeclaration",
+      "babel_source": "const body = callback.body;",
+      "parentContext": {
+        "functionName": "extractJSXFromCallback",
+        "functionParams": [
+          "callback"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d431beb4",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(body)",
+      "babel_source": "if (t.isJSXElement(body)) {\r\n      return body;\r\n    }",
+      "parentContext": {
+        "functionName": "extractJSXFromCallback",
+        "functionParams": [
+          "callback"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ebec8e7a",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(body)",
+      "parentContext": {
+        "functionName": "extractJSXFromCallback",
+        "functionParams": [
+          "callback"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a7e16e97",
+      "type": "ReturnStatement",
+      "babel_source": "return body;",
+      "parentContext": {
+        "functionName": "extractJSXFromCallback",
+        "functionParams": [
+          "callback"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "61b2b372",
+      "type": "IfStatement",
+      "condition": "t.isBlockStatement(body)",
+      "babel_source": "if (t.isBlockStatement(body)) {\r\n      // Find return statement\r\n      for (const stmt of body.body) {\r\n        if (t.isReturnStatement(stmt) && t.isJSXElement(stmt.argument)) {\r\n          return stmt.argument;\r\n        }\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "extractJSXFromCallback",
+        "functionParams": [
+          "callback"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8f74e258",
+      "type": "BabelTypeCheck",
+      "method": "isBlockStatement",
+      "babel_source": "t.isBlockStatement(body)",
+      "parentContext": {
+        "functionName": "extractJSXFromCallback",
+        "functionParams": [
+          "callback"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "08783c56",
+      "type": "ForOfStatement",
+      "babel_source": "for (const stmt of body.body) {\r\n        if (t.isReturnStatement(stmt) && t.isJSXElement(stmt.argument)) {\r\n          return stmt.argument;\r\n        }\r\n      }",
+      "parentContext": {
+        "functionName": "extractJSXFromCallback",
+        "functionParams": [
+          "callback"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2b909e3d",
+      "type": "VariableDeclaration",
+      "babel_source": "const stmt",
+      "parentContext": {
+        "functionName": "extractJSXFromCallback",
+        "functionParams": [
+          "callback"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "21fe2c90",
+      "type": "IfStatement",
+      "condition": "t.isReturnStatement(stmt) && t.isJSXElement(stmt.argument)",
+      "babel_source": "if (t.isReturnStatement(stmt) && t.isJSXElement(stmt.argument)) {\r\n          return stmt.argument;\r\n        }",
+      "parentContext": {
+        "functionName": "extractJSXFromCallback",
+        "functionParams": [
+          "callback"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ea727499",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isReturnStatement(stmt) && t.isJSXElement(stmt.argument)",
+      "parentContext": {
+        "functionName": "extractJSXFromCallback",
+        "functionParams": [
+          "callback"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5841e02a",
+      "type": "BabelTypeCheck",
+      "method": "isReturnStatement",
+      "babel_source": "t.isReturnStatement(stmt)",
+      "parentContext": {
+        "functionName": "extractJSXFromCallback",
+        "functionParams": [
+          "callback"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a35420ed",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(stmt.argument)",
+      "parentContext": {
+        "functionName": "extractJSXFromCallback",
+        "functionParams": [
+          "callback"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b1b6be75",
+      "type": "ReturnStatement",
+      "babel_source": "return stmt.argument;",
+      "parentContext": {
+        "functionName": "extractJSXFromCallback",
+        "functionParams": [
+          "callback"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c564aada",
+      "type": "IfStatement",
+      "condition": "t.isConditionalExpression(body)",
+      "babel_source": "if (t.isConditionalExpression(body)) {\r\n      // Handle ternary: condition ? <div/> : <span/>\r\n      // For now, just take the consequent (true branch)\r\n      if (t.isJSXElement(body.consequent)) {\r\n        return body.consequent;\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "extractJSXFromCallback",
+        "functionParams": [
+          "callback"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "73c16a5b",
+      "type": "BabelTypeCheck",
+      "method": "isConditionalExpression",
+      "babel_source": "t.isConditionalExpression(body)",
+      "parentContext": {
+        "functionName": "extractJSXFromCallback",
+        "functionParams": [
+          "callback"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9cbe9df7",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(body.consequent)",
+      "babel_source": "if (t.isJSXElement(body.consequent)) {\r\n        return body.consequent;\r\n      }",
+      "parentContext": {
+        "functionName": "extractJSXFromCallback",
+        "functionParams": [
+          "callback"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c5d4001c",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(body.consequent)",
+      "parentContext": {
+        "functionName": "extractJSXFromCallback",
+        "functionParams": [
+          "callback"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9bbbe1bf",
+      "type": "ReturnStatement",
+      "babel_source": "return body.consequent;",
+      "parentContext": {
+        "functionName": "extractJSXFromCallback",
+        "functionParams": [
+          "callback"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c1e13d6f",
+      "type": "IfStatement",
+      "condition": "t.isLogicalExpression(body) && body.operator === '&&'",
+      "babel_source": "if (t.isLogicalExpression(body) && body.operator === '&&') {\r\n      // Handle logical AND: condition && <div/>\r\n      if (t.isJSXElement(body.right)) {\r\n        return body.right;\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "extractJSXFromCallback",
+        "functionParams": [
+          "callback"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1876e513",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isLogicalExpression(body) && body.operator === '&&'",
+      "parentContext": {
+        "functionName": "extractJSXFromCallback",
+        "functionParams": [
+          "callback"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "34b5593d",
+      "type": "BabelTypeCheck",
+      "method": "isLogicalExpression",
+      "babel_source": "t.isLogicalExpression(body)",
+      "parentContext": {
+        "functionName": "extractJSXFromCallback",
+        "functionParams": [
+          "callback"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9c30e3ff",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "body.operator === '&&'",
+      "parentContext": {
+        "functionName": "extractJSXFromCallback",
+        "functionParams": [
+          "callback"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1eed1a56",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(body.right)",
+      "babel_source": "if (t.isJSXElement(body.right)) {\r\n        return body.right;\r\n      }",
+      "parentContext": {
+        "functionName": "extractJSXFromCallback",
+        "functionParams": [
+          "callback"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c8323b12",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(body.right)",
+      "parentContext": {
+        "functionName": "extractJSXFromCallback",
+        "functionParams": [
+          "callback"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "65a10dd6",
+      "type": "ReturnStatement",
+      "babel_source": "return body.right;",
+      "parentContext": {
+        "functionName": "extractJSXFromCallback",
+        "functionParams": [
+          "callback"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractJSXFromCallback",
+        "functionParams": [
+          "callback"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/loopTemplates.cjs"
+  ]
+}

@@ -1,0 +1,444 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "validateTimeline",
+  "params": [
+    {
+      "name": "timeline",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function validateTimeline(timeline) {\r\n  const errors = [];\r\n\r\n  // Check duration\r\n  if (timeline.duration <= 0) {\r\n    errors.push(`Timeline duration must be positive (got ${timeline.duration}ms)`);\r\n  }\r\n\r\n  // Check keyframe timing\r\n  timeline.keyframes.forEach((kf, index) => {\r\n    // Check time ordering\r\n    if (index > 0) {\r\n      const prevTime = timeline.keyframes[index - 1].time;\r\n      if (kf.time <= prevTime) {\r\n        errors.push(\r\n          `Keyframe times must be ascending. ` +\r\n          `Keyframe at index ${index} (${kf.time}ms) is not after previous (${prevTime}ms).`\r\n        );\r\n      }\r\n    }\r\n\r\n    // Check time within duration\r\n    if (kf.time > timeline.duration) {\r\n      errors.push(\r\n        `Keyframe at ${kf.time}ms exceeds timeline duration (${timeline.duration}ms).`\r\n      );\r\n    }\r\n\r\n    // Check state keys are bound\r\n    Object.keys(kf.state).forEach(stateKey => {\r\n      if (!timeline.stateBindings.has(stateKey)) {\r\n        errors.push(\r\n          `Keyframe at ${kf.time}ms references unbound state '${stateKey}'. ` +\r\n          `Add useTimelineState(timeline, '${stateKey}', ...).`\r\n        );\r\n      }\r\n    });\r\n  });\r\n\r\n  // Check state bindings exist in keyframes\r\n  timeline.stateBindings.forEach((binding, stateKey) => {\r\n    const usedInKeyframes = timeline.keyframes.some(kf => stateKey in kf.state);\r\n    if (!usedInKeyframes) {\r\n      console.warn(\r\n        `[Timeline] State binding '${stateKey}' is not used in any keyframe`\r\n      );\r\n    }\r\n  });\r\n\r\n  return {\r\n    valid: errors.length === 0,\r\n    errors: errors\r\n  };\r\n}",
+  "body_templates": [
+    {
+      "hash": "f53a56ba",
+      "type": "VariableDeclaration",
+      "babel_source": "const errors = [];",
+      "parentContext": {
+        "functionName": "validateTimeline",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "validateTimeline",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bfeb4979",
+      "type": "IfStatement",
+      "condition": "timeline.duration <= 0",
+      "babel_source": "if (timeline.duration <= 0) {\r\n    errors.push(`Timeline duration must be positive (got ${timeline.duration}ms)`);\r\n  }",
+      "parentContext": {
+        "functionName": "validateTimeline",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3ff0517f",
+      "type": "BinaryExpression",
+      "operator": "<=",
+      "babel_source": "timeline.duration <= 0",
+      "parentContext": {
+        "functionName": "validateTimeline",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "46f7a64a",
+      "type": "TemplateLiteral",
+      "babel_source": "`Timeline duration must be positive (got ${timeline.duration}ms)`",
+      "parentContext": {
+        "functionName": "validateTimeline",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b93d9de0",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "(kf, index) => {\r\n    // Check time ordering\r\n    if (index > 0) {\r\n      const prevTime = timeline.keyframes[index - 1].time;\r\n      if (kf.time <= prevTime) {\r\n        errors.push(\r\n          `Keyframe times must be ascending. ` +\r\n          `Keyframe at index ${index} (${kf.time}ms) is not after previous (${prevTime}ms).`\r\n        );\r\n      }\r\n    }\r\n\r\n    // Check time within duration\r\n    if (kf.time > timeline.duration) {\r\n      errors.push(\r\n        `Keyframe at ${kf.time}ms exceeds timeline duration (${timeline.duration}ms).`\r\n      );\r\n    }\r\n\r\n    // Check state keys are bound\r\n    Object.keys(kf.state).forEach(stateKey => {\r\n      if (!timeline.stateBindings.has(stateKey)) {\r\n        errors.push(\r\n          `Keyframe at ${kf.time}ms references unbound state '${stateKey}'. ` +\r\n          `Add useTimelineState(timeline, '${stateKey}', ...).`\r\n        );\r\n      }\r\n    });\r\n  }",
+      "parentContext": {
+        "functionName": "validateTimeline",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "193befcb",
+      "type": "IfStatement",
+      "condition": "index > 0",
+      "babel_source": "if (index > 0) {\r\n      const prevTime = timeline.keyframes[index - 1].time;\r\n      if (kf.time <= prevTime) {\r\n        errors.push(\r\n          `Keyframe times must be ascending. ` +\r\n          `Keyframe at index ${index} (${kf.time}ms) is not after previous (${prevTime}ms).`\r\n        );\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "validateTimeline",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7e32485f",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "index > 0",
+      "parentContext": {
+        "functionName": "validateTimeline",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3fecb196",
+      "type": "VariableDeclaration",
+      "babel_source": "const prevTime = timeline.keyframes[index - 1].time;",
+      "parentContext": {
+        "functionName": "validateTimeline",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "38710edf",
+      "type": "BinaryExpression",
+      "operator": "-",
+      "babel_source": "index - 1",
+      "parentContext": {
+        "functionName": "validateTimeline",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "06a07a9f",
+      "type": "IfStatement",
+      "condition": "kf.time <= prevTime",
+      "babel_source": "if (kf.time <= prevTime) {\r\n        errors.push(\r\n          `Keyframe times must be ascending. ` +\r\n          `Keyframe at index ${index} (${kf.time}ms) is not after previous (${prevTime}ms).`\r\n        );\r\n      }",
+      "parentContext": {
+        "functionName": "validateTimeline",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d8908ba3",
+      "type": "BinaryExpression",
+      "operator": "<=",
+      "babel_source": "kf.time <= prevTime",
+      "parentContext": {
+        "functionName": "validateTimeline",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "52282b2c",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "`Keyframe times must be ascending. ` +\r\n          `Keyframe at index ${index} (${kf.time}ms) is not after previous (${prevTime}ms).`",
+      "parentContext": {
+        "functionName": "validateTimeline",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "92a1045f",
+      "type": "TemplateLiteral",
+      "babel_source": "`Keyframe times must be ascending. `",
+      "parentContext": {
+        "functionName": "validateTimeline",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e3ad9266",
+      "type": "TemplateLiteral",
+      "babel_source": "`Keyframe at index ${index} (${kf.time}ms) is not after previous (${prevTime}ms).`",
+      "parentContext": {
+        "functionName": "validateTimeline",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3dbac1d7",
+      "type": "IfStatement",
+      "condition": "kf.time > timeline.duration",
+      "babel_source": "if (kf.time > timeline.duration) {\r\n      errors.push(\r\n        `Keyframe at ${kf.time}ms exceeds timeline duration (${timeline.duration}ms).`\r\n      );\r\n    }",
+      "parentContext": {
+        "functionName": "validateTimeline",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3daa7e36",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "kf.time > timeline.duration",
+      "parentContext": {
+        "functionName": "validateTimeline",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7796cb81",
+      "type": "TemplateLiteral",
+      "babel_source": "`Keyframe at ${kf.time}ms exceeds timeline duration (${timeline.duration}ms).`",
+      "parentContext": {
+        "functionName": "validateTimeline",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ead36798",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "stateKey => {\r\n      if (!timeline.stateBindings.has(stateKey)) {\r\n        errors.push(\r\n          `Keyframe at ${kf.time}ms references unbound state '${stateKey}'. ` +\r\n          `Add useTimelineState(timeline, '${stateKey}', ...).`\r\n        );\r\n      }\r\n    }",
+      "parentContext": {
+        "functionName": "validateTimeline",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d1b4c020",
+      "type": "IfStatement",
+      "condition": "!timeline.stateBindings.has(stateKey)",
+      "babel_source": "if (!timeline.stateBindings.has(stateKey)) {\r\n        errors.push(\r\n          `Keyframe at ${kf.time}ms references unbound state '${stateKey}'. ` +\r\n          `Add useTimelineState(timeline, '${stateKey}', ...).`\r\n        );\r\n      }",
+      "parentContext": {
+        "functionName": "validateTimeline",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "252f4166",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!timeline.stateBindings.has(stateKey)",
+      "parentContext": {
+        "functionName": "validateTimeline",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d587cdbc",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "`Keyframe at ${kf.time}ms references unbound state '${stateKey}'. ` +\r\n          `Add useTimelineState(timeline, '${stateKey}', ...).`",
+      "parentContext": {
+        "functionName": "validateTimeline",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d37ff21d",
+      "type": "TemplateLiteral",
+      "babel_source": "`Keyframe at ${kf.time}ms references unbound state '${stateKey}'. `",
+      "parentContext": {
+        "functionName": "validateTimeline",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e58fdce3",
+      "type": "TemplateLiteral",
+      "babel_source": "`Add useTimelineState(timeline, '${stateKey}', ...).`",
+      "parentContext": {
+        "functionName": "validateTimeline",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "581cd283",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "(binding, stateKey) => {\r\n    const usedInKeyframes = timeline.keyframes.some(kf => stateKey in kf.state);\r\n    if (!usedInKeyframes) {\r\n      console.warn(\r\n        `[Timeline] State binding '${stateKey}' is not used in any keyframe`\r\n      );\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "validateTimeline",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c9d5ed9a",
+      "type": "VariableDeclaration",
+      "babel_source": "const usedInKeyframes = timeline.keyframes.some(kf => stateKey in kf.state);",
+      "parentContext": {
+        "functionName": "validateTimeline",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "de3621af",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "kf => stateKey in kf.state",
+      "parentContext": {
+        "functionName": "validateTimeline",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c3e2a149",
+      "type": "BinaryExpression",
+      "operator": "in",
+      "babel_source": "stateKey in kf.state",
+      "parentContext": {
+        "functionName": "validateTimeline",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4b5f297e",
+      "type": "IfStatement",
+      "condition": "!usedInKeyframes",
+      "babel_source": "if (!usedInKeyframes) {\r\n      console.warn(\r\n        `[Timeline] State binding '${stateKey}' is not used in any keyframe`\r\n      );\r\n    }",
+      "parentContext": {
+        "functionName": "validateTimeline",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c9a34023",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!usedInKeyframes",
+      "parentContext": {
+        "functionName": "validateTimeline",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "385db5cc",
+      "type": "TemplateLiteral",
+      "babel_source": "`[Timeline] State binding '${stateKey}' is not used in any keyframe`",
+      "parentContext": {
+        "functionName": "validateTimeline",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a4015a01",
+      "type": "ReturnStatement",
+      "babel_source": "return {\r\n    valid: errors.length === 0,\r\n    errors: errors\r\n  };",
+      "parentContext": {
+        "functionName": "validateTimeline",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "907d42cd",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    valid: errors.length === 0,\r\n    errors: errors\r\n  }",
+      "parentContext": {
+        "functionName": "validateTimeline",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3eade0e6",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "errors.length === 0",
+      "parentContext": {
+        "functionName": "validateTimeline",
+        "functionParams": [
+          "timeline"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/timelineAnalyzer.cjs"
+  ]
+}

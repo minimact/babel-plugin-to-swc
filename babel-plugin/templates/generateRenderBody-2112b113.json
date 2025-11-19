@@ -1,0 +1,439 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateRenderBody",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "indent",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateRenderBody(node, component, indent) {\r\n  const indentStr = '    '.repeat(indent);\r\n\r\n  if (!node) {\r\n    return `${indentStr}return new VText(\"\");`;\r\n  }\r\n\r\n  // Handle different node types\r\n  if (t.isJSXElement(node) || t.isJSXFragment(node)) {\r\n    return `${indentStr}return ${generateJSXElement(node, component, indent)};`;\r\n  }\r\n\r\n  if (t.isConditionalExpression(node)) {\r\n    // Ternary: condition ? a : b\r\n    return generateConditional(node, component, indent);\r\n  }\r\n\r\n  if (t.isLogicalExpression(node) && node.operator === '&&') {\r\n    // Short-circuit: condition && <Element>\r\n    return generateShortCircuit(node, component, indent);\r\n  }\r\n\r\n  if (t.isCallExpression(node) && t.isMemberExpression(node.callee) && node.callee.property.name === 'map') {\r\n    // Array.map()\r\n    return generateMapExpression(node, component, indent);\r\n  }\r\n\r\n  // Fallback\r\n  return `${indentStr}return new VText(\"${node.type}\");`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "9929f4d7",
+      "type": "VariableDeclaration",
+      "babel_source": "const indentStr = '    '.repeat(indent);",
+      "parentContext": {
+        "functionName": "generateRenderBody",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "da0d409a",
+      "type": "IfStatement",
+      "condition": "!node",
+      "babel_source": "if (!node) {\r\n    return `${indentStr}return new VText(\"\");`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateRenderBody",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e10d47ee",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!node",
+      "parentContext": {
+        "functionName": "generateRenderBody",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "057c91c6",
+      "type": "ReturnStatement",
+      "babel_source": "return `${indentStr}return new VText(\"\");`;",
+      "parentContext": {
+        "functionName": "generateRenderBody",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9f2e404e",
+      "type": "TemplateLiteral",
+      "babel_source": "`${indentStr}return new VText(\"\");`",
+      "parentContext": {
+        "functionName": "generateRenderBody",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d1fd555b",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(node) || t.isJSXFragment(node)",
+      "babel_source": "if (t.isJSXElement(node) || t.isJSXFragment(node)) {\r\n    return `${indentStr}return ${generateJSXElement(node, component, indent)};`;\r\n  }",
+      "parentContext": {
+        "functionName": "generateRenderBody",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "351cafad",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isJSXElement(node) || t.isJSXFragment(node)",
+      "parentContext": {
+        "functionName": "generateRenderBody",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "606ccdc5",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(node)",
+      "parentContext": {
+        "functionName": "generateRenderBody",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "00ed8bb0",
+      "type": "BabelTypeCheck",
+      "method": "isJSXFragment",
+      "babel_source": "t.isJSXFragment(node)",
+      "parentContext": {
+        "functionName": "generateRenderBody",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0ea71844",
+      "type": "ReturnStatement",
+      "babel_source": "return `${indentStr}return ${generateJSXElement(node, component, indent)};`;",
+      "parentContext": {
+        "functionName": "generateRenderBody",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "58d4fba4",
+      "type": "TemplateLiteral",
+      "babel_source": "`${indentStr}return ${generateJSXElement(node, component, indent)};`",
+      "parentContext": {
+        "functionName": "generateRenderBody",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "365ce847",
+      "type": "IfStatement",
+      "condition": "t.isConditionalExpression(node)",
+      "babel_source": "if (t.isConditionalExpression(node)) {\r\n    // Ternary: condition ? a : b\r\n    return generateConditional(node, component, indent);\r\n  }",
+      "parentContext": {
+        "functionName": "generateRenderBody",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1459577d",
+      "type": "BabelTypeCheck",
+      "method": "isConditionalExpression",
+      "babel_source": "t.isConditionalExpression(node)",
+      "parentContext": {
+        "functionName": "generateRenderBody",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "12addaa3",
+      "type": "ReturnStatement",
+      "babel_source": "return generateConditional(node, component, indent);",
+      "parentContext": {
+        "functionName": "generateRenderBody",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e7bed254",
+      "type": "IfStatement",
+      "condition": "t.isLogicalExpression(node) && node.operator === '&&'",
+      "babel_source": "if (t.isLogicalExpression(node) && node.operator === '&&') {\r\n    // Short-circuit: condition && <Element>\r\n    return generateShortCircuit(node, component, indent);\r\n  }",
+      "parentContext": {
+        "functionName": "generateRenderBody",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6f6f89fa",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isLogicalExpression(node) && node.operator === '&&'",
+      "parentContext": {
+        "functionName": "generateRenderBody",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "00fb4fd3",
+      "type": "BabelTypeCheck",
+      "method": "isLogicalExpression",
+      "babel_source": "t.isLogicalExpression(node)",
+      "parentContext": {
+        "functionName": "generateRenderBody",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "50a384f0",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "node.operator === '&&'",
+      "parentContext": {
+        "functionName": "generateRenderBody",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "54bb8c98",
+      "type": "ReturnStatement",
+      "babel_source": "return generateShortCircuit(node, component, indent);",
+      "parentContext": {
+        "functionName": "generateRenderBody",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ccf058e",
+      "type": "IfStatement",
+      "condition": "t.isCallExpression(node) && t.isMemberExpression(node.callee) && node.callee.property.name === 'map'",
+      "babel_source": "if (t.isCallExpression(node) && t.isMemberExpression(node.callee) && node.callee.property.name === 'map') {\r\n    // Array.map()\r\n    return generateMapExpression(node, component, indent);\r\n  }",
+      "parentContext": {
+        "functionName": "generateRenderBody",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c9f069a8",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isCallExpression(node) && t.isMemberExpression(node.callee) && node.callee.property.name === 'map'",
+      "parentContext": {
+        "functionName": "generateRenderBody",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ba57e01c",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isCallExpression(node) && t.isMemberExpression(node.callee)",
+      "parentContext": {
+        "functionName": "generateRenderBody",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1088dc62",
+      "type": "BabelTypeCheck",
+      "method": "isCallExpression",
+      "babel_source": "t.isCallExpression(node)",
+      "parentContext": {
+        "functionName": "generateRenderBody",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ec7eca4e",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(node.callee)",
+      "parentContext": {
+        "functionName": "generateRenderBody",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "969c954c",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "node.callee.property.name === 'map'",
+      "parentContext": {
+        "functionName": "generateRenderBody",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "395dc792",
+      "type": "ReturnStatement",
+      "babel_source": "return generateMapExpression(node, component, indent);",
+      "parentContext": {
+        "functionName": "generateRenderBody",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "641fbfbf",
+      "type": "ReturnStatement",
+      "babel_source": "return `${indentStr}return new VText(\"${node.type}\");`;",
+      "parentContext": {
+        "functionName": "generateRenderBody",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "766dc89e",
+      "type": "TemplateLiteral",
+      "babel_source": "`${indentStr}return new VText(\"${node.type}\");`",
+      "parentContext": {
+        "functionName": "generateRenderBody",
+        "functionParams": [
+          "node",
+          "component",
+          "indent"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/renderBody.cjs"
+  ]
+}

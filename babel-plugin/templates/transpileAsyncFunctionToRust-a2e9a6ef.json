@@ -1,0 +1,145 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "transpileAsyncFunctionToRust",
+  "params": [
+    {
+      "name": "asyncFunction",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "options",
+      "inferredType": "&Options",
+      "defaultValue": "{}"
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function transpileAsyncFunctionToRust(asyncFunction, options = {}) {\r\n  const body = asyncFunction.body;\r\n  const params = asyncFunction.params;\r\n\r\n  let rustCode = '';\r\n\r\n  // Transpile body\r\n  if (t.isBlockStatement(body)) {\r\n    rustCode = transpileBlockStatement(body);\r\n  } else {\r\n    // Arrow function with expression body: () => expr\r\n    rustCode = transpileExpression(body);\r\n  }\r\n\r\n  return rustCode;\r\n}",
+  "body_templates": [
+    {
+      "hash": "44136fa3",
+      "type": "ObjectExpression",
+      "babel_source": "{}",
+      "parentContext": {
+        "functionName": "transpileAsyncFunctionToRust",
+        "functionParams": [
+          "asyncFunction",
+          "options"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "04a9204b",
+      "type": "VariableDeclaration",
+      "babel_source": "const body = asyncFunction.body;",
+      "parentContext": {
+        "functionName": "transpileAsyncFunctionToRust",
+        "functionParams": [
+          "asyncFunction",
+          "options"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "672533ec",
+      "type": "VariableDeclaration",
+      "babel_source": "const params = asyncFunction.params;",
+      "parentContext": {
+        "functionName": "transpileAsyncFunctionToRust",
+        "functionParams": [
+          "asyncFunction",
+          "options"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9e9a9ceb",
+      "type": "VariableDeclaration",
+      "babel_source": "let rustCode = '';",
+      "parentContext": {
+        "functionName": "transpileAsyncFunctionToRust",
+        "functionParams": [
+          "asyncFunction",
+          "options"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e207fb84",
+      "type": "IfStatement",
+      "condition": "t.isBlockStatement(body)",
+      "babel_source": "if (t.isBlockStatement(body)) {\r\n    rustCode = transpileBlockStatement(body);\r\n  } else {\r\n    // Arrow function with expression body: () => expr\r\n    rustCode = transpileExpression(body);\r\n  }",
+      "parentContext": {
+        "functionName": "transpileAsyncFunctionToRust",
+        "functionParams": [
+          "asyncFunction",
+          "options"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8f74e258",
+      "type": "BabelTypeCheck",
+      "method": "isBlockStatement",
+      "babel_source": "t.isBlockStatement(body)",
+      "parentContext": {
+        "functionName": "transpileAsyncFunctionToRust",
+        "functionParams": [
+          "asyncFunction",
+          "options"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d9309466",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "rustCode = transpileBlockStatement(body)",
+      "parentContext": {
+        "functionName": "transpileAsyncFunctionToRust",
+        "functionParams": [
+          "asyncFunction",
+          "options"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0a41e868",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "rustCode = transpileExpression(body)",
+      "parentContext": {
+        "functionName": "transpileAsyncFunctionToRust",
+        "functionParams": [
+          "asyncFunction",
+          "options"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c92e67e1",
+      "type": "ReturnStatement",
+      "babel_source": "return rustCode;",
+      "parentContext": {
+        "functionName": "transpileAsyncFunctionToRust",
+        "functionParams": [
+          "asyncFunction",
+          "options"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "transpilers/typescriptToRust.cjs"
+  ]
+}

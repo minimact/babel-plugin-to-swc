@@ -1,0 +1,296 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractTypeString",
+  "params": [
+    {
+      "name": "typeNode",
+      "inferredType": "&Node",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractTypeString(typeNode) {\r\n  if (t.isTSStringKeyword(typeNode)) return 'string';\r\n  if (t.isTSNumberKeyword(typeNode)) return 'number';\r\n  if (t.isTSBooleanKeyword(typeNode)) return 'boolean';\r\n  if (t.isTSAnyKeyword(typeNode)) return 'any';\r\n  if (t.isTSArrayType(typeNode)) {\r\n    const elementType = extractTypeString(typeNode.elementType);\r\n    return `${elementType}[]`;\r\n  }\r\n  if (t.isTSTypeReference(typeNode)) {\r\n    return typeNode.typeName.name || 'any';\r\n  }\r\n  return 'any';\r\n}",
+  "body_templates": [
+    {
+      "hash": "57c17c41",
+      "type": "IfStatement",
+      "condition": "t.isTSStringKeyword(typeNode)",
+      "babel_source": "if (t.isTSStringKeyword(typeNode)) return 'string';",
+      "parentContext": {
+        "functionName": "extractTypeString",
+        "functionParams": [
+          "typeNode"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "df84ef13",
+      "type": "BabelTypeCheck",
+      "method": "isTSStringKeyword",
+      "babel_source": "t.isTSStringKeyword(typeNode)",
+      "parentContext": {
+        "functionName": "extractTypeString",
+        "functionParams": [
+          "typeNode"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f83ace9b",
+      "type": "ReturnStatement",
+      "babel_source": "return 'string';",
+      "parentContext": {
+        "functionName": "extractTypeString",
+        "functionParams": [
+          "typeNode"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e9e61c68",
+      "type": "IfStatement",
+      "condition": "t.isTSNumberKeyword(typeNode)",
+      "babel_source": "if (t.isTSNumberKeyword(typeNode)) return 'number';",
+      "parentContext": {
+        "functionName": "extractTypeString",
+        "functionParams": [
+          "typeNode"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7593e210",
+      "type": "BabelTypeCheck",
+      "method": "isTSNumberKeyword",
+      "babel_source": "t.isTSNumberKeyword(typeNode)",
+      "parentContext": {
+        "functionName": "extractTypeString",
+        "functionParams": [
+          "typeNode"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1991d145",
+      "type": "ReturnStatement",
+      "babel_source": "return 'number';",
+      "parentContext": {
+        "functionName": "extractTypeString",
+        "functionParams": [
+          "typeNode"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "10ce57b7",
+      "type": "IfStatement",
+      "condition": "t.isTSBooleanKeyword(typeNode)",
+      "babel_source": "if (t.isTSBooleanKeyword(typeNode)) return 'boolean';",
+      "parentContext": {
+        "functionName": "extractTypeString",
+        "functionParams": [
+          "typeNode"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8bf3d4fa",
+      "type": "BabelTypeCheck",
+      "method": "isTSBooleanKeyword",
+      "babel_source": "t.isTSBooleanKeyword(typeNode)",
+      "parentContext": {
+        "functionName": "extractTypeString",
+        "functionParams": [
+          "typeNode"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f051c3e6",
+      "type": "ReturnStatement",
+      "babel_source": "return 'boolean';",
+      "parentContext": {
+        "functionName": "extractTypeString",
+        "functionParams": [
+          "typeNode"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "16859d18",
+      "type": "IfStatement",
+      "condition": "t.isTSAnyKeyword(typeNode)",
+      "babel_source": "if (t.isTSAnyKeyword(typeNode)) return 'any';",
+      "parentContext": {
+        "functionName": "extractTypeString",
+        "functionParams": [
+          "typeNode"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f8ecd54a",
+      "type": "BabelTypeCheck",
+      "method": "isTSAnyKeyword",
+      "babel_source": "t.isTSAnyKeyword(typeNode)",
+      "parentContext": {
+        "functionName": "extractTypeString",
+        "functionParams": [
+          "typeNode"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "578ca534",
+      "type": "ReturnStatement",
+      "babel_source": "return 'any';",
+      "parentContext": {
+        "functionName": "extractTypeString",
+        "functionParams": [
+          "typeNode"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "21f66f06",
+      "type": "IfStatement",
+      "condition": "t.isTSArrayType(typeNode)",
+      "babel_source": "if (t.isTSArrayType(typeNode)) {\r\n    const elementType = extractTypeString(typeNode.elementType);\r\n    return `${elementType}[]`;\r\n  }",
+      "parentContext": {
+        "functionName": "extractTypeString",
+        "functionParams": [
+          "typeNode"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4fd92d36",
+      "type": "BabelTypeCheck",
+      "method": "isTSArrayType",
+      "babel_source": "t.isTSArrayType(typeNode)",
+      "parentContext": {
+        "functionName": "extractTypeString",
+        "functionParams": [
+          "typeNode"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "88d24abf",
+      "type": "VariableDeclaration",
+      "babel_source": "const elementType = extractTypeString(typeNode.elementType);",
+      "parentContext": {
+        "functionName": "extractTypeString",
+        "functionParams": [
+          "typeNode"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b1368c18",
+      "type": "ReturnStatement",
+      "babel_source": "return `${elementType}[]`;",
+      "parentContext": {
+        "functionName": "extractTypeString",
+        "functionParams": [
+          "typeNode"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "abf61730",
+      "type": "TemplateLiteral",
+      "babel_source": "`${elementType}[]`",
+      "parentContext": {
+        "functionName": "extractTypeString",
+        "functionParams": [
+          "typeNode"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "33e45dc0",
+      "type": "IfStatement",
+      "condition": "t.isTSTypeReference(typeNode)",
+      "babel_source": "if (t.isTSTypeReference(typeNode)) {\r\n    return typeNode.typeName.name || 'any';\r\n  }",
+      "parentContext": {
+        "functionName": "extractTypeString",
+        "functionParams": [
+          "typeNode"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "449c2936",
+      "type": "BabelTypeCheck",
+      "method": "isTSTypeReference",
+      "babel_source": "t.isTSTypeReference(typeNode)",
+      "parentContext": {
+        "functionName": "extractTypeString",
+        "functionParams": [
+          "typeNode"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6bf27a75",
+      "type": "ReturnStatement",
+      "babel_source": "return typeNode.typeName.name || 'any';",
+      "parentContext": {
+        "functionName": "extractTypeString",
+        "functionParams": [
+          "typeNode"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2a662c99",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "typeNode.typeName.name || 'any'",
+      "parentContext": {
+        "functionName": "extractTypeString",
+        "functionParams": [
+          "typeNode"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "578ca534",
+      "type": "ReturnStatement",
+      "babel_source": "return 'any';",
+      "parentContext": {
+        "functionName": "extractTypeString",
+        "functionParams": [
+          "typeNode"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "analyzers/hookDetector.cjs"
+  ]
+}

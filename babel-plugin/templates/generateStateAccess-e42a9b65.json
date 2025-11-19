@@ -1,0 +1,433 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateStateAccess",
+  "params": [
+    {
+      "name": "analysis",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "namespace",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "returnBindings",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateStateAccess(analysis, namespace, returnBindings) {\r\n  const accessors = [];\r\n\r\n  if (!analysis.returnValues || returnBindings.length === 0) {\r\n    return accessors;\r\n  }\r\n\r\n  analysis.returnValues.forEach((returnValue, index) => {\r\n    if (index >= returnBindings.length) return;\r\n\r\n    const varName = returnBindings[index];\r\n\r\n    if (returnValue.type === 'state') {\r\n      // Access state value: var count = State[\"namespace.count\"];\r\n      const stateKey = `${namespace}.${returnValue.name}`;\r\n      const csharpType = mapTypeToCSharp('any'); // TODO: Infer correct type\r\n      accessors.push({\r\n        varName: varName,\r\n        stateKey: stateKey,\r\n        code: `var ${varName} = GetState<${csharpType}>(\"${stateKey}\");`\r\n      });\r\n    }\r\n    else if (returnValue.type === 'setter') {\r\n      // Generate method to call setter\r\n      accessors.push({\r\n        varName: varName,\r\n        stateKey: null,\r\n        code: `// ${varName} - method call via state manipulation`\r\n      });\r\n    }\r\n    else if (returnValue.type === 'method') {\r\n      // Generate method wrapper\r\n      accessors.push({\r\n        varName: varName,\r\n        stateKey: null,\r\n        code: `// ${varName} - method call via hook instance`\r\n      });\r\n    }\r\n    // JSX is handled via VComponentWrapper, no accessor needed\r\n  });\r\n\r\n  return accessors;\r\n}",
+  "body_templates": [
+    {
+      "hash": "7b352037",
+      "type": "VariableDeclaration",
+      "babel_source": "const accessors = [];",
+      "parentContext": {
+        "functionName": "generateStateAccess",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "returnBindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "generateStateAccess",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "returnBindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "eb131c3e",
+      "type": "IfStatement",
+      "condition": "!analysis.returnValues || returnBindings.length === 0",
+      "babel_source": "if (!analysis.returnValues || returnBindings.length === 0) {\r\n    return accessors;\r\n  }",
+      "parentContext": {
+        "functionName": "generateStateAccess",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "returnBindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "aa5530ef",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "!analysis.returnValues || returnBindings.length === 0",
+      "parentContext": {
+        "functionName": "generateStateAccess",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "returnBindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5ec44661",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!analysis.returnValues",
+      "parentContext": {
+        "functionName": "generateStateAccess",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "returnBindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e7a9887c",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "returnBindings.length === 0",
+      "parentContext": {
+        "functionName": "generateStateAccess",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "returnBindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c3e5c57d",
+      "type": "ReturnStatement",
+      "babel_source": "return accessors;",
+      "parentContext": {
+        "functionName": "generateStateAccess",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "returnBindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "df823dd9",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "(returnValue, index) => {\r\n    if (index >= returnBindings.length) return;\r\n\r\n    const varName = returnBindings[index];\r\n\r\n    if (returnValue.type === 'state') {\r\n      // Access state value: var count = State[\"namespace.count\"];\r\n      const stateKey = `${namespace}.${returnValue.name}`;\r\n      const csharpType = mapTypeToCSharp('any'); // TODO: Infer correct type\r\n      accessors.push({\r\n        varName: varName,\r\n        stateKey: stateKey,\r\n        code: `var ${varName} = GetState<${csharpType}>(\"${stateKey}\");`\r\n      });\r\n    }\r\n    else if (returnValue.type === 'setter') {\r\n      // Generate method to call setter\r\n      accessors.push({\r\n        varName: varName,\r\n        stateKey: null,\r\n        code: `// ${varName} - method call via state manipulation`\r\n      });\r\n    }\r\n    else if (returnValue.type === 'method') {\r\n      // Generate method wrapper\r\n      accessors.push({\r\n        varName: varName,\r\n        stateKey: null,\r\n        code: `// ${varName} - method call via hook instance`\r\n      });\r\n    }\r\n    // JSX is handled via VComponentWrapper, no accessor needed\r\n  }",
+      "parentContext": {
+        "functionName": "generateStateAccess",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "returnBindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b8120cd7",
+      "type": "IfStatement",
+      "condition": "index >= returnBindings.length",
+      "babel_source": "if (index >= returnBindings.length) return;",
+      "parentContext": {
+        "functionName": "generateStateAccess",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "returnBindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9acde2b9",
+      "type": "BinaryExpression",
+      "operator": ">=",
+      "babel_source": "index >= returnBindings.length",
+      "parentContext": {
+        "functionName": "generateStateAccess",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "returnBindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8beaabe2",
+      "type": "ReturnStatement",
+      "babel_source": "return;",
+      "parentContext": {
+        "functionName": "generateStateAccess",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "returnBindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e1cf56ae",
+      "type": "VariableDeclaration",
+      "babel_source": "const varName = returnBindings[index];",
+      "parentContext": {
+        "functionName": "generateStateAccess",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "returnBindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "04a66744",
+      "type": "IfStatement",
+      "condition": "returnValue.type === 'state'",
+      "babel_source": "if (returnValue.type === 'state') {\r\n      // Access state value: var count = State[\"namespace.count\"];\r\n      const stateKey = `${namespace}.${returnValue.name}`;\r\n      const csharpType = mapTypeToCSharp('any'); // TODO: Infer correct type\r\n      accessors.push({\r\n        varName: varName,\r\n        stateKey: stateKey,\r\n        code: `var ${varName} = GetState<${csharpType}>(\"${stateKey}\");`\r\n      });\r\n    }\r\n    else if (returnValue.type === 'setter') {\r\n      // Generate method to call setter\r\n      accessors.push({\r\n        varName: varName,\r\n        stateKey: null,\r\n        code: `// ${varName} - method call via state manipulation`\r\n      });\r\n    }\r\n    else if (returnValue.type === 'method') {\r\n      // Generate method wrapper\r\n      accessors.push({\r\n        varName: varName,\r\n        stateKey: null,\r\n        code: `// ${varName} - method call via hook instance`\r\n      });\r\n    }",
+      "parentContext": {
+        "functionName": "generateStateAccess",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "returnBindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "429a3d6e",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "returnValue.type === 'state'",
+      "parentContext": {
+        "functionName": "generateStateAccess",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "returnBindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b4a4d240",
+      "type": "VariableDeclaration",
+      "babel_source": "const stateKey = `${namespace}.${returnValue.name}`;",
+      "parentContext": {
+        "functionName": "generateStateAccess",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "returnBindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "48fb169a",
+      "type": "TemplateLiteral",
+      "babel_source": "`${namespace}.${returnValue.name}`",
+      "parentContext": {
+        "functionName": "generateStateAccess",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "returnBindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9f0e1133",
+      "type": "VariableDeclaration",
+      "babel_source": "const csharpType = mapTypeToCSharp('any');",
+      "parentContext": {
+        "functionName": "generateStateAccess",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "returnBindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "80825bf4",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n        varName: varName,\r\n        stateKey: stateKey,\r\n        code: `var ${varName} = GetState<${csharpType}>(\"${stateKey}\");`\r\n      }",
+      "parentContext": {
+        "functionName": "generateStateAccess",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "returnBindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "68abad71",
+      "type": "TemplateLiteral",
+      "babel_source": "`var ${varName} = GetState<${csharpType}>(\"${stateKey}\");`",
+      "parentContext": {
+        "functionName": "generateStateAccess",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "returnBindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "771f5cae",
+      "type": "IfStatement",
+      "condition": "returnValue.type === 'setter'",
+      "babel_source": "if (returnValue.type === 'setter') {\r\n      // Generate method to call setter\r\n      accessors.push({\r\n        varName: varName,\r\n        stateKey: null,\r\n        code: `// ${varName} - method call via state manipulation`\r\n      });\r\n    }\r\n    else if (returnValue.type === 'method') {\r\n      // Generate method wrapper\r\n      accessors.push({\r\n        varName: varName,\r\n        stateKey: null,\r\n        code: `// ${varName} - method call via hook instance`\r\n      });\r\n    }",
+      "parentContext": {
+        "functionName": "generateStateAccess",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "returnBindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bc13f80a",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "returnValue.type === 'setter'",
+      "parentContext": {
+        "functionName": "generateStateAccess",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "returnBindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0f73ae27",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n        varName: varName,\r\n        stateKey: null,\r\n        code: `// ${varName} - method call via state manipulation`\r\n      }",
+      "parentContext": {
+        "functionName": "generateStateAccess",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "returnBindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a1d5ba07",
+      "type": "TemplateLiteral",
+      "babel_source": "`// ${varName} - method call via state manipulation`",
+      "parentContext": {
+        "functionName": "generateStateAccess",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "returnBindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "380763d6",
+      "type": "IfStatement",
+      "condition": "returnValue.type === 'method'",
+      "babel_source": "if (returnValue.type === 'method') {\r\n      // Generate method wrapper\r\n      accessors.push({\r\n        varName: varName,\r\n        stateKey: null,\r\n        code: `// ${varName} - method call via hook instance`\r\n      });\r\n    }",
+      "parentContext": {
+        "functionName": "generateStateAccess",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "returnBindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9944341e",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "returnValue.type === 'method'",
+      "parentContext": {
+        "functionName": "generateStateAccess",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "returnBindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6e9ca9b4",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n        varName: varName,\r\n        stateKey: null,\r\n        code: `// ${varName} - method call via hook instance`\r\n      }",
+      "parentContext": {
+        "functionName": "generateStateAccess",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "returnBindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "023506c8",
+      "type": "TemplateLiteral",
+      "babel_source": "`// ${varName} - method call via hook instance`",
+      "parentContext": {
+        "functionName": "generateStateAccess",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "returnBindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c3e5c57d",
+      "type": "ReturnStatement",
+      "babel_source": "return accessors;",
+      "parentContext": {
+        "functionName": "generateStateAccess",
+        "functionParams": [
+          "analysis",
+          "namespace",
+          "returnBindings"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/hookClassGenerator.cjs"
+  ]
+}

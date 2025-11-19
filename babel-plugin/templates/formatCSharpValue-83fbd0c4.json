@@ -1,0 +1,286 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "formatCSharpValue",
+  "params": [
+    {
+      "name": "value",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function formatCSharpValue(value) {\r\n  if (typeof value === 'string') {\r\n    // Escape quotes and backslashes\r\n    const escaped = value.replace(/\\\\/g, '\\\\\\\\').replace(/\"/g, '\\\\\"');\r\n    return `\"${escaped}\"`;\r\n  } else if (typeof value === 'number') {\r\n    return value.toString();\r\n  } else if (typeof value === 'boolean') {\r\n    return value ? 'true' : 'false';\r\n  } else if (value === null) {\r\n    return 'null';\r\n  }\r\n  return 'null';\r\n}",
+  "body_templates": [
+    {
+      "hash": "4bbc05da",
+      "type": "IfStatement",
+      "condition": "typeof value === 'string'",
+      "babel_source": "if (typeof value === 'string') {\r\n    // Escape quotes and backslashes\r\n    const escaped = value.replace(/\\\\/g, '\\\\\\\\').replace(/\"/g, '\\\\\"');\r\n    return `\"${escaped}\"`;\r\n  } else if (typeof value === 'number') {\r\n    return value.toString();\r\n  } else if (typeof value === 'boolean') {\r\n    return value ? 'true' : 'false';\r\n  } else if (value === null) {\r\n    return 'null';\r\n  }",
+      "parentContext": {
+        "functionName": "formatCSharpValue",
+        "functionParams": [
+          "value"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d58523c8",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "typeof value === 'string'",
+      "parentContext": {
+        "functionName": "formatCSharpValue",
+        "functionParams": [
+          "value"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "18ae9281",
+      "type": "UnaryExpression",
+      "operator": "typeof",
+      "babel_source": "typeof value",
+      "parentContext": {
+        "functionName": "formatCSharpValue",
+        "functionParams": [
+          "value"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d35e20eb",
+      "type": "VariableDeclaration",
+      "babel_source": "const escaped = value.replace(/\\\\/g, '\\\\\\\\').replace(/\"/g, '\\\\\"');",
+      "parentContext": {
+        "functionName": "formatCSharpValue",
+        "functionParams": [
+          "value"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7de23ca2",
+      "type": "RegExpLiteral",
+      "pattern": "\\\\",
+      "flags": "g",
+      "babel_source": "/\\\\/g",
+      "parentContext": {
+        "functionName": "formatCSharpValue",
+        "functionParams": [
+          "value"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab9aeb8a",
+      "type": "RegExpLiteral",
+      "pattern": "\"",
+      "flags": "g",
+      "babel_source": "/\"/g",
+      "parentContext": {
+        "functionName": "formatCSharpValue",
+        "functionParams": [
+          "value"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5eca0029",
+      "type": "ReturnStatement",
+      "babel_source": "return `\"${escaped}\"`;",
+      "parentContext": {
+        "functionName": "formatCSharpValue",
+        "functionParams": [
+          "value"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3c43ac94",
+      "type": "TemplateLiteral",
+      "babel_source": "`\"${escaped}\"`",
+      "parentContext": {
+        "functionName": "formatCSharpValue",
+        "functionParams": [
+          "value"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "94884875",
+      "type": "IfStatement",
+      "condition": "typeof value === 'number'",
+      "babel_source": "if (typeof value === 'number') {\r\n    return value.toString();\r\n  } else if (typeof value === 'boolean') {\r\n    return value ? 'true' : 'false';\r\n  } else if (value === null) {\r\n    return 'null';\r\n  }",
+      "parentContext": {
+        "functionName": "formatCSharpValue",
+        "functionParams": [
+          "value"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "85f02f76",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "typeof value === 'number'",
+      "parentContext": {
+        "functionName": "formatCSharpValue",
+        "functionParams": [
+          "value"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "18ae9281",
+      "type": "UnaryExpression",
+      "operator": "typeof",
+      "babel_source": "typeof value",
+      "parentContext": {
+        "functionName": "formatCSharpValue",
+        "functionParams": [
+          "value"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ae2853d4",
+      "type": "ReturnStatement",
+      "babel_source": "return value.toString();",
+      "parentContext": {
+        "functionName": "formatCSharpValue",
+        "functionParams": [
+          "value"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e72f612f",
+      "type": "IfStatement",
+      "condition": "typeof value === 'boolean'",
+      "babel_source": "if (typeof value === 'boolean') {\r\n    return value ? 'true' : 'false';\r\n  } else if (value === null) {\r\n    return 'null';\r\n  }",
+      "parentContext": {
+        "functionName": "formatCSharpValue",
+        "functionParams": [
+          "value"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "02418520",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "typeof value === 'boolean'",
+      "parentContext": {
+        "functionName": "formatCSharpValue",
+        "functionParams": [
+          "value"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "18ae9281",
+      "type": "UnaryExpression",
+      "operator": "typeof",
+      "babel_source": "typeof value",
+      "parentContext": {
+        "functionName": "formatCSharpValue",
+        "functionParams": [
+          "value"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fe834ab8",
+      "type": "ReturnStatement",
+      "babel_source": "return value ? 'true' : 'false';",
+      "parentContext": {
+        "functionName": "formatCSharpValue",
+        "functionParams": [
+          "value"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b9198835",
+      "type": "ConditionalExpression",
+      "babel_source": "value ? 'true' : 'false'",
+      "parentContext": {
+        "functionName": "formatCSharpValue",
+        "functionParams": [
+          "value"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "02439405",
+      "type": "IfStatement",
+      "condition": "value === null",
+      "babel_source": "if (value === null) {\r\n    return 'null';\r\n  }",
+      "parentContext": {
+        "functionName": "formatCSharpValue",
+        "functionParams": [
+          "value"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ef0f8fb1",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "value === null",
+      "parentContext": {
+        "functionName": "formatCSharpValue",
+        "functionParams": [
+          "value"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e6caf818",
+      "type": "ReturnStatement",
+      "babel_source": "return 'null';",
+      "parentContext": {
+        "functionName": "formatCSharpValue",
+        "functionParams": [
+          "value"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e6caf818",
+      "type": "ReturnStatement",
+      "babel_source": "return 'null';",
+      "parentContext": {
+        "functionName": "formatCSharpValue",
+        "functionParams": [
+          "value"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/timelineGenerator.cjs"
+  ]
+}

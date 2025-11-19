@@ -1,0 +1,187 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateTimelineMetadataFile",
+  "params": [
+    {
+      "name": "componentName",
+      "inferredType": "&str",
+      "defaultValue": null
+    },
+    {
+      "name": "timeline",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "templates",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateTimelineMetadataFile(componentName, timeline, templates) {\r\n  return {\r\n    component: componentName,\r\n    timelineId: timeline.timelineId,\r\n    duration: timeline.duration,\r\n    repeat: timeline.repeat || false,\r\n    repeatCount: timeline.repeatCount || -1,\r\n    easing: timeline.easing || 'linear',\r\n    stateBindings: Object.fromEntries(\r\n      Array.from(timeline.stateBindings.entries()).map(([key, binding]) => [\r\n        key,\r\n        {\r\n          interpolate: binding.interpolate,\r\n          type: binding.stateType,\r\n          setterName: binding.setterName\r\n        }\r\n      ])\r\n    ),\r\n    keyframes: timeline.keyframes.map(kf => ({\r\n      time: kf.time,\r\n      label: kf.label,\r\n      state: kf.state,\r\n      easing: kf.easing,\r\n      affectedPaths: extractAffectedPaths(kf.state, templates)\r\n    })),\r\n    generatedAt: Date.now()\r\n  };\r\n}",
+  "body_templates": [
+    {
+      "hash": "acd7b9ae",
+      "type": "ReturnStatement",
+      "babel_source": "return {\r\n    component: componentName,\r\n    timelineId: timeline.timelineId,\r\n    duration: timeline.duration,\r\n    repeat: timeline.repeat || false,\r\n    repeatCount: timeline.repeatCount || -1,\r\n    easing: timeline.easing || 'linear',\r\n    stateBindings: Object.fromEntries(\r\n      Array.from(timeline.stateBindings.entries()).map(([key, binding]) => [\r\n        key,\r\n        {\r\n          interpolate: binding.interpolate,\r\n          type: binding.stateType,\r\n          setterName: binding.setterName\r\n        }\r\n      ])\r\n    ),\r\n    keyframes: timeline.keyframes.map(kf => ({\r\n      time: kf.time,\r\n      label: kf.label,\r\n      state: kf.state,\r\n      easing: kf.easing,\r\n      affectedPaths: extractAffectedPaths(kf.state, templates)\r\n    })),\r\n    generatedAt: Date.now()\r\n  };",
+      "parentContext": {
+        "functionName": "generateTimelineMetadataFile",
+        "functionParams": [
+          "componentName",
+          "timeline",
+          "templates"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cea66a99",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    component: componentName,\r\n    timelineId: timeline.timelineId,\r\n    duration: timeline.duration,\r\n    repeat: timeline.repeat || false,\r\n    repeatCount: timeline.repeatCount || -1,\r\n    easing: timeline.easing || 'linear',\r\n    stateBindings: Object.fromEntries(\r\n      Array.from(timeline.stateBindings.entries()).map(([key, binding]) => [\r\n        key,\r\n        {\r\n          interpolate: binding.interpolate,\r\n          type: binding.stateType,\r\n          setterName: binding.setterName\r\n        }\r\n      ])\r\n    ),\r\n    keyframes: timeline.keyframes.map(kf => ({\r\n      time: kf.time,\r\n      label: kf.label,\r\n      state: kf.state,\r\n      easing: kf.easing,\r\n      affectedPaths: extractAffectedPaths(kf.state, templates)\r\n    })),\r\n    generatedAt: Date.now()\r\n  }",
+      "parentContext": {
+        "functionName": "generateTimelineMetadataFile",
+        "functionParams": [
+          "componentName",
+          "timeline",
+          "templates"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6e090381",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "timeline.repeat || false",
+      "parentContext": {
+        "functionName": "generateTimelineMetadataFile",
+        "functionParams": [
+          "componentName",
+          "timeline",
+          "templates"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2bc136e0",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "timeline.repeatCount || -1",
+      "parentContext": {
+        "functionName": "generateTimelineMetadataFile",
+        "functionParams": [
+          "componentName",
+          "timeline",
+          "templates"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1bad6b8c",
+      "type": "UnaryExpression",
+      "operator": "-",
+      "babel_source": "-1",
+      "parentContext": {
+        "functionName": "generateTimelineMetadataFile",
+        "functionParams": [
+          "componentName",
+          "timeline",
+          "templates"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f771742",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "timeline.easing || 'linear'",
+      "parentContext": {
+        "functionName": "generateTimelineMetadataFile",
+        "functionParams": [
+          "componentName",
+          "timeline",
+          "templates"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a8b67119",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "([key, binding]) => [\r\n        key,\r\n        {\r\n          interpolate: binding.interpolate,\r\n          type: binding.stateType,\r\n          setterName: binding.setterName\r\n        }\r\n      ]",
+      "parentContext": {
+        "functionName": "generateTimelineMetadataFile",
+        "functionParams": [
+          "componentName",
+          "timeline",
+          "templates"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "611b546a",
+      "type": "ArrayExpression",
+      "babel_source": "[\r\n        key,\r\n        {\r\n          interpolate: binding.interpolate,\r\n          type: binding.stateType,\r\n          setterName: binding.setterName\r\n        }\r\n      ]",
+      "parentContext": {
+        "functionName": "generateTimelineMetadataFile",
+        "functionParams": [
+          "componentName",
+          "timeline",
+          "templates"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2180221c",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n          interpolate: binding.interpolate,\r\n          type: binding.stateType,\r\n          setterName: binding.setterName\r\n        }",
+      "parentContext": {
+        "functionName": "generateTimelineMetadataFile",
+        "functionParams": [
+          "componentName",
+          "timeline",
+          "templates"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "01d8d973",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "kf => ({\r\n      time: kf.time,\r\n      label: kf.label,\r\n      state: kf.state,\r\n      easing: kf.easing,\r\n      affectedPaths: extractAffectedPaths(kf.state, templates)\r\n    })",
+      "parentContext": {
+        "functionName": "generateTimelineMetadataFile",
+        "functionParams": [
+          "componentName",
+          "timeline",
+          "templates"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "08a12191",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n      time: kf.time,\r\n      label: kf.label,\r\n      state: kf.state,\r\n      easing: kf.easing,\r\n      affectedPaths: extractAffectedPaths(kf.state, templates)\r\n    }",
+      "parentContext": {
+        "functionName": "generateTimelineMetadataFile",
+        "functionParams": [
+          "componentName",
+          "timeline",
+          "templates"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/timelineGenerator.cjs"
+  ]
+}

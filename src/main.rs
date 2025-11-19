@@ -809,6 +809,16 @@ fn infer_param_type_from_usage(param_name: &str, transforms: &[Transform]) -> &'
 
 /// Generate a Rust helper function from detected transforms
 fn generate_helper_function(helper: &HelperFunction, metadata: Option<&PluginMetadata>) -> String {
+    // Check if this function should be skipped
+    if let Some(meta) = metadata {
+        if let Some(func_def) = meta.get_function_signature(&helper.name) {
+            if func_def.skip.unwrap_or(false) {
+                eprintln!("Skipping helper function '{}' per metadata hint", helper.name);
+                return String::new();
+            }
+        }
+    }
+
     let mut code = String::new();
     let func_name = to_snake_case(&helper.name);
 
