@@ -295,6 +295,9 @@ impl SwcGenerator {
         self.type_env.push_scope();
         for param in &f.params {
             let param_ctx = self.type_from_ast(&param.ty);
+            #[cfg(debug_assertions)]
+            eprintln!("[swc] param {} : {:?} -> swc_type={}",
+                param.name, param.ty, param_ctx.swc_type);
             self.type_env.define(&param.name, param_ctx);
         }
 
@@ -528,12 +531,17 @@ impl SwcGenerator {
                 // Check for if-let pattern first
                 if let Some(pattern) = &if_stmt.pattern {
                     self.gen_if_let_stmt(if_stmt, pattern);
-                } else if let Some((var_name, type_name)) = self.extract_matches_pattern(&if_stmt.condition) {
-                    // Check if condition is matches!(var, Type)
+                } else if let Some((var_name, type_name, field_path)) = self.extract_matches_pattern(&if_stmt.condition) {
+                    // Check if condition is matches!(var, Type) or matches!(obj.field, Type)
                     // Look up the variable's type to determine the correct context
-                    let var_type = self.type_env.lookup(&var_name)
-                        .map(|ctx| ctx.swc_type.clone())
-                        .unwrap_or_else(|| "Expr".to_string());
+                    let var_type = if field_path.is_some() {
+                        // For field access like decl.id, infer from the expression
+                        self.infer_type(&if_stmt.condition).swc_type.clone()
+                    } else {
+                        self.type_env.lookup(&var_name)
+                            .map(|ctx| ctx.swc_type.clone())
+                            .unwrap_or_else(|| "Expr".to_string())
+                    };
 
                     // Generate if let with type narrowing using context
                     let (swc_enum, swc_variant, swc_struct) = get_swc_variant_in_context(&type_name, &var_type);
@@ -552,7 +560,12 @@ impl SwcGenerator {
 
                     // Shadow the variable with narrowed type
                     let narrowed_ctx = TypeContext::narrowed(&type_name, &swc_struct);
-                    self.type_env.define(&var_name, narrowed_ctx);
+                    self.type_env.define(&var_name, narrowed_ctx.clone());
+
+                    // If this was a field access, also register the field refinement
+                    if let Some(path) = &field_path {
+                        self.type_env.refine_field(path, narrowed_ctx);
+                    }
 
                     self.gen_block(&if_stmt.then_branch);
 
@@ -561,11 +574,15 @@ impl SwcGenerator {
 
                     // Handle else-if branches - each might also be a matches! pattern
                     for (cond, block) in &if_stmt.else_if_branches {
-                        if let Some((else_var_name, else_type_name)) = self.extract_matches_pattern(cond) {
+                        if let Some((else_var_name, else_type_name, else_field_path)) = self.extract_matches_pattern(cond) {
                             // This else-if is also a matches! pattern
-                            let else_var_type = self.type_env.lookup(&else_var_name)
-                                .map(|ctx| ctx.swc_type.clone())
-                                .unwrap_or_else(|| "Expr".to_string());
+                            let else_var_type = if else_field_path.is_some() {
+                                self.infer_type(cond).swc_type.clone()
+                            } else {
+                                self.type_env.lookup(&else_var_name)
+                                    .map(|ctx| ctx.swc_type.clone())
+                                    .unwrap_or_else(|| "Expr".to_string())
+                            };
 
                             let (else_swc_enum, else_swc_variant, else_swc_struct) =
                                 get_swc_variant_in_context(&else_type_name, &else_var_type);
@@ -584,7 +601,12 @@ impl SwcGenerator {
                             self.type_env.push_scope();
 
                             let else_narrowed_ctx = TypeContext::narrowed(&else_type_name, &else_swc_struct);
-                            self.type_env.define(&else_var_name, else_narrowed_ctx);
+                            self.type_env.define(&else_var_name, else_narrowed_ctx.clone());
+
+                            // Register field refinement if needed
+                            if let Some(path) = &else_field_path {
+                                self.type_env.refine_field(path, else_narrowed_ctx);
+                            }
 
                             self.gen_block(block);
 
@@ -683,11 +705,15 @@ impl SwcGenerator {
             }
             Stmt::While(while_stmt) => {
                 // Check if condition is matches!(var, Type)
-                if let Some((var_name, type_name)) = self.extract_matches_pattern(&while_stmt.condition) {
+                if let Some((var_name, type_name, field_path)) = self.extract_matches_pattern(&while_stmt.condition) {
                     // Look up the variable's type to determine the correct context
-                    let var_type = self.type_env.lookup(&var_name)
-                        .map(|ctx| ctx.swc_type.clone())
-                        .unwrap_or_else(|| "Expr".to_string());
+                    let var_type = if field_path.is_some() {
+                        self.infer_type(&while_stmt.condition).swc_type.clone()
+                    } else {
+                        self.type_env.lookup(&var_name)
+                            .map(|ctx| ctx.swc_type.clone())
+                            .unwrap_or_else(|| "Expr".to_string())
+                    };
 
                     // Generate while let with type narrowing using context
                     let (swc_enum, swc_variant, swc_struct) = get_swc_variant_in_context(&type_name, &var_type);
@@ -701,7 +727,12 @@ impl SwcGenerator {
 
                     // Shadow the variable with narrowed type
                     let narrowed_ctx = TypeContext::narrowed(&type_name, &swc_struct);
-                    self.type_env.define(&var_name, narrowed_ctx);
+                    self.type_env.define(&var_name, narrowed_ctx.clone());
+
+                    // Register field refinement if needed
+                    if let Some(path) = &field_path {
+                        self.type_env.refine_field(path, narrowed_ctx);
+                    }
 
                     self.gen_block(&while_stmt.body);
 
@@ -766,9 +797,19 @@ impl SwcGenerator {
             if let Some(inner_pat) = inner {
                 if let Pattern::Ident(binding) = inner_pat.as_ref() {
                     // For Some(x), the binding 'x' gets the inner type
-                    // For now, use unknown type - could be improved with type inference
-                    let ctx = TypeContext::unknown();
-                    self.type_env.define(binding, ctx);
+                    // Infer the type of the condition and unwrap it
+                    let cond_type = self.infer_type(&if_stmt.condition);
+                    let cond_type_str = cond_type.swc_type.clone();
+                    let inner_type = if name == "Some" {
+                        // Unwrap Option<T> to get T
+                        cond_type.unwrap_generic()
+                    } else {
+                        cond_type
+                    };
+                    #[cfg(debug_assertions)]
+                    eprintln!("[swc] if let {}({}) = ... -> cond_type={}, inner_type={}",
+                        name, binding, cond_type_str, inner_type.swc_type);
+                    self.type_env.define(binding, inner_type);
                 }
             }
         } else if let Pattern::Ident(binding) = pattern {
@@ -954,16 +995,25 @@ impl SwcGenerator {
     }
 
     /// Extract matches!(var, Type) pattern from an expression
-    /// Returns (variable_name, type_name) if found
-    fn extract_matches_pattern(&self, expr: &Expr) -> Option<(String, String)> {
+    /// Returns (variable_or_expr_name, type_name, optional_field_path) if found
+    /// field_path is Some("obj.field") for matches!(obj.field, Type)
+    fn extract_matches_pattern(&self, expr: &Expr) -> Option<(String, String, Option<String>)> {
         if let Expr::Call(call) = expr {
             if let Expr::Ident(ident) = call.callee.as_ref() {
                 if ident.name == "matches!" && call.args.len() == 2 {
-                    // First arg should be the variable
-                    let var_name = if let Expr::Ident(id) = &call.args[0] {
-                        id.name.clone()
-                    } else {
-                        return None;
+                    // First arg can be variable or member expression
+                    let (var_name, field_path) = match &call.args[0] {
+                        Expr::Ident(id) => (id.name.clone(), None),
+                        Expr::Member(mem) => {
+                            // For obj.field, extract the full path
+                            if let Expr::Ident(obj_id) = &*mem.object {
+                                let path = format!("{}.{}", obj_id.name, mem.property);
+                                (path.clone(), Some(path))
+                            } else {
+                                return None;
+                            }
+                        }
+                        _ => return None,
                     };
 
                     // Second arg should be the type name
@@ -973,7 +1023,7 @@ impl SwcGenerator {
                         return None;
                     };
 
-                    return Some((var_name, type_name));
+                    return Some((var_name, type_name, field_path));
                 }
             }
         }
@@ -991,10 +1041,27 @@ impl SwcGenerator {
             }
 
             Expr::Member(mem) => {
-                // Get object type, then look up field type
+                // 1. Check Refinements First
+                if let Expr::Ident(obj) = &*mem.object {
+                    if let Some(refined) = self.type_env.lookup_field_refinement(&obj.name, &mem.property) {
+                        return refined.clone();
+                    }
+                }
+
+                // 2. Standard Inference - Get object type, then look up field type
                 let obj_type = self.infer_type(&mem.object);
+                #[cfg(debug_assertions)]
+                eprintln!("[swc] Member: {}.{} -> obj_type={}",
+                    match &*mem.object {
+                        Expr::Ident(i) => i.name.clone(),
+                        _ => "?".to_string(),
+                    },
+                    mem.property,
+                    obj_type.swc_type);
                 if let Some(mapping) = get_typed_field_mapping(&obj_type.swc_type, &mem.property) {
                     let (_, kind) = map_rustscript_to_swc(mapping.result_type_rs);
+                    #[cfg(debug_assertions)]
+                    eprintln!("[swc]   -> result_type={}", mapping.result_type_swc);
                     TypeContext {
                         rustscript_type: mapping.result_type_rs.to_string(),
                         swc_type: mapping.result_type_swc.to_string(),
@@ -1004,6 +1071,8 @@ impl SwcGenerator {
                     }
                 } else {
                     // Unknown field access
+                    #[cfg(debug_assertions)]
+                    eprintln!("[swc]   -> no mapping found");
                     TypeContext::unknown()
                 }
             }
@@ -1012,7 +1081,10 @@ impl SwcGenerator {
                 // Check for .clone() which preserves type
                 if let Expr::Member(mem) = call.callee.as_ref() {
                     if mem.property == "clone" && call.args.is_empty() {
-                        return self.infer_type(&mem.object);
+                        let result = self.infer_type(&mem.object);
+                        #[cfg(debug_assertions)]
+                        eprintln!("[swc] Call .clone() -> inferred type={}", result.swc_type);
+                        return result;
                     }
                 }
                 // Default: unknown return type
@@ -1027,6 +1099,16 @@ impl SwcGenerator {
             Expr::Ref(ref_expr) => {
                 // Reference expression - infer the inner type
                 self.infer_type(&ref_expr.expr)
+            }
+
+            Expr::Index(idx) => {
+                // Array/Vec indexing - get the element type
+                let container_type = self.infer_type(&idx.object);
+                let elem_type = self.get_element_type(&container_type);
+                #[cfg(debug_assertions)]
+                eprintln!("[swc] Index: container_type={}, elem_type={}",
+                    container_type.swc_type, elem_type.swc_type);
+                elem_type
             }
 
             _ => TypeContext::unknown(),
@@ -1240,19 +1322,27 @@ impl SwcGenerator {
                 // Simple member access
                 self.gen_expr(&mem.object);
                 self.emit(".");
-                // Map RustScript field names to SWC field names
-                let swc_field = match mem.property.as_str() {
-                    // Identifier.name -> Ident.sym
-                    "name" => "sym",
-                    // MemberExpression.property -> MemberExpr.prop
-                    "property" => "prop",
-                    // MemberExpression.object -> MemberExpr.obj (needs Box unwrap)
-                    "object" => "obj",
-                    // CallExpression.arguments -> CallExpr.args
-                    "arguments" => "args",
-                    // CallExpression.callee -> CallExpr.callee (needs Box unwrap)
-                    "callee" => "callee",
-                    _ => &mem.property,
+                // Map RustScript field names to SWC field names using type context
+                let obj_type = self.infer_type(&mem.object);
+                let swc_field = if let Some(mapping) = get_typed_field_mapping(&obj_type.swc_type, &mem.property) {
+                    mapping.swc_field
+                } else {
+                    // Fallback to hardcoded mappings for common cases
+                    match mem.property.as_str() {
+                        // Identifier.name -> Ident.sym
+                        "name" => "sym",
+                        // MemberExpression.property -> MemberExpr.prop
+                        "property" => "prop",
+                        // MemberExpression.object -> MemberExpr.obj (needs Box unwrap)
+                        "object" => "obj",
+                        // CallExpression.arguments -> CallExpr.args
+                        "arguments" => "args",
+                        // CallExpression.callee -> CallExpr.callee (needs Box unwrap)
+                        "callee" => "callee",
+                        // ArrayPattern.elements / ArrayExpression.elements -> elems
+                        "elements" => "elems",
+                        _ => &mem.property,
+                    }
                 };
                 self.emit(swc_field);
             }

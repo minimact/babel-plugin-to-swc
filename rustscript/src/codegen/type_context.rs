@@ -106,12 +106,77 @@ impl TypeContext {
             self.clone()
         }
     }
+
+    /// Unwrap a generic type to get the element type
+    /// e.g., "Vec<Option<Pat>>" -> "Option<Pat>"
+    /// e.g., "Option<Pat>" -> "Pat"
+    pub fn unwrap_generic(&self) -> Self {
+        let swc = &self.swc_type;
+
+        // Handle Vec<T>
+        if swc.starts_with("Vec<") && swc.ends_with(">") {
+            let inner = &swc[4..swc.len()-1];
+            return Self::from_swc_type(inner);
+        }
+
+        // Handle Option<T>
+        if swc.starts_with("Option<") && swc.ends_with(">") {
+            let inner = &swc[7..swc.len()-1];
+            return Self::from_swc_type(inner);
+        }
+
+        // Handle Box<T>
+        if swc.starts_with("Box<") && swc.ends_with(">") {
+            let inner = &swc[4..swc.len()-1];
+            let mut ctx = Self::from_swc_type(inner);
+            ctx.needs_deref = true;
+            return ctx;
+        }
+
+        self.clone()
+    }
+
+    /// Create TypeContext from a SWC type string
+    pub fn from_swc_type(swc_type: &str) -> Self {
+        // Determine kind from type name
+        let kind = match swc_type {
+            "Expr" => SwcTypeKind::Enum,
+            "Stmt" => SwcTypeKind::Enum,
+            "Decl" => SwcTypeKind::Enum,
+            "Pat" => SwcTypeKind::Enum,
+            "Lit" => SwcTypeKind::Enum,
+            "MemberProp" | "PropName" | "Callee" => SwcTypeKind::WrapperEnum,
+            s if s.starts_with("Vec<") => SwcTypeKind::Unknown, // Collection
+            s if s.starts_with("Option<") => SwcTypeKind::Unknown, // Optional
+            s if s.starts_with("Box<") => SwcTypeKind::Unknown, // Boxed
+            _ => SwcTypeKind::Struct,
+        };
+
+        Self {
+            rustscript_type: swc_type.to_string(),
+            swc_type: swc_type.to_string(),
+            kind,
+            known_variant: None,
+            needs_deref: false,
+        }
+    }
+
+    /// Get the base enum type for pattern matching
+    /// e.g., for "Pat" return "Pat", for "Ident" with context return "Pat" or "Expr"
+    pub fn get_enum_context(&self) -> Option<String> {
+        match self.swc_type.as_str() {
+            "Expr" | "Stmt" | "Decl" | "Pat" | "Lit" => Some(self.swc_type.clone()),
+            _ => None,
+        }
+    }
 }
 
 /// Type environment for tracking variable types through scopes
 pub struct TypeEnvironment {
     /// Stack of scopes, each mapping variable names to types
     scopes: Vec<HashMap<String, TypeContext>>,
+    /// Stack of field refinements per scope (e.g., "decl.id" -> ArrayPat)
+    refinements: Vec<HashMap<String, TypeContext>>,
 }
 
 impl TypeEnvironment {
@@ -119,19 +184,40 @@ impl TypeEnvironment {
     pub fn new() -> Self {
         Self {
             scopes: vec![HashMap::new()],
+            refinements: vec![HashMap::new()],
         }
     }
 
     /// Push a new scope (for entering blocks, if/while let, etc.)
     pub fn push_scope(&mut self) {
         self.scopes.push(HashMap::new());
+        self.refinements.push(HashMap::new());
     }
 
     /// Pop the current scope
     pub fn pop_scope(&mut self) {
         if self.scopes.len() > 1 {
             self.scopes.pop();
+            self.refinements.pop();
         }
+    }
+
+    /// Register a field refinement (e.g., "decl.id" is now ArrayPat)
+    pub fn refine_field(&mut self, path: &str, ctx: TypeContext) {
+        if let Some(scope) = self.refinements.last_mut() {
+            scope.insert(path.to_string(), ctx);
+        }
+    }
+
+    /// Look up a field refinement
+    pub fn lookup_field_refinement(&self, obj: &str, field: &str) -> Option<&TypeContext> {
+        let path = format!("{}.{}", obj, field);
+        for scope in self.refinements.iter().rev() {
+            if let Some(ctx) = scope.get(&path) {
+                return Some(ctx);
+            }
+        }
+        None
     }
 
     /// Define a variable in the current scope
@@ -577,6 +663,59 @@ pub fn get_typed_field_mapping(parent_swc_type: &str, field: &str) -> Option<Typ
             needs_deref: false,
             result_type_rs: "Vec<Pat>",
             result_type_swc: "Vec<Param>",
+            read_conversion: "",
+            write_conversion: "",
+        }),
+
+        // ArrayPat fields
+        ("ArrayPat", "elements") => Some(TypedFieldMapping {
+            rustscript_field: "elements",
+            swc_field: "elems",
+            needs_deref: false,
+            result_type_rs: "Vec<Option<Pat>>",
+            result_type_swc: "Vec<Option<Pat>>",
+            read_conversion: "",
+            write_conversion: "",
+        }),
+
+        // ArrayLit fields (ArrayExpression)
+        ("ArrayLit", "elements") => Some(TypedFieldMapping {
+            rustscript_field: "elements",
+            swc_field: "elems",
+            needs_deref: false,
+            result_type_rs: "Vec<Option<ExprOrSpread>>",
+            result_type_swc: "Vec<Option<ExprOrSpread>>",
+            read_conversion: "",
+            write_conversion: "",
+        }),
+
+        // VariableDeclarator fields
+        ("VariableDeclarator", "id") | ("VarDeclarator", "id") => Some(TypedFieldMapping {
+            rustscript_field: "id",
+            swc_field: "name",
+            needs_deref: false,
+            result_type_rs: "Pat",
+            result_type_swc: "Pat",
+            read_conversion: "",
+            write_conversion: "",
+        }),
+        ("VariableDeclarator", "init") | ("VarDeclarator", "init") => Some(TypedFieldMapping {
+            rustscript_field: "init",
+            swc_field: "init",
+            needs_deref: true,
+            result_type_rs: "Option<Expr>",
+            result_type_swc: "Option<Box<Expr>>",
+            read_conversion: "",
+            write_conversion: "",
+        }),
+
+        // ExprOrSpread fields
+        ("ExprOrSpread", "expr") => Some(TypedFieldMapping {
+            rustscript_field: "expr",
+            swc_field: "expr",
+            needs_deref: true,
+            result_type_rs: "Expr",
+            result_type_swc: "Box<Expr>",
             read_conversion: "",
             write_conversion: "",
         }),

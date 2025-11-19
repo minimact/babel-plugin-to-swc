@@ -413,6 +413,19 @@ pub static FIELD_MAPPINGS: Lazy<Vec<FieldMapping>> = Lazy::new(|| vec![
         write_conversion: None,
     },
 
+    // === ArrayPattern ===
+    FieldMapping {
+        node_type: "ArrayPattern",
+        rustscript: "elements",
+        babel: "elements",
+        swc: "elems",
+        swc_type: "Vec<Option<Pat>>",
+        needs_box_unwrap: false,
+        optional: false,
+        read_conversion: None,
+        write_conversion: None,
+    },
+
     // === ObjectExpression ===
     FieldMapping {
         node_type: "ObjectExpression",
