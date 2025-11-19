@@ -16,6 +16,8 @@ pub struct SwcGenerator {
     hoisted_visitors: Vec<String>,
     /// Type environment for flow-sensitive typing
     type_env: TypeEnvironment,
+    /// Variables captured from outer scope (need self. prefix)
+    captured_vars: std::collections::HashSet<String>,
 }
 
 impl SwcGenerator {
@@ -27,6 +29,7 @@ impl SwcGenerator {
             plugin_name: String::new(),
             hoisted_visitors: Vec::new(),
             type_env: TypeEnvironment::new(),
+            captured_vars: std::collections::HashSet::new(),
         }
     }
 
@@ -755,8 +758,18 @@ impl SwcGenerator {
                     } else {
                         "&'a"
                     };
-                    // TODO: Infer actual type from scope
-                    struct_def.push_str(&format!("    {}: {} _CapturedType_,\n", capture.name, ref_type));
+                    // Look up type from environment, default to i32
+                    // For simple integer variables initialized with literals, default to i32
+                    let captured_type = if let Some(type_ctx) = self.type_env.lookup(&capture.name) {
+                        if type_ctx.swc_type == "Unknown" {
+                            "i32".to_string() // Default unknown types to i32
+                        } else {
+                            type_ctx.swc_type.clone()
+                        }
+                    } else {
+                        "i32".to_string()
+                    };
+                    struct_def.push_str(&format!("    {}: {} {},\n", capture.name, ref_type, captured_type));
                 }
 
                 // Add local state fields
@@ -801,9 +814,17 @@ impl SwcGenerator {
 
                     struct_def.push_str(&format!("    fn {}(&mut self, {}: &mut {}) {{\n", swc_method, param_name, param_type));
 
-                    // Generate method body
+                    // Generate method body with captured variables marked for self. prefix
                     let mut body_gen = SwcGenerator::new();
                     body_gen.indent = 2;
+                    // Mark captured variables so they generate as self.var
+                    for capture in &traverse_stmt.captures {
+                        body_gen.captured_vars.insert(capture.name.clone());
+                    }
+                    // Also mark local state variables
+                    for let_stmt in &inline.state {
+                        body_gen.captured_vars.insert(let_stmt.name.clone());
+                    }
                     body_gen.gen_block(&method.body);
                     struct_def.push_str(&body_gen.output);
 
@@ -1047,7 +1068,12 @@ impl SwcGenerator {
                         } else {
                             ident.name.clone()
                         };
-                        self.emit(&output);
+                        // Check if this is a captured variable (needs self. prefix)
+                        if self.captured_vars.contains(&ident.name) {
+                            self.emit(&format!("self.{}", output));
+                        } else {
+                            self.emit(&output);
+                        }
                     }
                 }
             }

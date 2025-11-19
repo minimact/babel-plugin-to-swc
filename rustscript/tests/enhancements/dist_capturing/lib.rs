@@ -40,24 +40,24 @@ impl VisitMut for CapturingTest {
 
 // Hoisted inline visitors for traverse blocks
 struct __InlineVisitor_0<'a> {
-    count: &'a mut _CapturedType_,
+    count: &'a mut i32,
 }
 
 impl<'a> VisitMut for __InlineVisitor_0<'a> {
     fn visit_mut_identifier(&mut self, id: &mut Ident) {
-        count += 1;
+        self.count += 1;
     }
 }
 
 struct __InlineVisitor_1<'a> {
-    count: &'a mut _CapturedType_,
-    total: &'a mut _CapturedType_,
+    count: &'a mut i32,
+    total: &'a mut i32,
 }
 
 impl<'a> VisitMut for __InlineVisitor_1<'a> {
     fn visit_mut_identifier(&mut self, id: &mut Ident) {
-        count += 1;
-        total += 1;
+        self.count += 1;
+        self.total += 1;
     }
 }
 
