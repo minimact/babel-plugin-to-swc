@@ -5,7 +5,17 @@ use crate::lexer::Span;
 /// Root of the AST - a program containing a plugin or writer declaration
 #[derive(Debug, Clone)]
 pub struct Program {
+    /// Use statements (imports)
+    pub uses: Vec<UseStmt>,
     pub decl: TopLevelDecl,
+    pub span: Span,
+}
+
+/// Use statement: `use fs;` or `use json;`
+#[derive(Debug, Clone)]
+pub struct UseStmt {
+    /// Module name (e.g., "fs", "json")
+    pub module: String,
     pub span: Span,
 }
 

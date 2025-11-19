@@ -48,6 +48,11 @@ pub enum TypeInfo {
     /// AST node type (from Unified AST)
     AstNode(String),
 
+    /// Module type (for imports like fs, json)
+    Module {
+        name: String,
+    },
+
     /// Type variable (for inference)
     Var(usize),
 
@@ -194,6 +199,7 @@ impl TypeInfo {
             TypeInfo::Struct { name, .. } => name.clone(),
             TypeInfo::Enum { name, .. } => name.clone(),
             TypeInfo::AstNode(name) => name.clone(),
+            TypeInfo::Module { name } => format!("module {}", name),
             TypeInfo::Var(id) => format!("?{}", id),
             TypeInfo::Unknown => "unknown".to_string(),
             TypeInfo::Never => "!".to_string(),

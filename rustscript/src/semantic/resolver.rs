@@ -21,6 +21,11 @@ impl Resolver {
 
     /// Run name resolution
     pub fn resolve(&mut self, program: &Program) -> Result<(), Vec<SemanticError>> {
+        // Process use statements - define imported modules
+        for use_stmt in &program.uses {
+            self.resolve_use(use_stmt);
+        }
+
         match &program.decl {
             TopLevelDecl::Plugin(plugin) => self.resolve_plugin(plugin),
             TopLevelDecl::Writer(writer) => self.resolve_writer(writer),
@@ -31,6 +36,28 @@ impl Resolver {
             Ok(())
         } else {
             Err(std::mem::take(&mut self.errors))
+        }
+    }
+
+    /// Resolve a use statement
+    fn resolve_use(&mut self, use_stmt: &UseStmt) {
+        // Define the module in the environment
+        // Valid modules: fs, json
+        let valid_modules = ["fs", "json"];
+
+        if valid_modules.contains(&use_stmt.module.as_str()) {
+            self.env.define(
+                use_stmt.module.clone(),
+                TypeInfo::Module {
+                    name: use_stmt.module.clone(),
+                },
+            );
+        } else {
+            self.errors.push(SemanticError::new(
+                "RS007",
+                format!("Unknown module: {}", use_stmt.module),
+                use_stmt.span,
+            ));
         }
     }
 
@@ -363,7 +390,7 @@ impl Resolver {
                 if self.env.lookup(&ident.name).is_none() {
                     // Check for special names and built-in macros
                     let is_special = matches!(ident.name.as_str(),
-                        "self" | "Self" | "matches!" | "format!" | "format" | "vec!" | "Some" | "None" | "Ok" | "Err" | "String"
+                        "self" | "Self" | "matches!" | "format!" | "format" | "vec!" | "Some" | "None" | "Ok" | "Err" | "String" | "HashMap" | "HashSet" | "Vec" | "Option" | "Result"
                     );
                     // Check if it's a known AST node type (used in matches!)
                     let is_ast_type = get_node_mapping(&ident.name).is_some();

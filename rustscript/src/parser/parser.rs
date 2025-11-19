@@ -37,6 +37,13 @@ impl Parser {
         self.skip_newlines();
         let start_span = self.current_span();
 
+        // Parse use statements
+        let mut uses = Vec::new();
+        while self.check(TokenKind::Use) {
+            uses.push(self.parse_use_stmt()?);
+            self.skip_newlines();
+        }
+
         let decl = if self.check(TokenKind::Plugin) {
             TopLevelDecl::Plugin(self.parse_plugin()?)
         } else if self.check(TokenKind::Writer) {
@@ -46,7 +53,21 @@ impl Parser {
         };
 
         Ok(Program {
+            uses,
             decl,
+            span: start_span,
+        })
+    }
+
+    /// Parse use statement: `use fs;`
+    fn parse_use_stmt(&mut self) -> ParseResult<UseStmt> {
+        let start_span = self.current_span();
+        self.expect(TokenKind::Use)?;
+        let module = self.expect_ident()?;
+        self.expect(TokenKind::Semicolon)?;
+
+        Ok(UseStmt {
+            module,
             span: start_span,
         })
     }
@@ -685,6 +706,17 @@ impl Parser {
                     expr = Expr::Index(IndexExpr {
                         object: Box::new(expr),
                         index: Box::new(index),
+                        span,
+                    });
+                } else if self.match_token(TokenKind::ColonColon) {
+                    // Path expression like fs::write
+                    let method = self.expect_ident()?;
+                    let span = self.current_span();
+                    expr = Expr::Member(MemberExpr {
+                        object: Box::new(expr),
+                        property: method,
+                        optional: false,
+                        computed: false,
                         span,
                     });
                 } else {
@@ -1338,6 +1370,26 @@ impl Parser {
 
         // AST node type as identifier
         if let Some(name) = self.try_expect_ast_type() {
+            if self.check(TokenKind::LBrace) {
+                return self.parse_struct_init(name, span);
+            }
+            return Ok(Expr::Ident(IdentExpr { name, span }));
+        }
+
+        // Type keywords that can be used as path expressions (HashMap::new(), etc.)
+        let type_name = match self.peek() {
+            Some(Token { kind: TokenKind::HashMap, .. }) => Some("HashMap"),
+            Some(Token { kind: TokenKind::HashSet, .. }) => Some("HashSet"),
+            Some(Token { kind: TokenKind::Vec, .. }) => Some("Vec"),
+            Some(Token { kind: TokenKind::Option, .. }) => Some("Option"),
+            Some(Token { kind: TokenKind::Result, .. }) => Some("Result"),
+            Some(Token { kind: TokenKind::Str, .. }) => Some("String"),
+            _ => None,
+        };
+
+        if let Some(name) = type_name {
+            self.advance();
+            let name = name.to_string();
             if self.check(TokenKind::LBrace) {
                 return self.parse_struct_init(name, span);
             }
