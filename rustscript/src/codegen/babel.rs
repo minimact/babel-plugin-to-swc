@@ -25,6 +25,9 @@ impl BabelGenerator {
         match &program.decl {
             TopLevelDecl::Plugin(plugin) => self.gen_plugin(plugin),
             TopLevelDecl::Writer(writer) => self.gen_writer(writer),
+            TopLevelDecl::Interface(_iface) => {
+                // TODO: Generate TypeScript interface
+            }
         }
         std::mem::take(&mut self.output)
     }

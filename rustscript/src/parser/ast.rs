@@ -14,6 +14,7 @@ pub struct Program {
 pub enum TopLevelDecl {
     Plugin(PluginDecl),
     Writer(WriterDecl),
+    Interface(InterfaceDecl),
 }
 
 /// Plugin declaration: `plugin Name { ... }`
@@ -117,6 +118,154 @@ pub enum Type {
     },
     /// User-defined type or AST node type
     Named(String),
+    /// Array type: [T]
+    Array { element: Box<Type> },
+    /// Tuple type: (T1, T2)
+    Tuple(Vec<Type>),
+    /// Optional type: T?
+    Optional(Box<Type>),
+    /// Unit type: ()
+    Unit,
+}
+
+// =============================================================================
+// TypeScript AST Types
+// =============================================================================
+
+/// TypeScript type annotation AST node
+/// Distinct from RustScript's Type enum which represents variable types
+#[derive(Debug, Clone)]
+pub enum TsType {
+    // Keywords
+    String,
+    Number,
+    Boolean,
+    Any,
+    Void,
+    Null,
+    Undefined,
+    Never,
+    Unknown,
+
+    // Compound types
+    Array(Box<TsType>),
+    Tuple(Vec<TsType>),
+    Union(Vec<TsType>),
+    Intersection(Vec<TsType>),
+
+    // Reference types
+    TypeReference {
+        name: String,
+        type_args: Vec<TsType>,
+    },
+
+    // Function types
+    FunctionType {
+        params: Vec<TsType>,
+        return_type: Box<TsType>,
+    },
+
+    // Literal types
+    LiteralString(String),
+    LiteralNumber(f64),
+    LiteralBoolean(bool),
+}
+
+impl TsType {
+    /// Convert TypeScript type to RustScript Type for codegen
+    pub fn to_rustscript_type(&self) -> Type {
+        match self {
+            TsType::String => Type::Primitive("Str".to_string()),
+            TsType::Number => Type::Primitive("f64".to_string()),
+            TsType::Boolean => Type::Primitive("bool".to_string()),
+            TsType::Array(inner) => Type::Container {
+                name: "Vec".to_string(),
+                type_args: vec![inner.to_rustscript_type()],
+            },
+            TsType::TypeReference { name, type_args } => {
+                if type_args.is_empty() {
+                    Type::Named(name.clone())
+                } else {
+                    Type::Container {
+                        name: name.clone(),
+                        type_args: type_args.iter().map(|t| t.to_rustscript_type()).collect(),
+                    }
+                }
+            }
+            TsType::Void => Type::Unit,
+            TsType::Null | TsType::Undefined => Type::Named("None".to_string()),
+            _ => Type::Named("dynamic".to_string()),
+        }
+    }
+}
+
+// =============================================================================
+// TypeScript Declaration Types
+// =============================================================================
+
+/// Interface declaration (per Refinement 3: flattened structure)
+#[derive(Debug, Clone)]
+pub struct InterfaceDecl {
+    pub name: String,
+    pub members: Vec<InterfaceMember>,
+    pub extends: Vec<String>,
+    pub type_params: Vec<TypeParam>,
+    pub span: Span,
+}
+
+/// Interface member types
+#[derive(Debug, Clone)]
+pub enum InterfaceMember {
+    Property(PropertySignature),
+    Method(MethodSignature),
+    Index(IndexSignature),
+}
+
+/// Property signature in an interface
+#[derive(Debug, Clone)]
+pub struct PropertySignature {
+    pub key: String,
+    pub type_annotation: Option<TsType>,
+    pub optional: bool,
+    pub readonly: bool,
+    pub span: Span,
+}
+
+/// Method signature in an interface
+#[derive(Debug, Clone)]
+pub struct MethodSignature {
+    pub name: String,
+    pub params: Vec<TsType>,
+    pub return_type: Option<TsType>,
+    pub optional: bool,
+    pub span: Span,
+}
+
+/// Index signature in an interface: [key: string]: T
+#[derive(Debug, Clone)]
+pub struct IndexSignature {
+    pub key_name: String,
+    pub key_type: TsType,
+    pub value_type: TsType,
+    pub span: Span,
+}
+
+/// Type parameter: T, T extends U, T = Default
+#[derive(Debug, Clone)]
+pub struct TypeParam {
+    pub name: String,
+    pub constraint: Option<TsType>,
+    pub default: Option<TsType>,
+    pub span: Span,
+}
+
+/// Template element for template literals
+#[derive(Debug, Clone)]
+pub struct TemplateElement {
+    pub raw: String,
+    pub cooked: Option<String>,
+    pub tail: bool,
+    pub span: Span,
 }
 
 /// Block of statements
@@ -397,6 +546,8 @@ pub enum UnaryOp {
 pub struct CallExpr {
     pub callee: Box<Expr>,
     pub args: Vec<Expr>,
+    pub type_args: Vec<TsType>,
+    pub optional: bool,
     pub span: Span,
 }
 
@@ -405,6 +556,8 @@ pub struct CallExpr {
 pub struct MemberExpr {
     pub object: Box<Expr>,
     pub property: String,
+    pub optional: bool,
+    pub computed: bool,
     pub span: Span,
 }
 

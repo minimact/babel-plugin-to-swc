@@ -447,6 +447,8 @@ mod tests {
                     span: crate::lexer::Span::new(0, 0, 0, 0),
                 }),
             ],
+            type_args: Vec::new(),
+            optional: false,
             span: crate::lexer::Span::new(0, 0, 0, 0),
         });
 

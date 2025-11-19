@@ -88,6 +88,7 @@ impl UnwrapHoister {
         match &mut program.decl {
             TopLevelDecl::Plugin(plugin) => self.visit_plugin(plugin),
             TopLevelDecl::Writer(writer) => self.visit_writer(writer),
+            TopLevelDecl::Interface(_) => {} // Interfaces don't need hoisting
         }
     }
 
@@ -422,6 +423,8 @@ impl UnwrapHoister {
             base_access = Expr::Member(MemberExpr {
                 object: Box::new(base_access),
                 property: step.clone(),
+                optional: false,
+                computed: false,
                 span,
             });
         }
@@ -436,6 +439,8 @@ impl UnwrapHoister {
             let temp_access = Expr::Member(MemberExpr {
                 object: Box::new(base_access),
                 property: unwrap.field_name.clone(),
+                optional: false,
+                computed: false,
                 span,
             });
 
@@ -475,6 +480,8 @@ impl UnwrapHoister {
                         span,
                     }),
                 ],
+                type_args: Vec::new(),
+                optional: false,
                 span,
             });
 
@@ -500,6 +507,8 @@ impl UnwrapHoister {
                     span,
                 })),
                 property: analysis.final_field.clone(),
+                optional: false,
+                computed: false,
                 span,
             });
 
@@ -508,9 +517,13 @@ impl UnwrapHoister {
                 callee: Box::new(Expr::Member(MemberExpr {
                     object: Box::new(inner_access),
                     property: "clone".to_string(),
+                    optional: false,
+                    computed: false,
                     span,
                 })),
                 args: vec![],
+                type_args: Vec::new(),
+                optional: false,
                 span,
             });
 
@@ -550,6 +563,8 @@ impl UnwrapHoister {
                                         analysis.final_field
                                     ))),
                                 ],
+                                type_args: Vec::new(),
+                                optional: false,
                                 span,
                             }),
                             span,
@@ -576,6 +591,8 @@ impl UnwrapHoister {
             init: Expr::Member(MemberExpr {
                 object: Box::new(analysis.base_expr),
                 property: analysis.final_field,
+                optional: false,
+                computed: false,
                 span,
             }),
             span,
@@ -663,6 +680,8 @@ mod tests {
                 span: Span::new(0, 0, 0, 0),
             })),
             property: "property".to_string(),
+            optional: false,
+            computed: false,
             span: Span::new(0, 0, 0, 0),
         });
 
@@ -687,9 +706,13 @@ mod tests {
                     span: Span::new(0, 0, 0, 0),
                 })),
                 property: "property".to_string(),
+                optional: false,
+                computed: false,
                 span: Span::new(0, 0, 0, 0),
             })),
             property: "name".to_string(),
+            optional: false,
+            computed: false,
             span: Span::new(0, 0, 0, 0),
         });
 

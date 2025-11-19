@@ -357,5 +357,17 @@ pub fn ast_type_to_type_info(ty: &crate::parser::Type) -> TypeInfo {
             // Check if it's an AST node type
             TypeInfo::AstNode(name.clone())
         }
+        crate::parser::Type::Array { element } => {
+            TypeInfo::Vec(Box::new(ast_type_to_type_info(element)))
+        }
+        crate::parser::Type::Tuple(types) => {
+            // For now, treat tuples as unknown
+            let _ = types;
+            TypeInfo::Unknown
+        }
+        crate::parser::Type::Optional(inner) => {
+            TypeInfo::Option(Box::new(ast_type_to_type_info(inner)))
+        }
+        crate::parser::Type::Unit => TypeInfo::Unit,
     }
 }

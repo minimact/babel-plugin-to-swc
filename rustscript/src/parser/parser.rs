@@ -966,6 +966,8 @@ impl Parser {
                 expr = Expr::Call(CallExpr {
                     callee: Box::new(expr),
                     args,
+                    type_args: Vec::new(),
+                    optional: false,
                     span,
                 });
             } else if self.match_token(TokenKind::Dot) {
@@ -975,6 +977,8 @@ impl Parser {
                 expr = Expr::Member(MemberExpr {
                     object: Box::new(expr),
                     property,
+                    optional: false,
+                    computed: false,
                     span,
                 });
             } else if self.match_token(TokenKind::LBracket) {
@@ -994,6 +998,8 @@ impl Parser {
                 expr = Expr::Member(MemberExpr {
                     object: Box::new(expr),
                     property: method,
+                    optional: false,
+                    computed: false,
                     span,
                 });
             } else {
@@ -1085,6 +1091,8 @@ impl Parser {
                         span,
                     })),
                     args,
+                    type_args: Vec::new(),
+                    optional: false,
                     span,
                 }));
             } else {
@@ -1106,6 +1114,8 @@ impl Parser {
                     span,
                 })),
                 args,
+                type_args: Vec::new(),
+                optional: false,
                 span,
             }));
         }

@@ -23,6 +23,7 @@ impl Resolver {
         match &program.decl {
             TopLevelDecl::Plugin(plugin) => self.resolve_plugin(plugin),
             TopLevelDecl::Writer(writer) => self.resolve_writer(writer),
+            TopLevelDecl::Interface(_) => {} // Interfaces don't need resolution
         }
 
         if self.errors.is_empty() {

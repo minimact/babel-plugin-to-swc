@@ -44,6 +44,9 @@ impl SwcGenerator {
         match &program.decl {
             TopLevelDecl::Plugin(plugin) => self.gen_plugin(plugin),
             TopLevelDecl::Writer(writer) => self.gen_writer(writer),
+            TopLevelDecl::Interface(_iface) => {
+                // TODO: Generate TypeScript interface type
+            }
         }
 
         // Emit hoisted inline visitors at the end
@@ -427,6 +430,17 @@ impl SwcGenerator {
                 // Map RustScript AST types to SWC types
                 self.rustscript_to_swc_type(&name.to_lowercase())
             }
+            Type::Array { element } => {
+                format!("Vec<{}>", self.type_to_rust(element))
+            }
+            Type::Tuple(types) => {
+                let inner: Vec<String> = types.iter().map(|t| self.type_to_rust(t)).collect();
+                format!("({})", inner.join(", "))
+            }
+            Type::Optional(inner) => {
+                format!("Option<{}>", self.type_to_rust(inner))
+            }
+            Type::Unit => "()".to_string(),
         }
     }
 
@@ -835,6 +849,13 @@ impl SwcGenerator {
                 // Handle Vec, Option, etc.
                 TypeContext::from_rustscript(name)
             }
+            Type::Array { element } => {
+                let _elem_type = self.type_from_ast(element);
+                TypeContext::unknown() // Array type - could be improved
+            }
+            Type::Tuple(_) => TypeContext::unknown(),
+            Type::Optional(inner) => self.type_from_ast(inner),
+            Type::Unit => TypeContext::unknown(),
         }
     }
 

@@ -148,6 +148,7 @@ pub enum TokenKind {
     FatArrow,       // =>
     ColonColon,     // ::
     Question,       // ?
+    QuestionDot,    // ?.
 
     // Special
     Comment(String),

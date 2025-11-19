@@ -25,6 +25,7 @@ impl TypeChecker {
         match &program.decl {
             TopLevelDecl::Plugin(plugin) => self.check_plugin(plugin),
             TopLevelDecl::Writer(writer) => self.check_writer(writer),
+            TopLevelDecl::Interface(_) => {} // Interfaces are type declarations, not code
         }
 
         if self.errors.is_empty() {
