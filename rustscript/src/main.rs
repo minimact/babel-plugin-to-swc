@@ -4,7 +4,7 @@ use clap::{Parser as ClapParser, Subcommand};
 use std::fs;
 use std::path::PathBuf;
 
-use rustscript::{Lexer, Parser, analyze, generate, Target};
+use rustscript::{Lexer, Parser, analyze, lower, generate, Target};
 
 #[derive(ClapParser)]
 #[command(name = "rustscript")]
@@ -168,7 +168,7 @@ fn main() {
             let tokens = lexer.tokenize();
             let mut parser = Parser::new(tokens);
 
-            let program = match parser.parse() {
+            let mut program = match parser.parse() {
                 Ok(p) => p,
                 Err(e) => {
                     eprintln!("Parse error at {}:{}: {}", e.span.line, e.span.column, e.message);
@@ -188,6 +188,9 @@ fn main() {
                 eprintln!("Build failed: {} error(s)", result.errors.len());
                 std::process::exit(1);
             }
+
+            // AST lowering (transform deep chains to pattern matching)
+            lower(&mut program);
 
             // Determine target
             let target_enum = match target.as_str() {

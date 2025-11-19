@@ -934,6 +934,7 @@ impl SwcGenerator {
                 self.emit(")");
             }
             Expr::Member(mem) => {
+                // Simple member access - auto-unwrap is handled by the UnwrapHoister pass
                 self.gen_expr(&mem.object);
                 self.emit(".");
                 // Map RustScript field names to SWC field names

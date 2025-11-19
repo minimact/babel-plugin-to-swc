@@ -726,6 +726,176 @@ pub fn get_typed_field_mapping(parent_swc_type: &str, field: &str) -> Option<Typ
     }
 }
 
+// =============================================================================
+// Chain Analysis for Auto-Unwrap
+// =============================================================================
+
+/// Represents a single step in a member expression chain
+#[derive(Clone, Debug)]
+pub struct ChainStep {
+    /// The field name in RustScript (e.g., "property", "object", "name")
+    pub field_name: String,
+    /// Type context after this step
+    pub result_type: TypeContext,
+    /// Whether this step needs enum unwrapping
+    pub needs_unwrap: bool,
+    /// If needs_unwrap is true, the expected variant (e.g., "Ident" for MemberProp::Ident)
+    pub expected_variant: Option<String>,
+    /// The SWC enum to match against (e.g., "MemberProp", "Expr")
+    pub enum_type: Option<String>,
+    /// The SWC struct after unwrapping (e.g., "Ident", "MemberExpr")
+    pub unwrapped_struct: Option<String>,
+}
+
+/// Analysis of a complete member expression chain
+#[derive(Clone, Debug)]
+pub struct ChainAnalysis {
+    /// The base expression type
+    pub base_type: TypeContext,
+    /// Steps in the chain
+    pub steps: Vec<ChainStep>,
+    /// Whether any step needs unwrapping
+    pub has_unwraps: bool,
+}
+
+impl ChainAnalysis {
+    /// Create a new chain analysis
+    pub fn new(base_type: TypeContext) -> Self {
+        Self {
+            base_type,
+            steps: Vec::new(),
+            has_unwraps: false,
+        }
+    }
+
+    /// Add a step to the chain
+    pub fn add_step(&mut self, step: ChainStep) {
+        if step.needs_unwrap {
+            self.has_unwraps = true;
+        }
+        self.steps.push(step);
+    }
+
+    /// Get the final type after all steps
+    pub fn final_type(&self) -> &TypeContext {
+        self.steps.last()
+            .map(|s| &s.result_type)
+            .unwrap_or(&self.base_type)
+    }
+}
+
+/// Analyze a member expression chain to determine unwrap requirements
+///
+/// Given a chain like `member.property.name`, this function:
+/// 1. Looks up the base type (member: MemberExpr)
+/// 2. For each field access, determines if unwrapping is needed
+/// 3. Returns the complete analysis with unwrap points marked
+pub fn analyze_member_chain(
+    base_type: &TypeContext,
+    fields: &[String],
+) -> ChainAnalysis {
+    let mut analysis = ChainAnalysis::new(base_type.clone());
+    let mut current_type = base_type.clone();
+
+    for field in fields {
+        // Get field mapping for the current type
+        let field_mapping = get_typed_field_mapping(&current_type.swc_type, field);
+
+        if let Some(mapping) = field_mapping {
+            // Determine the result type
+            let result_swc_type = mapping.result_type_swc;
+            let result_kind = classify_swc_type(result_swc_type);
+
+            // Check if this result type needs unwrapping
+            let needs_unwrap = matches!(result_kind, SwcTypeKind::WrapperEnum | SwcTypeKind::Enum);
+
+            // If the next field access expects a specific type, we can infer the variant
+            let (expected_variant, enum_type, unwrapped_struct) = if needs_unwrap {
+                // Look at the next field to infer what variant we expect
+                // For now, we'll need the caller to provide this
+                // This will be filled in during code generation when we see what field comes next
+                (None, Some(result_swc_type.to_string()), None)
+            } else {
+                (None, None, None)
+            };
+
+            let step = ChainStep {
+                field_name: field.clone(),
+                result_type: TypeContext {
+                    rustscript_type: mapping.result_type_rs.to_string(),
+                    swc_type: result_swc_type.to_string(),
+                    kind: result_kind.clone(),
+                    known_variant: None,
+                    needs_deref: mapping.needs_deref,
+                },
+                needs_unwrap,
+                expected_variant,
+                enum_type,
+                unwrapped_struct,
+            };
+
+            current_type = step.result_type.clone();
+            analysis.add_step(step);
+        } else {
+            // Field not found in mappings - create unknown step
+            let step = ChainStep {
+                field_name: field.clone(),
+                result_type: TypeContext::unknown(),
+                needs_unwrap: false,
+                expected_variant: None,
+                enum_type: None,
+                unwrapped_struct: None,
+            };
+            current_type = step.result_type.clone();
+            analysis.add_step(step);
+        }
+    }
+
+    analysis
+}
+
+/// Infer the expected variant when accessing a field through a wrapper enum
+///
+/// For example, when accessing `.name` through `MemberProp`, we know:
+/// - Only `MemberProp::Ident` has a `.name` field (actually `.sym`)
+/// - So the expected variant is "Ident"
+pub fn infer_expected_variant(wrapper_enum: &str, next_field: &str) -> Option<(String, String)> {
+    match (wrapper_enum, next_field) {
+        // MemberProp.name -> must be MemberProp::Ident
+        ("MemberProp", "name") => Some(("Ident".to_string(), "Ident".to_string())),
+
+        // Callee.object, Callee.property -> must be Callee::Expr(Expr::Member)
+        ("Callee", "object") | ("Callee", "property") => Some(("Expr".to_string(), "Expr".to_string())),
+
+        // Lit.value -> could be Str, Num, Bool, etc. - need more context
+        ("Lit", "value") => None, // Ambiguous without more context
+
+        // PropName.name -> must be PropName::Ident
+        ("PropName", "name") => Some(("Ident".to_string(), "Ident".to_string())),
+
+        // JSXElementName patterns
+        ("JSXElementName", "name") => Some(("Ident".to_string(), "Ident".to_string())),
+
+        _ => None,
+    }
+}
+
+/// Generate the unwrap code for a chain step
+///
+/// Returns (pattern, binding_name) for use in match/if-let
+pub fn generate_unwrap_pattern(step: &ChainStep) -> Option<(String, String)> {
+    if !step.needs_unwrap {
+        return None;
+    }
+
+    let enum_type = step.enum_type.as_ref()?;
+    let variant = step.expected_variant.as_ref()?;
+    let binding = format!("__{}", step.field_name);
+
+    let pattern = format!("{}::{}({})", enum_type, variant, binding);
+    Some((pattern, binding))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -862,5 +1032,45 @@ mod tests {
         let mapping = get_typed_field_mapping("JSXOpeningElement", "attributes").unwrap();
         assert_eq!(mapping.swc_field, "attrs");
         assert_eq!(mapping.result_type_swc, "Vec<JSXAttrOrSpread>");
+    }
+
+    #[test]
+    fn test_chain_analysis_simple() {
+        // Test simple chain: member.property
+        let base = TypeContext::narrowed("MemberExpression", "MemberExpr");
+        let analysis = analyze_member_chain(&base, &["property".to_string()]);
+
+        assert_eq!(analysis.steps.len(), 1);
+        assert!(analysis.has_unwraps); // MemberProp is a wrapper enum
+        assert_eq!(analysis.steps[0].result_type.swc_type, "MemberProp");
+    }
+
+    #[test]
+    fn test_chain_analysis_nested() {
+        // Test nested chain: member.object
+        let base = TypeContext::narrowed("MemberExpression", "MemberExpr");
+        let analysis = analyze_member_chain(&base, &["object".to_string()]);
+
+        assert_eq!(analysis.steps.len(), 1);
+        assert!(analysis.has_unwraps); // Expr is an enum
+        assert_eq!(analysis.steps[0].result_type.swc_type, "Expr");
+        assert!(analysis.steps[0].result_type.needs_deref); // Box<Expr>
+    }
+
+    #[test]
+    fn test_infer_expected_variant() {
+        // MemberProp.name -> Ident
+        let result = infer_expected_variant("MemberProp", "name");
+        assert!(result.is_some());
+        assert_eq!(result.unwrap().0, "Ident");
+
+        // PropName.name -> Ident
+        let result = infer_expected_variant("PropName", "name");
+        assert!(result.is_some());
+        assert_eq!(result.unwrap().0, "Ident");
+
+        // Unknown -> None
+        let result = infer_expected_variant("Unknown", "foo");
+        assert!(result.is_none());
     }
 }

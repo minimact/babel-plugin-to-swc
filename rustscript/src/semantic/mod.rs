@@ -2,11 +2,13 @@ mod resolver;
 mod type_checker;
 mod ownership;
 mod types;
+pub mod hoist_unwraps;
 
 pub use resolver::Resolver;
 pub use type_checker::TypeChecker;
 pub use ownership::OwnershipChecker;
 pub use types::{TypeInfo, TypeEnv};
+pub use hoist_unwraps::UnwrapHoister;
 
 use crate::parser::Program;
 use crate::lexer::Span;
@@ -71,4 +73,10 @@ pub fn analyze(program: &Program) -> SemanticResult {
         warnings,
         type_env: type_checker.into_env(),
     }
+}
+
+/// Run the AST lowering pass (transforms deep chains into explicit pattern matching)
+pub fn lower(program: &mut Program) {
+    let mut hoister = UnwrapHoister::new();
+    hoister.run(program);
 }

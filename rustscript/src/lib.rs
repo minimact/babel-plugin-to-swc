@@ -12,7 +12,7 @@ pub mod mapping;
 
 pub use lexer::{Lexer, Token, TokenKind, Span};
 pub use parser::{Parser, Program, ParseError};
-pub use semantic::{analyze, SemanticError, SemanticResult};
+pub use semantic::{analyze, lower, SemanticError, SemanticResult, UnwrapHoister};
 pub use codegen::{generate, Target, GeneratedCode};
 pub use mapping::{
     NodeMapping, FieldMapping, HelperMapping, PatternMapping,
