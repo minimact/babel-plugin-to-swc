@@ -3,34 +3,31 @@
 
 module.exports = function({ types: t }) {
   
+  function build_member_path(expr) {
+    let parts = [];
+    let current = expr;
+    while ((t.isMemberExpression(current))) {
+      const member = current;
+      const property = member.property;
+      const object = member.object;
+      if ((t.isIdentifier(property))) {
+        const name = property.name;
+        parts.unshift(name);
+      }
+      current = object;
+    }
+    if ((t.isIdentifier(current))) {
+      const name = current.name;
+      parts.unshift(name);
+    }
+    return parts.join(".");
+  }
+  
   let state = {};
   
   return {
     visitor: {
-      FunctionDeclaration(path) {
-        const node = path.node;
-        for (const stmt of node.body.body) {
-          if (stmt.isIfStatement()) {
-            const __nestedVisitor = {
-              state: {
-                return_count: 0,
-              },
-              ReturnStatement(path) {
-                const ret = path.node;
-                path.replaceWith(t.returnStatement(null));
-                this.return_count += 1;
-              },
-            };
-            stmt.traverse(__nestedVisitor);
-          }
-        }
-      },
-      ClassDeclaration(path) {
-        const node = path.node;
-        if (node.abstract) {
-          node.traverse(CleanupVisitor);
-        }
-      }
+
     }
   };
 };

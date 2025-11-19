@@ -12,7 +12,7 @@ mod fields;
 mod helpers;
 mod patterns;
 
-pub use nodes::{NodeMapping, NODE_MAPPINGS, get_node_mapping};
+pub use nodes::{NodeMapping, NODE_MAPPINGS, get_node_mapping, get_node_mapping_by_visitor};
 pub use fields::{FieldMapping, get_field_mapping};
 pub use helpers::{HelperMapping, get_helper_for_field};
 pub use patterns::{PatternMapping, get_pattern_check};

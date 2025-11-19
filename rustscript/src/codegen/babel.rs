@@ -1,6 +1,7 @@
 //! Babel (JavaScript) code generator for RustScript
 
 use crate::parser::*;
+use crate::mapping::{get_node_mapping, get_node_mapping_by_visitor, get_field_mapping};
 
 /// Generator for Babel plugin JavaScript code
 pub struct BabelGenerator {
@@ -211,9 +212,13 @@ impl BabelGenerator {
     }
 
     fn visitor_name_to_babel_type(&self, name: &str) -> String {
-        // visit_call_expression -> CallExpression
+        // Use mapping module: visit_call_expression -> CallExpression
+        if let Some(mapping) = get_node_mapping_by_visitor(name) {
+            return mapping.babel.to_string();
+        }
+
+        // Fallback: convert snake_case to PascalCase
         let stripped = name.strip_prefix("visit_").unwrap_or(name);
-        // Convert snake_case to PascalCase
         stripped
             .split('_')
             .map(|s| {
@@ -405,7 +410,12 @@ impl BabelGenerator {
     }
 
     fn visitor_method_to_node_type(&self, method_name: &str) -> String {
-        // Convert visit_xxx_yyy to XxxYyy
+        // Use mapping module: visit_xxx_yyy -> XxxYyy
+        if let Some(mapping) = get_node_mapping_by_visitor(method_name) {
+            return mapping.babel.to_string();
+        }
+
+        // Fallback: convert visit_xxx_yyy to XxxYyy
         if let Some(stripped) = method_name.strip_prefix("visit_") {
             stripped
                 .split('_')
@@ -473,7 +483,11 @@ impl BabelGenerator {
             }
             Pattern::Struct { name, fields } => {
                 // Type check with field pattern matching
-                self.emit(&format!("t.is{}(", name));
+                // Use mapping to get the correct Babel type checker
+                let checker = get_node_mapping(name)
+                    .map(|m| m.babel_checker.to_string())
+                    .unwrap_or_else(|| format!("is{}", name));
+                self.emit(&format!("t.{}(", checker));
                 self.gen_expr(scrutinee);
                 self.emit(")");
                 for (field_name, field_pattern) in fields {
@@ -583,6 +597,29 @@ impl BabelGenerator {
                     }
                     // clone() -> just the value (no-op in JS)
                     if prop == "clone" {
+                        self.gen_expr(&mem.object);
+                        return;
+                    }
+                    // insert(0, x) -> unshift(x) when first arg is 0
+                    if prop == "insert" && call.args.len() == 2 {
+                        if let Expr::Literal(Literal::Int(0)) = &call.args[0] {
+                            self.gen_expr(&mem.object);
+                            self.emit(".unshift(");
+                            self.gen_expr(&call.args[1]);
+                            self.emit(")");
+                            return;
+                        }
+                        // Otherwise use splice for insert at arbitrary index
+                        self.gen_expr(&mem.object);
+                        self.emit(".splice(");
+                        self.gen_expr(&call.args[0]);
+                        self.emit(", 0, ");
+                        self.gen_expr(&call.args[1]);
+                        self.emit(")");
+                        return;
+                    }
+                    // to_string() -> no-op in JS (strings are already strings)
+                    if prop == "to_string" {
                         self.gen_expr(&mem.object);
                         return;
                     }
@@ -835,8 +872,11 @@ impl BabelGenerator {
                 // Generate t.isType(scrutinee, { field: value, ... })
                 let type_name = &init.name;
 
-                // Generate the type check: t.isIdentifier(scrutinee)
-                self.emit(&format!("t.is{}(", type_name));
+                // Use mapping to get the correct Babel type checker
+                let checker = get_node_mapping(type_name)
+                    .map(|m| m.babel_checker.to_string())
+                    .unwrap_or_else(|| format!("is{}", type_name));
+                self.emit(&format!("t.{}(", checker));
                 self.gen_expr(scrutinee);
                 self.emit(")");
 
@@ -870,8 +910,25 @@ impl BabelGenerator {
                     }
                 }
             }
+            Expr::Ident(ident) => {
+                // Check if this is a type name (AST node type)
+                // If so, generate t.isTypeName(scrutinee)
+                let type_name = &ident.name;
+
+                // Use mapping to get the correct Babel type checker
+                if let Some(mapping) = get_node_mapping(type_name) {
+                    self.emit(&format!("t.{}(", mapping.babel_checker));
+                    self.gen_expr(scrutinee);
+                    self.emit(")");
+                } else {
+                    // Fallback: assume it's an AST type and generate isTypeName
+                    self.emit(&format!("t.is{}(", type_name));
+                    self.gen_expr(scrutinee);
+                    self.emit(")");
+                }
+            }
             _ => {
-                // For non-struct patterns, just generate equality check
+                // For other patterns (literals, etc.), generate equality check
                 self.gen_expr(scrutinee);
                 self.emit(" === ");
                 self.gen_expr(pattern);
@@ -881,74 +938,34 @@ impl BabelGenerator {
 
     /// Convert RustScript AST type names to Babel builder function names
     fn ast_type_to_babel_builder(&self, type_name: &str) -> Option<String> {
-        let builder = match type_name {
-            // Identifiers
-            "Identifier" => "identifier",
+        // Use mapping module to get the Babel builder name
+        // The builder name is typically camelCase of the type name
+        if let Some(mapping) = get_node_mapping(type_name) {
+            // Convert PascalCase to camelCase for builder function
+            let babel_name = mapping.babel;
+            let mut chars = babel_name.chars();
+            let builder = match chars.next() {
+                None => return None,
+                Some(c) => c.to_lowercase().collect::<String>() + chars.as_str(),
+            };
+            return Some(builder);
+        }
 
-            // Literals
+        // Fallback for types not in mapping (like literals)
+        let builder = match type_name {
             "StringLiteral" => "stringLiteral",
             "NumericLiteral" => "numericLiteral",
             "BooleanLiteral" => "booleanLiteral",
             "NullLiteral" => "nullLiteral",
-
-            // Expressions
-            "CallExpression" => "callExpression",
-            "MemberExpression" => "memberExpression",
-            "BinaryExpression" => "binaryExpression",
-            "UnaryExpression" => "unaryExpression",
-            "AssignmentExpression" => "assignmentExpression",
-            "ConditionalExpression" => "conditionalExpression",
-            "ArrayExpression" => "arrayExpression",
-            "ObjectExpression" => "objectExpression",
-            "ArrowFunctionExpression" => "arrowFunctionExpression",
-            "FunctionExpression" => "functionExpression",
-            "AwaitExpression" => "awaitExpression",
             "SpreadElement" => "spreadElement",
-
-            // Statements
-            "ExpressionStatement" => "expressionStatement",
-            "ReturnStatement" => "returnStatement",
-            "IfStatement" => "ifStatement",
-            "BlockStatement" => "blockStatement",
-            "VariableDeclaration" => "variableDeclaration",
             "VariableDeclarator" => "variableDeclarator",
-            "ForStatement" => "forStatement",
-            "ForOfStatement" => "forOfStatement",
-            "WhileStatement" => "whileStatement",
-            "ThrowStatement" => "throwStatement",
-            "TryStatement" => "tryStatement",
             "CatchClause" => "catchClause",
-
-            // Declarations
-            "FunctionDeclaration" => "functionDeclaration",
-            "ClassDeclaration" => "classDeclaration",
-            "ImportDeclaration" => "importDeclaration",
-            "ExportDeclaration" => "exportDeclaration",
-
-            // Object/Class members
             "ObjectProperty" => "objectProperty",
             "ObjectMethod" => "objectMethod",
             "ClassMethod" => "classMethod",
             "ClassProperty" => "classProperty",
-
-            // JSX
-            "JSXElement" => "jsxElement",
-            "JSXFragment" => "jsxFragment",
-            "JSXOpeningElement" => "jsxOpeningElement",
-            "JSXClosingElement" => "jsxClosingElement",
-            "JSXAttribute" => "jsxAttribute",
-            "JSXIdentifier" => "jsxIdentifier",
-            "JSXText" => "jsxText",
-            "JSXExpressionContainer" => "jsxExpressionContainer",
-            "JSXSpreadAttribute" => "jsxSpreadAttribute",
-
-            // Patterns
-            "ObjectPattern" => "objectPattern",
-            "ArrayPattern" => "arrayPattern",
             "RestElement" => "restElement",
             "AssignmentPattern" => "assignmentPattern",
-
-            // Not an AST node type
             _ => return None,
         };
         Some(builder.to_string())

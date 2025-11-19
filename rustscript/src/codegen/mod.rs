@@ -4,9 +4,13 @@
 
 mod babel;
 mod swc;
+pub mod type_context;
+pub mod swc_patterns;
 
 pub use babel::BabelGenerator;
 pub use swc::SwcGenerator;
+pub use type_context::{TypeContext, TypeEnvironment, SwcTypeKind};
+pub use swc_patterns::SwcPatternGenerator;
 
 /// Target platform for code generation
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

@@ -5,46 +5,35 @@ use swc_common::{Span, DUMMY_SP};
 use swc_ecma_ast::*;
 use swc_ecma_visit::{VisitMut, VisitMutWith};
 
-pub struct TraverseTest {
+pub struct BuildMemberPath {
     // Plugin state
 }
 
-impl TraverseTest {
+impl BuildMemberPath {
     pub fn new() -> Self {
         Self {}
     }
-}
-
-impl VisitMut for TraverseTest {
     
-    fn visit_mut_fn_decl(&mut self, n: &mut FnDecl) {
-        for stmt in &mut n.body.stmts {
-            if stmt.is_if_statement() {
-                let mut __visitor = __InlineVisitor_0 {
-                    return_count: 0,
-                };
-                stmt.visit_mut_with(&mut __visitor);
+    pub fn build_member_path(expr: &Expr) -> String {
+        let mut parts = vec![];
+        let mut current = expr.clone();
+        while let Expr::Member(current) = current {
+            let member = current.clone();
+            let property = member.prop.clone();
+            let object = member.obj.clone();
+            if let Expr::Ident(property) = &property {
+                let name = property.sym.clone();
+                parts.insert(0, name);
             }
+            current = object;
         }
-    }
-    
-    fn visit_mut_class_declaration(&mut self, n: &mut ClassDeclaration) {
-        if n.is_abstract {
-            let mut __visitor = CleanupVisitor::default();
-            n.visit_mut_with(&mut __visitor);
+        if let Expr::Ident(current) = &current {
+            let name = current.sym.clone();
+            parts.insert(0, name);
         }
+        return parts.join(".");
     }
 }
 
-// Hoisted inline visitors for traverse blocks
-struct __InlineVisitor_0 {
-    return_count: i32,
+impl VisitMut for BuildMemberPath {
 }
-
-impl VisitMut for __InlineVisitor_0 {
-    fn visit_mut_return_statement(&mut self, ret: &mut ReturnStmt) {
-        *ret = ReturnStmt { argument: None };
-        self.return_count += 1;
-    }
-}
-

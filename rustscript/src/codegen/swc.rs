@@ -1,6 +1,8 @@
 //! SWC (Rust) code generator for RustScript
 
 use crate::parser::*;
+use crate::mapping::{get_node_mapping, get_node_mapping_by_visitor, get_field_mapping, get_pattern_check};
+use super::type_context::{TypeEnvironment, TypeContext, get_swc_variant};
 
 /// Generator for SWC plugin Rust code
 pub struct SwcGenerator {
@@ -12,6 +14,8 @@ pub struct SwcGenerator {
     plugin_name: String,
     /// Hoisted inline visitor structs
     hoisted_visitors: Vec<String>,
+    /// Type environment for flow-sensitive typing
+    type_env: TypeEnvironment,
 }
 
 impl SwcGenerator {
@@ -22,6 +26,7 @@ impl SwcGenerator {
             param_renames: std::collections::HashMap::new(),
             plugin_name: String::new(),
             hoisted_visitors: Vec::new(),
+            type_env: TypeEnvironment::new(),
         }
     }
 
@@ -324,71 +329,77 @@ impl SwcGenerator {
     }
 
     fn visitor_name_to_swc(&self, name: &str) -> String {
-        // visit_call_expression -> visit_mut_call_expr
+        // Use mapping module: visit_call_expression -> visit_mut_call_expr
+        if let Some(mapping) = get_node_mapping_by_visitor(name) {
+            return mapping.swc_visitor.to_string();
+        }
+        // Fallback for unknown visitor methods
         let stripped = name.strip_prefix("visit_").unwrap_or(name);
         format!("visit_mut_{}", self.to_swc_node_name(stripped))
     }
 
     fn visitor_name_to_swc_type(&self, name: &str) -> String {
+        // Use mapping module to get the SWC type for a visitor method
+        if let Some(mapping) = get_node_mapping_by_visitor(name) {
+            return mapping.swc.to_string();
+        }
         let stripped = name.strip_prefix("visit_").unwrap_or(name);
         self.rustscript_to_swc_type(stripped)
     }
 
     fn to_swc_node_name(&self, name: &str) -> String {
-        // Convert RustScript node names to SWC visitor method names
-        match name {
-            "call_expression" => "call_expr".to_string(),
-            "member_expression" => "member_expr".to_string(),
-            "binary_expression" => "bin_expr".to_string(),
-            "unary_expression" => "unary_expr".to_string(),
-            "function_declaration" => "fn_decl".to_string(),
-            "variable_declaration" => "var_decl".to_string(),
-            "if_statement" => "if_stmt".to_string(),
-            "return_statement" => "return_stmt".to_string(),
-            "block_statement" => "block_stmt".to_string(),
-            "expression_statement" => "expr_stmt".to_string(),
-            "for_statement" => "for_stmt".to_string(),
-            "while_statement" => "while_stmt".to_string(),
-            "jsx_element" => "jsx_element".to_string(),
-            "jsx_attribute" => "jsx_attr".to_string(),
-            _ => name.to_string(),
+        // Convert snake_case RustScript node names to SWC visitor method suffixes
+        // Try to find a mapping by converting snake_case to PascalCase
+        let pascal = name.split('_')
+            .map(|part| {
+                let mut chars = part.chars();
+                match chars.next() {
+                    None => String::new(),
+                    Some(first) => first.to_uppercase().collect::<String>() + chars.as_str(),
+                }
+            })
+            .collect::<String>();
+
+        if let Some(mapping) = get_node_mapping(&pascal) {
+            // Extract the suffix from swc_visitor (e.g., "visit_mut_call_expr" -> "call_expr")
+            mapping.swc_visitor
+                .strip_prefix("visit_mut_")
+                .unwrap_or(&mapping.swc_visitor)
+                .to_string()
+        } else {
+            // Fallback: apply common transformations
+            name.replace("_expression", "_expr")
+                .replace("_statement", "_stmt")
+                .replace("_declaration", "_decl")
         }
     }
 
     fn rustscript_to_swc_type(&self, name: &str) -> String {
-        // Convert RustScript node names to SWC AST types
+        // Convert RustScript node names to SWC AST types using mapping module
         // Handle both snake_case and PascalCase inputs
-        match name.to_lowercase().as_str() {
-            "call_expression" | "callexpression" => "CallExpr".to_string(),
-            "member_expression" | "memberexpression" => "MemberExpr".to_string(),
-            "binary_expression" | "binaryexpression" => "BinExpr".to_string(),
-            "unary_expression" | "unaryexpression" => "UnaryExpr".to_string(),
-            "function_declaration" | "functiondeclaration" => "FnDecl".to_string(),
-            "variable_declaration" | "variabledeclaration" => "VarDecl".to_string(),
-            "if_statement" | "ifstatement" => "IfStmt".to_string(),
-            "return_statement" | "returnstatement" => "ReturnStmt".to_string(),
-            "block_statement" | "blockstatement" => "BlockStmt".to_string(),
-            "expression_statement" | "expressionstatement" => "ExprStmt".to_string(),
-            "for_statement" | "forstatement" => "ForStmt".to_string(),
-            "while_statement" | "whilestatement" => "WhileStmt".to_string(),
-            "identifier" => "Ident".to_string(),
-            "jsx_element" | "jsxelement" => "JSXElement".to_string(),
-            "jsx_attribute" | "jsxattribute" => "JSXAttr".to_string(),
-            "program" => "Program".to_string(),
-            "literal" => "Lit".to_string(),
-            _ => {
-                // Convert snake_case to PascalCase for unknown types
-                name.split('_')
-                    .map(|s| {
-                        let mut chars = s.chars();
-                        match chars.next() {
-                            None => String::new(),
-                            Some(c) => c.to_uppercase().chain(chars).collect(),
-                        }
-                    })
-                    .collect()
-            }
+
+        // First try direct lookup (PascalCase)
+        if let Some(mapping) = get_node_mapping(name) {
+            return mapping.swc.to_string();
         }
+
+        // Try converting snake_case to PascalCase
+        let pascal: String = name.split('_')
+            .map(|s| {
+                let mut chars = s.chars();
+                match chars.next() {
+                    None => String::new(),
+                    Some(c) => c.to_uppercase().chain(chars).collect(),
+                }
+            })
+            .collect();
+
+        if let Some(mapping) = get_node_mapping(&pascal) {
+            return mapping.swc.to_string();
+        }
+
+        // Fallback: return the PascalCase conversion
+        pascal
     }
 
     fn type_to_rust(&self, ty: &Type) -> String {
@@ -459,33 +470,67 @@ impl SwcGenerator {
                 self.emit(";\n");
             }
             Stmt::If(if_stmt) => {
-                self.emit_indent();
-                self.emit("if ");
-                self.gen_expr(&if_stmt.condition);
-                self.emit(" {\n");
-                self.indent += 1;
-                self.gen_block(&if_stmt.then_branch);
-                self.indent -= 1;
+                // Check if condition is matches!(var, Type)
+                if let Some((var_name, type_name)) = self.extract_matches_pattern(&if_stmt.condition) {
+                    // Generate if let with type narrowing
+                    let (swc_enum, swc_variant, swc_struct) = get_swc_variant(&type_name);
 
-                for (cond, block) in &if_stmt.else_if_branches {
                     self.emit_indent();
-                    self.emit("} else if ");
-                    self.gen_expr(cond);
+                    self.emit(&format!("if let {}::{}({}) = &{} {{\n",
+                        swc_enum, swc_variant, var_name, var_name));
+
+                    self.indent += 1;
+                    self.type_env.push_scope();
+
+                    // Shadow the variable with narrowed type
+                    let narrowed_ctx = TypeContext::narrowed(&type_name, &swc_struct);
+                    self.type_env.define(&var_name, narrowed_ctx);
+
+                    self.gen_block(&if_stmt.then_branch);
+
+                    self.type_env.pop_scope();
+                    self.indent -= 1;
+
+                    // Handle else branches (no type narrowing for these)
+                    if let Some(else_block) = &if_stmt.else_branch {
+                        self.emit_indent();
+                        self.emit("} else {\n");
+                        self.indent += 1;
+                        self.gen_block(else_block);
+                        self.indent -= 1;
+                    }
+
+                    self.emit_line("}");
+                } else {
+                    // Standard if statement
+                    self.emit_indent();
+                    self.emit("if ");
+                    self.gen_expr(&if_stmt.condition);
                     self.emit(" {\n");
                     self.indent += 1;
-                    self.gen_block(block);
+                    self.gen_block(&if_stmt.then_branch);
                     self.indent -= 1;
-                }
 
-                if let Some(else_block) = &if_stmt.else_branch {
-                    self.emit_indent();
-                    self.emit("} else {\n");
-                    self.indent += 1;
-                    self.gen_block(else_block);
-                    self.indent -= 1;
-                }
+                    for (cond, block) in &if_stmt.else_if_branches {
+                        self.emit_indent();
+                        self.emit("} else if ");
+                        self.gen_expr(cond);
+                        self.emit(" {\n");
+                        self.indent += 1;
+                        self.gen_block(block);
+                        self.indent -= 1;
+                    }
 
-                self.emit_line("}");
+                    if let Some(else_block) = &if_stmt.else_branch {
+                        self.emit_indent();
+                        self.emit("} else {\n");
+                        self.indent += 1;
+                        self.gen_block(else_block);
+                        self.indent -= 1;
+                    }
+
+                    self.emit_line("}");
+                }
             }
             Stmt::Match(match_stmt) => {
                 self.emit_indent();
@@ -514,14 +559,38 @@ impl SwcGenerator {
                 self.emit_line("}");
             }
             Stmt::While(while_stmt) => {
-                self.emit_indent();
-                self.emit("while ");
-                self.gen_expr(&while_stmt.condition);
-                self.emit(" {\n");
-                self.indent += 1;
-                self.gen_block(&while_stmt.body);
-                self.indent -= 1;
-                self.emit_line("}");
+                // Check if condition is matches!(var, Type)
+                if let Some((var_name, type_name)) = self.extract_matches_pattern(&while_stmt.condition) {
+                    // Generate while let with type narrowing
+                    let (swc_enum, swc_variant, swc_struct) = get_swc_variant(&type_name);
+
+                    self.emit_indent();
+                    self.emit(&format!("while let {}::{}({}) = {} {{\n",
+                        swc_enum, swc_variant, var_name, var_name));
+
+                    self.indent += 1;
+                    self.type_env.push_scope();
+
+                    // Shadow the variable with narrowed type
+                    let narrowed_ctx = TypeContext::narrowed(&type_name, &swc_struct);
+                    self.type_env.define(&var_name, narrowed_ctx);
+
+                    self.gen_block(&while_stmt.body);
+
+                    self.type_env.pop_scope();
+                    self.indent -= 1;
+                    self.emit_line("}");
+                } else {
+                    // Standard while loop
+                    self.emit_indent();
+                    self.emit("while ");
+                    self.gen_expr(&while_stmt.condition);
+                    self.emit(" {\n");
+                    self.indent += 1;
+                    self.gen_block(&while_stmt.body);
+                    self.indent -= 1;
+                    self.emit_line("}");
+                }
             }
             Stmt::Loop(loop_stmt) => {
                 self.emit_line("loop {");
@@ -654,17 +723,37 @@ impl SwcGenerator {
     }
 
     fn rustscript_type_to_swc(&self, type_name: &str) -> String {
-        // Map RustScript AST types to SWC types
-        match type_name {
-            "FunctionDeclaration" => "FnDecl",
-            "CallExpression" => "CallExpr",
-            "MemberExpression" => "MemberExpr",
-            "Identifier" => "Ident",
-            "ReturnStatement" => "ReturnStmt",
-            "IfStatement" => "IfStmt",
-            "BlockStatement" => "BlockStmt",
-            _ => type_name,
-        }.to_string()
+        // Use mapping module to convert RustScript AST types to SWC types
+        get_node_mapping(type_name)
+            .map(|m| m.swc.to_string())
+            .unwrap_or_else(|| type_name.to_string())
+    }
+
+    /// Extract matches!(var, Type) pattern from an expression
+    /// Returns (variable_name, type_name) if found
+    fn extract_matches_pattern(&self, expr: &Expr) -> Option<(String, String)> {
+        if let Expr::Call(call) = expr {
+            if let Expr::Ident(ident) = call.callee.as_ref() {
+                if ident.name == "matches!" && call.args.len() == 2 {
+                    // First arg should be the variable
+                    let var_name = if let Expr::Ident(id) = &call.args[0] {
+                        id.name.clone()
+                    } else {
+                        return None;
+                    };
+
+                    // Second arg should be the type name
+                    let type_name = if let Expr::Ident(id) = &call.args[1] {
+                        id.name.clone()
+                    } else {
+                        return None;
+                    };
+
+                    return Some((var_name, type_name));
+                }
+            }
+        }
+        None
     }
 
     fn gen_pattern(&mut self, pattern: &Pattern) {
@@ -787,6 +876,14 @@ impl SwcGenerator {
                 let swc_field = match mem.property.as_str() {
                     // Identifier.name -> Ident.sym
                     "name" => "sym",
+                    // MemberExpression.property -> MemberExpr.prop
+                    "property" => "prop",
+                    // MemberExpression.object -> MemberExpr.obj (needs Box unwrap)
+                    "object" => "obj",
+                    // CallExpression.arguments -> CallExpr.args
+                    "arguments" => "args",
+                    // CallExpression.callee -> CallExpr.callee (needs Box unwrap)
+                    "callee" => "callee",
                     _ => &mem.property,
                 };
                 self.emit(swc_field);
@@ -1020,13 +1117,21 @@ impl SwcGenerator {
                 self.gen_expr(scrutinee);
                 self.emit(", ");
 
-                // Map RustScript types to SWC enum variants
-                match init.name.as_str() {
-                    "Identifier" => self.emit("Expr::Ident(_)"),
-                    "MemberExpression" => self.emit("Expr::Member(_)"),
-                    "CallExpression" => self.emit("Expr::Call(_)"),
-                    "StringLiteral" => self.emit("Expr::Lit(Lit::Str(_))"),
-                    _ => self.emit(&format!("{}{{ .. }}", swc_type)),
+                // Use mapping module for SWC enum variants
+                if let Some(mapping) = get_node_mapping(&init.name) {
+                    // Use the swc_pattern from mapping (e.g., "Expr::Ident(ident)")
+                    // but we need just the pattern without binding
+                    let pattern = mapping.swc_pattern.replace(|c: char| c.is_lowercase() || c == '_', "");
+                    let pattern = if pattern.ends_with("()") {
+                        pattern.replace("()", "(_)")
+                    } else {
+                        format!("{}(_)", mapping.swc_pattern.split('(').next().unwrap_or(&mapping.swc_pattern))
+                    };
+                    self.emit(&pattern);
+                } else if init.name == "StringLiteral" {
+                    self.emit("Expr::Lit(Lit::Str(_))");
+                } else {
+                    self.emit(&format!("{}{{ .. }}", swc_type));
                 }
                 self.emit(")");
 
@@ -1035,15 +1140,16 @@ impl SwcGenerator {
                     self.emit(" && ");
 
                     // Generate field access - need to unwrap the enum first
-                    let unwrap_prefix = match init.name.as_str() {
-                        "Identifier" => "if let Expr::Ident(id) = &",
-                        "MemberExpression" => "if let Expr::Member(mem) = &",
-                        _ => "",
+                    let unwrap_prefix = if let Some(mapping) = get_node_mapping(&init.name) {
+                        // Generate: if let Pattern = &expr { ... }
+                        format!("if let {} = &", mapping.swc_pattern)
+                    } else {
+                        String::new()
                     };
 
                     if !unwrap_prefix.is_empty() {
                         self.emit("{ ");
-                        self.emit(unwrap_prefix);
+                        self.emit(&unwrap_prefix);
                         self.gen_expr(scrutinee);
                         self.emit(" { ");
                     }
@@ -1052,22 +1158,42 @@ impl SwcGenerator {
                     match field_pattern {
                         Expr::Literal(Literal::String(s)) => {
                             // String equality check on field
-                            let swc_field = match field_name.as_str() {
-                                "name" => "sym",
-                                _ => field_name,
-                            };
-                            self.emit(&format!("&*{}.{} == \"{}\"",
-                                if init.name == "Identifier" { "id" } else { "mem" },
-                                swc_field, s));
+                            // Use field mapping to get correct SWC field name
+                            let swc_field = get_field_mapping(&init.name, field_name)
+                                .map(|m| m.swc)
+                                .unwrap_or(field_name.as_str());
+
+                            // Get the variable name from the pattern binding
+                            let var_name = get_node_mapping(&init.name)
+                                .map(|m| {
+                                    // Extract binding name from pattern like "Expr::Ident(ident)" -> "ident"
+                                    m.swc_pattern
+                                        .split('(')
+                                        .nth(1)
+                                        .and_then(|s| s.strip_suffix(')'))
+                                        .unwrap_or("n")
+                                })
+                                .unwrap_or("n");
+
+                            self.emit(&format!("&*{}.{} == \"{}\"", var_name, swc_field, s));
                         }
                         Expr::StructInit(nested) => {
                             // Nested pattern - recursive check
-                            let obj_var = if init.name == "MemberExpression" { "mem" } else { "id" };
-                            let swc_field = match field_name.as_str() {
-                                "object" => "obj",
-                                "property" => "prop",
-                                _ => field_name,
-                            };
+                            // Get the variable name from the pattern binding
+                            let obj_var = get_node_mapping(&init.name)
+                                .map(|m| {
+                                    m.swc_pattern
+                                        .split('(')
+                                        .nth(1)
+                                        .and_then(|s| s.strip_suffix(')'))
+                                        .unwrap_or("n")
+                                })
+                                .unwrap_or("n");
+
+                            // Use field mapping for the field name
+                            let swc_field = get_field_mapping(&init.name, field_name)
+                                .map(|m| m.swc)
+                                .unwrap_or(field_name.as_str());
 
                             // Handle MemberProp specially - it's not an Expr
                             if init.name == "MemberExpression" && field_name == "property" {
@@ -1105,8 +1231,53 @@ impl SwcGenerator {
                     }
                 }
             }
+            Expr::Ident(ident) => {
+                // Type check for a simple type name (e.g., MemberExpression)
+                let type_name = &ident.name;
+
+                // Use mapping to get the correct SWC pattern
+                if let Some(mapping) = get_node_mapping(type_name) {
+                    // Generate: matches!(scrutinee, Expr::Member(_))
+                    self.emit("matches!(");
+                    self.gen_expr(scrutinee);
+                    self.emit(", ");
+
+                    // Extract just the pattern part (e.g., "Expr::Member(_)")
+                    let pattern_str = mapping.swc_pattern;
+                    // Replace any binding variable with _
+                    let pattern = if pattern_str.contains('(') {
+                        let parts: Vec<&str> = pattern_str.split('(').collect();
+                        format!("{}(_)", parts[0])
+                    } else {
+                        format!("{}{{ .. }}", pattern_str)
+                    };
+                    self.emit(&pattern);
+                    self.emit(")");
+                } else {
+                    // Fallback: try common mappings
+                    let swc_pattern = match type_name.as_str() {
+                        "MemberExpression" => "Expr::Member(_)",
+                        "CallExpression" => "Expr::Call(_)",
+                        "Identifier" => "Expr::Ident(_)",
+                        "FunctionDeclaration" => "Decl::Fn(_)",
+                        "VariableDeclaration" => "Decl::Var(_)",
+                        "ReturnStatement" => "Stmt::Return(_)",
+                        "IfStatement" => "Stmt::If(_)",
+                        "BlockStatement" => "Stmt::Block(_)",
+                        _ => {
+                            // Generate a placeholder
+                            self.gen_expr(scrutinee);
+                            self.emit(&format!(".is_{}()", type_name.to_lowercase()));
+                            return;
+                        }
+                    };
+                    self.emit(&format!("matches!("));
+                    self.gen_expr(scrutinee);
+                    self.emit(&format!(", {})", swc_pattern));
+                }
+            }
             _ => {
-                // Simple equality check
+                // Literal or other pattern - generate equality check
                 self.gen_expr(scrutinee);
                 self.emit(" == ");
                 self.gen_expr(pattern);
