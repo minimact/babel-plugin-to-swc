@@ -230,6 +230,10 @@ impl Resolver {
             Stmt::If(if_stmt) => {
                 self.resolve_expr(&if_stmt.condition);
                 self.env.push_scope();
+                // If this is an if-let, resolve the pattern to bind variables
+                if let Some(ref pattern) = if_stmt.pattern {
+                    self.resolve_pattern(pattern);
+                }
                 self.resolve_block(&if_stmt.then_branch);
                 self.env.pop_scope();
 

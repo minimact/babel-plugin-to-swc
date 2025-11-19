@@ -699,6 +699,48 @@ pub static NODE_MAPPINGS: Lazy<Vec<NodeMapping>> = Lazy::new(|| vec![
         visitor_method: "visit_ts_type_parameter_declaration",
         swc_visitor: "visit_mut_ts_type_param_decl",
     },
+
+    // === Patterns ===
+    NodeMapping {
+        rustscript: "ArrayPattern",
+        babel: "ArrayPattern",
+        swc: "ArrayPat",
+        swc_enum: Some("Pat::Array"),
+        babel_checker: "isArrayPattern",
+        swc_pattern: "Pat::Array",
+        visitor_method: "visit_array_pattern",
+        swc_visitor: "visit_mut_array_pat",
+    },
+    NodeMapping {
+        rustscript: "ObjectPattern",
+        babel: "ObjectPattern",
+        swc: "ObjectPat",
+        swc_enum: Some("Pat::Object"),
+        babel_checker: "isObjectPattern",
+        swc_pattern: "Pat::Object",
+        visitor_method: "visit_object_pattern",
+        swc_visitor: "visit_mut_object_pat",
+    },
+    NodeMapping {
+        rustscript: "RestElement",
+        babel: "RestElement",
+        swc: "RestPat",
+        swc_enum: Some("Pat::Rest"),
+        babel_checker: "isRestElement",
+        swc_pattern: "Pat::Rest",
+        visitor_method: "visit_rest_element",
+        swc_visitor: "visit_mut_rest_pat",
+    },
+    NodeMapping {
+        rustscript: "AssignmentPattern",
+        babel: "AssignmentPattern",
+        swc: "AssignPat",
+        swc_enum: Some("Pat::Assign"),
+        babel_checker: "isAssignmentPattern",
+        swc_pattern: "Pat::Assign",
+        visitor_method: "visit_assignment_pattern",
+        swc_visitor: "visit_mut_assign_pat",
+    },
 ]);
 
 /// Index for fast lookup by RustScript name
