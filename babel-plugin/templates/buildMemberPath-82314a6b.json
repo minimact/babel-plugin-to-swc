@@ -1,0 +1,182 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "buildMemberPath",
+  "params": [
+    {
+      "name": "expr",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function buildMemberPath(expr) {\r\n  const parts = [];\r\n  let current = expr;\r\n\r\n  while (t.isMemberExpression(current)) {\r\n    if (t.isIdentifier(current.property)) {\r\n      parts.unshift(current.property.name);\r\n    }\r\n    current = current.object;\r\n  }\r\n\r\n  if (t.isIdentifier(current)) {\r\n    parts.unshift(current.name);\r\n  }\r\n\r\n  return parts.length > 0 ? parts.join('.') : null;\r\n}",
+  "body_templates": [
+    {
+      "hash": "c4133e54",
+      "type": "VariableDeclaration",
+      "babel_source": "const parts = [];",
+      "parentContext": {
+        "functionName": "buildMemberPath",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "buildMemberPath",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b74a5e61",
+      "type": "VariableDeclaration",
+      "babel_source": "let current = expr;",
+      "parentContext": {
+        "functionName": "buildMemberPath",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8d52c99b",
+      "type": "WhileStatement",
+      "babel_source": "while (t.isMemberExpression(current)) {\r\n    if (t.isIdentifier(current.property)) {\r\n      parts.unshift(current.property.name);\r\n    }\r\n    current = current.object;\r\n  }",
+      "parentContext": {
+        "functionName": "buildMemberPath",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "99ac970d",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(current)",
+      "parentContext": {
+        "functionName": "buildMemberPath",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "abb395c7",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(current.property)",
+      "babel_source": "if (t.isIdentifier(current.property)) {\r\n      parts.unshift(current.property.name);\r\n    }",
+      "parentContext": {
+        "functionName": "buildMemberPath",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "70f404ee",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(current.property)",
+      "parentContext": {
+        "functionName": "buildMemberPath",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "05723cfe",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "current = current.object",
+      "parentContext": {
+        "functionName": "buildMemberPath",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b18dbc31",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(current)",
+      "babel_source": "if (t.isIdentifier(current)) {\r\n    parts.unshift(current.name);\r\n  }",
+      "parentContext": {
+        "functionName": "buildMemberPath",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f41cdd7f",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(current)",
+      "parentContext": {
+        "functionName": "buildMemberPath",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "048838a3",
+      "type": "ReturnStatement",
+      "babel_source": "return parts.length > 0 ? parts.join('.') : null;",
+      "parentContext": {
+        "functionName": "buildMemberPath",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9728e5e0",
+      "type": "ConditionalExpression",
+      "babel_source": "parts.length > 0 ? parts.join('.') : null",
+      "parentContext": {
+        "functionName": "buildMemberPath",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "41b46808",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "parts.length > 0",
+      "parentContext": {
+        "functionName": "buildMemberPath",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/conditionalElementTemplates/buildMemberPath.cjs"
+  ]
+}

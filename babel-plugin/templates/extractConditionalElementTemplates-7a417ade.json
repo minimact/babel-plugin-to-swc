@@ -1,0 +1,250 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractConditionalElementTemplates",
+  "params": [
+    {
+      "name": "renderBody",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "component",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractConditionalElementTemplates(renderBody, component) {\r\n  if (!renderBody) return {};\r\n\r\n  const conditionalTemplates = {};\r\n\r\n  // Build mapping from variable name → state key\r\n  const stateKeyMap = new Map();\r\n\r\n  // Map useState variables to state_N keys\r\n  if (component.useState) {\r\n    component.useState.forEach((state, index) => {\r\n      stateKeyMap.set(state.name, `state_${index}`);\r\n    });\r\n  }\r\n\r\n  // Map useRef variables to ref_N keys\r\n  if (component.useRef) {\r\n    component.useRef.forEach((ref, index) => {\r\n      stateKeyMap.set(ref.name, `ref_${index}`);\r\n    });\r\n  }\r\n\r\n  // Map props (they use the prop name as-is)\r\n  if (component.props) {\r\n    component.props.forEach((prop) => {\r\n      stateKeyMap.set(prop.name, prop.name);\r\n    });\r\n  }\r\n\r\n  // Start traversal\r\n  traverseJSX(renderBody, null, conditionalTemplates, stateKeyMap);\r\n\r\n  return conditionalTemplates;\r\n}",
+  "body_templates": [
+    {
+      "hash": "43f557ed",
+      "type": "IfStatement",
+      "condition": "!renderBody",
+      "babel_source": "if (!renderBody) return {};",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bc65e16e",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!renderBody",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e4b08665",
+      "type": "ReturnStatement",
+      "babel_source": "return {};",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "44136fa3",
+      "type": "ObjectExpression",
+      "babel_source": "{}",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e5ba7e8d",
+      "type": "VariableDeclaration",
+      "babel_source": "const conditionalTemplates = {};",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "44136fa3",
+      "type": "ObjectExpression",
+      "babel_source": "{}",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "228ed2c8",
+      "type": "VariableDeclaration",
+      "babel_source": "const stateKeyMap = new Map();",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cc227fdc",
+      "type": "NewExpression",
+      "babel_source": "new Map()",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b5e50e02",
+      "type": "IfStatement",
+      "condition": "component.useState",
+      "babel_source": "if (component.useState) {\r\n    component.useState.forEach((state, index) => {\r\n      stateKeyMap.set(state.name, `state_${index}`);\r\n    });\r\n  }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d6d168e3",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "(state, index) => {\r\n      stateKeyMap.set(state.name, `state_${index}`);\r\n    }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8e6920e6",
+      "type": "TemplateLiteral",
+      "babel_source": "`state_${index}`",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "00034afb",
+      "type": "IfStatement",
+      "condition": "component.useRef",
+      "babel_source": "if (component.useRef) {\r\n    component.useRef.forEach((ref, index) => {\r\n      stateKeyMap.set(ref.name, `ref_${index}`);\r\n    });\r\n  }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fe72e758",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "(ref, index) => {\r\n      stateKeyMap.set(ref.name, `ref_${index}`);\r\n    }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "738dc397",
+      "type": "TemplateLiteral",
+      "babel_source": "`ref_${index}`",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "018e32d6",
+      "type": "IfStatement",
+      "condition": "component.props",
+      "babel_source": "if (component.props) {\r\n    component.props.forEach((prop) => {\r\n      stateKeyMap.set(prop.name, prop.name);\r\n    });\r\n  }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "47a790e2",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "(prop) => {\r\n      stateKeyMap.set(prop.name, prop.name);\r\n    }",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "95b2bfa3",
+      "type": "ReturnStatement",
+      "babel_source": "return conditionalTemplates;",
+      "parentContext": {
+        "functionName": "extractConditionalElementTemplates",
+        "functionParams": [
+          "renderBody",
+          "component"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/conditionalElementTemplates.cjs"
+  ]
+}

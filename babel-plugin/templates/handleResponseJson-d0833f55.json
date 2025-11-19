@@ -1,0 +1,173 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "handleResponseJson",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "generateCSharpExpression",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function handleResponseJson(node, generateCSharpExpression) {\r\n  if (!t.isMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.property, { name: 'json' })) {\r\n    return null;\r\n  }\r\n  const object = generateCSharpExpression(node.callee.object);\r\n  return `${object}.Content.ReadFromJsonAsync<dynamic>()`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "979e7c85",
+      "type": "IfStatement",
+      "condition": "!t.isMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.property, { name: 'json' })",
+      "babel_source": "if (!t.isMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.property, { name: 'json' })) {\r\n    return null;\r\n  }",
+      "parentContext": {
+        "functionName": "handleResponseJson",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c1b3a7e0",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "!t.isMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.property, { name: 'json' })",
+      "parentContext": {
+        "functionName": "handleResponseJson",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c5100590",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isMemberExpression(node.callee)",
+      "parentContext": {
+        "functionName": "handleResponseJson",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ec7eca4e",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(node.callee)",
+      "parentContext": {
+        "functionName": "handleResponseJson",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ce57e44e",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isIdentifier(node.callee.property, { name: 'json' })",
+      "parentContext": {
+        "functionName": "handleResponseJson",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e30647ca",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee.property, { name: 'json' })",
+      "parentContext": {
+        "functionName": "handleResponseJson",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f7443b74",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'json' }",
+      "parentContext": {
+        "functionName": "handleResponseJson",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "handleResponseJson",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2ea5d72d",
+      "type": "VariableDeclaration",
+      "babel_source": "const object = generateCSharpExpression(node.callee.object);",
+      "parentContext": {
+        "functionName": "handleResponseJson",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e11030a9",
+      "type": "ReturnStatement",
+      "babel_source": "return `${object}.Content.ReadFromJsonAsync<dynamic>()`;",
+      "parentContext": {
+        "functionName": "handleResponseJson",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5da53183",
+      "type": "TemplateLiteral",
+      "babel_source": "`${object}.Content.ReadFromJsonAsync<dynamic>()`",
+      "parentContext": {
+        "functionName": "handleResponseJson",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/expressions/calls/handleStringMethods.cjs"
+  ]
+}

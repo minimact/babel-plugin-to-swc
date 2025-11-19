@@ -1,0 +1,717 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractTernaryElementTemplate",
+  "params": [
+    {
+      "name": "expr",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    },
+    {
+      "name": "containerNode",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "parentPath",
+      "inferredType": "&Path",
+      "defaultValue": null
+    },
+    {
+      "name": "stateKeyMap",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractTernaryElementTemplate(expr, containerNode, parentPath, stateKeyMap) {\r\n  const test = expr.test;\r\n  const consequent = expr.consequent;\r\n  const alternate = expr.alternate;\r\n\r\n  // Check if branches are JSX elements\r\n  const hasConsequent = t.isJSXElement(consequent) || t.isJSXFragment(consequent);\r\n  const hasAlternate = t.isJSXElement(alternate) || t.isJSXFragment(alternate) || t.isNullLiteral(alternate);\r\n\r\n  if (!hasConsequent && !hasAlternate) {\r\n    return null; // Not a structural template\r\n  }\r\n\r\n  // Extract condition\r\n  const conditionCode = generate(test).code;\r\n  const variableNames = extractBindingsFromCondition(test);\r\n\r\n  // Build mapping from variable names to state keys\r\n  const conditionMapping = {};\r\n  const stateKeys = [];\r\n\r\n  for (const varName of variableNames) {\r\n    const stateKey = stateKeyMap.get(varName) || varName;\r\n    conditionMapping[varName] = stateKey;\r\n    stateKeys.push(stateKey);\r\n  }\r\n\r\n  const isEvaluable = isConditionEvaluableClientSide(test, variableNames);\r\n\r\n  // Extract both branches\r\n  const branches = {};\r\n\r\n  if (hasConsequent) {\r\n    branches.true = extractElementStructure(consequent);\r\n  }\r\n\r\n  if (hasAlternate) {\r\n    if (t.isNullLiteral(alternate)) {\r\n      branches.false = null;\r\n    } else {\r\n      branches.false = extractElementStructure(alternate);\r\n    }\r\n  }\r\n\r\n  const template = {\r\n    type: \"conditional-element\",\r\n    conditionExpression: conditionCode,\r\n    conditionBindings: stateKeys, // [\"state_0\", \"state_1\"]\r\n    conditionMapping: conditionMapping, // { \"myState1\": \"state_0\", \"myState2\": \"state_1\" }\r\n    evaluable: isEvaluable,\r\n    branches,\r\n    operator: \"?\"\r\n  };\r\n\r\n  // Add parent reference if nested\r\n  if (parentPath) {\r\n    template.parentTemplate = parentPath;\r\n  }\r\n\r\n  return template;\r\n}",
+  "body_templates": [
+    {
+      "hash": "a9289657",
+      "type": "VariableDeclaration",
+      "babel_source": "const test = expr.test;",
+      "parentContext": {
+        "functionName": "extractTernaryElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "07505016",
+      "type": "VariableDeclaration",
+      "babel_source": "const consequent = expr.consequent;",
+      "parentContext": {
+        "functionName": "extractTernaryElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0b6775ef",
+      "type": "VariableDeclaration",
+      "babel_source": "const alternate = expr.alternate;",
+      "parentContext": {
+        "functionName": "extractTernaryElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c3f92bdf",
+      "type": "VariableDeclaration",
+      "babel_source": "const hasConsequent = t.isJSXElement(consequent) || t.isJSXFragment(consequent);",
+      "parentContext": {
+        "functionName": "extractTernaryElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "206afb41",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isJSXElement(consequent) || t.isJSXFragment(consequent)",
+      "parentContext": {
+        "functionName": "extractTernaryElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5395efda",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(consequent)",
+      "parentContext": {
+        "functionName": "extractTernaryElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c9fb974c",
+      "type": "BabelTypeCheck",
+      "method": "isJSXFragment",
+      "babel_source": "t.isJSXFragment(consequent)",
+      "parentContext": {
+        "functionName": "extractTernaryElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "119fad27",
+      "type": "VariableDeclaration",
+      "babel_source": "const hasAlternate = t.isJSXElement(alternate) || t.isJSXFragment(alternate) || t.isNullLiteral(alternate);",
+      "parentContext": {
+        "functionName": "extractTernaryElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "227d184c",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isJSXElement(alternate) || t.isJSXFragment(alternate) || t.isNullLiteral(alternate)",
+      "parentContext": {
+        "functionName": "extractTernaryElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8faa9a16",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isJSXElement(alternate) || t.isJSXFragment(alternate)",
+      "parentContext": {
+        "functionName": "extractTernaryElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e91dca1c",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(alternate)",
+      "parentContext": {
+        "functionName": "extractTernaryElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b8b8dabd",
+      "type": "BabelTypeCheck",
+      "method": "isJSXFragment",
+      "babel_source": "t.isJSXFragment(alternate)",
+      "parentContext": {
+        "functionName": "extractTernaryElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "10e00a9e",
+      "type": "BabelTypeCheck",
+      "method": "isNullLiteral",
+      "babel_source": "t.isNullLiteral(alternate)",
+      "parentContext": {
+        "functionName": "extractTernaryElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ca25efcd",
+      "type": "IfStatement",
+      "condition": "!hasConsequent && !hasAlternate",
+      "babel_source": "if (!hasConsequent && !hasAlternate) {\r\n    return null; // Not a structural template\r\n  }",
+      "parentContext": {
+        "functionName": "extractTernaryElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fc358580",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "!hasConsequent && !hasAlternate",
+      "parentContext": {
+        "functionName": "extractTernaryElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "371e381f",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!hasConsequent",
+      "parentContext": {
+        "functionName": "extractTernaryElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "801af7e3",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!hasAlternate",
+      "parentContext": {
+        "functionName": "extractTernaryElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractTernaryElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "034e8ea8",
+      "type": "VariableDeclaration",
+      "babel_source": "const conditionCode = generate(test).code;",
+      "parentContext": {
+        "functionName": "extractTernaryElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "efc8d638",
+      "type": "VariableDeclaration",
+      "babel_source": "const variableNames = extractBindingsFromCondition(test);",
+      "parentContext": {
+        "functionName": "extractTernaryElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c27089ac",
+      "type": "VariableDeclaration",
+      "babel_source": "const conditionMapping = {};",
+      "parentContext": {
+        "functionName": "extractTernaryElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "44136fa3",
+      "type": "ObjectExpression",
+      "babel_source": "{}",
+      "parentContext": {
+        "functionName": "extractTernaryElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c0e20026",
+      "type": "VariableDeclaration",
+      "babel_source": "const stateKeys = [];",
+      "parentContext": {
+        "functionName": "extractTernaryElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractTernaryElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0cdd4a9f",
+      "type": "ForOfStatement",
+      "babel_source": "for (const varName of variableNames) {\r\n    const stateKey = stateKeyMap.get(varName) || varName;\r\n    conditionMapping[varName] = stateKey;\r\n    stateKeys.push(stateKey);\r\n  }",
+      "parentContext": {
+        "functionName": "extractTernaryElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "15fc1236",
+      "type": "VariableDeclaration",
+      "babel_source": "const varName",
+      "parentContext": {
+        "functionName": "extractTernaryElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "348b0016",
+      "type": "VariableDeclaration",
+      "babel_source": "const stateKey = stateKeyMap.get(varName) || varName;",
+      "parentContext": {
+        "functionName": "extractTernaryElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ae9c5046",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "stateKeyMap.get(varName) || varName",
+      "parentContext": {
+        "functionName": "extractTernaryElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bd309258",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "conditionMapping[varName] = stateKey",
+      "parentContext": {
+        "functionName": "extractTernaryElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0237fe9f",
+      "type": "VariableDeclaration",
+      "babel_source": "const isEvaluable = isConditionEvaluableClientSide(test, variableNames);",
+      "parentContext": {
+        "functionName": "extractTernaryElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ad2f493f",
+      "type": "VariableDeclaration",
+      "babel_source": "const branches = {};",
+      "parentContext": {
+        "functionName": "extractTernaryElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "44136fa3",
+      "type": "ObjectExpression",
+      "babel_source": "{}",
+      "parentContext": {
+        "functionName": "extractTernaryElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ba0b3a56",
+      "type": "IfStatement",
+      "condition": "hasConsequent",
+      "babel_source": "if (hasConsequent) {\r\n    branches.true = extractElementStructure(consequent);\r\n  }",
+      "parentContext": {
+        "functionName": "extractTernaryElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8e34362d",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "branches.true = extractElementStructure(consequent)",
+      "parentContext": {
+        "functionName": "extractTernaryElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ac2e71af",
+      "type": "IfStatement",
+      "condition": "hasAlternate",
+      "babel_source": "if (hasAlternate) {\r\n    if (t.isNullLiteral(alternate)) {\r\n      branches.false = null;\r\n    } else {\r\n      branches.false = extractElementStructure(alternate);\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "extractTernaryElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f705d3a9",
+      "type": "IfStatement",
+      "condition": "t.isNullLiteral(alternate)",
+      "babel_source": "if (t.isNullLiteral(alternate)) {\r\n      branches.false = null;\r\n    } else {\r\n      branches.false = extractElementStructure(alternate);\r\n    }",
+      "parentContext": {
+        "functionName": "extractTernaryElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "10e00a9e",
+      "type": "BabelTypeCheck",
+      "method": "isNullLiteral",
+      "babel_source": "t.isNullLiteral(alternate)",
+      "parentContext": {
+        "functionName": "extractTernaryElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab7605fc",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "branches.false = null",
+      "parentContext": {
+        "functionName": "extractTernaryElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e1844583",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "branches.false = extractElementStructure(alternate)",
+      "parentContext": {
+        "functionName": "extractTernaryElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "17cf2fd4",
+      "type": "VariableDeclaration",
+      "babel_source": "const template = {\r\n    type: \"conditional-element\",\r\n    conditionExpression: conditionCode,\r\n    conditionBindings: stateKeys, // [\"state_0\", \"state_1\"]\r\n    conditionMapping: conditionMapping, // { \"myState1\": \"state_0\", \"myState2\": \"state_1\" }\r\n    evaluable: isEvaluable,\r\n    branches,\r\n    operator: \"?\"\r\n  };",
+      "parentContext": {
+        "functionName": "extractTernaryElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3d6a0980",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    type: \"conditional-element\",\r\n    conditionExpression: conditionCode,\r\n    conditionBindings: stateKeys, // [\"state_0\", \"state_1\"]\r\n    conditionMapping: conditionMapping, // { \"myState1\": \"state_0\", \"myState2\": \"state_1\" }\r\n    evaluable: isEvaluable,\r\n    branches,\r\n    operator: \"?\"\r\n  }",
+      "parentContext": {
+        "functionName": "extractTernaryElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cddcdd46",
+      "type": "IfStatement",
+      "condition": "parentPath",
+      "babel_source": "if (parentPath) {\r\n    template.parentTemplate = parentPath;\r\n  }",
+      "parentContext": {
+        "functionName": "extractTernaryElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "92eb2035",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "template.parentTemplate = parentPath",
+      "parentContext": {
+        "functionName": "extractTernaryElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ce5ef868",
+      "type": "ReturnStatement",
+      "babel_source": "return template;",
+      "parentContext": {
+        "functionName": "extractTernaryElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/conditionalElementTemplates/extractTernaryElementTemplate.cjs"
+  ]
+}

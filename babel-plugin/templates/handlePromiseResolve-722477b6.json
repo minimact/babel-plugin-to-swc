@@ -1,0 +1,282 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "handlePromiseResolve",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "generateCSharpExpression",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function handlePromiseResolve(node, generateCSharpExpression) {\r\n  if (!t.isMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.object, { name: 'Promise' }) ||\r\n      !t.isIdentifier(node.callee.property, { name: 'resolve' })) {\r\n    return null;\r\n  }\r\n  if (node.arguments.length > 0) {\r\n    const value = generateCSharpExpression(node.arguments[0]);\r\n    return `Task.FromResult(${value})`;\r\n  }\r\n  return `Task.CompletedTask`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "4281c198",
+      "type": "IfStatement",
+      "condition": "!t.isMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.object, { name: 'Promise' }) ||\r\n      !t.isIdentifier(node.callee.property, { name: 'resolve' })",
+      "babel_source": "if (!t.isMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.object, { name: 'Promise' }) ||\r\n      !t.isIdentifier(node.callee.property, { name: 'resolve' })) {\r\n    return null;\r\n  }",
+      "parentContext": {
+        "functionName": "handlePromiseResolve",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6bb5a01c",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "!t.isMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.object, { name: 'Promise' }) ||\r\n      !t.isIdentifier(node.callee.property, { name: 'resolve' })",
+      "parentContext": {
+        "functionName": "handlePromiseResolve",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d5eb140a",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "!t.isMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.object, { name: 'Promise' })",
+      "parentContext": {
+        "functionName": "handlePromiseResolve",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c5100590",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isMemberExpression(node.callee)",
+      "parentContext": {
+        "functionName": "handlePromiseResolve",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ec7eca4e",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(node.callee)",
+      "parentContext": {
+        "functionName": "handlePromiseResolve",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "27c0436e",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isIdentifier(node.callee.object, { name: 'Promise' })",
+      "parentContext": {
+        "functionName": "handlePromiseResolve",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0d9915a8",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee.object, { name: 'Promise' })",
+      "parentContext": {
+        "functionName": "handlePromiseResolve",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c6409ebd",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'Promise' }",
+      "parentContext": {
+        "functionName": "handlePromiseResolve",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1aad0e2f",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isIdentifier(node.callee.property, { name: 'resolve' })",
+      "parentContext": {
+        "functionName": "handlePromiseResolve",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a740d8e1",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee.property, { name: 'resolve' })",
+      "parentContext": {
+        "functionName": "handlePromiseResolve",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fc17a34c",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'resolve' }",
+      "parentContext": {
+        "functionName": "handlePromiseResolve",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "handlePromiseResolve",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "628c72cf",
+      "type": "IfStatement",
+      "condition": "node.arguments.length > 0",
+      "babel_source": "if (node.arguments.length > 0) {\r\n    const value = generateCSharpExpression(node.arguments[0]);\r\n    return `Task.FromResult(${value})`;\r\n  }",
+      "parentContext": {
+        "functionName": "handlePromiseResolve",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e786d65e",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "node.arguments.length > 0",
+      "parentContext": {
+        "functionName": "handlePromiseResolve",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e1c72b87",
+      "type": "VariableDeclaration",
+      "babel_source": "const value = generateCSharpExpression(node.arguments[0]);",
+      "parentContext": {
+        "functionName": "handlePromiseResolve",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b48deb2c",
+      "type": "ReturnStatement",
+      "babel_source": "return `Task.FromResult(${value})`;",
+      "parentContext": {
+        "functionName": "handlePromiseResolve",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e6e04d2a",
+      "type": "TemplateLiteral",
+      "babel_source": "`Task.FromResult(${value})`",
+      "parentContext": {
+        "functionName": "handlePromiseResolve",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e27ceb10",
+      "type": "ReturnStatement",
+      "babel_source": "return `Task.CompletedTask`;",
+      "parentContext": {
+        "functionName": "handlePromiseResolve",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "75bacffe",
+      "type": "TemplateLiteral",
+      "babel_source": "`Task.CompletedTask`",
+      "parentContext": {
+        "functionName": "handlePromiseResolve",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/expressions/calls/handlePromiseCalls.cjs"
+  ]
+}

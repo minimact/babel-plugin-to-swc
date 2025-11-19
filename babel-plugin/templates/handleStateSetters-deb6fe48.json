@@ -1,0 +1,376 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "handleStateSetters",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "generateCSharpExpression",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    },
+    {
+      "name": "currentComponent",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function handleStateSetters(node, generateCSharpExpression, currentComponent) {\r\n  if (!t.isIdentifier(node.callee) || !currentComponent) {\r\n    return null;\r\n  }\r\n\r\n  const setterName = node.callee.name;\r\n\r\n  // Check if this is a useState setter\r\n  const useState = [...(currentComponent.useState || []), ...(currentComponent.useClientState || [])]\r\n    .find(state => state.setter === setterName);\r\n\r\n  if (useState && node.arguments.length > 0) {\r\n    const newValue = generateCSharpExpression(node.arguments[0]);\r\n    return `SetState(nameof(${useState.name}), ${newValue})`;\r\n  }\r\n\r\n  return null;\r\n}",
+  "body_templates": [
+    {
+      "hash": "be8da6a7",
+      "type": "IfStatement",
+      "condition": "!t.isIdentifier(node.callee) || !currentComponent",
+      "babel_source": "if (!t.isIdentifier(node.callee) || !currentComponent) {\r\n    return null;\r\n  }",
+      "parentContext": {
+        "functionName": "handleStateSetters",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2fe09a59",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "!t.isIdentifier(node.callee) || !currentComponent",
+      "parentContext": {
+        "functionName": "handleStateSetters",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "08ce0787",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isIdentifier(node.callee)",
+      "parentContext": {
+        "functionName": "handleStateSetters",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "55f75a54",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee)",
+      "parentContext": {
+        "functionName": "handleStateSetters",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "837b824e",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!currentComponent",
+      "parentContext": {
+        "functionName": "handleStateSetters",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "handleStateSetters",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "545d5ea1",
+      "type": "VariableDeclaration",
+      "babel_source": "const setterName = node.callee.name;",
+      "parentContext": {
+        "functionName": "handleStateSetters",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "99b1b12c",
+      "type": "VariableDeclaration",
+      "babel_source": "const useState = [...(currentComponent.useState || []), ...(currentComponent.useClientState || [])]\r\n    .find(state => state.setter === setterName);",
+      "parentContext": {
+        "functionName": "handleStateSetters",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c8ac030a",
+      "type": "ArrayExpression",
+      "babel_source": "[...(currentComponent.useState || []), ...(currentComponent.useClientState || [])]",
+      "parentContext": {
+        "functionName": "handleStateSetters",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5dc6ab1d",
+      "type": "SpreadElement",
+      "babel_source": "...(currentComponent.useState || [])",
+      "parentContext": {
+        "functionName": "handleStateSetters",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cc9e6117",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "currentComponent.useState || []",
+      "parentContext": {
+        "functionName": "handleStateSetters",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "handleStateSetters",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b32676b0",
+      "type": "SpreadElement",
+      "babel_source": "...(currentComponent.useClientState || [])",
+      "parentContext": {
+        "functionName": "handleStateSetters",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "36639255",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "currentComponent.useClientState || []",
+      "parentContext": {
+        "functionName": "handleStateSetters",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "handleStateSetters",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c8a4d983",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "state => state.setter === setterName",
+      "parentContext": {
+        "functionName": "handleStateSetters",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a87bc328",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "state.setter === setterName",
+      "parentContext": {
+        "functionName": "handleStateSetters",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c8a14eea",
+      "type": "IfStatement",
+      "condition": "useState && node.arguments.length > 0",
+      "babel_source": "if (useState && node.arguments.length > 0) {\r\n    const newValue = generateCSharpExpression(node.arguments[0]);\r\n    return `SetState(nameof(${useState.name}), ${newValue})`;\r\n  }",
+      "parentContext": {
+        "functionName": "handleStateSetters",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "049c28b1",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "useState && node.arguments.length > 0",
+      "parentContext": {
+        "functionName": "handleStateSetters",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e786d65e",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "node.arguments.length > 0",
+      "parentContext": {
+        "functionName": "handleStateSetters",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "678dc056",
+      "type": "VariableDeclaration",
+      "babel_source": "const newValue = generateCSharpExpression(node.arguments[0]);",
+      "parentContext": {
+        "functionName": "handleStateSetters",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a1889d52",
+      "type": "ReturnStatement",
+      "babel_source": "return `SetState(nameof(${useState.name}), ${newValue})`;",
+      "parentContext": {
+        "functionName": "handleStateSetters",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9cd9fc63",
+      "type": "TemplateLiteral",
+      "babel_source": "`SetState(nameof(${useState.name}), ${newValue})`",
+      "parentContext": {
+        "functionName": "handleStateSetters",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "handleStateSetters",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/expressions/calls/handleArrayMethods.cjs"
+  ]
+}

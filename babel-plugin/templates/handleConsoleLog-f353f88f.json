@@ -1,0 +1,241 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "handleConsoleLog",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "generateCSharpExpression",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function handleConsoleLog(node, generateCSharpExpression) {\r\n  if (!t.isMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.object, { name: 'console' }) ||\r\n      !t.isIdentifier(node.callee.property, { name: 'log' })) {\r\n    return null;\r\n  }\r\n  const args = node.arguments.map(arg => generateCSharpExpression(arg)).join(' + ');\r\n  return `Console.WriteLine(${args})`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "6fb88c1f",
+      "type": "IfStatement",
+      "condition": "!t.isMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.object, { name: 'console' }) ||\r\n      !t.isIdentifier(node.callee.property, { name: 'log' })",
+      "babel_source": "if (!t.isMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.object, { name: 'console' }) ||\r\n      !t.isIdentifier(node.callee.property, { name: 'log' })) {\r\n    return null;\r\n  }",
+      "parentContext": {
+        "functionName": "handleConsoleLog",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d164a72f",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "!t.isMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.object, { name: 'console' }) ||\r\n      !t.isIdentifier(node.callee.property, { name: 'log' })",
+      "parentContext": {
+        "functionName": "handleConsoleLog",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "63e1cf44",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "!t.isMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.object, { name: 'console' })",
+      "parentContext": {
+        "functionName": "handleConsoleLog",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c5100590",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isMemberExpression(node.callee)",
+      "parentContext": {
+        "functionName": "handleConsoleLog",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ec7eca4e",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(node.callee)",
+      "parentContext": {
+        "functionName": "handleConsoleLog",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c5d6d091",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isIdentifier(node.callee.object, { name: 'console' })",
+      "parentContext": {
+        "functionName": "handleConsoleLog",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "44dc9330",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee.object, { name: 'console' })",
+      "parentContext": {
+        "functionName": "handleConsoleLog",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "802420a1",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'console' }",
+      "parentContext": {
+        "functionName": "handleConsoleLog",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1a21114c",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isIdentifier(node.callee.property, { name: 'log' })",
+      "parentContext": {
+        "functionName": "handleConsoleLog",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0ea551b3",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee.property, { name: 'log' })",
+      "parentContext": {
+        "functionName": "handleConsoleLog",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "91456a9a",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'log' }",
+      "parentContext": {
+        "functionName": "handleConsoleLog",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "handleConsoleLog",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "67d3010f",
+      "type": "VariableDeclaration",
+      "babel_source": "const args = node.arguments.map(arg => generateCSharpExpression(arg)).join(' + ');",
+      "parentContext": {
+        "functionName": "handleConsoleLog",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "38737e30",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "arg => generateCSharpExpression(arg)",
+      "parentContext": {
+        "functionName": "handleConsoleLog",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9a9fa93f",
+      "type": "ReturnStatement",
+      "babel_source": "return `Console.WriteLine(${args})`;",
+      "parentContext": {
+        "functionName": "handleConsoleLog",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "97fc31c3",
+      "type": "TemplateLiteral",
+      "babel_source": "`Console.WriteLine(${args})`",
+      "parentContext": {
+        "functionName": "handleConsoleLog",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/expressions/calls/handleObjectCalls.cjs"
+  ]
+}

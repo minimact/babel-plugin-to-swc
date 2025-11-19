@@ -1,0 +1,144 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "handleEncodeURIComponent",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "generateCSharpExpression",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function handleEncodeURIComponent(node, generateCSharpExpression) {\r\n  if (!t.isIdentifier(node.callee, { name: 'encodeURIComponent' })) {\r\n    return null;\r\n  }\r\n  const args = node.arguments.map(arg => generateCSharpExpression(arg)).join(', ');\r\n  return `Uri.EscapeDataString(${args})`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "2b1521f6",
+      "type": "IfStatement",
+      "condition": "!t.isIdentifier(node.callee, { name: 'encodeURIComponent' })",
+      "babel_source": "if (!t.isIdentifier(node.callee, { name: 'encodeURIComponent' })) {\r\n    return null;\r\n  }",
+      "parentContext": {
+        "functionName": "handleEncodeURIComponent",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "90ccf959",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isIdentifier(node.callee, { name: 'encodeURIComponent' })",
+      "parentContext": {
+        "functionName": "handleEncodeURIComponent",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bdb7706b",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee, { name: 'encodeURIComponent' })",
+      "parentContext": {
+        "functionName": "handleEncodeURIComponent",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8b12141e",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'encodeURIComponent' }",
+      "parentContext": {
+        "functionName": "handleEncodeURIComponent",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "handleEncodeURIComponent",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8a5de54b",
+      "type": "VariableDeclaration",
+      "babel_source": "const args = node.arguments.map(arg => generateCSharpExpression(arg)).join(', ');",
+      "parentContext": {
+        "functionName": "handleEncodeURIComponent",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "38737e30",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "arg => generateCSharpExpression(arg)",
+      "parentContext": {
+        "functionName": "handleEncodeURIComponent",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5c6c7cbb",
+      "type": "ReturnStatement",
+      "babel_source": "return `Uri.EscapeDataString(${args})`;",
+      "parentContext": {
+        "functionName": "handleEncodeURIComponent",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "00cc22f7",
+      "type": "TemplateLiteral",
+      "babel_source": "`Uri.EscapeDataString(${args})`",
+      "parentContext": {
+        "functionName": "handleEncodeURIComponent",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/expressions/calls/handleGlobalFunctions.cjs"
+  ]
+}

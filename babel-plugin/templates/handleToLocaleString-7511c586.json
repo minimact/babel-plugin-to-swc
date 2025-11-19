@@ -1,0 +1,173 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "handleToLocaleString",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "generateCSharpExpression",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function handleToLocaleString(node, generateCSharpExpression) {\r\n  if (!t.isMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.property, { name: 'toLocaleString' })) {\r\n    return null;\r\n  }\r\n  const object = generateCSharpExpression(node.callee.object);\r\n  return `${object}.ToString(\"g\")`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "ff35cd39",
+      "type": "IfStatement",
+      "condition": "!t.isMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.property, { name: 'toLocaleString' })",
+      "babel_source": "if (!t.isMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.property, { name: 'toLocaleString' })) {\r\n    return null;\r\n  }",
+      "parentContext": {
+        "functionName": "handleToLocaleString",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6a3d1ed4",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "!t.isMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.property, { name: 'toLocaleString' })",
+      "parentContext": {
+        "functionName": "handleToLocaleString",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c5100590",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isMemberExpression(node.callee)",
+      "parentContext": {
+        "functionName": "handleToLocaleString",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ec7eca4e",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(node.callee)",
+      "parentContext": {
+        "functionName": "handleToLocaleString",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "045985ef",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isIdentifier(node.callee.property, { name: 'toLocaleString' })",
+      "parentContext": {
+        "functionName": "handleToLocaleString",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f947c018",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee.property, { name: 'toLocaleString' })",
+      "parentContext": {
+        "functionName": "handleToLocaleString",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "716a8413",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'toLocaleString' }",
+      "parentContext": {
+        "functionName": "handleToLocaleString",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "handleToLocaleString",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2ea5d72d",
+      "type": "VariableDeclaration",
+      "babel_source": "const object = generateCSharpExpression(node.callee.object);",
+      "parentContext": {
+        "functionName": "handleToLocaleString",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bb703a50",
+      "type": "ReturnStatement",
+      "babel_source": "return `${object}.ToString(\"g\")`;",
+      "parentContext": {
+        "functionName": "handleToLocaleString",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "55a6fd47",
+      "type": "TemplateLiteral",
+      "babel_source": "`${object}.ToString(\"g\")`",
+      "parentContext": {
+        "functionName": "handleToLocaleString",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/expressions/calls/handleStringMethods.cjs"
+  ]
+}

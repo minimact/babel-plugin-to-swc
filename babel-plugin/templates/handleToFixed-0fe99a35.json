@@ -1,0 +1,380 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "handleToFixed",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "generateCSharpExpression",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function handleToFixed(node, generateCSharpExpression) {\r\n  if (!t.isMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.property, { name: 'toFixed' })) {\r\n    return null;\r\n  }\r\n\r\n  let object = generateCSharpExpression(node.callee.object);\r\n\r\n  // Preserve parentheses for complex expressions\r\n  if (t.isBinaryExpression(node.callee.object) ||\r\n      t.isLogicalExpression(node.callee.object) ||\r\n      t.isConditionalExpression(node.callee.object) ||\r\n      t.isCallExpression(node.callee.object)) {\r\n    object = `(${object})`;\r\n  }\r\n\r\n  const decimals = node.arguments.length > 0 && t.isNumericLiteral(node.arguments[0])\r\n    ? node.arguments[0].value\r\n    : 2;\r\n  return `${object}.ToString(\"F${decimals}\")`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "9181beb6",
+      "type": "IfStatement",
+      "condition": "!t.isMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.property, { name: 'toFixed' })",
+      "babel_source": "if (!t.isMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.property, { name: 'toFixed' })) {\r\n    return null;\r\n  }",
+      "parentContext": {
+        "functionName": "handleToFixed",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "961d7943",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "!t.isMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.property, { name: 'toFixed' })",
+      "parentContext": {
+        "functionName": "handleToFixed",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c5100590",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isMemberExpression(node.callee)",
+      "parentContext": {
+        "functionName": "handleToFixed",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ec7eca4e",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(node.callee)",
+      "parentContext": {
+        "functionName": "handleToFixed",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1faad2d7",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isIdentifier(node.callee.property, { name: 'toFixed' })",
+      "parentContext": {
+        "functionName": "handleToFixed",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "163239e1",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee.property, { name: 'toFixed' })",
+      "parentContext": {
+        "functionName": "handleToFixed",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c0cd1937",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'toFixed' }",
+      "parentContext": {
+        "functionName": "handleToFixed",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "handleToFixed",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dc64b109",
+      "type": "VariableDeclaration",
+      "babel_source": "let object = generateCSharpExpression(node.callee.object);",
+      "parentContext": {
+        "functionName": "handleToFixed",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "73382c9b",
+      "type": "IfStatement",
+      "condition": "t.isBinaryExpression(node.callee.object) ||\r\n      t.isLogicalExpression(node.callee.object) ||\r\n      t.isConditionalExpression(node.callee.object) ||\r\n      t.isCallExpression(node.callee.object)",
+      "babel_source": "if (t.isBinaryExpression(node.callee.object) ||\r\n      t.isLogicalExpression(node.callee.object) ||\r\n      t.isConditionalExpression(node.callee.object) ||\r\n      t.isCallExpression(node.callee.object)) {\r\n    object = `(${object})`;\r\n  }",
+      "parentContext": {
+        "functionName": "handleToFixed",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f2dd91c0",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isBinaryExpression(node.callee.object) ||\r\n      t.isLogicalExpression(node.callee.object) ||\r\n      t.isConditionalExpression(node.callee.object) ||\r\n      t.isCallExpression(node.callee.object)",
+      "parentContext": {
+        "functionName": "handleToFixed",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0bc9c92e",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isBinaryExpression(node.callee.object) ||\r\n      t.isLogicalExpression(node.callee.object) ||\r\n      t.isConditionalExpression(node.callee.object)",
+      "parentContext": {
+        "functionName": "handleToFixed",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e980a93a",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isBinaryExpression(node.callee.object) ||\r\n      t.isLogicalExpression(node.callee.object)",
+      "parentContext": {
+        "functionName": "handleToFixed",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "10ad59df",
+      "type": "BabelTypeCheck",
+      "method": "isBinaryExpression",
+      "babel_source": "t.isBinaryExpression(node.callee.object)",
+      "parentContext": {
+        "functionName": "handleToFixed",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8bd2bf9d",
+      "type": "BabelTypeCheck",
+      "method": "isLogicalExpression",
+      "babel_source": "t.isLogicalExpression(node.callee.object)",
+      "parentContext": {
+        "functionName": "handleToFixed",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a312ff38",
+      "type": "BabelTypeCheck",
+      "method": "isConditionalExpression",
+      "babel_source": "t.isConditionalExpression(node.callee.object)",
+      "parentContext": {
+        "functionName": "handleToFixed",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "752a1a21",
+      "type": "BabelTypeCheck",
+      "method": "isCallExpression",
+      "babel_source": "t.isCallExpression(node.callee.object)",
+      "parentContext": {
+        "functionName": "handleToFixed",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fd426ac6",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "object = `(${object})`",
+      "parentContext": {
+        "functionName": "handleToFixed",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3918e805",
+      "type": "TemplateLiteral",
+      "babel_source": "`(${object})`",
+      "parentContext": {
+        "functionName": "handleToFixed",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c1b263e0",
+      "type": "VariableDeclaration",
+      "babel_source": "const decimals = node.arguments.length > 0 && t.isNumericLiteral(node.arguments[0])\r\n    ? node.arguments[0].value\r\n    : 2;",
+      "parentContext": {
+        "functionName": "handleToFixed",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "308784bc",
+      "type": "ConditionalExpression",
+      "babel_source": "node.arguments.length > 0 && t.isNumericLiteral(node.arguments[0])\r\n    ? node.arguments[0].value\r\n    : 2",
+      "parentContext": {
+        "functionName": "handleToFixed",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "612d5da7",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "node.arguments.length > 0 && t.isNumericLiteral(node.arguments[0])",
+      "parentContext": {
+        "functionName": "handleToFixed",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e786d65e",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "node.arguments.length > 0",
+      "parentContext": {
+        "functionName": "handleToFixed",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4a72e5b1",
+      "type": "BabelTypeCheck",
+      "method": "isNumericLiteral",
+      "babel_source": "t.isNumericLiteral(node.arguments[0])",
+      "parentContext": {
+        "functionName": "handleToFixed",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ddced66f",
+      "type": "ReturnStatement",
+      "babel_source": "return `${object}.ToString(\"F${decimals}\")`;",
+      "parentContext": {
+        "functionName": "handleToFixed",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "12db959a",
+      "type": "TemplateLiteral",
+      "babel_source": "`${object}.ToString(\"F${decimals}\")`",
+      "parentContext": {
+        "functionName": "handleToFixed",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/expressions/calls/handleStringMethods.cjs"
+  ]
+}

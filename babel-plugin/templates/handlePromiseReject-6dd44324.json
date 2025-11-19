@@ -1,0 +1,269 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "handlePromiseReject",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "generateCSharpExpression",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function handlePromiseReject(node, generateCSharpExpression) {\r\n  if (!t.isMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.object, { name: 'Promise' }) ||\r\n      !t.isIdentifier(node.callee.property, { name: 'reject' })) {\r\n    return null;\r\n  }\r\n  if (node.arguments.length > 0) {\r\n    const error = generateCSharpExpression(node.arguments[0]);\r\n    return `Task.FromException(new Exception(${error}))`;\r\n  }\r\n  return null;\r\n}",
+  "body_templates": [
+    {
+      "hash": "44859d2f",
+      "type": "IfStatement",
+      "condition": "!t.isMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.object, { name: 'Promise' }) ||\r\n      !t.isIdentifier(node.callee.property, { name: 'reject' })",
+      "babel_source": "if (!t.isMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.object, { name: 'Promise' }) ||\r\n      !t.isIdentifier(node.callee.property, { name: 'reject' })) {\r\n    return null;\r\n  }",
+      "parentContext": {
+        "functionName": "handlePromiseReject",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4d1404a9",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "!t.isMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.object, { name: 'Promise' }) ||\r\n      !t.isIdentifier(node.callee.property, { name: 'reject' })",
+      "parentContext": {
+        "functionName": "handlePromiseReject",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d5eb140a",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "!t.isMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.object, { name: 'Promise' })",
+      "parentContext": {
+        "functionName": "handlePromiseReject",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c5100590",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isMemberExpression(node.callee)",
+      "parentContext": {
+        "functionName": "handlePromiseReject",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ec7eca4e",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(node.callee)",
+      "parentContext": {
+        "functionName": "handlePromiseReject",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "27c0436e",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isIdentifier(node.callee.object, { name: 'Promise' })",
+      "parentContext": {
+        "functionName": "handlePromiseReject",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0d9915a8",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee.object, { name: 'Promise' })",
+      "parentContext": {
+        "functionName": "handlePromiseReject",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c6409ebd",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'Promise' }",
+      "parentContext": {
+        "functionName": "handlePromiseReject",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b10b5dfd",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isIdentifier(node.callee.property, { name: 'reject' })",
+      "parentContext": {
+        "functionName": "handlePromiseReject",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7897ed7b",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee.property, { name: 'reject' })",
+      "parentContext": {
+        "functionName": "handlePromiseReject",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ad2788a3",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'reject' }",
+      "parentContext": {
+        "functionName": "handlePromiseReject",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "handlePromiseReject",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9d862376",
+      "type": "IfStatement",
+      "condition": "node.arguments.length > 0",
+      "babel_source": "if (node.arguments.length > 0) {\r\n    const error = generateCSharpExpression(node.arguments[0]);\r\n    return `Task.FromException(new Exception(${error}))`;\r\n  }",
+      "parentContext": {
+        "functionName": "handlePromiseReject",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e786d65e",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "node.arguments.length > 0",
+      "parentContext": {
+        "functionName": "handlePromiseReject",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4e2bc815",
+      "type": "VariableDeclaration",
+      "babel_source": "const error = generateCSharpExpression(node.arguments[0]);",
+      "parentContext": {
+        "functionName": "handlePromiseReject",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "290188f8",
+      "type": "ReturnStatement",
+      "babel_source": "return `Task.FromException(new Exception(${error}))`;",
+      "parentContext": {
+        "functionName": "handlePromiseReject",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "61b16429",
+      "type": "TemplateLiteral",
+      "babel_source": "`Task.FromException(new Exception(${error}))`",
+      "parentContext": {
+        "functionName": "handlePromiseReject",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "handlePromiseReject",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/expressions/calls/handlePromiseCalls.cjs"
+  ]
+}

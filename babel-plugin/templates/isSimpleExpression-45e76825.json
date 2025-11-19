@@ -1,0 +1,174 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "isSimpleExpression",
+  "params": [
+    {
+      "name": "expr",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "bool",
+  "babel_source": "function isSimpleExpression(expr) {\r\n  return t.isIdentifier(expr) ||\r\n         t.isMemberExpression(expr) ||\r\n         t.isStringLiteral(expr) ||\r\n         t.isNumericLiteral(expr) ||\r\n         t.isBooleanLiteral(expr) ||\r\n         t.isNullLiteral(expr);\r\n}",
+  "body_templates": [
+    {
+      "hash": "b2c66ba1",
+      "type": "ReturnStatement",
+      "babel_source": "return t.isIdentifier(expr) ||\r\n         t.isMemberExpression(expr) ||\r\n         t.isStringLiteral(expr) ||\r\n         t.isNumericLiteral(expr) ||\r\n         t.isBooleanLiteral(expr) ||\r\n         t.isNullLiteral(expr);",
+      "parentContext": {
+        "functionName": "isSimpleExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bf72bfaf",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isIdentifier(expr) ||\r\n         t.isMemberExpression(expr) ||\r\n         t.isStringLiteral(expr) ||\r\n         t.isNumericLiteral(expr) ||\r\n         t.isBooleanLiteral(expr) ||\r\n         t.isNullLiteral(expr)",
+      "parentContext": {
+        "functionName": "isSimpleExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3cbc1076",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isIdentifier(expr) ||\r\n         t.isMemberExpression(expr) ||\r\n         t.isStringLiteral(expr) ||\r\n         t.isNumericLiteral(expr) ||\r\n         t.isBooleanLiteral(expr)",
+      "parentContext": {
+        "functionName": "isSimpleExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7a6b1a3e",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isIdentifier(expr) ||\r\n         t.isMemberExpression(expr) ||\r\n         t.isStringLiteral(expr) ||\r\n         t.isNumericLiteral(expr)",
+      "parentContext": {
+        "functionName": "isSimpleExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "53ef7e9e",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isIdentifier(expr) ||\r\n         t.isMemberExpression(expr) ||\r\n         t.isStringLiteral(expr)",
+      "parentContext": {
+        "functionName": "isSimpleExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "08256878",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isIdentifier(expr) ||\r\n         t.isMemberExpression(expr)",
+      "parentContext": {
+        "functionName": "isSimpleExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42d26fd4",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(expr)",
+      "parentContext": {
+        "functionName": "isSimpleExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c8858c63",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(expr)",
+      "parentContext": {
+        "functionName": "isSimpleExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "81d695ea",
+      "type": "BabelTypeCheck",
+      "method": "isStringLiteral",
+      "babel_source": "t.isStringLiteral(expr)",
+      "parentContext": {
+        "functionName": "isSimpleExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bed165a3",
+      "type": "BabelTypeCheck",
+      "method": "isNumericLiteral",
+      "babel_source": "t.isNumericLiteral(expr)",
+      "parentContext": {
+        "functionName": "isSimpleExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b9190750",
+      "type": "BabelTypeCheck",
+      "method": "isBooleanLiteral",
+      "babel_source": "t.isBooleanLiteral(expr)",
+      "parentContext": {
+        "functionName": "isSimpleExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "65e02bf2",
+      "type": "BabelTypeCheck",
+      "method": "isNullLiteral",
+      "babel_source": "t.isNullLiteral(expr)",
+      "parentContext": {
+        "functionName": "isSimpleExpression",
+        "functionParams": [
+          "expr"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/conditionalElementTemplates/isSimpleExpression.cjs"
+  ]
+}

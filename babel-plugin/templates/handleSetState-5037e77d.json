@@ -1,0 +1,198 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "handleSetState",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "generateCSharpExpression",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function handleSetState(node, generateCSharpExpression) {\r\n  if (!t.isIdentifier(node.callee, { name: 'setState' })) {\r\n    return null;\r\n  }\r\n  if (node.arguments.length >= 2) {\r\n    const key = generateCSharpExpression(node.arguments[0]);\r\n    const value = generateCSharpExpression(node.arguments[1]);\r\n    return `SetState(${key}, ${value})`;\r\n  } else {\r\n    console.warn('[Babel Plugin] setState requires 2 arguments (key, value)');\r\n    return `SetState(\"\", null)`;\r\n  }\r\n}",
+  "body_templates": [
+    {
+      "hash": "7df19d43",
+      "type": "IfStatement",
+      "condition": "!t.isIdentifier(node.callee, { name: 'setState' })",
+      "babel_source": "if (!t.isIdentifier(node.callee, { name: 'setState' })) {\r\n    return null;\r\n  }",
+      "parentContext": {
+        "functionName": "handleSetState",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e3548ba3",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isIdentifier(node.callee, { name: 'setState' })",
+      "parentContext": {
+        "functionName": "handleSetState",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a2c62c43",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee, { name: 'setState' })",
+      "parentContext": {
+        "functionName": "handleSetState",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42cd6039",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'setState' }",
+      "parentContext": {
+        "functionName": "handleSetState",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "handleSetState",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "af327640",
+      "type": "IfStatement",
+      "condition": "node.arguments.length >= 2",
+      "babel_source": "if (node.arguments.length >= 2) {\r\n    const key = generateCSharpExpression(node.arguments[0]);\r\n    const value = generateCSharpExpression(node.arguments[1]);\r\n    return `SetState(${key}, ${value})`;\r\n  } else {\r\n    console.warn('[Babel Plugin] setState requires 2 arguments (key, value)');\r\n    return `SetState(\"\", null)`;\r\n  }",
+      "parentContext": {
+        "functionName": "handleSetState",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "398521da",
+      "type": "BinaryExpression",
+      "operator": ">=",
+      "babel_source": "node.arguments.length >= 2",
+      "parentContext": {
+        "functionName": "handleSetState",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3a426b97",
+      "type": "VariableDeclaration",
+      "babel_source": "const key = generateCSharpExpression(node.arguments[0]);",
+      "parentContext": {
+        "functionName": "handleSetState",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2178a6fa",
+      "type": "VariableDeclaration",
+      "babel_source": "const value = generateCSharpExpression(node.arguments[1]);",
+      "parentContext": {
+        "functionName": "handleSetState",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2a2d0892",
+      "type": "ReturnStatement",
+      "babel_source": "return `SetState(${key}, ${value})`;",
+      "parentContext": {
+        "functionName": "handleSetState",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d3b06d0e",
+      "type": "TemplateLiteral",
+      "babel_source": "`SetState(${key}, ${value})`",
+      "parentContext": {
+        "functionName": "handleSetState",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "15aa981a",
+      "type": "ReturnStatement",
+      "babel_source": "return `SetState(\"\", null)`;",
+      "parentContext": {
+        "functionName": "handleSetState",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "190b4eb4",
+      "type": "TemplateLiteral",
+      "babel_source": "`SetState(\"\", null)`",
+      "parentContext": {
+        "functionName": "handleSetState",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/expressions/calls/handleGlobalFunctions.cjs"
+  ]
+}

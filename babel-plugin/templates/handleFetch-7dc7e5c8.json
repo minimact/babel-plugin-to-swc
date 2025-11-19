@@ -1,0 +1,158 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "handleFetch",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "generateCSharpExpression",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function handleFetch(node, generateCSharpExpression) {\r\n  if (!t.isIdentifier(node.callee, { name: 'fetch' })) {\r\n    return null;\r\n  }\r\n  const url = node.arguments.length > 0 ? generateCSharpExpression(node.arguments[0]) : '\"\"';\r\n  return `new HttpClient().GetAsync(${url})`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "7d83de7b",
+      "type": "IfStatement",
+      "condition": "!t.isIdentifier(node.callee, { name: 'fetch' })",
+      "babel_source": "if (!t.isIdentifier(node.callee, { name: 'fetch' })) {\r\n    return null;\r\n  }",
+      "parentContext": {
+        "functionName": "handleFetch",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8a919b82",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isIdentifier(node.callee, { name: 'fetch' })",
+      "parentContext": {
+        "functionName": "handleFetch",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e74b1786",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee, { name: 'fetch' })",
+      "parentContext": {
+        "functionName": "handleFetch",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ac64b48a",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'fetch' }",
+      "parentContext": {
+        "functionName": "handleFetch",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "handleFetch",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "251ca8f4",
+      "type": "VariableDeclaration",
+      "babel_source": "const url = node.arguments.length > 0 ? generateCSharpExpression(node.arguments[0]) : '\"\"';",
+      "parentContext": {
+        "functionName": "handleFetch",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bfc598fa",
+      "type": "ConditionalExpression",
+      "babel_source": "node.arguments.length > 0 ? generateCSharpExpression(node.arguments[0]) : '\"\"'",
+      "parentContext": {
+        "functionName": "handleFetch",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e786d65e",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "node.arguments.length > 0",
+      "parentContext": {
+        "functionName": "handleFetch",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "44bdd90c",
+      "type": "ReturnStatement",
+      "babel_source": "return `new HttpClient().GetAsync(${url})`;",
+      "parentContext": {
+        "functionName": "handleFetch",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2d782a7f",
+      "type": "TemplateLiteral",
+      "babel_source": "`new HttpClient().GetAsync(${url})`",
+      "parentContext": {
+        "functionName": "handleFetch",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/expressions/calls/handleGlobalFunctions.cjs"
+  ]
+}

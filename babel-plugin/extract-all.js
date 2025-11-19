@@ -623,9 +623,12 @@ if (!fs.existsSync(templatesDir)) {
 // Write each template to its own file (only if new)
 let newCount = 0;
 let skippedCount = 0;
+const generatedFiles = new Set();
 
 Object.entries(allTemplates.templates).forEach(([hash, template]) => {
-  const templatePath = path.join(templatesDir, `${template.name}-${hash}.json`);
+  const fileName = `${template.name}-${hash}.json`;
+  const templatePath = path.join(templatesDir, fileName);
+  generatedFiles.add(fileName);
 
   // Check if file already exists
   if (fs.existsSync(templatePath) && !forceOverwrite) {
@@ -637,6 +640,23 @@ Object.entries(allTemplates.templates).forEach(([hash, template]) => {
     newCount++;
   }
 });
+
+// Move stale files to backup folder
+const existingFiles = fs.readdirSync(templatesDir).filter(f => f.endsWith('.json'));
+const staleFiles = existingFiles.filter(f => !generatedFiles.has(f));
+
+if (staleFiles.length > 0) {
+  const dateStr = new Date().toISOString().slice(0, 10);
+  const backupDir = path.join(templatesDir, `backup-${dateStr}`);
+  if (!fs.existsSync(backupDir)) {
+    fs.mkdirSync(backupDir, { recursive: true });
+  }
+
+  staleFiles.forEach(f => {
+    fs.renameSync(path.join(templatesDir, f), path.join(backupDir, f));
+  });
+  console.log(`  ${staleFiles.length} stale files moved to ${backupDir}`);
+}
 
 console.log(`Templates written to: ${templatesDir}/`);
 console.log(`  ${newCount} new files created`);

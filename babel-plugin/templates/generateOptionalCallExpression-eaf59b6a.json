@@ -1,0 +1,155 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateOptionalCallExpression",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "generateCSharpExpression",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    },
+    {
+      "name": "generateCSharpStatement",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "currentComponent",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateOptionalCallExpression(node, generateCSharpExpression, generateCSharpStatement, currentComponent) {\r\n  // Handle optional map\r\n  const result = handleOptionalMap(node, generateCSharpExpression, generateCSharpStatement, currentComponent);\r\n  if (result) return result;\r\n\r\n  // Generic optional call\r\n  const callee = generateCSharpExpression(node.callee);\r\n  const args = node.arguments.map(arg => generateCSharpExpression(arg)).join(', ');\r\n  return `${callee}(${args})`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "374da2bf",
+      "type": "VariableDeclaration",
+      "babel_source": "const result = handleOptionalMap(node, generateCSharpExpression, generateCSharpStatement, currentComponent);",
+      "parentContext": {
+        "functionName": "generateOptionalCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab8637f6",
+      "type": "IfStatement",
+      "condition": "result",
+      "babel_source": "if (result) return result;",
+      "parentContext": {
+        "functionName": "generateOptionalCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "882101dd",
+      "type": "ReturnStatement",
+      "babel_source": "return result;",
+      "parentContext": {
+        "functionName": "generateOptionalCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8637216e",
+      "type": "VariableDeclaration",
+      "babel_source": "const callee = generateCSharpExpression(node.callee);",
+      "parentContext": {
+        "functionName": "generateOptionalCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8a5de54b",
+      "type": "VariableDeclaration",
+      "babel_source": "const args = node.arguments.map(arg => generateCSharpExpression(arg)).join(', ');",
+      "parentContext": {
+        "functionName": "generateOptionalCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "38737e30",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "arg => generateCSharpExpression(arg)",
+      "parentContext": {
+        "functionName": "generateOptionalCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0b87ae87",
+      "type": "ReturnStatement",
+      "babel_source": "return `${callee}(${args})`;",
+      "parentContext": {
+        "functionName": "generateOptionalCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0653ee57",
+      "type": "TemplateLiteral",
+      "babel_source": "`${callee}(${args})`",
+      "parentContext": {
+        "functionName": "generateOptionalCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/expressions/calls.cjs"
+  ]
+}

@@ -1,0 +1,172 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "handleStringConstructor",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "generateCSharpExpression",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function handleStringConstructor(node, generateCSharpExpression) {\r\n  if (!t.isIdentifier(node.callee, { name: 'String' })) {\r\n    return null;\r\n  }\r\n  if (node.arguments.length > 0) {\r\n    const arg = generateCSharpExpression(node.arguments[0]);\r\n    return `(${arg}).ToString()`;\r\n  }\r\n  return '\"\"';\r\n}",
+  "body_templates": [
+    {
+      "hash": "b0670858",
+      "type": "IfStatement",
+      "condition": "!t.isIdentifier(node.callee, { name: 'String' })",
+      "babel_source": "if (!t.isIdentifier(node.callee, { name: 'String' })) {\r\n    return null;\r\n  }",
+      "parentContext": {
+        "functionName": "handleStringConstructor",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4c657c00",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isIdentifier(node.callee, { name: 'String' })",
+      "parentContext": {
+        "functionName": "handleStringConstructor",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "54345581",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee, { name: 'String' })",
+      "parentContext": {
+        "functionName": "handleStringConstructor",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e51e2a9f",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'String' }",
+      "parentContext": {
+        "functionName": "handleStringConstructor",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "handleStringConstructor",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3ea1ac3d",
+      "type": "IfStatement",
+      "condition": "node.arguments.length > 0",
+      "babel_source": "if (node.arguments.length > 0) {\r\n    const arg = generateCSharpExpression(node.arguments[0]);\r\n    return `(${arg}).ToString()`;\r\n  }",
+      "parentContext": {
+        "functionName": "handleStringConstructor",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e786d65e",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "node.arguments.length > 0",
+      "parentContext": {
+        "functionName": "handleStringConstructor",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ea615a50",
+      "type": "VariableDeclaration",
+      "babel_source": "const arg = generateCSharpExpression(node.arguments[0]);",
+      "parentContext": {
+        "functionName": "handleStringConstructor",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6d495157",
+      "type": "ReturnStatement",
+      "babel_source": "return `(${arg}).ToString()`;",
+      "parentContext": {
+        "functionName": "handleStringConstructor",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "678b0971",
+      "type": "TemplateLiteral",
+      "babel_source": "`(${arg}).ToString()`",
+      "parentContext": {
+        "functionName": "handleStringConstructor",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "248880b6",
+      "type": "ReturnStatement",
+      "babel_source": "return '\"\"';",
+      "parentContext": {
+        "functionName": "handleStringConstructor",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/expressions/calls/handleGlobalFunctions.cjs"
+  ]
+}

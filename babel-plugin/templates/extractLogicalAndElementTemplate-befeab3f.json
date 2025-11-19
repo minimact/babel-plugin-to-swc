@@ -1,0 +1,511 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "extractLogicalAndElementTemplate",
+  "params": [
+    {
+      "name": "expr",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    },
+    {
+      "name": "containerNode",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "parentPath",
+      "inferredType": "&Path",
+      "defaultValue": null
+    },
+    {
+      "name": "stateKeyMap",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "Option<T>",
+  "babel_source": "function extractLogicalAndElementTemplate(expr, containerNode, parentPath, stateKeyMap) {\r\n  const right = expr.right;\r\n\r\n  // Check if right side is JSX element (structural)\r\n  if (!t.isJSXElement(right) && !t.isJSXFragment(right)) {\r\n    return null;\r\n  }\r\n\r\n  // Extract full condition expression\r\n  const condition = extractLeftSideOfAnd(expr);\r\n  const conditionCode = generate(condition).code;\r\n\r\n  // Extract bindings from condition (variable names)\r\n  const variableNames = extractBindingsFromCondition(condition);\r\n\r\n  // Build mapping from variable names to state keys\r\n  const conditionMapping = {};\r\n  const stateKeys = [];\r\n\r\n  for (const varName of variableNames) {\r\n    const stateKey = stateKeyMap.get(varName) || varName;\r\n    conditionMapping[varName] = stateKey;\r\n    stateKeys.push(stateKey);\r\n  }\r\n\r\n  // Can we evaluate this condition client-side?\r\n  const isEvaluable = isConditionEvaluableClientSide(condition, variableNames);\r\n\r\n  // Extract element structure\r\n  const elementStructure = extractElementStructure(right);\r\n\r\n  if (!elementStructure) {\r\n    return null;\r\n  }\r\n\r\n  const template = {\r\n    type: \"conditional-element\",\r\n    conditionExpression: conditionCode,\r\n    conditionBindings: stateKeys, // [\"state_0\", \"state_1\"]\r\n    conditionMapping: conditionMapping, // { \"myState1\": \"state_0\", \"myState2\": \"state_1\" }\r\n    evaluable: isEvaluable,\r\n    branches: {\r\n      true: elementStructure,\r\n      false: null\r\n    },\r\n    operator: \"&&\"\r\n  };\r\n\r\n  // Add parent reference if nested\r\n  if (parentPath) {\r\n    template.parentTemplate = parentPath;\r\n  }\r\n\r\n  return template;\r\n}",
+  "body_templates": [
+    {
+      "hash": "6ee5d651",
+      "type": "VariableDeclaration",
+      "babel_source": "const right = expr.right;",
+      "parentContext": {
+        "functionName": "extractLogicalAndElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a4c3d4aa",
+      "type": "IfStatement",
+      "condition": "!t.isJSXElement(right) && !t.isJSXFragment(right)",
+      "babel_source": "if (!t.isJSXElement(right) && !t.isJSXFragment(right)) {\r\n    return null;\r\n  }",
+      "parentContext": {
+        "functionName": "extractLogicalAndElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e246a628",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "!t.isJSXElement(right) && !t.isJSXFragment(right)",
+      "parentContext": {
+        "functionName": "extractLogicalAndElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c2be9785",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isJSXElement(right)",
+      "parentContext": {
+        "functionName": "extractLogicalAndElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ea961854",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(right)",
+      "parentContext": {
+        "functionName": "extractLogicalAndElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c96bdf4f",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isJSXFragment(right)",
+      "parentContext": {
+        "functionName": "extractLogicalAndElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e9149293",
+      "type": "BabelTypeCheck",
+      "method": "isJSXFragment",
+      "babel_source": "t.isJSXFragment(right)",
+      "parentContext": {
+        "functionName": "extractLogicalAndElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractLogicalAndElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "45e04e28",
+      "type": "VariableDeclaration",
+      "babel_source": "const condition = extractLeftSideOfAnd(expr);",
+      "parentContext": {
+        "functionName": "extractLogicalAndElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2960d3ab",
+      "type": "VariableDeclaration",
+      "babel_source": "const conditionCode = generate(condition).code;",
+      "parentContext": {
+        "functionName": "extractLogicalAndElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0934037a",
+      "type": "VariableDeclaration",
+      "babel_source": "const variableNames = extractBindingsFromCondition(condition);",
+      "parentContext": {
+        "functionName": "extractLogicalAndElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c27089ac",
+      "type": "VariableDeclaration",
+      "babel_source": "const conditionMapping = {};",
+      "parentContext": {
+        "functionName": "extractLogicalAndElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "44136fa3",
+      "type": "ObjectExpression",
+      "babel_source": "{}",
+      "parentContext": {
+        "functionName": "extractLogicalAndElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c0e20026",
+      "type": "VariableDeclaration",
+      "babel_source": "const stateKeys = [];",
+      "parentContext": {
+        "functionName": "extractLogicalAndElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "extractLogicalAndElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0cdd4a9f",
+      "type": "ForOfStatement",
+      "babel_source": "for (const varName of variableNames) {\r\n    const stateKey = stateKeyMap.get(varName) || varName;\r\n    conditionMapping[varName] = stateKey;\r\n    stateKeys.push(stateKey);\r\n  }",
+      "parentContext": {
+        "functionName": "extractLogicalAndElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "15fc1236",
+      "type": "VariableDeclaration",
+      "babel_source": "const varName",
+      "parentContext": {
+        "functionName": "extractLogicalAndElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "348b0016",
+      "type": "VariableDeclaration",
+      "babel_source": "const stateKey = stateKeyMap.get(varName) || varName;",
+      "parentContext": {
+        "functionName": "extractLogicalAndElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ae9c5046",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "stateKeyMap.get(varName) || varName",
+      "parentContext": {
+        "functionName": "extractLogicalAndElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bd309258",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "conditionMapping[varName] = stateKey",
+      "parentContext": {
+        "functionName": "extractLogicalAndElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5215f976",
+      "type": "VariableDeclaration",
+      "babel_source": "const isEvaluable = isConditionEvaluableClientSide(condition, variableNames);",
+      "parentContext": {
+        "functionName": "extractLogicalAndElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "27bd301f",
+      "type": "VariableDeclaration",
+      "babel_source": "const elementStructure = extractElementStructure(right);",
+      "parentContext": {
+        "functionName": "extractLogicalAndElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8c4d82f3",
+      "type": "IfStatement",
+      "condition": "!elementStructure",
+      "babel_source": "if (!elementStructure) {\r\n    return null;\r\n  }",
+      "parentContext": {
+        "functionName": "extractLogicalAndElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "90abdcb8",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!elementStructure",
+      "parentContext": {
+        "functionName": "extractLogicalAndElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "extractLogicalAndElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6663fed5",
+      "type": "VariableDeclaration",
+      "babel_source": "const template = {\r\n    type: \"conditional-element\",\r\n    conditionExpression: conditionCode,\r\n    conditionBindings: stateKeys, // [\"state_0\", \"state_1\"]\r\n    conditionMapping: conditionMapping, // { \"myState1\": \"state_0\", \"myState2\": \"state_1\" }\r\n    evaluable: isEvaluable,\r\n    branches: {\r\n      true: elementStructure,\r\n      false: null\r\n    },\r\n    operator: \"&&\"\r\n  };",
+      "parentContext": {
+        "functionName": "extractLogicalAndElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "82002c58",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n    type: \"conditional-element\",\r\n    conditionExpression: conditionCode,\r\n    conditionBindings: stateKeys, // [\"state_0\", \"state_1\"]\r\n    conditionMapping: conditionMapping, // { \"myState1\": \"state_0\", \"myState2\": \"state_1\" }\r\n    evaluable: isEvaluable,\r\n    branches: {\r\n      true: elementStructure,\r\n      false: null\r\n    },\r\n    operator: \"&&\"\r\n  }",
+      "parentContext": {
+        "functionName": "extractLogicalAndElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3e02a392",
+      "type": "ObjectExpression",
+      "babel_source": "{\r\n      true: elementStructure,\r\n      false: null\r\n    }",
+      "parentContext": {
+        "functionName": "extractLogicalAndElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cddcdd46",
+      "type": "IfStatement",
+      "condition": "parentPath",
+      "babel_source": "if (parentPath) {\r\n    template.parentTemplate = parentPath;\r\n  }",
+      "parentContext": {
+        "functionName": "extractLogicalAndElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "92eb2035",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "template.parentTemplate = parentPath",
+      "parentContext": {
+        "functionName": "extractLogicalAndElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ce5ef868",
+      "type": "ReturnStatement",
+      "babel_source": "return template;",
+      "parentContext": {
+        "functionName": "extractLogicalAndElementTemplate",
+        "functionParams": [
+          "expr",
+          "containerNode",
+          "parentPath",
+          "stateKeyMap"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/conditionalElementTemplates/extractLogicalAndElementTemplate.cjs"
+  ]
+}

@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "generated_at": "2025-11-19T02:10:15.594Z",
+  "generated_at": "2025-11-19T02:35:39.819Z",
   "source_dir": "J:\\projects\\babel-plugin-to-swc\\babel-plugin-to-swc\\example\\babel-plugin-minimact\\src",
   "files": {
     "utils/helpers.cjs": {
@@ -186,20 +186,124 @@
         "fd18f0ca"
       ]
     },
-    "extractors/conditionalElementTemplates.cjs": {
+    "extractors/conditionalElementTemplates/buildMemberPath.cjs": {
       "helper_imports": {},
       "template_hashes": [
-        "c39c355f",
-        "6ea74560",
-        "6fe19ce7",
-        "74d83491",
-        "a2a823b3",
-        "4d9cf8e7",
-        "8daa9ae2",
-        "0b90c11f",
-        "b0b1cbcb",
-        "591d5191",
-        "07b38537"
+        "82314a6b"
+      ]
+    },
+    "extractors/conditionalElementTemplates/extractBindingsFromCondition.cjs": {
+      "helper_imports": {
+        "buildMemberPath": {
+          "source": "./buildMemberPath.cjs",
+          "imported": "buildMemberPath"
+        }
+      },
+      "template_hashes": [
+        "68e6a82f",
+        "c410adbc"
+      ]
+    },
+    "extractors/conditionalElementTemplates/extractElementStructure.cjs": {
+      "helper_imports": {
+        "buildMemberPath": {
+          "source": "./buildMemberPath.cjs",
+          "imported": "buildMemberPath"
+        }
+      },
+      "template_hashes": [
+        "cba993d2"
+      ]
+    },
+    "extractors/conditionalElementTemplates/extractLeftSideOfAnd.cjs": {
+      "helper_imports": {},
+      "template_hashes": [
+        "76375d22"
+      ]
+    },
+    "extractors/conditionalElementTemplates/extractLogicalAndElementTemplate.cjs": {
+      "helper_imports": {
+        "extractLeftSideOfAnd": {
+          "source": "./extractLeftSideOfAnd.cjs",
+          "imported": "extractLeftSideOfAnd"
+        },
+        "extractBindingsFromCondition": {
+          "source": "./extractBindingsFromCondition.cjs",
+          "imported": "extractBindingsFromCondition"
+        },
+        "isConditionEvaluableClientSide": {
+          "source": "./isConditionEvaluableClientSide.cjs",
+          "imported": "isConditionEvaluableClientSide"
+        },
+        "extractElementStructure": {
+          "source": "./extractElementStructure.cjs",
+          "imported": "extractElementStructure"
+        }
+      },
+      "template_hashes": [
+        "befeab3f"
+      ]
+    },
+    "extractors/conditionalElementTemplates/extractTernaryElementTemplate.cjs": {
+      "helper_imports": {
+        "extractBindingsFromCondition": {
+          "source": "./extractBindingsFromCondition.cjs",
+          "imported": "extractBindingsFromCondition"
+        },
+        "isConditionEvaluableClientSide": {
+          "source": "./isConditionEvaluableClientSide.cjs",
+          "imported": "isConditionEvaluableClientSide"
+        },
+        "extractElementStructure": {
+          "source": "./extractElementStructure.cjs",
+          "imported": "extractElementStructure"
+        }
+      },
+      "template_hashes": [
+        "1638388c"
+      ]
+    },
+    "extractors/conditionalElementTemplates/isConditionEvaluableClientSide.cjs": {
+      "helper_imports": {
+        "isSimpleExpression": {
+          "source": "./isSimpleExpression.cjs",
+          "imported": "isSimpleExpression"
+        }
+      },
+      "template_hashes": [
+        "246af4fb"
+      ]
+    },
+    "extractors/conditionalElementTemplates/isSimpleExpression.cjs": {
+      "helper_imports": {},
+      "template_hashes": [
+        "45e76825"
+      ]
+    },
+    "extractors/conditionalElementTemplates/traverseJSX.cjs": {
+      "helper_imports": {
+        "extractLogicalAndElementTemplate": {
+          "source": "./extractLogicalAndElementTemplate.cjs",
+          "imported": "extractLogicalAndElementTemplate"
+        },
+        "extractTernaryElementTemplate": {
+          "source": "./extractTernaryElementTemplate.cjs",
+          "imported": "extractTernaryElementTemplate"
+        }
+      },
+      "template_hashes": [
+        "ead0d88e"
+      ]
+    },
+    "extractors/conditionalElementTemplates.cjs": {
+      "helper_imports": {
+        "traverseJSX": {
+          "source": "./conditionalElementTemplates/traverseJSX.cjs",
+          "imported": "traverseJSX"
+        }
+      },
+      "template_hashes": [
+        "7a417ade"
       ]
     },
     "extractors/eventHandlers.cjs": {
@@ -721,18 +825,108 @@
         "596cd144"
       ]
     },
-    "extractors/structuralTemplates.cjs": {
+    "extractors/structuralTemplates/buildMemberPath.cjs": {
       "helper_imports": {},
       "template_hashes": [
-        "59b1cc91",
-        "b74d3a44",
-        "49b14e62",
-        "377f4cc2",
-        "fddc67eb",
-        "4f5168ba",
-        "61f275d0",
-        "794d4fc2",
-        "04dc8022"
+        "c29f6cbf"
+      ]
+    },
+    "extractors/structuralTemplates/extractBinding.cjs": {
+      "helper_imports": {
+        "buildMemberPath": {
+          "source": "./buildMemberPath.cjs",
+          "imported": "buildMemberPath"
+        }
+      },
+      "template_hashes": [
+        "8c99df1e"
+      ]
+    },
+    "extractors/structuralTemplates/extractConditionalStructuralTemplate.cjs": {
+      "helper_imports": {
+        "extractBinding": {
+          "source": "./extractBinding.cjs",
+          "imported": "extractBinding"
+        },
+        "extractStateKey": {
+          "source": "./extractStateKey.cjs",
+          "imported": "extractStateKey"
+        },
+        "extractElementOrFragmentTemplate": {
+          "source": "./extractElementOrFragmentTemplate.cjs",
+          "imported": "extractElementOrFragmentTemplate"
+        }
+      },
+      "template_hashes": [
+        "c7597df1"
+      ]
+    },
+    "extractors/structuralTemplates/extractElementOrFragmentTemplate.cjs": {
+      "helper_imports": {
+        "extractSimpleElementTemplate": {
+          "source": "./extractSimpleElementTemplate.cjs",
+          "imported": "extractSimpleElementTemplate"
+        }
+      },
+      "template_hashes": [
+        "e214e5d8"
+      ]
+    },
+    "extractors/structuralTemplates/extractLogicalAndTemplate.cjs": {
+      "helper_imports": {
+        "extractBinding": {
+          "source": "./extractBinding.cjs",
+          "imported": "extractBinding"
+        },
+        "extractStateKey": {
+          "source": "./extractStateKey.cjs",
+          "imported": "extractStateKey"
+        },
+        "extractElementOrFragmentTemplate": {
+          "source": "./extractElementOrFragmentTemplate.cjs",
+          "imported": "extractElementOrFragmentTemplate"
+        }
+      },
+      "template_hashes": [
+        "d2d0aa2c"
+      ]
+    },
+    "extractors/structuralTemplates/extractSimpleElementTemplate.cjs": {
+      "helper_imports": {},
+      "template_hashes": [
+        "0dddc597"
+      ]
+    },
+    "extractors/structuralTemplates/extractStateKey.cjs": {
+      "helper_imports": {},
+      "template_hashes": [
+        "e63379e9"
+      ]
+    },
+    "extractors/structuralTemplates/traverseJSX.cjs": {
+      "helper_imports": {
+        "extractConditionalStructuralTemplate": {
+          "source": "./extractConditionalStructuralTemplate.cjs",
+          "imported": "extractConditionalStructuralTemplate"
+        },
+        "extractLogicalAndTemplate": {
+          "source": "./extractLogicalAndTemplate.cjs",
+          "imported": "extractLogicalAndTemplate"
+        }
+      },
+      "template_hashes": [
+        "f3906f8c"
+      ]
+    },
+    "extractors/structuralTemplates.cjs": {
+      "helper_imports": {
+        "traverseJSX": {
+          "source": "./structuralTemplates/traverseJSX.cjs",
+          "imported": "traverseJSX"
+        }
+      },
+      "template_hashes": [
+        "99d9f757"
       ]
     },
     "extractors/templates/buildMemberPath.cjs": {
@@ -1223,16 +1417,172 @@
         "09a81e56"
       ]
     },
-    "generators/expressions/calls.cjs": {
+    "generators/expressions/calls/handleArrayMethods.cjs": {
       "helper_imports": {
         "generateJSXElement": {
-          "source": "../jsx.cjs",
+          "source": "../../jsx.cjs",
           "imported": "generateJSXElement"
         }
       },
       "template_hashes": [
-        "ba3a7f64",
-        "1e78dcef"
+        "4436bd77",
+        "deb6fe48"
+      ]
+    },
+    "generators/expressions/calls/handleGlobalFunctions.cjs": {
+      "helper_imports": {},
+      "template_hashes": [
+        "b7776d3f",
+        "5037e77d",
+        "7dc7e5c8",
+        "10cf7bcc",
+        "1b1c2583"
+      ]
+    },
+    "generators/expressions/calls/handleMathCalls.cjs": {
+      "helper_imports": {},
+      "template_hashes": [
+        "fcc3e264"
+      ]
+    },
+    "generators/expressions/calls/handleObjectCalls.cjs": {
+      "helper_imports": {},
+      "template_hashes": [
+        "536883c1",
+        "11de033e",
+        "f353f88f"
+      ]
+    },
+    "generators/expressions/calls/handleOptionalMap.cjs": {
+      "helper_imports": {
+        "generateJSXElement": {
+          "source": "../../jsx.cjs",
+          "imported": "generateJSXElement"
+        }
+      },
+      "template_hashes": [
+        "99fe2971"
+      ]
+    },
+    "generators/expressions/calls/handlePromiseCalls.cjs": {
+      "helper_imports": {},
+      "template_hashes": [
+        "722477b6",
+        "6dd44324"
+      ]
+    },
+    "generators/expressions/calls/handleStringMethods.cjs": {
+      "helper_imports": {},
+      "template_hashes": [
+        "0fe99a35",
+        "7511c586",
+        "0580d3ad",
+        "c3fb8dfa",
+        "d3e831ba",
+        "0782eadd",
+        "45a106b1",
+        "088ba6c8",
+        "d0833f55"
+      ]
+    },
+    "generators/expressions/calls.cjs": {
+      "helper_imports": {
+        "handleMathCalls": {
+          "source": "./calls/handleMathCalls.cjs",
+          "imported": "handleMathCalls"
+        },
+        "handleEncodeURIComponent": {
+          "source": "./calls/handleGlobalFunctions.cjs",
+          "imported": "handleEncodeURIComponent"
+        },
+        "handleSetState": {
+          "source": "./calls/handleGlobalFunctions.cjs",
+          "imported": "handleSetState"
+        },
+        "handleFetch": {
+          "source": "./calls/handleGlobalFunctions.cjs",
+          "imported": "handleFetch"
+        },
+        "handleAlert": {
+          "source": "./calls/handleGlobalFunctions.cjs",
+          "imported": "handleAlert"
+        },
+        "handleStringConstructor": {
+          "source": "./calls/handleGlobalFunctions.cjs",
+          "imported": "handleStringConstructor"
+        },
+        "handlePromiseResolve": {
+          "source": "./calls/handlePromiseCalls.cjs",
+          "imported": "handlePromiseResolve"
+        },
+        "handlePromiseReject": {
+          "source": "./calls/handlePromiseCalls.cjs",
+          "imported": "handlePromiseReject"
+        },
+        "handleObjectKeys": {
+          "source": "./calls/handleObjectCalls.cjs",
+          "imported": "handleObjectKeys"
+        },
+        "handleDateNow": {
+          "source": "./calls/handleObjectCalls.cjs",
+          "imported": "handleDateNow"
+        },
+        "handleConsoleLog": {
+          "source": "./calls/handleObjectCalls.cjs",
+          "imported": "handleConsoleLog"
+        },
+        "handleToFixed": {
+          "source": "./calls/handleStringMethods.cjs",
+          "imported": "handleToFixed"
+        },
+        "handleToLocaleString": {
+          "source": "./calls/handleStringMethods.cjs",
+          "imported": "handleToLocaleString"
+        },
+        "handleToLowerCase": {
+          "source": "./calls/handleStringMethods.cjs",
+          "imported": "handleToLowerCase"
+        },
+        "handleToUpperCase": {
+          "source": "./calls/handleStringMethods.cjs",
+          "imported": "handleToUpperCase"
+        },
+        "handleTrim": {
+          "source": "./calls/handleStringMethods.cjs",
+          "imported": "handleTrim"
+        },
+        "handleSubstring": {
+          "source": "./calls/handleStringMethods.cjs",
+          "imported": "handleSubstring"
+        },
+        "handlePadStart": {
+          "source": "./calls/handleStringMethods.cjs",
+          "imported": "handlePadStart"
+        },
+        "handlePadEnd": {
+          "source": "./calls/handleStringMethods.cjs",
+          "imported": "handlePadEnd"
+        },
+        "handleResponseJson": {
+          "source": "./calls/handleStringMethods.cjs",
+          "imported": "handleResponseJson"
+        },
+        "handleMap": {
+          "source": "./calls/handleArrayMethods.cjs",
+          "imported": "handleMap"
+        },
+        "handleStateSetters": {
+          "source": "./calls/handleArrayMethods.cjs",
+          "imported": "handleStateSetters"
+        },
+        "handleOptionalMap": {
+          "source": "./calls/handleOptionalMap.cjs",
+          "imported": "handleOptionalMap"
+        }
+      },
+      "template_hashes": [
+        "d3d10300",
+        "eaf59b6a"
       ]
     },
     "generators/expressions/functions.cjs": {
@@ -1650,5 +2000,5 @@
       ]
     }
   },
-  "template_count": 332
+  "template_count": 354
 }

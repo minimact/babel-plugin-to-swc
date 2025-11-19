@@ -1,0 +1,444 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "handleMathCalls",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "generateCSharpExpression",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function handleMathCalls(node, generateCSharpExpression) {\r\n  if (!t.isMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.object, { name: 'Math' })) {\r\n    return null;\r\n  }\r\n\r\n  const methodName = node.callee.property.name;\r\n  const args = node.arguments.map(arg => generateCSharpExpression(arg)).join(', ');\r\n\r\n  // Handle Math.max() → Math.Max()\r\n  if (methodName === 'max') {\r\n    return `Math.Max(${args})`;\r\n  }\r\n\r\n  // Handle Math.min() → Math.Min()\r\n  if (methodName === 'min') {\r\n    return `Math.Min(${args})`;\r\n  }\r\n\r\n  // Handle other Math methods (floor, ceil, round, pow, log, etc.) → Pascal case\r\n  const pascalMethodName = methodName.charAt(0).toUpperCase() + methodName.slice(1);\r\n\r\n  // Cast floor/ceil/round to int for array indexing compatibility\r\n  if (methodName === 'floor' || methodName === 'ceil' || methodName === 'round') {\r\n    return `(int)Math.${pascalMethodName}(${args})`;\r\n  }\r\n\r\n  return `Math.${pascalMethodName}(${args})`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "311e624d",
+      "type": "IfStatement",
+      "condition": "!t.isMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.object, { name: 'Math' })",
+      "babel_source": "if (!t.isMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.object, { name: 'Math' })) {\r\n    return null;\r\n  }",
+      "parentContext": {
+        "functionName": "handleMathCalls",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "83759fc3",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "!t.isMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.object, { name: 'Math' })",
+      "parentContext": {
+        "functionName": "handleMathCalls",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c5100590",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isMemberExpression(node.callee)",
+      "parentContext": {
+        "functionName": "handleMathCalls",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ec7eca4e",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(node.callee)",
+      "parentContext": {
+        "functionName": "handleMathCalls",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a93f48e9",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isIdentifier(node.callee.object, { name: 'Math' })",
+      "parentContext": {
+        "functionName": "handleMathCalls",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d7860666",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee.object, { name: 'Math' })",
+      "parentContext": {
+        "functionName": "handleMathCalls",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "721c7d25",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'Math' }",
+      "parentContext": {
+        "functionName": "handleMathCalls",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "handleMathCalls",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "36e8b992",
+      "type": "VariableDeclaration",
+      "babel_source": "const methodName = node.callee.property.name;",
+      "parentContext": {
+        "functionName": "handleMathCalls",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8a5de54b",
+      "type": "VariableDeclaration",
+      "babel_source": "const args = node.arguments.map(arg => generateCSharpExpression(arg)).join(', ');",
+      "parentContext": {
+        "functionName": "handleMathCalls",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "38737e30",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "arg => generateCSharpExpression(arg)",
+      "parentContext": {
+        "functionName": "handleMathCalls",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ba7f6fee",
+      "type": "IfStatement",
+      "condition": "methodName === 'max'",
+      "babel_source": "if (methodName === 'max') {\r\n    return `Math.Max(${args})`;\r\n  }",
+      "parentContext": {
+        "functionName": "handleMathCalls",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "263e7fd8",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "methodName === 'max'",
+      "parentContext": {
+        "functionName": "handleMathCalls",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f3ab3707",
+      "type": "ReturnStatement",
+      "babel_source": "return `Math.Max(${args})`;",
+      "parentContext": {
+        "functionName": "handleMathCalls",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "314a1fb3",
+      "type": "TemplateLiteral",
+      "babel_source": "`Math.Max(${args})`",
+      "parentContext": {
+        "functionName": "handleMathCalls",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "280b23e0",
+      "type": "IfStatement",
+      "condition": "methodName === 'min'",
+      "babel_source": "if (methodName === 'min') {\r\n    return `Math.Min(${args})`;\r\n  }",
+      "parentContext": {
+        "functionName": "handleMathCalls",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a31931bd",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "methodName === 'min'",
+      "parentContext": {
+        "functionName": "handleMathCalls",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "be433fca",
+      "type": "ReturnStatement",
+      "babel_source": "return `Math.Min(${args})`;",
+      "parentContext": {
+        "functionName": "handleMathCalls",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ade87b07",
+      "type": "TemplateLiteral",
+      "babel_source": "`Math.Min(${args})`",
+      "parentContext": {
+        "functionName": "handleMathCalls",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c29fa654",
+      "type": "VariableDeclaration",
+      "babel_source": "const pascalMethodName = methodName.charAt(0).toUpperCase() + methodName.slice(1);",
+      "parentContext": {
+        "functionName": "handleMathCalls",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a0d4aeeb",
+      "type": "BinaryExpression",
+      "operator": "+",
+      "babel_source": "methodName.charAt(0).toUpperCase() + methodName.slice(1)",
+      "parentContext": {
+        "functionName": "handleMathCalls",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b76599a5",
+      "type": "IfStatement",
+      "condition": "methodName === 'floor' || methodName === 'ceil' || methodName === 'round'",
+      "babel_source": "if (methodName === 'floor' || methodName === 'ceil' || methodName === 'round') {\r\n    return `(int)Math.${pascalMethodName}(${args})`;\r\n  }",
+      "parentContext": {
+        "functionName": "handleMathCalls",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "680806c7",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "methodName === 'floor' || methodName === 'ceil' || methodName === 'round'",
+      "parentContext": {
+        "functionName": "handleMathCalls",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9dcfe074",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "methodName === 'floor' || methodName === 'ceil'",
+      "parentContext": {
+        "functionName": "handleMathCalls",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "99e6f873",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "methodName === 'floor'",
+      "parentContext": {
+        "functionName": "handleMathCalls",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fcc2e17d",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "methodName === 'ceil'",
+      "parentContext": {
+        "functionName": "handleMathCalls",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b83b1861",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "methodName === 'round'",
+      "parentContext": {
+        "functionName": "handleMathCalls",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab8d0f4e",
+      "type": "ReturnStatement",
+      "babel_source": "return `(int)Math.${pascalMethodName}(${args})`;",
+      "parentContext": {
+        "functionName": "handleMathCalls",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2540f9bf",
+      "type": "TemplateLiteral",
+      "babel_source": "`(int)Math.${pascalMethodName}(${args})`",
+      "parentContext": {
+        "functionName": "handleMathCalls",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a7447008",
+      "type": "ReturnStatement",
+      "babel_source": "return `Math.${pascalMethodName}(${args})`;",
+      "parentContext": {
+        "functionName": "handleMathCalls",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f9eb9082",
+      "type": "TemplateLiteral",
+      "babel_source": "`Math.${pascalMethodName}(${args})`",
+      "parentContext": {
+        "functionName": "handleMathCalls",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/expressions/calls/handleMathCalls.cjs"
+  ]
+}

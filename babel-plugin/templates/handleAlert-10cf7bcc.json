@@ -1,0 +1,144 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "handleAlert",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "generateCSharpExpression",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function handleAlert(node, generateCSharpExpression) {\r\n  if (!t.isIdentifier(node.callee, { name: 'alert' })) {\r\n    return null;\r\n  }\r\n  const args = node.arguments.map(arg => generateCSharpExpression(arg)).join(' + ');\r\n  return `Console.WriteLine(${args})`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "7f6337a6",
+      "type": "IfStatement",
+      "condition": "!t.isIdentifier(node.callee, { name: 'alert' })",
+      "babel_source": "if (!t.isIdentifier(node.callee, { name: 'alert' })) {\r\n    return null;\r\n  }",
+      "parentContext": {
+        "functionName": "handleAlert",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5c7a4105",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isIdentifier(node.callee, { name: 'alert' })",
+      "parentContext": {
+        "functionName": "handleAlert",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3775ba8b",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee, { name: 'alert' })",
+      "parentContext": {
+        "functionName": "handleAlert",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7fe05178",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'alert' }",
+      "parentContext": {
+        "functionName": "handleAlert",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "handleAlert",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "67d3010f",
+      "type": "VariableDeclaration",
+      "babel_source": "const args = node.arguments.map(arg => generateCSharpExpression(arg)).join(' + ');",
+      "parentContext": {
+        "functionName": "handleAlert",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "38737e30",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "arg => generateCSharpExpression(arg)",
+      "parentContext": {
+        "functionName": "handleAlert",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9a9fa93f",
+      "type": "ReturnStatement",
+      "babel_source": "return `Console.WriteLine(${args})`;",
+      "parentContext": {
+        "functionName": "handleAlert",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "97fc31c3",
+      "type": "TemplateLiteral",
+      "babel_source": "`Console.WriteLine(${args})`",
+      "parentContext": {
+        "functionName": "handleAlert",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/expressions/calls/handleGlobalFunctions.cjs"
+  ]
+}

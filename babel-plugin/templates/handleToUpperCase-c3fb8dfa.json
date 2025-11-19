@@ -1,0 +1,173 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "handleToUpperCase",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "generateCSharpExpression",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function handleToUpperCase(node, generateCSharpExpression) {\r\n  if (!t.isMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.property, { name: 'toUpperCase' })) {\r\n    return null;\r\n  }\r\n  const object = generateCSharpExpression(node.callee.object);\r\n  return `${object}.ToUpper()`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "ada16487",
+      "type": "IfStatement",
+      "condition": "!t.isMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.property, { name: 'toUpperCase' })",
+      "babel_source": "if (!t.isMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.property, { name: 'toUpperCase' })) {\r\n    return null;\r\n  }",
+      "parentContext": {
+        "functionName": "handleToUpperCase",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "738b195e",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "!t.isMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.property, { name: 'toUpperCase' })",
+      "parentContext": {
+        "functionName": "handleToUpperCase",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c5100590",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isMemberExpression(node.callee)",
+      "parentContext": {
+        "functionName": "handleToUpperCase",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ec7eca4e",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(node.callee)",
+      "parentContext": {
+        "functionName": "handleToUpperCase",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "00d2b333",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isIdentifier(node.callee.property, { name: 'toUpperCase' })",
+      "parentContext": {
+        "functionName": "handleToUpperCase",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a48e8eb4",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee.property, { name: 'toUpperCase' })",
+      "parentContext": {
+        "functionName": "handleToUpperCase",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3f4c9764",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'toUpperCase' }",
+      "parentContext": {
+        "functionName": "handleToUpperCase",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "handleToUpperCase",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2ea5d72d",
+      "type": "VariableDeclaration",
+      "babel_source": "const object = generateCSharpExpression(node.callee.object);",
+      "parentContext": {
+        "functionName": "handleToUpperCase",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b721b8d7",
+      "type": "ReturnStatement",
+      "babel_source": "return `${object}.ToUpper()`;",
+      "parentContext": {
+        "functionName": "handleToUpperCase",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "70e78408",
+      "type": "TemplateLiteral",
+      "babel_source": "`${object}.ToUpper()`",
+      "parentContext": {
+        "functionName": "handleToUpperCase",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/expressions/calls/handleStringMethods.cjs"
+  ]
+}

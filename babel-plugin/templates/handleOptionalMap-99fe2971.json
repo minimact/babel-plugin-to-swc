@@ -1,0 +1,808 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "handleOptionalMap",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "generateCSharpExpression",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    },
+    {
+      "name": "generateCSharpStatement",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "currentComponent",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function handleOptionalMap(node, generateCSharpExpression, generateCSharpStatement, currentComponent) {\r\n  if (!t.isOptionalMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.property, { name: 'map' })) {\r\n    return null;\r\n  }\r\n\r\n  const object = generateCSharpExpression(node.callee.object);\r\n  if (node.arguments.length > 0) {\r\n    const callback = node.arguments[0];\r\n    if (t.isArrowFunctionExpression(callback)) {\r\n      const paramNames = callback.params.map(p => p.name);\r\n      // C# requires parentheses for 0 or 2+ parameters\r\n      const params = paramNames.length === 1\r\n        ? paramNames[0]\r\n        : `(${paramNames.join(', ')})`;\r\n\r\n      // Handle JSX in arrow function body\r\n      let body;\r\n      if (t.isBlockStatement(callback.body)) {\r\n        body = `{ ${callback.body.body.map(stmt => generateCSharpStatement(stmt)).join(' ')} }`;\r\n      } else if (t.isJSXElement(callback.body) || t.isJSXFragment(callback.body)) {\r\n        // JSX element - use generateJSXElement with currentComponent context\r\n        // Store map context for event handler closure capture\r\n        // For nested maps, we need to ACCUMULATE params, not replace them\r\n        const previousMapContext = currentComponent ? currentComponent.currentMapContext : null;\r\n        const previousParams = previousMapContext ? previousMapContext.params : [];\r\n        if (currentComponent) {\r\n          // Combine previous params with current params for nested map support\r\n          currentComponent.currentMapContext = { params: [...previousParams, ...paramNames] };\r\n        }\r\n        body = generateJSXElement(callback.body, currentComponent, 0);\r\n        // Restore previous context\r\n        if (currentComponent) {\r\n          currentComponent.currentMapContext = previousMapContext;\r\n        }\r\n      } else {\r\n        body = generateCSharpExpression(callback.body);\r\n      }\r\n\r\n      // Cast to IEnumerable<dynamic> for optional chaining (likely dynamic)\r\n      const castedObject = `((IEnumerable<dynamic>)${object})`;\r\n\r\n      // Cast result to List<dynamic> for ?? operator compatibility\r\n      // Anonymous types from Select need explicit Cast<dynamic>() before ToList()\r\n      return `${castedObject}?.Select(${params} => ${body})?.Cast<dynamic>().ToList()`;\r\n    }\r\n  }\r\n  return null;\r\n}",
+  "body_templates": [
+    {
+      "hash": "de969368",
+      "type": "IfStatement",
+      "condition": "!t.isOptionalMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.property, { name: 'map' })",
+      "babel_source": "if (!t.isOptionalMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.property, { name: 'map' })) {\r\n    return null;\r\n  }",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bdd99acf",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "!t.isOptionalMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.property, { name: 'map' })",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "613ae308",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isOptionalMemberExpression(node.callee)",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1d08ebb6",
+      "type": "BabelTypeCheck",
+      "method": "isOptionalMemberExpression",
+      "babel_source": "t.isOptionalMemberExpression(node.callee)",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bad136f6",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isIdentifier(node.callee.property, { name: 'map' })",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fabb4451",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee.property, { name: 'map' })",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "66886116",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'map' }",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2ea5d72d",
+      "type": "VariableDeclaration",
+      "babel_source": "const object = generateCSharpExpression(node.callee.object);",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2e27ae6e",
+      "type": "IfStatement",
+      "condition": "node.arguments.length > 0",
+      "babel_source": "if (node.arguments.length > 0) {\r\n    const callback = node.arguments[0];\r\n    if (t.isArrowFunctionExpression(callback)) {\r\n      const paramNames = callback.params.map(p => p.name);\r\n      // C# requires parentheses for 0 or 2+ parameters\r\n      const params = paramNames.length === 1\r\n        ? paramNames[0]\r\n        : `(${paramNames.join(', ')})`;\r\n\r\n      // Handle JSX in arrow function body\r\n      let body;\r\n      if (t.isBlockStatement(callback.body)) {\r\n        body = `{ ${callback.body.body.map(stmt => generateCSharpStatement(stmt)).join(' ')} }`;\r\n      } else if (t.isJSXElement(callback.body) || t.isJSXFragment(callback.body)) {\r\n        // JSX element - use generateJSXElement with currentComponent context\r\n        // Store map context for event handler closure capture\r\n        // For nested maps, we need to ACCUMULATE params, not replace them\r\n        const previousMapContext = currentComponent ? currentComponent.currentMapContext : null;\r\n        const previousParams = previousMapContext ? previousMapContext.params : [];\r\n        if (currentComponent) {\r\n          // Combine previous params with current params for nested map support\r\n          currentComponent.currentMapContext = { params: [...previousParams, ...paramNames] };\r\n        }\r\n        body = generateJSXElement(callback.body, currentComponent, 0);\r\n        // Restore previous context\r\n        if (currentComponent) {\r\n          currentComponent.currentMapContext = previousMapContext;\r\n        }\r\n      } else {\r\n        body = generateCSharpExpression(callback.body);\r\n      }\r\n\r\n      // Cast to IEnumerable<dynamic> for optional chaining (likely dynamic)\r\n      const castedObject = `((IEnumerable<dynamic>)${object})`;\r\n\r\n      // Cast result to List<dynamic> for ?? operator compatibility\r\n      // Anonymous types from Select need explicit Cast<dynamic>() before ToList()\r\n      return `${castedObject}?.Select(${params} => ${body})?.Cast<dynamic>().ToList()`;\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e786d65e",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "node.arguments.length > 0",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "88261630",
+      "type": "VariableDeclaration",
+      "babel_source": "const callback = node.arguments[0];",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "99f62ea5",
+      "type": "IfStatement",
+      "condition": "t.isArrowFunctionExpression(callback)",
+      "babel_source": "if (t.isArrowFunctionExpression(callback)) {\r\n      const paramNames = callback.params.map(p => p.name);\r\n      // C# requires parentheses for 0 or 2+ parameters\r\n      const params = paramNames.length === 1\r\n        ? paramNames[0]\r\n        : `(${paramNames.join(', ')})`;\r\n\r\n      // Handle JSX in arrow function body\r\n      let body;\r\n      if (t.isBlockStatement(callback.body)) {\r\n        body = `{ ${callback.body.body.map(stmt => generateCSharpStatement(stmt)).join(' ')} }`;\r\n      } else if (t.isJSXElement(callback.body) || t.isJSXFragment(callback.body)) {\r\n        // JSX element - use generateJSXElement with currentComponent context\r\n        // Store map context for event handler closure capture\r\n        // For nested maps, we need to ACCUMULATE params, not replace them\r\n        const previousMapContext = currentComponent ? currentComponent.currentMapContext : null;\r\n        const previousParams = previousMapContext ? previousMapContext.params : [];\r\n        if (currentComponent) {\r\n          // Combine previous params with current params for nested map support\r\n          currentComponent.currentMapContext = { params: [...previousParams, ...paramNames] };\r\n        }\r\n        body = generateJSXElement(callback.body, currentComponent, 0);\r\n        // Restore previous context\r\n        if (currentComponent) {\r\n          currentComponent.currentMapContext = previousMapContext;\r\n        }\r\n      } else {\r\n        body = generateCSharpExpression(callback.body);\r\n      }\r\n\r\n      // Cast to IEnumerable<dynamic> for optional chaining (likely dynamic)\r\n      const castedObject = `((IEnumerable<dynamic>)${object})`;\r\n\r\n      // Cast result to List<dynamic> for ?? operator compatibility\r\n      // Anonymous types from Select need explicit Cast<dynamic>() before ToList()\r\n      return `${castedObject}?.Select(${params} => ${body})?.Cast<dynamic>().ToList()`;\r\n    }",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c04c3b2e",
+      "type": "BabelTypeCheck",
+      "method": "isArrowFunctionExpression",
+      "babel_source": "t.isArrowFunctionExpression(callback)",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7b7aee33",
+      "type": "VariableDeclaration",
+      "babel_source": "const paramNames = callback.params.map(p => p.name);",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "722f041e",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "p => p.name",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9dd18b2e",
+      "type": "VariableDeclaration",
+      "babel_source": "const params = paramNames.length === 1\r\n        ? paramNames[0]\r\n        : `(${paramNames.join(', ')})`;",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ef4fa467",
+      "type": "ConditionalExpression",
+      "babel_source": "paramNames.length === 1\r\n        ? paramNames[0]\r\n        : `(${paramNames.join(', ')})`",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f8481d90",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "paramNames.length === 1",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "fe0c0712",
+      "type": "TemplateLiteral",
+      "babel_source": "`(${paramNames.join(', ')})`",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "df08436d",
+      "type": "VariableDeclaration",
+      "babel_source": "let body;",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ea827aed",
+      "type": "IfStatement",
+      "condition": "t.isBlockStatement(callback.body)",
+      "babel_source": "if (t.isBlockStatement(callback.body)) {\r\n        body = `{ ${callback.body.body.map(stmt => generateCSharpStatement(stmt)).join(' ')} }`;\r\n      } else if (t.isJSXElement(callback.body) || t.isJSXFragment(callback.body)) {\r\n        // JSX element - use generateJSXElement with currentComponent context\r\n        // Store map context for event handler closure capture\r\n        // For nested maps, we need to ACCUMULATE params, not replace them\r\n        const previousMapContext = currentComponent ? currentComponent.currentMapContext : null;\r\n        const previousParams = previousMapContext ? previousMapContext.params : [];\r\n        if (currentComponent) {\r\n          // Combine previous params with current params for nested map support\r\n          currentComponent.currentMapContext = { params: [...previousParams, ...paramNames] };\r\n        }\r\n        body = generateJSXElement(callback.body, currentComponent, 0);\r\n        // Restore previous context\r\n        if (currentComponent) {\r\n          currentComponent.currentMapContext = previousMapContext;\r\n        }\r\n      } else {\r\n        body = generateCSharpExpression(callback.body);\r\n      }",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9ce55016",
+      "type": "BabelTypeCheck",
+      "method": "isBlockStatement",
+      "babel_source": "t.isBlockStatement(callback.body)",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7fa94722",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "body = `{ ${callback.body.body.map(stmt => generateCSharpStatement(stmt)).join(' ')} }`",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1e9f6f9b",
+      "type": "TemplateLiteral",
+      "babel_source": "`{ ${callback.body.body.map(stmt => generateCSharpStatement(stmt)).join(' ')} }`",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "351b6ebf",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "stmt => generateCSharpStatement(stmt)",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "32379cba",
+      "type": "IfStatement",
+      "condition": "t.isJSXElement(callback.body) || t.isJSXFragment(callback.body)",
+      "babel_source": "if (t.isJSXElement(callback.body) || t.isJSXFragment(callback.body)) {\r\n        // JSX element - use generateJSXElement with currentComponent context\r\n        // Store map context for event handler closure capture\r\n        // For nested maps, we need to ACCUMULATE params, not replace them\r\n        const previousMapContext = currentComponent ? currentComponent.currentMapContext : null;\r\n        const previousParams = previousMapContext ? previousMapContext.params : [];\r\n        if (currentComponent) {\r\n          // Combine previous params with current params for nested map support\r\n          currentComponent.currentMapContext = { params: [...previousParams, ...paramNames] };\r\n        }\r\n        body = generateJSXElement(callback.body, currentComponent, 0);\r\n        // Restore previous context\r\n        if (currentComponent) {\r\n          currentComponent.currentMapContext = previousMapContext;\r\n        }\r\n      } else {\r\n        body = generateCSharpExpression(callback.body);\r\n      }",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8686a80a",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "t.isJSXElement(callback.body) || t.isJSXFragment(callback.body)",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e74aa137",
+      "type": "BabelTypeCheck",
+      "method": "isJSXElement",
+      "babel_source": "t.isJSXElement(callback.body)",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dba7e467",
+      "type": "BabelTypeCheck",
+      "method": "isJSXFragment",
+      "babel_source": "t.isJSXFragment(callback.body)",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ef428401",
+      "type": "VariableDeclaration",
+      "babel_source": "const previousMapContext = currentComponent ? currentComponent.currentMapContext : null;",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9a6f1474",
+      "type": "ConditionalExpression",
+      "babel_source": "currentComponent ? currentComponent.currentMapContext : null",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8ab8bc6a",
+      "type": "VariableDeclaration",
+      "babel_source": "const previousParams = previousMapContext ? previousMapContext.params : [];",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f509d3a5",
+      "type": "ConditionalExpression",
+      "babel_source": "previousMapContext ? previousMapContext.params : []",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4f53cda1",
+      "type": "ArrayExpression",
+      "babel_source": "[]",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3e3acf34",
+      "type": "IfStatement",
+      "condition": "currentComponent",
+      "babel_source": "if (currentComponent) {\r\n          // Combine previous params with current params for nested map support\r\n          currentComponent.currentMapContext = { params: [...previousParams, ...paramNames] };\r\n        }",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d301e931",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "currentComponent.currentMapContext = { params: [...previousParams, ...paramNames] }",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "608f51a4",
+      "type": "ObjectExpression",
+      "babel_source": "{ params: [...previousParams, ...paramNames] }",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "5cb2b97e",
+      "type": "ArrayExpression",
+      "babel_source": "[...previousParams, ...paramNames]",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1cd25663",
+      "type": "SpreadElement",
+      "babel_source": "...previousParams",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ebf26aa5",
+      "type": "SpreadElement",
+      "babel_source": "...paramNames",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "54ccf012",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "body = generateJSXElement(callback.body, currentComponent, 0)",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ccd067e9",
+      "type": "IfStatement",
+      "condition": "currentComponent",
+      "babel_source": "if (currentComponent) {\r\n          currentComponent.currentMapContext = previousMapContext;\r\n        }",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9b8360d3",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "currentComponent.currentMapContext = previousMapContext",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "6a1b5377",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "body = generateCSharpExpression(callback.body)",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2a8e3a48",
+      "type": "VariableDeclaration",
+      "babel_source": "const castedObject = `((IEnumerable<dynamic>)${object})`;",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "56818431",
+      "type": "TemplateLiteral",
+      "babel_source": "`((IEnumerable<dynamic>)${object})`",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "93cd8a42",
+      "type": "ReturnStatement",
+      "babel_source": "return `${castedObject}?.Select(${params} => ${body})?.Cast<dynamic>().ToList()`;",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c2b221a7",
+      "type": "TemplateLiteral",
+      "babel_source": "`${castedObject}?.Select(${params} => ${body})?.Cast<dynamic>().ToList()`",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "handleOptionalMap",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/expressions/calls/handleOptionalMap.cjs"
+  ]
+}

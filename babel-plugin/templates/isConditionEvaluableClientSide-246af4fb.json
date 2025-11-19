@@ -1,0 +1,338 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "isConditionEvaluableClientSide",
+  "params": [
+    {
+      "name": "expr",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    },
+    {
+      "name": "bindings",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "bool",
+  "babel_source": "function isConditionEvaluableClientSide(expr, bindings) {\r\n  // Simple identifier: myState1\r\n  if (t.isIdentifier(expr)) {\r\n    return true;\r\n  }\r\n\r\n  // Unary: !myState1\r\n  if (t.isUnaryExpression(expr) && expr.operator === '!') {\r\n    return isConditionEvaluableClientSide(expr.argument, bindings);\r\n  }\r\n\r\n  // Logical: myState1 && myState2, myState1 || myState2\r\n  if (t.isLogicalExpression(expr)) {\r\n    return isConditionEvaluableClientSide(expr.left, bindings) &&\r\n           isConditionEvaluableClientSide(expr.right, bindings);\r\n  }\r\n\r\n  // Binary comparisons: count > 0, name === \"admin\"\r\n  if (t.isBinaryExpression(expr)) {\r\n    // Simple comparisons are evaluable\r\n    const operators = ['==', '===', '!=', '!==', '<', '>', '<=', '>='];\r\n    if (operators.includes(expr.operator)) {\r\n      return isSimpleExpression(expr.left) && isSimpleExpression(expr.right);\r\n    }\r\n  }\r\n\r\n  // Member expressions: user.isAdmin\r\n  if (t.isMemberExpression(expr)) {\r\n    return true;\r\n  }\r\n\r\n  // Complex expressions require server evaluation\r\n  return false;\r\n}",
+  "body_templates": [
+    {
+      "hash": "c2ccac45",
+      "type": "IfStatement",
+      "condition": "t.isIdentifier(expr)",
+      "babel_source": "if (t.isIdentifier(expr)) {\r\n    return true;\r\n  }",
+      "parentContext": {
+        "functionName": "isConditionEvaluableClientSide",
+        "functionParams": [
+          "expr",
+          "bindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "42d26fd4",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(expr)",
+      "parentContext": {
+        "functionName": "isConditionEvaluableClientSide",
+        "functionParams": [
+          "expr",
+          "bindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "10e0fa08",
+      "type": "ReturnStatement",
+      "babel_source": "return true;",
+      "parentContext": {
+        "functionName": "isConditionEvaluableClientSide",
+        "functionParams": [
+          "expr",
+          "bindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "2edcd467",
+      "type": "IfStatement",
+      "condition": "t.isUnaryExpression(expr) && expr.operator === '!'",
+      "babel_source": "if (t.isUnaryExpression(expr) && expr.operator === '!') {\r\n    return isConditionEvaluableClientSide(expr.argument, bindings);\r\n  }",
+      "parentContext": {
+        "functionName": "isConditionEvaluableClientSide",
+        "functionParams": [
+          "expr",
+          "bindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f7ca2c2f",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "t.isUnaryExpression(expr) && expr.operator === '!'",
+      "parentContext": {
+        "functionName": "isConditionEvaluableClientSide",
+        "functionParams": [
+          "expr",
+          "bindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4b2e045a",
+      "type": "BabelTypeCheck",
+      "method": "isUnaryExpression",
+      "babel_source": "t.isUnaryExpression(expr)",
+      "parentContext": {
+        "functionName": "isConditionEvaluableClientSide",
+        "functionParams": [
+          "expr",
+          "bindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9893e520",
+      "type": "BinaryExpression",
+      "operator": "===",
+      "babel_source": "expr.operator === '!'",
+      "parentContext": {
+        "functionName": "isConditionEvaluableClientSide",
+        "functionParams": [
+          "expr",
+          "bindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "094a19ab",
+      "type": "ReturnStatement",
+      "babel_source": "return isConditionEvaluableClientSide(expr.argument, bindings);",
+      "parentContext": {
+        "functionName": "isConditionEvaluableClientSide",
+        "functionParams": [
+          "expr",
+          "bindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "274fb01f",
+      "type": "IfStatement",
+      "condition": "t.isLogicalExpression(expr)",
+      "babel_source": "if (t.isLogicalExpression(expr)) {\r\n    return isConditionEvaluableClientSide(expr.left, bindings) &&\r\n           isConditionEvaluableClientSide(expr.right, bindings);\r\n  }",
+      "parentContext": {
+        "functionName": "isConditionEvaluableClientSide",
+        "functionParams": [
+          "expr",
+          "bindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c20dd732",
+      "type": "BabelTypeCheck",
+      "method": "isLogicalExpression",
+      "babel_source": "t.isLogicalExpression(expr)",
+      "parentContext": {
+        "functionName": "isConditionEvaluableClientSide",
+        "functionParams": [
+          "expr",
+          "bindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1c0734dc",
+      "type": "ReturnStatement",
+      "babel_source": "return isConditionEvaluableClientSide(expr.left, bindings) &&\r\n           isConditionEvaluableClientSide(expr.right, bindings);",
+      "parentContext": {
+        "functionName": "isConditionEvaluableClientSide",
+        "functionParams": [
+          "expr",
+          "bindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "23552249",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "isConditionEvaluableClientSide(expr.left, bindings) &&\r\n           isConditionEvaluableClientSide(expr.right, bindings)",
+      "parentContext": {
+        "functionName": "isConditionEvaluableClientSide",
+        "functionParams": [
+          "expr",
+          "bindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "75ec6152",
+      "type": "IfStatement",
+      "condition": "t.isBinaryExpression(expr)",
+      "babel_source": "if (t.isBinaryExpression(expr)) {\r\n    // Simple comparisons are evaluable\r\n    const operators = ['==', '===', '!=', '!==', '<', '>', '<=', '>='];\r\n    if (operators.includes(expr.operator)) {\r\n      return isSimpleExpression(expr.left) && isSimpleExpression(expr.right);\r\n    }\r\n  }",
+      "parentContext": {
+        "functionName": "isConditionEvaluableClientSide",
+        "functionParams": [
+          "expr",
+          "bindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8db0ee56",
+      "type": "BabelTypeCheck",
+      "method": "isBinaryExpression",
+      "babel_source": "t.isBinaryExpression(expr)",
+      "parentContext": {
+        "functionName": "isConditionEvaluableClientSide",
+        "functionParams": [
+          "expr",
+          "bindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "b918cba5",
+      "type": "VariableDeclaration",
+      "babel_source": "const operators = ['==', '===', '!=', '!==', '<', '>', '<=', '>='];",
+      "parentContext": {
+        "functionName": "isConditionEvaluableClientSide",
+        "functionParams": [
+          "expr",
+          "bindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8d074ad2",
+      "type": "ArrayExpression",
+      "babel_source": "['==', '===', '!=', '!==', '<', '>', '<=', '>=']",
+      "parentContext": {
+        "functionName": "isConditionEvaluableClientSide",
+        "functionParams": [
+          "expr",
+          "bindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "21952b0e",
+      "type": "IfStatement",
+      "condition": "operators.includes(expr.operator)",
+      "babel_source": "if (operators.includes(expr.operator)) {\r\n      return isSimpleExpression(expr.left) && isSimpleExpression(expr.right);\r\n    }",
+      "parentContext": {
+        "functionName": "isConditionEvaluableClientSide",
+        "functionParams": [
+          "expr",
+          "bindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a8363c1f",
+      "type": "ReturnStatement",
+      "babel_source": "return isSimpleExpression(expr.left) && isSimpleExpression(expr.right);",
+      "parentContext": {
+        "functionName": "isConditionEvaluableClientSide",
+        "functionParams": [
+          "expr",
+          "bindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7407a07c",
+      "type": "LogicalExpression",
+      "operator": "&&",
+      "babel_source": "isSimpleExpression(expr.left) && isSimpleExpression(expr.right)",
+      "parentContext": {
+        "functionName": "isConditionEvaluableClientSide",
+        "functionParams": [
+          "expr",
+          "bindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "67af9b13",
+      "type": "IfStatement",
+      "condition": "t.isMemberExpression(expr)",
+      "babel_source": "if (t.isMemberExpression(expr)) {\r\n    return true;\r\n  }",
+      "parentContext": {
+        "functionName": "isConditionEvaluableClientSide",
+        "functionParams": [
+          "expr",
+          "bindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c8858c63",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(expr)",
+      "parentContext": {
+        "functionName": "isConditionEvaluableClientSide",
+        "functionParams": [
+          "expr",
+          "bindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "10e0fa08",
+      "type": "ReturnStatement",
+      "babel_source": "return true;",
+      "parentContext": {
+        "functionName": "isConditionEvaluableClientSide",
+        "functionParams": [
+          "expr",
+          "bindings"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dabbdf16",
+      "type": "ReturnStatement",
+      "babel_source": "return false;",
+      "parentContext": {
+        "functionName": "isConditionEvaluableClientSide",
+        "functionParams": [
+          "expr",
+          "bindings"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "extractors/conditionalElementTemplates/isConditionEvaluableClientSide.cjs"
+  ]
+}

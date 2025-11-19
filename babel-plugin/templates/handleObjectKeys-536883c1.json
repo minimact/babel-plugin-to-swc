@@ -1,0 +1,269 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "handleObjectKeys",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "generateCSharpExpression",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function handleObjectKeys(node, generateCSharpExpression) {\r\n  if (!t.isMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.object, { name: 'Object' }) ||\r\n      !t.isIdentifier(node.callee.property, { name: 'keys' })) {\r\n    return null;\r\n  }\r\n  if (node.arguments.length > 0) {\r\n    const obj = generateCSharpExpression(node.arguments[0]);\r\n    return `((IDictionary<string, object>)${obj}).Keys`;\r\n  }\r\n  return null;\r\n}",
+  "body_templates": [
+    {
+      "hash": "c69a0f25",
+      "type": "IfStatement",
+      "condition": "!t.isMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.object, { name: 'Object' }) ||\r\n      !t.isIdentifier(node.callee.property, { name: 'keys' })",
+      "babel_source": "if (!t.isMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.object, { name: 'Object' }) ||\r\n      !t.isIdentifier(node.callee.property, { name: 'keys' })) {\r\n    return null;\r\n  }",
+      "parentContext": {
+        "functionName": "handleObjectKeys",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a162a938",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "!t.isMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.object, { name: 'Object' }) ||\r\n      !t.isIdentifier(node.callee.property, { name: 'keys' })",
+      "parentContext": {
+        "functionName": "handleObjectKeys",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0fe4f91e",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "!t.isMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.object, { name: 'Object' })",
+      "parentContext": {
+        "functionName": "handleObjectKeys",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c5100590",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isMemberExpression(node.callee)",
+      "parentContext": {
+        "functionName": "handleObjectKeys",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ec7eca4e",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(node.callee)",
+      "parentContext": {
+        "functionName": "handleObjectKeys",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d784b4a1",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isIdentifier(node.callee.object, { name: 'Object' })",
+      "parentContext": {
+        "functionName": "handleObjectKeys",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7aef0468",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee.object, { name: 'Object' })",
+      "parentContext": {
+        "functionName": "handleObjectKeys",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "293a7b89",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'Object' }",
+      "parentContext": {
+        "functionName": "handleObjectKeys",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "90b3884b",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isIdentifier(node.callee.property, { name: 'keys' })",
+      "parentContext": {
+        "functionName": "handleObjectKeys",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "75dbece8",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee.property, { name: 'keys' })",
+      "parentContext": {
+        "functionName": "handleObjectKeys",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a2591de2",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'keys' }",
+      "parentContext": {
+        "functionName": "handleObjectKeys",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "handleObjectKeys",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "64f6331e",
+      "type": "IfStatement",
+      "condition": "node.arguments.length > 0",
+      "babel_source": "if (node.arguments.length > 0) {\r\n    const obj = generateCSharpExpression(node.arguments[0]);\r\n    return `((IDictionary<string, object>)${obj}).Keys`;\r\n  }",
+      "parentContext": {
+        "functionName": "handleObjectKeys",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e786d65e",
+      "type": "BinaryExpression",
+      "operator": ">",
+      "babel_source": "node.arguments.length > 0",
+      "parentContext": {
+        "functionName": "handleObjectKeys",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "bf73c6e6",
+      "type": "VariableDeclaration",
+      "babel_source": "const obj = generateCSharpExpression(node.arguments[0]);",
+      "parentContext": {
+        "functionName": "handleObjectKeys",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a25a8fb8",
+      "type": "ReturnStatement",
+      "babel_source": "return `((IDictionary<string, object>)${obj}).Keys`;",
+      "parentContext": {
+        "functionName": "handleObjectKeys",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "80cedb5d",
+      "type": "TemplateLiteral",
+      "babel_source": "`((IDictionary<string, object>)${obj}).Keys`",
+      "parentContext": {
+        "functionName": "handleObjectKeys",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "handleObjectKeys",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/expressions/calls/handleObjectCalls.cjs"
+  ]
+}

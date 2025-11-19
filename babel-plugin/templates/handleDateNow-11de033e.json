@@ -1,0 +1,184 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "handleDateNow",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "unknown",
+  "babel_source": "function handleDateNow(node) {\r\n  if (!t.isMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.object, { name: 'Date' }) ||\r\n      !t.isIdentifier(node.callee.property, { name: 'now' })) {\r\n    return null;\r\n  }\r\n  return 'DateTimeOffset.Now.ToUnixTimeMilliseconds()';\r\n}",
+  "body_templates": [
+    {
+      "hash": "6cd548cd",
+      "type": "IfStatement",
+      "condition": "!t.isMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.object, { name: 'Date' }) ||\r\n      !t.isIdentifier(node.callee.property, { name: 'now' })",
+      "babel_source": "if (!t.isMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.object, { name: 'Date' }) ||\r\n      !t.isIdentifier(node.callee.property, { name: 'now' })) {\r\n    return null;\r\n  }",
+      "parentContext": {
+        "functionName": "handleDateNow",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e82672bb",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "!t.isMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.object, { name: 'Date' }) ||\r\n      !t.isIdentifier(node.callee.property, { name: 'now' })",
+      "parentContext": {
+        "functionName": "handleDateNow",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3729aaa7",
+      "type": "LogicalExpression",
+      "operator": "||",
+      "babel_source": "!t.isMemberExpression(node.callee) ||\r\n      !t.isIdentifier(node.callee.object, { name: 'Date' })",
+      "parentContext": {
+        "functionName": "handleDateNow",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c5100590",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isMemberExpression(node.callee)",
+      "parentContext": {
+        "functionName": "handleDateNow",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ec7eca4e",
+      "type": "BabelTypeCheck",
+      "method": "isMemberExpression",
+      "babel_source": "t.isMemberExpression(node.callee)",
+      "parentContext": {
+        "functionName": "handleDateNow",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "624e9b8a",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isIdentifier(node.callee.object, { name: 'Date' })",
+      "parentContext": {
+        "functionName": "handleDateNow",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "9dd21249",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee.object, { name: 'Date' })",
+      "parentContext": {
+        "functionName": "handleDateNow",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "314fe5f2",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'Date' }",
+      "parentContext": {
+        "functionName": "handleDateNow",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ce063787",
+      "type": "UnaryExpression",
+      "operator": "!",
+      "babel_source": "!t.isIdentifier(node.callee.property, { name: 'now' })",
+      "parentContext": {
+        "functionName": "handleDateNow",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "49d51678",
+      "type": "BabelTypeCheck",
+      "method": "isIdentifier",
+      "babel_source": "t.isIdentifier(node.callee.property, { name: 'now' })",
+      "parentContext": {
+        "functionName": "handleDateNow",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "dfe50aae",
+      "type": "ObjectExpression",
+      "babel_source": "{ name: 'now' }",
+      "parentContext": {
+        "functionName": "handleDateNow",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "4ad2292c",
+      "type": "ReturnStatement",
+      "babel_source": "return null;",
+      "parentContext": {
+        "functionName": "handleDateNow",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ebdd1f95",
+      "type": "ReturnStatement",
+      "babel_source": "return 'DateTimeOffset.Now.ToUnixTimeMilliseconds()';",
+      "parentContext": {
+        "functionName": "handleDateNow",
+        "functionParams": [
+          "node"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/expressions/calls/handleObjectCalls.cjs"
+  ]
+}

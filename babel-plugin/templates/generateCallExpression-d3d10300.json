@@ -1,0 +1,1158 @@
+{
+  "type": "FunctionDeclaration",
+  "name": "generateCallExpression",
+  "params": [
+    {
+      "name": "node",
+      "inferredType": "&Node",
+      "defaultValue": null
+    },
+    {
+      "name": "generateCSharpExpression",
+      "inferredType": "&Expr",
+      "defaultValue": null
+    },
+    {
+      "name": "generateCSharpStatement",
+      "inferredType": "unknown",
+      "defaultValue": null
+    },
+    {
+      "name": "currentComponent",
+      "inferredType": "unknown",
+      "defaultValue": null
+    }
+  ],
+  "inferredReturnType": "String",
+  "babel_source": "function generateCallExpression(node, generateCSharpExpression, generateCSharpStatement, currentComponent) {\r\n  // Try each handler in order\r\n  let result;\r\n\r\n  result = handleMathCalls(node, generateCSharpExpression);\r\n  if (result) return result;\r\n\r\n  result = handleEncodeURIComponent(node, generateCSharpExpression);\r\n  if (result) return result;\r\n\r\n  result = handleSetState(node, generateCSharpExpression);\r\n  if (result) return result;\r\n\r\n  result = handleFetch(node, generateCSharpExpression);\r\n  if (result) return result;\r\n\r\n  result = handlePromiseResolve(node, generateCSharpExpression);\r\n  if (result) return result;\r\n\r\n  result = handlePromiseReject(node, generateCSharpExpression);\r\n  if (result) return result;\r\n\r\n  result = handleAlert(node, generateCSharpExpression);\r\n  if (result) return result;\r\n\r\n  result = handleStringConstructor(node, generateCSharpExpression);\r\n  if (result) return result;\r\n\r\n  result = handleObjectKeys(node, generateCSharpExpression);\r\n  if (result) return result;\r\n\r\n  result = handleDateNow(node);\r\n  if (result) return result;\r\n\r\n  result = handleConsoleLog(node, generateCSharpExpression);\r\n  if (result) return result;\r\n\r\n  result = handleResponseJson(node, generateCSharpExpression);\r\n  if (result) return result;\r\n\r\n  result = handleToFixed(node, generateCSharpExpression);\r\n  if (result) return result;\r\n\r\n  result = handleToLocaleString(node, generateCSharpExpression);\r\n  if (result) return result;\r\n\r\n  result = handleToLowerCase(node, generateCSharpExpression);\r\n  if (result) return result;\r\n\r\n  result = handleToUpperCase(node, generateCSharpExpression);\r\n  if (result) return result;\r\n\r\n  result = handleTrim(node, generateCSharpExpression);\r\n  if (result) return result;\r\n\r\n  result = handleSubstring(node, generateCSharpExpression);\r\n  if (result) return result;\r\n\r\n  result = handlePadStart(node, generateCSharpExpression);\r\n  if (result) return result;\r\n\r\n  result = handlePadEnd(node, generateCSharpExpression);\r\n  if (result) return result;\r\n\r\n  result = handleStateSetters(node, generateCSharpExpression, currentComponent);\r\n  if (result) return result;\r\n\r\n  result = handleMap(node, generateCSharpExpression, generateCSharpStatement, currentComponent);\r\n  if (result) return result;\r\n\r\n  // Generic function call\r\n  const callee = generateCSharpExpression(node.callee);\r\n  const args = node.arguments.map(arg => generateCSharpExpression(arg)).join(', ');\r\n  return `${callee}(${args})`;\r\n}",
+  "body_templates": [
+    {
+      "hash": "a84c4307",
+      "type": "VariableDeclaration",
+      "babel_source": "let result;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "c428bd8c",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "result = handleMathCalls(node, generateCSharpExpression)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab8637f6",
+      "type": "IfStatement",
+      "condition": "result",
+      "babel_source": "if (result) return result;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "882101dd",
+      "type": "ReturnStatement",
+      "babel_source": "return result;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "f5b1ac81",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "result = handleEncodeURIComponent(node, generateCSharpExpression)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab8637f6",
+      "type": "IfStatement",
+      "condition": "result",
+      "babel_source": "if (result) return result;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "882101dd",
+      "type": "ReturnStatement",
+      "babel_source": "return result;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "a0f04355",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "result = handleSetState(node, generateCSharpExpression)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab8637f6",
+      "type": "IfStatement",
+      "condition": "result",
+      "babel_source": "if (result) return result;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "882101dd",
+      "type": "ReturnStatement",
+      "babel_source": "return result;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7453be4d",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "result = handleFetch(node, generateCSharpExpression)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab8637f6",
+      "type": "IfStatement",
+      "condition": "result",
+      "babel_source": "if (result) return result;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "882101dd",
+      "type": "ReturnStatement",
+      "babel_source": "return result;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cc56adf1",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "result = handlePromiseResolve(node, generateCSharpExpression)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab8637f6",
+      "type": "IfStatement",
+      "condition": "result",
+      "babel_source": "if (result) return result;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "882101dd",
+      "type": "ReturnStatement",
+      "babel_source": "return result;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e66bc592",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "result = handlePromiseReject(node, generateCSharpExpression)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab8637f6",
+      "type": "IfStatement",
+      "condition": "result",
+      "babel_source": "if (result) return result;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "882101dd",
+      "type": "ReturnStatement",
+      "babel_source": "return result;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "de9aeedf",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "result = handleAlert(node, generateCSharpExpression)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab8637f6",
+      "type": "IfStatement",
+      "condition": "result",
+      "babel_source": "if (result) return result;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "882101dd",
+      "type": "ReturnStatement",
+      "babel_source": "return result;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "784d3ceb",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "result = handleStringConstructor(node, generateCSharpExpression)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab8637f6",
+      "type": "IfStatement",
+      "condition": "result",
+      "babel_source": "if (result) return result;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "882101dd",
+      "type": "ReturnStatement",
+      "babel_source": "return result;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "d9499b3b",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "result = handleObjectKeys(node, generateCSharpExpression)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab8637f6",
+      "type": "IfStatement",
+      "condition": "result",
+      "babel_source": "if (result) return result;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "882101dd",
+      "type": "ReturnStatement",
+      "babel_source": "return result;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "35a69c9f",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "result = handleDateNow(node)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab8637f6",
+      "type": "IfStatement",
+      "condition": "result",
+      "babel_source": "if (result) return result;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "882101dd",
+      "type": "ReturnStatement",
+      "babel_source": "return result;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e854dd59",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "result = handleConsoleLog(node, generateCSharpExpression)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab8637f6",
+      "type": "IfStatement",
+      "condition": "result",
+      "babel_source": "if (result) return result;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "882101dd",
+      "type": "ReturnStatement",
+      "babel_source": "return result;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "81bf30b7",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "result = handleResponseJson(node, generateCSharpExpression)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab8637f6",
+      "type": "IfStatement",
+      "condition": "result",
+      "babel_source": "if (result) return result;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "882101dd",
+      "type": "ReturnStatement",
+      "babel_source": "return result;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "7b51ed31",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "result = handleToFixed(node, generateCSharpExpression)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab8637f6",
+      "type": "IfStatement",
+      "condition": "result",
+      "babel_source": "if (result) return result;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "882101dd",
+      "type": "ReturnStatement",
+      "babel_source": "return result;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1e41cce2",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "result = handleToLocaleString(node, generateCSharpExpression)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab8637f6",
+      "type": "IfStatement",
+      "condition": "result",
+      "babel_source": "if (result) return result;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "882101dd",
+      "type": "ReturnStatement",
+      "babel_source": "return result;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "e813e324",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "result = handleToLowerCase(node, generateCSharpExpression)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab8637f6",
+      "type": "IfStatement",
+      "condition": "result",
+      "babel_source": "if (result) return result;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "882101dd",
+      "type": "ReturnStatement",
+      "babel_source": "return result;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "1846aec7",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "result = handleToUpperCase(node, generateCSharpExpression)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab8637f6",
+      "type": "IfStatement",
+      "condition": "result",
+      "babel_source": "if (result) return result;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "882101dd",
+      "type": "ReturnStatement",
+      "babel_source": "return result;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "cf607875",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "result = handleTrim(node, generateCSharpExpression)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab8637f6",
+      "type": "IfStatement",
+      "condition": "result",
+      "babel_source": "if (result) return result;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "882101dd",
+      "type": "ReturnStatement",
+      "babel_source": "return result;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "36f4eef5",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "result = handleSubstring(node, generateCSharpExpression)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab8637f6",
+      "type": "IfStatement",
+      "condition": "result",
+      "babel_source": "if (result) return result;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "882101dd",
+      "type": "ReturnStatement",
+      "babel_source": "return result;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "82d0a78f",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "result = handlePadStart(node, generateCSharpExpression)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab8637f6",
+      "type": "IfStatement",
+      "condition": "result",
+      "babel_source": "if (result) return result;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "882101dd",
+      "type": "ReturnStatement",
+      "babel_source": "return result;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "583bed93",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "result = handlePadEnd(node, generateCSharpExpression)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab8637f6",
+      "type": "IfStatement",
+      "condition": "result",
+      "babel_source": "if (result) return result;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "882101dd",
+      "type": "ReturnStatement",
+      "babel_source": "return result;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "3d1e026d",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "result = handleStateSetters(node, generateCSharpExpression, currentComponent)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab8637f6",
+      "type": "IfStatement",
+      "condition": "result",
+      "babel_source": "if (result) return result;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "882101dd",
+      "type": "ReturnStatement",
+      "babel_source": "return result;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "665e1276",
+      "type": "AssignmentExpression",
+      "operator": "=",
+      "babel_source": "result = handleMap(node, generateCSharpExpression, generateCSharpStatement, currentComponent)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "ab8637f6",
+      "type": "IfStatement",
+      "condition": "result",
+      "babel_source": "if (result) return result;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "882101dd",
+      "type": "ReturnStatement",
+      "babel_source": "return result;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8637216e",
+      "type": "VariableDeclaration",
+      "babel_source": "const callee = generateCSharpExpression(node.callee);",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "8a5de54b",
+      "type": "VariableDeclaration",
+      "babel_source": "const args = node.arguments.map(arg => generateCSharpExpression(arg)).join(', ');",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "38737e30",
+      "type": "ArrowFunctionExpression",
+      "babel_source": "arg => generateCSharpExpression(arg)",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0b87ae87",
+      "type": "ReturnStatement",
+      "babel_source": "return `${callee}(${args})`;",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    },
+    {
+      "hash": "0653ee57",
+      "type": "TemplateLiteral",
+      "babel_source": "`${callee}(${args})`",
+      "parentContext": {
+        "functionName": "generateCallExpression",
+        "functionParams": [
+          "node",
+          "generateCSharpExpression",
+          "generateCSharpStatement",
+          "currentComponent"
+        ]
+      },
+      "rust_translation": null
+    }
+  ],
+  "rust_translation": null,
+  "found_in": [
+    "generators/expressions/calls.cjs"
+  ]
+}
