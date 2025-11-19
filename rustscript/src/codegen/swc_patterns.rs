@@ -4,7 +4,7 @@
 //! and flow-sensitive type narrowing.
 
 use crate::parser::*;
-use super::type_context::{TypeContext, TypeEnvironment, get_swc_variant, get_typed_field_mapping, SwcTypeKind};
+use super::type_context::{TypeContext, TypeEnvironment, get_swc_variant, get_swc_variant_in_context, get_typed_field_mapping, SwcTypeKind};
 
 /// Pattern-aware SWC code generator
 pub struct SwcPatternGenerator {
@@ -42,10 +42,15 @@ impl SwcPatternGenerator {
     pub fn gen_while_stmt_typed(&mut self, condition: &Expr, body: &Block) {
         // 1. Try to extract matches!(var, Type) pattern
         if let Some((var_name, type_target)) = self.extract_matches_pattern(condition) {
-            // 2. Get SWC enum/variant mapping
-            let (swc_enum, swc_variant, swc_struct) = get_swc_variant(&type_target);
+            // 2. Look up the variable's type to determine the correct context
+            let var_type = self.env.lookup(&var_name)
+                .map(|ctx| ctx.swc_type.clone())
+                .unwrap_or_else(|| "Expr".to_string());
 
-            // 3. Generate "while let" with shadowing
+            // 3. Get SWC enum/variant mapping using context
+            let (swc_enum, swc_variant, swc_struct) = get_swc_variant_in_context(&type_target, &var_type);
+
+            // 4. Generate "while let" with shadowing
             self.emit_indent();
             // Output: while let Expr::Member(var_name) = var_name {
             self.output.push_str(&format!(
@@ -77,10 +82,17 @@ impl SwcPatternGenerator {
     pub fn gen_if_stmt_typed(&mut self, condition: &Expr, then_branch: &Block, else_branch: Option<&Block>) {
         // Try to extract matches!(var, Type) pattern
         if let Some((var_name, type_target)) = self.extract_matches_pattern(condition) {
-            let (swc_enum, swc_variant, swc_struct) = get_swc_variant(&type_target);
+            // Look up the variable's type to determine the correct context
+            let var_type = self.env.lookup(&var_name)
+                .map(|ctx| ctx.swc_type.clone())
+                .unwrap_or_else(|| "Expr".to_string());
+
+            // Use the variable's type as context for determining the enum/variant
+            let (swc_enum, swc_variant, swc_struct) = get_swc_variant_in_context(&type_target, &var_type);
 
             self.emit_indent();
             // Output: if let Expr::Ident(var_name) = var_name {
+            // or: if let MemberProp::Ident(var_name) = var_name {
             self.output.push_str(&format!(
                 "if let {}::{}({}) = {} {{\n",
                 swc_enum, swc_variant, var_name, var_name

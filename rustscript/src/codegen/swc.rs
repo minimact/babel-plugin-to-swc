@@ -2,7 +2,7 @@
 
 use crate::parser::*;
 use crate::mapping::{get_node_mapping, get_node_mapping_by_visitor, get_field_mapping, get_pattern_check};
-use super::type_context::{TypeEnvironment, TypeContext, get_swc_variant};
+use super::type_context::{TypeEnvironment, TypeContext, get_swc_variant_in_context, get_typed_field_mapping, map_rustscript_to_swc};
 
 /// Generator for SWC plugin Rust code
 pub struct SwcGenerator {
@@ -439,6 +439,9 @@ impl SwcGenerator {
     fn gen_stmt(&mut self, stmt: &Stmt) {
         match stmt {
             Stmt::Let(let_stmt) => {
+                // Infer the type from the initializer expression
+                let init_type = self.infer_type(&let_stmt.init);
+
                 self.emit_indent();
                 if let_stmt.mutable {
                     self.emit("let mut ");
@@ -452,6 +455,9 @@ impl SwcGenerator {
                 self.emit(" = ");
                 self.gen_expr(&let_stmt.init);
                 self.emit(";\n");
+
+                // Track the variable's type in the environment
+                self.type_env.define(&let_stmt.name, init_type);
             }
             Stmt::Const(const_stmt) => {
                 self.emit_indent();
@@ -472,8 +478,13 @@ impl SwcGenerator {
             Stmt::If(if_stmt) => {
                 // Check if condition is matches!(var, Type)
                 if let Some((var_name, type_name)) = self.extract_matches_pattern(&if_stmt.condition) {
-                    // Generate if let with type narrowing
-                    let (swc_enum, swc_variant, swc_struct) = get_swc_variant(&type_name);
+                    // Look up the variable's type to determine the correct context
+                    let var_type = self.type_env.lookup(&var_name)
+                        .map(|ctx| ctx.swc_type.clone())
+                        .unwrap_or_else(|| "Expr".to_string());
+
+                    // Generate if let with type narrowing using context
+                    let (swc_enum, swc_variant, swc_struct) = get_swc_variant_in_context(&type_name, &var_type);
 
                     self.emit_indent();
                     self.emit(&format!("if let {}::{}({}) = &{} {{\n",
@@ -561,8 +572,13 @@ impl SwcGenerator {
             Stmt::While(while_stmt) => {
                 // Check if condition is matches!(var, Type)
                 if let Some((var_name, type_name)) = self.extract_matches_pattern(&while_stmt.condition) {
-                    // Generate while let with type narrowing
-                    let (swc_enum, swc_variant, swc_struct) = get_swc_variant(&type_name);
+                    // Look up the variable's type to determine the correct context
+                    let var_type = self.type_env.lookup(&var_name)
+                        .map(|ctx| ctx.swc_type.clone())
+                        .unwrap_or_else(|| "Expr".to_string());
+
+                    // Generate while let with type narrowing using context
+                    let (swc_enum, swc_variant, swc_struct) = get_swc_variant_in_context(&type_name, &var_type);
 
                     self.emit_indent();
                     self.emit(&format!("while let {}::{}({}) = {} {{\n",
@@ -754,6 +770,54 @@ impl SwcGenerator {
             }
         }
         None
+    }
+
+    /// Infer the type of an expression based on context
+    fn infer_type(&self, expr: &Expr) -> TypeContext {
+        match expr {
+            Expr::Ident(ident) => {
+                // Look up variable type from environment
+                self.type_env.lookup(&ident.name)
+                    .cloned()
+                    .unwrap_or(TypeContext::unknown())
+            }
+
+            Expr::Member(mem) => {
+                // Get object type, then look up field type
+                let obj_type = self.infer_type(&mem.object);
+                if let Some(mapping) = get_typed_field_mapping(&obj_type.swc_type, &mem.property) {
+                    let (_, kind) = map_rustscript_to_swc(mapping.result_type_rs);
+                    TypeContext {
+                        rustscript_type: mapping.result_type_rs.to_string(),
+                        swc_type: mapping.result_type_swc.to_string(),
+                        kind,
+                        known_variant: None,
+                        needs_deref: mapping.needs_deref,
+                    }
+                } else {
+                    // Unknown field access
+                    TypeContext::unknown()
+                }
+            }
+
+            Expr::Call(call) => {
+                // Check for .clone() which preserves type
+                if let Expr::Member(mem) = call.callee.as_ref() {
+                    if mem.property == "clone" && call.args.is_empty() {
+                        return self.infer_type(&mem.object);
+                    }
+                }
+                // Default: unknown return type
+                TypeContext::unknown()
+            }
+
+            Expr::VecInit(_) => {
+                // Vec initialization - could track element type but for now unknown
+                TypeContext::unknown()
+            }
+
+            _ => TypeContext::unknown(),
+        }
     }
 
     fn gen_pattern(&mut self, pattern: &Pattern) {

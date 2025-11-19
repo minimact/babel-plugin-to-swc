@@ -277,6 +277,34 @@ pub fn classify_swc_type(type_name: &str) -> SwcTypeKind {
 /// Get the SWC enum and variant for a RustScript type
 /// Returns (enum_name, variant_name, struct_name)
 pub fn get_swc_variant(rs_type: &str) -> (String, String, String) {
+    // Default context is Expr
+    get_swc_variant_in_context(rs_type, "Expr")
+}
+
+/// Get the SWC enum and variant for a RustScript type within a specific context
+/// The context determines which enum to match against (e.g., "Expr", "MemberProp", "Callee")
+/// Returns (enum_name, variant_name, struct_name)
+pub fn get_swc_variant_in_context(rs_type: &str, context: &str) -> (String, String, String) {
+    // Handle MemberProp context - Identifier maps to MemberProp::Ident
+    if context == "MemberProp" {
+        return match rs_type {
+            "Identifier" => ("MemberProp".into(), "Ident".into(), "Ident".into()),
+            "ComputedPropName" => ("MemberProp".into(), "Computed".into(), "ComputedPropName".into()),
+            _ => ("MemberProp".into(), rs_type.to_string(), rs_type.to_string()),
+        };
+    }
+
+    // Handle Callee context
+    if context == "Callee" {
+        return match rs_type {
+            "Super" => ("Callee".into(), "Super".into(), "Super".into()),
+            "Import" => ("Callee".into(), "Import".into(), "Import".into()),
+            // Everything else is Callee::Expr(Box<Expr>)
+            _ => ("Callee".into(), "Expr".into(), "Expr".into()),
+        };
+    }
+
+    // Default Expr context
     match rs_type {
         // Expressions
         "MemberExpression" => ("Expr".into(), "Member".into(), "MemberExpr".into()),

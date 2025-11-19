@@ -21,7 +21,7 @@ impl BuildMemberPath {
             let member = current.clone();
             let property = member.prop.clone();
             let object = member.obj.clone();
-            if let Expr::Ident(property) = &property {
+            if let MemberProp::Ident(property) = &property {
                 let name = property.sym.clone();
                 parts.insert(0, name);
             }
