@@ -4,16 +4,16 @@
   "params": [
     {
       "name": "path",
-      "inferredType": "&Path",
+      "inferredType": "&CallExpr",
       "defaultValue": null
     },
     {
       "name": "component",
-      "inferredType": "unknown",
+      "inferredType": "&mut Component",
       "defaultValue": null
     }
   ],
-  "inferredReturnType": "Option<T>",
+  "inferredReturnType": "()",
   "babel_source": "function extractUseSignalR(path, component) {\r\n  const parent = path.parent;\r\n  if (!t.isVariableDeclarator(parent)) return;\r\n\r\n  const signalRName = parent.id.name;\r\n  const hubUrl = path.node.arguments[0];\r\n  const onMessage = path.node.arguments[1];\r\n\r\n  component.useSignalR = component.useSignalR || [];\r\n  component.useSignalR.push({\r\n    name: signalRName,\r\n    hubUrl: t.isStringLiteral(hubUrl) ? hubUrl.value : null,\r\n    hasOnMessage: !!onMessage\r\n  });\r\n}",
   "body_templates": [
     {
@@ -27,7 +27,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "let parent = self.get_parent();"
     },
     {
       "hash": "1cfe78c4",
@@ -41,7 +41,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "let signalr_name = match self.get_parent() {\n    Some(ParentContext::VarDeclarator(name)) => name.clone(),\n    _ => return,\n};"
     },
     {
       "hash": "dc772752",
@@ -55,7 +55,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "!matches!(parent, Some(ParentContext::VarDeclarator(_)))"
     },
     {
       "hash": "27a39ea7",
@@ -69,7 +69,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(parent, Some(ParentContext::VarDeclarator(_)))"
     },
     {
       "hash": "8beaabe2",
@@ -82,7 +82,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "return;"
     },
     {
       "hash": "fe44b8f1",
@@ -95,7 +95,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "let signalr_name = parent; // already extracted from match"
     },
     {
       "hash": "997479e2",
@@ -108,7 +108,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "let hub_url = call_expr.args.get(0).map(|arg| &*arg.expr);"
     },
     {
       "hash": "9b64d589",
@@ -121,7 +121,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "let on_message = call_expr.args.get(1).map(|arg| &*arg.expr);"
     },
     {
       "hash": "aaeba4b9",
@@ -135,7 +135,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "// In Rust, use_signalr is already a Vec, no need to initialize"
     },
     {
       "hash": "5a9b37ad",
@@ -149,7 +149,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "// Vec::new() is default in Rust struct"
     },
     {
       "hash": "4f53cda1",
@@ -162,7 +162,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "Vec::new()"
     },
     {
       "hash": "55616540",
@@ -175,7 +175,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "UseSignalRInfo {\n    name: signalr_name,\n    hub_url: hub_url.and_then(|e| match e {\n        Expr::Lit(Lit::Str(s)) => Some(s.value.to_string()),\n        _ => None,\n    }),\n    has_on_message: on_message.is_some(),\n}"
     },
     {
       "hash": "d2149ea1",
@@ -188,7 +188,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "hub_url.and_then(|e| match e {\n    Expr::Lit(Lit::Str(s)) => Some(s.value.to_string()),\n    _ => None,\n})"
     },
     {
       "hash": "2f97a0bb",
@@ -202,7 +202,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(hub_url, Some(Expr::Lit(Lit::Str(_))))"
     },
     {
       "hash": "aa839d57",
@@ -216,7 +216,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "on_message.is_some()"
     },
     {
       "hash": "8880ced9",
@@ -230,10 +230,10 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "on_message.is_none()"
     }
   ],
-  "rust_translation": null,
+  "rust_translation": "fn extract_use_signalr(&mut self, call_expr: &CallExpr, component: &mut Component) {\n    // Get parent context - must be a VarDeclarator\n    let signalr_name = match self.get_parent() {\n        Some(ParentContext::VarDeclarator(name)) => name.clone(),\n        _ => return,\n    };\n\n    // Get arguments\n    let hub_url = call_expr.args.get(0).map(|arg| &*arg.expr);\n    let on_message = call_expr.args.get(1).map(|arg| &*arg.expr);\n\n    // Extract hub URL if it's a string literal\n    let hub_url_value = hub_url.and_then(|e| match e {\n        Expr::Lit(Lit::Str(s)) => Some(s.value.to_string()),\n        _ => None,\n    });\n\n    component.use_signalr.push(UseSignalRInfo {\n        name: signalr_name,\n        hub_url: hub_url_value,\n        has_on_message: on_message.is_some(),\n    });\n}",
   "found_in": [
     "extractors/hooks.cjs"
   ]

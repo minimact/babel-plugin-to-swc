@@ -9,11 +9,11 @@
     },
     {
       "name": "hookPath",
-      "inferredType": "&Path",
+      "inferredType": "&BlockStmt",
       "defaultValue": null
     }
   ],
-  "inferredReturnType": "unknown",
+  "inferredReturnType": "Option<&Expr>",
   "babel_source": "function findJSXVariable(varName, hookPath) {\r\n  let foundNode = null;\r\n\r\n  const body = hookPath.node.body;\r\n  if (!t.isBlockStatement(body)) return null;\r\n\r\n  // Traverse the hook body to find: const varName = <JSX>;\r\n  for (const statement of body.body) {\r\n    if (t.isVariableDeclaration(statement)) {\r\n      for (const declarator of statement.declarations) {\r\n        if (t.isIdentifier(declarator.id) && declarator.id.name === varName) {\r\n          const init = declarator.init;\r\n          if (t.isJSXElement(init) || t.isJSXFragment(init)) {\r\n            foundNode = init;\r\n            break;\r\n          }\r\n          // Conditional: const ui = loading && <div>;\r\n          if (t.isLogicalExpression(init)) {\r\n            const right = init.right;\r\n            if (t.isJSXElement(right) || t.isJSXFragment(right)) {\r\n              foundNode = init; // Return the whole logical expression\r\n              break;\r\n            }\r\n          }\r\n          // Parenthesized expression\r\n          if (t.isParenthesizedExpression(init)) {\r\n            const inner = init.expression;\r\n            if (t.isJSXElement(inner) || t.isJSXFragment(inner)) {\r\n              foundNode = inner;\r\n              break;\r\n            }\r\n            if (t.isLogicalExpression(inner)) {\r\n              foundNode = inner;\r\n              break;\r\n            }\r\n          }\r\n        }\r\n      }\r\n    }\r\n    if (foundNode) break;\r\n  }\r\n\r\n  return foundNode;\r\n}",
   "body_templates": [
     {
@@ -27,7 +27,7 @@
           "hookPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "let mut found_node: Option<&Expr> = None;"
     },
     {
       "hash": "03ede5f6",
@@ -40,7 +40,7 @@
           "hookPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "// body is passed directly as &BlockStmt"
     },
     {
       "hash": "d4563ecb",
@@ -54,7 +54,7 @@
           "hookPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "// Already typed as &BlockStmt, no check needed"
     },
     {
       "hash": "cfa5d892",
@@ -68,7 +68,7 @@
           "hookPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "// Type check not needed - statically typed"
     },
     {
       "hash": "8f74e258",
@@ -82,7 +82,7 @@
           "hookPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "// matches!(body, BlockStmt { .. }) - not needed when typed"
     },
     {
       "hash": "4ad2292c",
@@ -95,7 +95,7 @@
           "hookPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "return None;"
     },
     {
       "hash": "adf7fcd4",
@@ -108,7 +108,7 @@
           "hookPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "'outer: for statement in &body.stmts { ... if found_node.is_some() { break 'outer; } }"
     },
     {
       "hash": "f397d33c",
@@ -121,7 +121,7 @@
           "hookPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "statement"
     },
     {
       "hash": "45bf6e6d",
@@ -135,7 +135,7 @@
           "hookPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "if let Stmt::Decl(Decl::Var(var_decl)) = statement { ... }"
     },
     {
       "hash": "80813906",
@@ -149,7 +149,7 @@
           "hookPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(statement, Stmt::Decl(Decl::Var(_)))"
     },
     {
       "hash": "752381eb",
@@ -162,7 +162,7 @@
           "hookPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "for declarator in &var_decl.decls { ... }"
     },
     {
       "hash": "42c4f561",
@@ -175,7 +175,7 @@
           "hookPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "declarator"
     },
     {
       "hash": "7b03ef48",
@@ -189,7 +189,7 @@
           "hookPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "if let Pat::Ident(ident) = &declarator.name {\n    if ident.id.sym.as_ref() == var_name { ... }\n}"
     },
     {
       "hash": "a8ad0e34",
@@ -203,7 +203,7 @@
           "hookPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "if let Pat::Ident(ident) = &declarator.name { ident.id.sym.as_ref() == var_name }"
     },
     {
       "hash": "d3ad7621",
@@ -217,7 +217,7 @@
           "hookPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(&declarator.name, Pat::Ident(_))"
     },
     {
       "hash": "3642bada",
@@ -231,7 +231,7 @@
           "hookPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "ident.id.sym.as_ref() == var_name"
     },
     {
       "hash": "c0c81141",
@@ -244,7 +244,7 @@
           "hookPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "if let Some(init) = &declarator.init { ... }"
     },
     {
       "hash": "a9aa4004",
@@ -258,7 +258,7 @@
           "hookPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "if matches!(init.as_ref(), Expr::JSXElement(_) | Expr::JSXFragment(_)) {\n    found_node = Some(init.as_ref());\n    break;\n}"
     },
     {
       "hash": "795fdaf6",
@@ -272,7 +272,7 @@
           "hookPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(init.as_ref(), Expr::JSXElement(_) | Expr::JSXFragment(_))"
     },
     {
       "hash": "0df997aa",
@@ -286,7 +286,7 @@
           "hookPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(init.as_ref(), Expr::JSXElement(_))"
     },
     {
       "hash": "a28732bb",
@@ -300,7 +300,7 @@
           "hookPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(init.as_ref(), Expr::JSXFragment(_))"
     },
     {
       "hash": "1304b77d",
@@ -314,7 +314,7 @@
           "hookPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "found_node = Some(init.as_ref());"
     },
     {
       "hash": "42af036c",
@@ -327,7 +327,7 @@
           "hookPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "break;"
     },
     {
       "hash": "9e861abf",
@@ -341,7 +341,7 @@
           "hookPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "if let Expr::Bin(bin_expr) = init.as_ref() {\n    if matches!(bin_expr.op, BinaryOp::LogicalAnd | BinaryOp::LogicalOr) { ... }\n}"
     },
     {
       "hash": "1aea69ca",
@@ -355,7 +355,7 @@
           "hookPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(init.as_ref(), Expr::Bin(BinExpr { op: BinaryOp::LogicalAnd | BinaryOp::LogicalOr, .. }))"
     },
     {
       "hash": "3f885ad4",
@@ -368,7 +368,7 @@
           "hookPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "let right = &bin_expr.right;"
     },
     {
       "hash": "b9773b2b",
@@ -382,7 +382,7 @@
           "hookPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "if matches!(right.as_ref(), Expr::JSXElement(_) | Expr::JSXFragment(_)) {\n    found_node = Some(init.as_ref());\n    break;\n}"
     },
     {
       "hash": "cc438cb5",
@@ -396,7 +396,7 @@
           "hookPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(right.as_ref(), Expr::JSXElement(_) | Expr::JSXFragment(_))"
     },
     {
       "hash": "ea961854",
@@ -410,7 +410,7 @@
           "hookPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(right.as_ref(), Expr::JSXElement(_))"
     },
     {
       "hash": "e9149293",
@@ -424,34 +424,7 @@
           "hookPath"
         ]
       },
-      "rust_translation": null
-    },
-    {
-      "hash": "1304b77d",
-      "type": "AssignmentExpression",
-      "operator": "=",
-      "babel_source": "foundNode = init",
-      "parentContext": {
-        "functionName": "findJSXVariable",
-        "functionParams": [
-          "varName",
-          "hookPath"
-        ]
-      },
-      "rust_translation": null
-    },
-    {
-      "hash": "42af036c",
-      "type": "BreakStatement",
-      "babel_source": "break;",
-      "parentContext": {
-        "functionName": "findJSXVariable",
-        "functionParams": [
-          "varName",
-          "hookPath"
-        ]
-      },
-      "rust_translation": null
+      "rust_translation": "matches!(right.as_ref(), Expr::JSXFragment(_))"
     },
     {
       "hash": "4a6e436e",
@@ -465,7 +438,7 @@
           "hookPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "if let Expr::Paren(paren_expr) = init.as_ref() { ... }"
     },
     {
       "hash": "8ae29286",
@@ -479,7 +452,7 @@
           "hookPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(init.as_ref(), Expr::Paren(_))"
     },
     {
       "hash": "c8549c78",
@@ -492,7 +465,7 @@
           "hookPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "let inner = &paren_expr.expr;"
     },
     {
       "hash": "30cdc947",
@@ -506,7 +479,7 @@
           "hookPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "if matches!(inner.as_ref(), Expr::JSXElement(_) | Expr::JSXFragment(_)) {\n    found_node = Some(inner.as_ref());\n    break;\n}"
     },
     {
       "hash": "deb966bd",
@@ -520,7 +493,7 @@
           "hookPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(inner.as_ref(), Expr::JSXElement(_) | Expr::JSXFragment(_))"
     },
     {
       "hash": "0ec7bd78",
@@ -534,7 +507,7 @@
           "hookPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(inner.as_ref(), Expr::JSXElement(_))"
     },
     {
       "hash": "29ea4c07",
@@ -548,7 +521,7 @@
           "hookPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(inner.as_ref(), Expr::JSXFragment(_))"
     },
     {
       "hash": "c2d5c4f3",
@@ -562,20 +535,7 @@
           "hookPath"
         ]
       },
-      "rust_translation": null
-    },
-    {
-      "hash": "42af036c",
-      "type": "BreakStatement",
-      "babel_source": "break;",
-      "parentContext": {
-        "functionName": "findJSXVariable",
-        "functionParams": [
-          "varName",
-          "hookPath"
-        ]
-      },
-      "rust_translation": null
+      "rust_translation": "found_node = Some(inner.as_ref());"
     },
     {
       "hash": "9f9c4912",
@@ -589,7 +549,7 @@
           "hookPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "if matches!(inner.as_ref(), Expr::Bin(BinExpr { op: BinaryOp::LogicalAnd | BinaryOp::LogicalOr, .. })) {\n    found_node = Some(inner.as_ref());\n    break;\n}"
     },
     {
       "hash": "f580b480",
@@ -603,34 +563,7 @@
           "hookPath"
         ]
       },
-      "rust_translation": null
-    },
-    {
-      "hash": "c2d5c4f3",
-      "type": "AssignmentExpression",
-      "operator": "=",
-      "babel_source": "foundNode = inner",
-      "parentContext": {
-        "functionName": "findJSXVariable",
-        "functionParams": [
-          "varName",
-          "hookPath"
-        ]
-      },
-      "rust_translation": null
-    },
-    {
-      "hash": "42af036c",
-      "type": "BreakStatement",
-      "babel_source": "break;",
-      "parentContext": {
-        "functionName": "findJSXVariable",
-        "functionParams": [
-          "varName",
-          "hookPath"
-        ]
-      },
-      "rust_translation": null
+      "rust_translation": "matches!(inner.as_ref(), Expr::Bin(BinExpr { op: BinaryOp::LogicalAnd | BinaryOp::LogicalOr, .. }))"
     },
     {
       "hash": "ad82240b",
@@ -644,20 +577,7 @@
           "hookPath"
         ]
       },
-      "rust_translation": null
-    },
-    {
-      "hash": "42af036c",
-      "type": "BreakStatement",
-      "babel_source": "break;",
-      "parentContext": {
-        "functionName": "findJSXVariable",
-        "functionParams": [
-          "varName",
-          "hookPath"
-        ]
-      },
-      "rust_translation": null
+      "rust_translation": "if found_node.is_some() { break; }"
     },
     {
       "hash": "29a90ca6",
@@ -670,10 +590,10 @@
           "hookPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "found_node"
     }
   ],
-  "rust_translation": null,
+  "rust_translation": "fn find_jsx_variable<'a>(var_name: &str, body: &'a BlockStmt) -> Option<&'a Expr> {\n    let mut found_node: Option<&Expr> = None;\n\n    'outer: for statement in &body.stmts {\n        if let Stmt::Decl(Decl::Var(var_decl)) = statement {\n            for declarator in &var_decl.decls {\n                if let Pat::Ident(ident) = &declarator.name {\n                    if ident.id.sym.as_ref() == var_name {\n                        if let Some(init) = &declarator.init {\n                            // Direct JSX\n                            if matches!(init.as_ref(), Expr::JSXElement(_) | Expr::JSXFragment(_)) {\n                                found_node = Some(init.as_ref());\n                                break;\n                            }\n                            // Logical expression: loading && <div>\n                            if let Expr::Bin(bin_expr) = init.as_ref() {\n                                if matches!(bin_expr.op, BinaryOp::LogicalAnd | BinaryOp::LogicalOr) {\n                                    if matches!(bin_expr.right.as_ref(), Expr::JSXElement(_) | Expr::JSXFragment(_)) {\n                                        found_node = Some(init.as_ref());\n                                        break;\n                                    }\n                                }\n                            }\n                            // Parenthesized expression\n                            if let Expr::Paren(paren_expr) = init.as_ref() {\n                                let inner = &paren_expr.expr;\n                                if matches!(inner.as_ref(), Expr::JSXElement(_) | Expr::JSXFragment(_)) {\n                                    found_node = Some(inner.as_ref());\n                                    break;\n                                }\n                                if matches!(inner.as_ref(), Expr::Bin(BinExpr { op: BinaryOp::LogicalAnd | BinaryOp::LogicalOr, .. })) {\n                                    found_node = Some(inner.as_ref());\n                                    break;\n                                }\n                            }\n                        }\n                    }\n                }\n            }\n        }\n        if found_node.is_some() { break 'outer; }\n    }\n\n    found_node\n}",
   "found_in": [
     "analyzers/hookAnalyzer.cjs"
   ]

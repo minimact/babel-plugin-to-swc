@@ -42,7 +42,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "render_body.is_none()"
     },
     {
       "hash": "c7221e11",
@@ -55,7 +55,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "return Vec::new();"
     },
     {
       "hash": "4f53cda1",
@@ -68,7 +68,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "Vec::new()"
     },
     {
       "hash": "10702c18",
@@ -81,7 +81,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "let mut expression_templates = Vec::new();"
     },
     {
       "hash": "4f53cda1",
@@ -94,7 +94,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "Vec::new()"
     },
     {
       "hash": "4f53cda1",
@@ -107,7 +107,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "Vec::new()"
     },
     {
       "hash": "c6644532",
@@ -135,7 +135,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(node, JSXElementChild::JSXElement(_))"
     },
     {
       "hash": "be449466",
@@ -231,7 +231,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(child, JSXElementChild::JSXExprContainer(_))"
     },
     {
       "hash": "0d1ae79d",
@@ -312,7 +312,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(child, JSXElementChild::JSXElement(_))"
     },
     {
       "hash": "31f59839",
@@ -406,7 +406,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(attr, JSXAttrOrSpread::JSXAttr(_))"
     },
     {
       "hash": "7bbf8e47",
@@ -420,7 +420,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(attr.value, Some(JSXAttrValue::JSXExprContainer(_)))"
     },
     {
       "hash": "13cba7d5",
@@ -489,7 +489,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(expr, Expr::Ident(_))"
     },
     {
       "hash": "4ad2292c",
@@ -502,7 +502,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "return None;"
     },
     {
       "hash": "caea504b",
@@ -544,7 +544,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(expr, Expr::Cond(_))"
     },
     {
       "hash": "c20dd732",
@@ -558,7 +558,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(expr, Expr::Bin(bin) if matches!(bin.op, BinaryOp::LogicalAnd | BinaryOp::LogicalOr | BinaryOp::NullishCoalescing))"
     },
     {
       "hash": "4ad2292c",
@@ -571,7 +571,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "return None;"
     },
     {
       "hash": "579174d2",
@@ -613,7 +613,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(expr, Expr::Call(_))"
     },
     {
       "hash": "d6c41024",
@@ -627,7 +627,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(&*call_expr.callee, Callee::Expr(e) if matches!(&**e, Expr::Member(_)))"
     },
     {
       "hash": "b63d78da",
@@ -668,7 +668,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(expr, Expr::Bin(_))"
     },
     {
       "hash": "9d23400b",
@@ -709,7 +709,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(expr, Expr::Member(_))"
     },
     {
       "hash": "06a46a2d",
@@ -750,7 +750,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(expr, Expr::Unary(_))"
     },
     {
       "hash": "874beb04",
@@ -776,7 +776,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "return None;"
     },
     {
       "hash": "1829eee5",
@@ -856,7 +856,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "return None;"
     },
     {
       "hash": "0ea37fc2",
@@ -923,7 +923,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "return None;"
     },
     {
       "hash": "24fe3fc4",
@@ -977,7 +977,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(arg, Expr::Lit(Lit::Num(_)))"
     },
     {
       "hash": "a32a50fe",
@@ -1018,7 +1018,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(arg, Expr::Lit(Lit::Str(_)))"
     },
     {
       "hash": "a32a50fe",
@@ -1059,7 +1059,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(arg, Expr::Lit(Lit::Bool(_)))"
     },
     {
       "hash": "a32a50fe",
@@ -1085,7 +1085,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "return None;"
     },
     {
       "hash": "f5298ae6",
@@ -1245,7 +1245,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "return None;"
     },
     {
       "hash": "27411c0e",
@@ -1661,7 +1661,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "return None;"
     },
     {
       "hash": "e0c550b8",
@@ -1795,7 +1795,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "return None;"
     },
     {
       "hash": "35f2f8d8",
@@ -1849,7 +1849,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "return None;"
     },
     {
       "hash": "d21b5e24",
@@ -1982,7 +1982,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "return None;"
     },
     {
       "hash": "73bd19bc",
@@ -2117,7 +2117,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "return None;"
     },
     {
       "hash": "332810e3",
@@ -2186,7 +2186,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(expr, Expr::Member(_))"
     },
     {
       "hash": "555e4b1f",
@@ -2212,7 +2212,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "return None;"
     },
     {
       "hash": "51d0305a",
@@ -2281,7 +2281,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(expr, Expr::Member(_))"
     },
     {
       "hash": "b74a5e61",
@@ -2389,7 +2389,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "return None;"
     },
     {
       "hash": "c4133e54",
@@ -2594,7 +2594,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(expr, Expr::Bin(_))"
     },
     {
       "hash": "dceb1877",
@@ -2622,7 +2622,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(expr, Expr::Unary(_))"
     },
     {
       "hash": "2b682674",
@@ -2650,7 +2650,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(expr, Expr::Member(_))"
     },
     {
       "hash": "25318da5",
@@ -2787,7 +2787,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(expr, Expr::Bin(_))"
     },
     {
       "hash": "b19840b2",
@@ -2867,7 +2867,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(expr, Expr::Unary(_))"
     },
     {
       "hash": "3f01e3e4",
@@ -2934,7 +2934,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(expr, Expr::Member(_))"
     },
     {
       "hash": "555e4b1f",
