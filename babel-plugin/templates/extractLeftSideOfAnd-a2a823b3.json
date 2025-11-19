@@ -8,7 +8,7 @@
       "defaultValue": null
     }
   ],
-  "inferredReturnType": "Option<T>",
+  "inferredReturnType": "&Expr",
   "babel_source": "function extractLeftSideOfAnd(expr) {\r\n    if (!t.isLogicalExpression(expr) || expr.operator !== '&&') {\r\n      return expr;\r\n    }\r\n\r\n    const right = expr.right;\r\n\r\n    // If right is JSX, left is the condition\r\n    if (t.isJSXElement(right) || t.isJSXFragment(right)) {\r\n      return expr.left;\r\n    }\r\n\r\n    // Otherwise, keep recursing\r\n    return expr;\r\n  }",
   "body_templates": [
     {
@@ -22,7 +22,7 @@
           "expr"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "let bin_expr = match expr {\n    Expr::Bin(bin) if bin.op == BinaryOp::LogicalAnd => bin,\n    _ => return expr,\n};"
     },
     {
       "hash": "525d1a89",
@@ -35,7 +35,7 @@
           "expr"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "!matches!(expr, Expr::Bin(bin) if bin.op == BinaryOp::LogicalAnd)"
     },
     {
       "hash": "572db5f9",
@@ -48,7 +48,7 @@
           "expr"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "!matches!(expr, Expr::Bin(_))"
     },
     {
       "hash": "c20dd732",
@@ -61,7 +61,7 @@
           "expr"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(expr, Expr::Bin(_))"
     },
     {
       "hash": "a61e13f9",
@@ -74,7 +74,7 @@
           "expr"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "bin.op != BinaryOp::LogicalAnd"
     },
     {
       "hash": "6e7ad6d5",
@@ -86,7 +86,7 @@
           "expr"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "return expr;"
     },
     {
       "hash": "6ee5d651",
@@ -98,7 +98,7 @@
           "expr"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "let right = &*bin_expr.right;"
     },
     {
       "hash": "bc4eee01",
@@ -111,7 +111,7 @@
           "expr"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "if matches!(right, Expr::JSXElement(_) | Expr::JSXFragment(_)) {\n    return &*bin_expr.left;\n}"
     },
     {
       "hash": "cc438cb5",
@@ -124,7 +124,7 @@
           "expr"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(right, Expr::JSXElement(_) | Expr::JSXFragment(_))"
     },
     {
       "hash": "ea961854",
@@ -137,7 +137,7 @@
           "expr"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(right, Expr::JSXElement(_))"
     },
     {
       "hash": "e9149293",
@@ -150,7 +150,7 @@
           "expr"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(right, Expr::JSXFragment(_))"
     },
     {
       "hash": "e860394e",
@@ -162,7 +162,7 @@
           "expr"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "return &*bin_expr.left;"
     },
     {
       "hash": "6e7ad6d5",
@@ -174,10 +174,10 @@
           "expr"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "return expr;"
     }
   ],
-  "rust_translation": null,
+  "rust_translation": "fn extract_left_side_of_and<'a>(expr: &'a Expr) -> &'a Expr {\n    // Check if it's a logical && expression\n    let bin_expr = match expr {\n        Expr::Bin(bin) if bin.op == BinaryOp::LogicalAnd => bin,\n        _ => return expr,\n    };\n\n    let right = &*bin_expr.right;\n\n    // If right is JSX, left is the condition\n    if matches!(right, Expr::JSXElement(_) | Expr::JSXFragment(_)) {\n        return &*bin_expr.left;\n    }\n\n    // Otherwise, return the expression as-is\n    expr\n}",
   "found_in": [
     "extractors/conditionalElementTemplates.cjs"
   ]

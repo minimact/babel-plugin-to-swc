@@ -8,7 +8,7 @@
       "defaultValue": null
     }
   ],
-  "inferredReturnType": "String",
+  "inferredReturnType": "Option<String>",
   "babel_source": "function buildOptionalMemberPath(expr) {\r\n    const parts = [];\r\n    let current = expr;\r\n\r\n    while (t.isOptionalMemberExpression(current) || t.isMemberExpression(current)) {\r\n      if (t.isIdentifier(current.property)) {\r\n        parts.unshift(current.property.name);\r\n      } else {\r\n        return null; // Computed property\r\n      }\r\n      current = current.object;\r\n    }\r\n\r\n    if (t.isIdentifier(current)) {\r\n      parts.unshift(current.name);\r\n      return parts.join('.');\r\n    }\r\n\r\n    return null;\r\n  }",
   "body_templates": [
     {
@@ -21,7 +21,7 @@
           "expr"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "let mut parts: Vec<String> = vec![];"
     },
     {
       "hash": "4f53cda1",
@@ -33,7 +33,7 @@
           "expr"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "vec![]"
     },
     {
       "hash": "b74a5e61",
@@ -45,7 +45,7 @@
           "expr"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "let mut current = expr;"
     },
     {
       "hash": "82683c50",
@@ -57,7 +57,7 @@
           "expr"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "loop {\n    match current {\n        Expr::OptChain(opt_chain) => {\n            if let OptChainBase::Member(member) = &*opt_chain.base {\n                match &member.prop {\n                    MemberProp::Ident(ident) => {\n                        parts.insert(0, ident.sym.to_string());\n                    }\n                    _ => return None, // Computed property\n                }\n                current = &member.obj;\n            } else {\n                break;\n            }\n        }\n        Expr::Member(member) => {\n            match &member.prop {\n                MemberProp::Ident(ident) => {\n                    parts.insert(0, ident.sym.to_string());\n                }\n                _ => return None, // Computed property\n            }\n            current = &member.obj;\n        }\n        _ => break,\n    }\n}"
     },
     {
       "hash": "3dbf7e03",
@@ -70,7 +70,7 @@
           "expr"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(current, Expr::OptChain(_) | Expr::Member(_))"
     },
     {
       "hash": "709f6575",
@@ -83,7 +83,7 @@
           "expr"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(current, Expr::OptChain(_))"
     },
     {
       "hash": "99ac970d",
@@ -96,7 +96,7 @@
           "expr"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(current, Expr::Member(_))"
     },
     {
       "hash": "b2a060cf",
@@ -109,7 +109,7 @@
           "expr"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "match &member.prop {\n    MemberProp::Ident(ident) => {\n        parts.insert(0, ident.sym.to_string());\n    }\n    _ => return None, // Computed property\n}"
     },
     {
       "hash": "70f404ee",
@@ -122,7 +122,7 @@
           "expr"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(&member.prop, MemberProp::Ident(_))"
     },
     {
       "hash": "4ad2292c",
@@ -134,7 +134,7 @@
           "expr"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "return None;"
     },
     {
       "hash": "05723cfe",
@@ -147,7 +147,7 @@
           "expr"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "current = &member.obj;"
     },
     {
       "hash": "083fc63f",
@@ -160,7 +160,7 @@
           "expr"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "if let Expr::Ident(ident) = current {\n    parts.insert(0, ident.sym.to_string());\n    return Some(parts.join(\".\"));\n}"
     },
     {
       "hash": "f41cdd7f",
@@ -173,7 +173,7 @@
           "expr"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(current, Expr::Ident(_))"
     },
     {
       "hash": "42163b24",
@@ -185,7 +185,7 @@
           "expr"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "return Some(parts.join(\".\"));"
     },
     {
       "hash": "4ad2292c",
@@ -197,10 +197,10 @@
           "expr"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "return None;"
     }
   ],
-  "rust_translation": null,
+  "rust_translation": "fn build_optional_member_path(expr: &Expr) -> Option<String> {\n    let mut parts: Vec<String> = vec![];\n    let mut current = expr;\n\n    loop {\n        match current {\n            Expr::OptChain(opt_chain) => {\n                if let OptChainBase::Member(member) = &*opt_chain.base {\n                    match &member.prop {\n                        MemberProp::Ident(ident) => {\n                            parts.insert(0, ident.sym.to_string());\n                        }\n                        _ => return None, // Computed property\n                    }\n                    current = &member.obj;\n                } else {\n                    break;\n                }\n            }\n            Expr::Member(member) => {\n                match &member.prop {\n                    MemberProp::Ident(ident) => {\n                        parts.insert(0, ident.sym.to_string());\n                    }\n                    _ => return None, // Computed property\n                }\n                current = &member.obj;\n            }\n            _ => break,\n        }\n    }\n\n    if let Expr::Ident(ident) = current {\n        parts.insert(0, ident.sym.to_string());\n        return Some(parts.join(\".\"));\n    }\n\n    None\n}",
   "found_in": [
     "extractors/templates.cjs"
   ]

@@ -4,11 +4,11 @@
   "params": [
     {
       "name": "path",
-      "inferredType": "&Path",
+      "inferredType": "&Function",
       "defaultValue": null
     }
   ],
-  "inferredReturnType": "unknown",
+  "inferredReturnType": "bool",
   "babel_source": "function containsUseState(path) {\r\n  const body = getHookBody(path);\r\n  if (!body) return false;\r\n\r\n  let hasUseState = false;\r\n\r\n  path.traverse({\r\n    CallExpression(callPath) {\r\n      if (t.isIdentifier(callPath.node.callee) &&\r\n          callPath.node.callee.name === 'useState') {\r\n        hasUseState = true;\r\n        callPath.stop(); // Stop traversal early\r\n      }\r\n    }\r\n  });\r\n\r\n  return hasUseState;\r\n}",
   "body_templates": [
     {
@@ -21,7 +21,7 @@
           "path"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "let body = get_hook_body(func);"
     },
     {
       "hash": "30fcce4c",
@@ -34,7 +34,7 @@
           "path"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "let body = match body {\n    Some(b) => b,\n    None => return false,\n};"
     },
     {
       "hash": "5de10c93",
@@ -47,7 +47,7 @@
           "path"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "body.is_none()"
     },
     {
       "hash": "dabbdf16",
@@ -59,7 +59,7 @@
           "path"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "return false;"
     },
     {
       "hash": "05a67034",
@@ -71,7 +71,7 @@
           "path"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "let mut has_use_state = false;"
     },
     {
       "hash": "0a73b7e6",
@@ -83,7 +83,7 @@
           "path"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "// NESTED VISITOR - requires custom UseStateFinder struct\nstruct UseStateFinder {\n    found: bool,\n}\nimpl Visit for UseStateFinder {\n    fn visit_call_expr(&mut self, call: &CallExpr) {\n        if self.found { return; } // early exit\n        if let Callee::Expr(expr) = &call.callee {\n            if let Expr::Ident(ident) = &**expr {\n                if &*ident.sym == \"useState\" {\n                    self.found = true;\n                    return;\n                }\n            }\n        }\n        call.visit_children_with(self);\n    }\n}"
     },
     {
       "hash": "71ff1e6b",
@@ -96,7 +96,7 @@
           "path"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "if let Callee::Expr(expr) = &call.callee {\n    if let Expr::Ident(ident) = &**expr {\n        if &*ident.sym == \"useState\" {\n            self.found = true;\n            return; // stop traversal\n        }\n    }\n}"
     },
     {
       "hash": "80f0a09e",
@@ -109,7 +109,7 @@
           "path"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(&call.callee, Callee::Expr(e) if matches!(&**e, Expr::Ident(i) if &*i.sym == \"useState\"))"
     },
     {
       "hash": "eebad6fb",
@@ -122,7 +122,7 @@
           "path"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(&call.callee, Callee::Expr(e) if matches!(&**e, Expr::Ident(_)))"
     },
     {
       "hash": "708e41c8",
@@ -135,7 +135,7 @@
           "path"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "&*ident.sym == \"useState\""
     },
     {
       "hash": "880cb3f5",
@@ -148,7 +148,7 @@
           "path"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "self.found = true;"
     },
     {
       "hash": "c64a1ee9",
@@ -160,10 +160,10 @@
           "path"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "finder.found"
     }
   ],
-  "rust_translation": null,
+  "rust_translation": "fn contains_use_state(func: &Function) -> bool {\n    let body = match &func.body {\n        Some(b) => b,\n        None => return false,\n    };\n\n    struct UseStateFinder {\n        found: bool,\n    }\n\n    impl Visit for UseStateFinder {\n        fn visit_call_expr(&mut self, call: &CallExpr) {\n            if self.found { return; }\n            if let Callee::Expr(expr) = &call.callee {\n                if let Expr::Ident(ident) = &**expr {\n                    if &*ident.sym == \"useState\" {\n                        self.found = true;\n                        return;\n                    }\n                }\n            }\n            call.visit_children_with(self);\n        }\n    }\n\n    let mut finder = UseStateFinder { found: false };\n    body.visit_with(&mut finder);\n    finder.found\n}",
   "found_in": [
     "analyzers/hookDetector.cjs"
   ]

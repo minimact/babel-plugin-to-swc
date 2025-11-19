@@ -4,11 +4,11 @@
   "params": [
     {
       "name": "path",
-      "inferredType": "&Path",
+      "inferredType": "&Decl",
       "defaultValue": null
     }
   ],
-  "inferredReturnType": "Option<T>",
+  "inferredReturnType": "Option<&BlockStmt>",
   "babel_source": "function getHookBody(path) {\r\n  if (t.isFunctionDeclaration(path.node)) {\r\n    return path.node.body;\r\n  }\r\n  if (t.isVariableDeclarator(path.node)) {\r\n    const init = path.node.init;\r\n    if (t.isArrowFunctionExpression(init) || t.isFunctionExpression(init)) {\r\n      return init.body;\r\n    }\r\n  }\r\n  return null;\r\n}",
   "body_templates": [
     {
@@ -22,7 +22,7 @@
           "path"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "if let Decl::Fn(fn_decl) = node {\n    return fn_decl.function.body.as_ref();\n}"
     },
     {
       "hash": "3633f955",
@@ -35,7 +35,7 @@
           "path"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(node, Decl::Fn(_))"
     },
     {
       "hash": "42dc47ee",
@@ -47,7 +47,7 @@
           "path"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "return fn_decl.function.body.as_ref();"
     },
     {
       "hash": "871b59f2",
@@ -60,7 +60,7 @@
           "path"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "if let Decl::Var(var_decl) = node {\n    for decl in &var_decl.decls {\n        if let Some(init) = &decl.init {\n            match init.as_ref() {\n                Expr::Arrow(arrow) => {\n                    if let BlockStmtOrExpr::BlockStmt(body) = &*arrow.body {\n                        return Some(body);\n                    }\n                }\n                Expr::Fn(fn_expr) => {\n                    return fn_expr.function.body.as_ref();\n                }\n                _ => {}\n            }\n        }\n    }\n}"
     },
     {
       "hash": "d06bdb04",
@@ -73,7 +73,7 @@
           "path"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(node, Decl::Var(_))"
     },
     {
       "hash": "d97ea1ee",
@@ -85,7 +85,7 @@
           "path"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "let init = &decl.init;"
     },
     {
       "hash": "ddc00e85",
@@ -98,7 +98,7 @@
           "path"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "match init.as_ref() {\n    Expr::Arrow(arrow) => { ... }\n    Expr::Fn(fn_expr) => { ... }\n    _ => {}\n}"
     },
     {
       "hash": "28364cae",
@@ -111,7 +111,7 @@
           "path"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(init.as_ref(), Expr::Arrow(_) | Expr::Fn(_))"
     },
     {
       "hash": "55a4b373",
@@ -124,7 +124,7 @@
           "path"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(init.as_ref(), Expr::Arrow(_))"
     },
     {
       "hash": "0f3cacc8",
@@ -137,7 +137,7 @@
           "path"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(init.as_ref(), Expr::Fn(_))"
     },
     {
       "hash": "d0e164ad",
@@ -149,7 +149,7 @@
           "path"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "// For Arrow: arrow.body (BlockStmtOrExpr)\n// For Fn: fn_expr.function.body.as_ref()"
     },
     {
       "hash": "4ad2292c",
@@ -161,10 +161,10 @@
           "path"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "None"
     }
   ],
-  "rust_translation": null,
+  "rust_translation": "pub fn get_hook_body(node: &Decl) -> Option<&BlockStmt> {\n    // Check if it's a function declaration\n    if let Decl::Fn(fn_decl) = node {\n        return fn_decl.function.body.as_ref();\n    }\n    \n    // Check if it's a variable declarator with arrow/function expression\n    if let Decl::Var(var_decl) = node {\n        for decl in &var_decl.decls {\n            if let Some(init) = &decl.init {\n                match init.as_ref() {\n                    Expr::Arrow(arrow) => {\n                        if let BlockStmtOrExpr::BlockStmt(body) = &*arrow.body {\n                            return Some(body);\n                        }\n                    }\n                    Expr::Fn(fn_expr) => {\n                        return fn_expr.function.body.as_ref();\n                    }\n                    _ => {}\n                }\n            }\n        }\n    }\n    \n    None\n}",
   "found_in": [
     "analyzers/hookDetector.cjs"
   ]

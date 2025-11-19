@@ -21,7 +21,7 @@
           "expr"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "let generated = generate_csharp_expression(expr);"
     },
     {
       "hash": "ae46a634",
@@ -34,7 +34,7 @@
           "expr"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "if let Expr::Member(member) = expr {\n    if !matches!(&member.prop, MemberProp::Computed(_)) {\n        if let Expr::Ident(_) = &*member.obj {\n            // Wrap dynamic member access in MObject for proper truthiness\n            return format!(\"new MObject({})\", generated);\n        }\n    }\n}"
     },
     {
       "hash": "7dbdc110",
@@ -47,7 +47,7 @@
           "expr"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(expr, Expr::Member(m) if !matches!(&m.prop, MemberProp::Computed(_)) && matches!(&*m.obj, Expr::Ident(_)))"
     },
     {
       "hash": "85e30958",
@@ -60,7 +60,7 @@
           "expr"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(expr, Expr::Member(m) if !matches!(&m.prop, MemberProp::Computed(_)))"
     },
     {
       "hash": "c8858c63",
@@ -73,7 +73,7 @@
           "expr"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(expr, Expr::Member(_))"
     },
     {
       "hash": "fc3b12dd",
@@ -86,7 +86,7 @@
           "expr"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "!matches!(&member.prop, MemberProp::Computed(_))"
     },
     {
       "hash": "114a7446",
@@ -99,7 +99,7 @@
           "expr"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(&*member.obj, Expr::Ident(_))"
     },
     {
       "hash": "060afec5",
@@ -111,7 +111,7 @@
           "expr"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "return format!(\"new MObject({})\", generated);"
     },
     {
       "hash": "31169a13",
@@ -123,7 +123,7 @@
           "expr"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "format!(\"new MObject({})\", generated)"
     },
     {
       "hash": "46a1d82e",
@@ -136,7 +136,7 @@
           "expr"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "if let Expr::Ident(_) = expr {\n    // Wrap in MObject for null/truthiness handling\n    return format!(\"new MObject({})\", generated);\n}"
     },
     {
       "hash": "42d26fd4",
@@ -149,7 +149,7 @@
           "expr"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(expr, Expr::Ident(_))"
     },
     {
       "hash": "060afec5",
@@ -161,7 +161,7 @@
           "expr"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "return format!(\"new MObject({})\", generated);"
     },
     {
       "hash": "31169a13",
@@ -173,7 +173,7 @@
           "expr"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "format!(\"new MObject({})\", generated)"
     },
     {
       "hash": "c09ead35",
@@ -185,10 +185,10 @@
           "expr"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "return generated;"
     }
   ],
-  "rust_translation": null,
+  "rust_translation": "fn generate_boolean_expression(expr: &Expr) -> String {\n    let generated = generate_csharp_expression(expr);\n\n    // Check if this is a member expression on dynamic object (like user.isAdmin)\n    if let Expr::Member(member) = expr {\n        if !matches!(&member.prop, MemberProp::Computed(_)) {\n            if let Expr::Ident(_) = &*member.obj {\n                // Wrap dynamic member access in MObject for proper truthiness\n                return format!(\"new MObject({})\", generated);\n            }\n        }\n    }\n\n    // Check if this is a simple identifier that might be dynamic\n    if let Expr::Ident(_) = expr {\n        // Wrap in MObject for null/truthiness handling\n        return format!(\"new MObject({})\", generated);\n    }\n\n    // For other expressions (literals, etc.), use as-is\n    generated\n}",
   "found_in": [
     "generators/expressions.cjs"
   ]

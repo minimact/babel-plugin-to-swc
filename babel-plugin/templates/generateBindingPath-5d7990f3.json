@@ -21,7 +21,7 @@
           "expression"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "let mut parts: Vec<String> = Vec::new();"
     },
     {
       "hash": "4f53cda1",
@@ -33,7 +33,7 @@
           "expression"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "Vec::new()"
     },
     {
       "hash": "fa1b4d49",
@@ -46,7 +46,7 @@
           "expression"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "match node {\n    Expr::Ident(ident) => {\n        if ident.sym.as_ref() != \"this\" {\n            parts.insert(0, ident.sym.to_string());\n        }\n    }\n    Expr::Member(member) => {\n        if let MemberProp::Ident(prop) = &member.prop {\n            parts.insert(0, prop.sym.to_string());\n        }\n        traverse(&member.obj, parts);\n    }\n    _ => {}\n}"
     },
     {
       "hash": "458e4c81",
@@ -59,7 +59,7 @@
           "expression"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(node, Expr::Ident(_))"
     },
     {
       "hash": "8e82efc6",
@@ -72,7 +72,7 @@
           "expression"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "if ident.sym.as_ref() != \"this\" {\n    parts.insert(0, ident.sym.to_string());\n}"
     },
     {
       "hash": "00ac7bb8",
@@ -85,7 +85,7 @@
           "expression"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "ident.sym.as_ref() != \"this\""
     },
     {
       "hash": "301e0cd3",
@@ -98,7 +98,7 @@
           "expression"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "Expr::Member(member) => {\n    if let MemberProp::Ident(prop) = &member.prop {\n        parts.insert(0, prop.sym.to_string());\n    }\n    traverse(&member.obj, parts);\n}"
     },
     {
       "hash": "e4025d71",
@@ -111,7 +111,7 @@
           "expression"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(node, Expr::Member(_))"
     },
     {
       "hash": "549fcb67",
@@ -124,7 +124,7 @@
           "expression"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "if let MemberProp::Ident(prop) = &member.prop {\n    parts.insert(0, prop.sym.to_string());\n}"
     },
     {
       "hash": "a42af9c4",
@@ -137,7 +137,7 @@
           "expression"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(&member.prop, MemberProp::Ident(_))"
     },
     {
       "hash": "42163b24",
@@ -149,10 +149,10 @@
           "expression"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "parts.join(\".\")"
     }
   ],
-  "rust_translation": null,
+  "rust_translation": "fn generate_binding_path(expression: &Expr) -> String {\n    let mut parts: Vec<String> = Vec::new();\n\n    fn traverse(node: &Expr, parts: &mut Vec<String>) {\n        match node {\n            Expr::Ident(ident) => {\n                // Skip 'this' prefix\n                if ident.sym.as_ref() != \"this\" {\n                    parts.insert(0, ident.sym.to_string());\n                }\n            }\n            Expr::Member(member) => {\n                if let MemberProp::Ident(prop) = &member.prop {\n                    parts.insert(0, prop.sym.to_string());\n                }\n                traverse(&member.obj, parts);\n            }\n            _ => {}\n        }\n    }\n\n    traverse(expression, &mut parts);\n    parts.join(\".\")\n}",
   "found_in": [
     "analyzers/analyzePluginUsage.cjs"
   ]

@@ -9,11 +9,11 @@
     },
     {
       "name": "component",
-      "inferredType": "unknown",
+      "inferredType": "&Component",
       "defaultValue": null
     }
   ],
-  "inferredReturnType": "Option<T>",
+  "inferredReturnType": "Option<String>",
   "babel_source": "function extractStateKey(expr, component) {\r\n    if (t.isIdentifier(expr)) {\r\n      return expr.name;\r\n    } else if (t.isMemberExpression(expr)) {\r\n      let current = expr;\r\n      while (t.isMemberExpression(current)) {\r\n        current = current.object;\r\n      }\r\n      if (t.isIdentifier(current)) {\r\n        return current.name;\r\n      }\r\n    }\r\n    return null;\r\n  }",
   "body_templates": [
     {
@@ -28,7 +28,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "if let Expr::Ident(ident) = expr {\n    return Some(ident.sym.to_string());\n} else if let Expr::Member(member_expr) = expr {\n    let mut current: &Expr = &member_expr.obj;\n    while let Expr::Member(m) = current {\n        current = &m.obj;\n    }\n    if let Expr::Ident(ident) = current {\n        return Some(ident.sym.to_string());\n    }\n}"
     },
     {
       "hash": "42d26fd4",
@@ -42,7 +42,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(expr, Expr::Ident(_))"
     },
     {
       "hash": "dc053a27",
@@ -55,7 +55,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "return Some(ident.sym.to_string());"
     },
     {
       "hash": "c3cee422",
@@ -69,7 +69,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "if let Expr::Member(member_expr) = expr {\n    let mut current: &Expr = &member_expr.obj;\n    while let Expr::Member(m) = current {\n        current = &m.obj;\n    }\n    if let Expr::Ident(ident) = current {\n        return Some(ident.sym.to_string());\n    }\n}"
     },
     {
       "hash": "c8858c63",
@@ -83,7 +83,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(expr, Expr::Member(_))"
     },
     {
       "hash": "b74a5e61",
@@ -96,7 +96,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "let mut current: &Expr = &member_expr.obj;"
     },
     {
       "hash": "847810c1",
@@ -109,7 +109,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "while let Expr::Member(m) = current {\n    current = &m.obj;\n}"
     },
     {
       "hash": "99ac970d",
@@ -123,7 +123,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(current, Expr::Member(_))"
     },
     {
       "hash": "05723cfe",
@@ -137,7 +137,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "current = &m.obj;"
     },
     {
       "hash": "17c54bb7",
@@ -151,7 +151,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "if let Expr::Ident(ident) = current {\n    return Some(ident.sym.to_string());\n}"
     },
     {
       "hash": "f41cdd7f",
@@ -165,7 +165,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(current, Expr::Ident(_))"
     },
     {
       "hash": "8eb838fb",
@@ -178,7 +178,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "return Some(ident.sym.to_string());"
     },
     {
       "hash": "4ad2292c",
@@ -191,10 +191,10 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "None"
     }
   ],
-  "rust_translation": null,
+  "rust_translation": "fn extract_state_key(expr: &Expr, _component: &Component) -> Option<String> {\n    if let Expr::Ident(ident) = expr {\n        return Some(ident.sym.to_string());\n    } else if let Expr::Member(member_expr) = expr {\n        let mut current: &Expr = &member_expr.obj;\n        while let Expr::Member(m) = current {\n            current = &m.obj;\n        }\n        if let Expr::Ident(ident) = current {\n            return Some(ident.sym.to_string());\n        }\n    }\n    None\n}",
   "found_in": [
     "extractors/expressionTemplates.cjs"
   ]

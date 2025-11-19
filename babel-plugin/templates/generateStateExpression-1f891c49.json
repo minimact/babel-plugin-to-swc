@@ -4,12 +4,12 @@
   "params": [
     {
       "name": "stateBinding",
-      "inferredType": "unknown",
+      "inferredType": "&StateBinding",
       "defaultValue": null
     },
     {
       "name": "componentState",
-      "inferredType": "unknown",
+      "inferredType": "&ComponentState",
       "defaultValue": null
     }
   ],
@@ -27,7 +27,7 @@
           "componentState"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "match state_binding {\n    StateBinding::Identifier { name } => name.clone(),\n    StateBinding::MemberExpression { binding, .. } => binding.clone(),\n    StateBinding::ObjectExpression { .. } => generate_inline_object(state_binding, component_state),\n    StateBinding::ComplexExpression { expression, .. } => generate_csharp_expression(expression),\n}"
     },
     {
       "hash": "77c7e2ab",
@@ -40,7 +40,7 @@
           "componentState"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "name.clone()"
     },
     {
       "hash": "61e15cc4",
@@ -53,7 +53,7 @@
           "componentState"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "binding.clone()"
     },
     {
       "hash": "48c5c681",
@@ -66,7 +66,7 @@
           "componentState"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "generate_inline_object(state_binding, component_state)"
     },
     {
       "hash": "716ad6c4",
@@ -79,7 +79,7 @@
           "componentState"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "generate_csharp_expression(expression)"
     },
     {
       "hash": "0157e484",
@@ -92,7 +92,7 @@
           "componentState"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "// Not needed - Rust match is exhaustive"
     },
     {
       "hash": "b05e3992",
@@ -105,7 +105,7 @@
           "componentState"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "// Not needed - Rust match is exhaustive"
     },
     {
       "hash": "f85b85a0",
@@ -118,10 +118,13 @@
           "componentState"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "format!(\"Unknown state binding type: {:?}\", state_binding)"
     }
   ],
-  "rust_translation": null,
+  "rust_translation": "pub fn generate_state_expression(state_binding: &StateBinding, component_state: &ComponentState) -> String {\n    match state_binding {\n        StateBinding::Identifier { name } => {\n            // Simple identifier: state={currentTime} -> currentTime\n            name.clone()\n        }\n        StateBinding::MemberExpression { binding, .. } => {\n            // Member expression: state={this.state.time} -> state.time (remove 'this')\n            binding.clone()\n        }\n        StateBinding::ObjectExpression { .. } => {\n            // Inline object: state={{ hours: h, minutes: m }}\n            generate_inline_object(state_binding, component_state)\n        }\n        StateBinding::ComplexExpression { expression, .. } => {\n            // Complex expression: evaluate using expression generator\n            generate_csharp_expression(expression)\n        }\n    }\n}",
+  "rust_types": {
+    "StateBinding": "enum StateBinding {\n    Identifier { name: String },\n    MemberExpression { binding: String },\n    ObjectExpression { properties: Vec<ObjectProperty> },\n    ComplexExpression { expression: Expr },\n}"
+  },
   "found_in": [
     "generators/plugin.cjs"
   ]

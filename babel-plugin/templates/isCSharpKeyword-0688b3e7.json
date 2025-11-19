@@ -4,7 +4,7 @@
   "params": [
     {
       "name": "identifier",
-      "inferredType": "unknown",
+      "inferredType": "&str",
       "defaultValue": null
     }
   ],
@@ -21,7 +21,7 @@
           "identifier"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "const CSHARP_KEYWORDS: &[&str] = &[\n    \"abstract\", \"as\", \"base\", \"bool\", \"break\", \"byte\", \"case\", \"catch\", \"char\",\n    \"checked\", \"class\", \"const\", \"continue\", \"decimal\", \"default\", \"delegate\",\n    \"do\", \"double\", \"else\", \"enum\", \"event\", \"explicit\", \"extern\", \"false\",\n    \"finally\", \"fixed\", \"float\", \"for\", \"foreach\", \"goto\", \"if\", \"implicit\",\n    \"in\", \"int\", \"interface\", \"internal\", \"is\", \"lock\", \"long\", \"namespace\",\n    \"new\", \"null\", \"object\", \"operator\", \"out\", \"override\", \"params\", \"private\",\n    \"protected\", \"public\", \"readonly\", \"ref\", \"return\", \"sbyte\", \"sealed\",\n    \"short\", \"sizeof\", \"stackalloc\", \"static\", \"string\", \"struct\", \"switch\",\n    \"this\", \"throw\", \"true\", \"try\", \"typeof\", \"uint\", \"ulong\", \"unchecked\",\n    \"unsafe\", \"ushort\", \"using\", \"virtual\", \"void\", \"volatile\", \"while\",\n    // C# contextual keywords\n    \"add\", \"and\", \"alias\", \"ascending\", \"async\", \"await\", \"by\", \"descending\",\n    \"dynamic\", \"equals\", \"from\", \"get\", \"global\", \"group\", \"into\", \"join\",\n    \"let\", \"nameof\", \"not\", \"notnull\", \"on\", \"or\", \"orderby\", \"partial\",\n    \"record\", \"remove\", \"select\", \"set\", \"unmanaged\", \"value\", \"var\", \"when\",\n    \"where\", \"with\", \"yield\"\n];"
     },
     {
       "hash": "ad2e6f34",
@@ -33,7 +33,7 @@
           "identifier"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "&[\"abstract\", \"as\", \"base\", ...]"
     },
     {
       "hash": "fbdc486a",
@@ -45,10 +45,10 @@
           "identifier"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "CSHARP_KEYWORDS.contains(&identifier)"
     }
   ],
-  "rust_translation": null,
+  "rust_translation": "const CSHARP_KEYWORDS: &[&str] = &[\n    \"abstract\", \"as\", \"base\", \"bool\", \"break\", \"byte\", \"case\", \"catch\", \"char\",\n    \"checked\", \"class\", \"const\", \"continue\", \"decimal\", \"default\", \"delegate\",\n    \"do\", \"double\", \"else\", \"enum\", \"event\", \"explicit\", \"extern\", \"false\",\n    \"finally\", \"fixed\", \"float\", \"for\", \"foreach\", \"goto\", \"if\", \"implicit\",\n    \"in\", \"int\", \"interface\", \"internal\", \"is\", \"lock\", \"long\", \"namespace\",\n    \"new\", \"null\", \"object\", \"operator\", \"out\", \"override\", \"params\", \"private\",\n    \"protected\", \"public\", \"readonly\", \"ref\", \"return\", \"sbyte\", \"sealed\",\n    \"short\", \"sizeof\", \"stackalloc\", \"static\", \"string\", \"struct\", \"switch\",\n    \"this\", \"throw\", \"true\", \"try\", \"typeof\", \"uint\", \"ulong\", \"unchecked\",\n    \"unsafe\", \"ushort\", \"using\", \"virtual\", \"void\", \"volatile\", \"while\",\n    // C# contextual keywords\n    \"add\", \"and\", \"alias\", \"ascending\", \"async\", \"await\", \"by\", \"descending\",\n    \"dynamic\", \"equals\", \"from\", \"get\", \"global\", \"group\", \"into\", \"join\",\n    \"let\", \"nameof\", \"not\", \"notnull\", \"on\", \"or\", \"orderby\", \"partial\",\n    \"record\", \"remove\", \"select\", \"set\", \"unmanaged\", \"value\", \"var\", \"when\",\n    \"where\", \"with\", \"yield\"\n];\n\npub fn is_csharp_keyword(identifier: &str) -> bool {\n    CSHARP_KEYWORDS.contains(&identifier)\n}",
   "found_in": [
     "analyzers/razorDetection.cjs"
   ]
