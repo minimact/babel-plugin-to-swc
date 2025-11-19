@@ -306,10 +306,20 @@ impl SwcGenerator {
             self.param_renames.insert(first_param.name.clone(), "n".to_string());
         }
 
+        // Track the parameter's type in the environment
+        // Both "n" and the original parameter name should map to the swc_type
+        self.type_env.push_scope();
+        let param_ctx = TypeContext::from_rustscript(&swc_type);
+        self.type_env.define("n", param_ctx.clone());
+        if let Some(first_param) = f.params.first() {
+            self.type_env.define(&first_param.name, param_ctx);
+        }
+
         // Generate body
         self.gen_block(&f.body);
 
-        // Clear renames
+        // Clear environment and renames
+        self.type_env.pop_scope();
         self.param_renames.clear();
 
         self.indent -= 1;
@@ -584,7 +594,16 @@ impl SwcGenerator {
                 self.gen_expr(&for_stmt.iter);
                 self.emit(" {\n");
                 self.indent += 1;
+
+                // Infer the type of the loop variable from the iterator
+                self.type_env.push_scope();
+                let iter_type = self.infer_type(&for_stmt.iter);
+                let elem_type = self.get_element_type(&iter_type);
+                self.type_env.define(&for_stmt.var, elem_type);
+
                 self.gen_block(&for_stmt.body);
+
+                self.type_env.pop_scope();
                 self.indent -= 1;
                 self.emit_line("}");
             }
@@ -857,6 +876,27 @@ impl SwcGenerator {
             Type::Optional(inner) => self.type_from_ast(inner),
             Type::Unit => TypeContext::unknown(),
         }
+    }
+
+    /// Get the element type from a collection type (Vec, array, etc.)
+    fn get_element_type(&self, container_type: &TypeContext) -> TypeContext {
+        // Check if the swc_type represents a Vec or array
+        let swc_type = &container_type.swc_type;
+
+        // Handle Vec<T> - extract T
+        if swc_type.starts_with("Vec<") && swc_type.ends_with(">") {
+            let inner = &swc_type[4..swc_type.len()-1];
+            return TypeContext {
+                rustscript_type: inner.to_string(),
+                swc_type: inner.to_string(),
+                kind: super::type_context::classify_swc_type(inner),
+                known_variant: None,
+                needs_deref: false,
+            };
+        }
+
+        // For unknown collections, return unknown
+        TypeContext::unknown()
     }
 
     fn gen_pattern(&mut self, pattern: &Pattern) {

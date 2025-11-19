@@ -3,6 +3,7 @@
 use std::collections::HashMap;
 use crate::parser::*;
 use crate::semantic::{SemanticError, TypeEnv, TypeInfo, types::ast_type_to_type_info};
+use crate::mapping::get_node_mapping;
 
 /// Name resolver - resolves all identifiers and builds the type environment
 pub struct Resolver {
@@ -354,7 +355,9 @@ impl Resolver {
                     let is_special = matches!(ident.name.as_str(),
                         "self" | "Self" | "matches!" | "format!" | "vec!" | "Some" | "None" | "Ok" | "Err"
                     );
-                    if !is_special {
+                    // Check if it's a known AST node type (used in matches!)
+                    let is_ast_type = get_node_mapping(&ident.name).is_some();
+                    if !is_special && !is_ast_type {
                         self.errors.push(SemanticError::new(
                             "RS006",
                             format!("Undefined variable: {}", ident.name),

@@ -716,9 +716,19 @@ pub fn get_node_mapping(rustscript_name: &str) -> Option<&'static NodeMapping> {
 
 /// Get node mapping by visitor method name
 pub fn get_node_mapping_by_visitor(visitor_method: &str) -> Option<&'static NodeMapping> {
-    NODE_MAPPINGS
-        .iter()
-        .find(|m| m.visitor_method == visitor_method)
+    // First try exact match
+    if let Some(mapping) = NODE_MAPPINGS.iter().find(|m| m.visitor_method == visitor_method) {
+        return Some(mapping);
+    }
+
+    // Try matching without ts_ prefix (e.g., visit_interface_declaration -> visit_ts_interface_declaration)
+    let with_ts = if visitor_method.starts_with("visit_") {
+        format!("visit_ts_{}", &visitor_method[6..])
+    } else {
+        return None;
+    };
+
+    NODE_MAPPINGS.iter().find(|m| m.visitor_method == with_ts)
 }
 
 /// Get SWC type from RustScript type

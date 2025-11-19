@@ -421,6 +421,20 @@ pub fn get_swc_variant_in_context(rs_type: &str, context: &str) -> (String, Stri
         };
     }
 
+    // Handle TsTypeElement context - TypeScript interface members
+    if context == "TsTypeElement" {
+        return match rs_type {
+            "TSPropertySignature" => ("TsTypeElement".into(), "TsPropertySignature".into(), "TsPropertySignature".into()),
+            "TSMethodSignature" => ("TsTypeElement".into(), "TsMethodSignature".into(), "TsMethodSignature".into()),
+            "TSIndexSignature" => ("TsTypeElement".into(), "TsIndexSignature".into(), "TsIndexSignature".into()),
+            "TSCallSignatureDeclaration" => ("TsTypeElement".into(), "TsCallSignatureDecl".into(), "TsCallSignatureDecl".into()),
+            "TSConstructSignatureDeclaration" => ("TsTypeElement".into(), "TsConstructSignatureDecl".into(), "TsConstructSignatureDecl".into()),
+            "TSGetterSignature" => ("TsTypeElement".into(), "TsGetterSignature".into(), "TsGetterSignature".into()),
+            "TSSetterSignature" => ("TsTypeElement".into(), "TsSetterSignature".into(), "TsSetterSignature".into()),
+            _ => ("TsTypeElement".into(), rs_type.to_string(), rs_type.to_string()),
+        };
+    }
+
     // Default Expr context
     match rs_type {
         // Expressions
@@ -718,6 +732,46 @@ pub fn get_typed_field_mapping(parent_swc_type: &str, field: &str) -> Option<Typ
             needs_deref: false,
             result_type_rs: "Identifier",
             result_type_swc: "Ident",
+            read_conversion: "",
+            write_conversion: "",
+        }),
+
+        // TypeScript Interface fields
+        ("TsInterfaceDecl", "id") => Some(TypedFieldMapping {
+            rustscript_field: "id",
+            swc_field: "id",
+            needs_deref: false,
+            result_type_rs: "Identifier",
+            result_type_swc: "Ident",
+            read_conversion: "",
+            write_conversion: "",
+        }),
+        ("TsInterfaceDecl", "body") => Some(TypedFieldMapping {
+            rustscript_field: "body",
+            swc_field: "body",
+            needs_deref: false,
+            result_type_rs: "TsInterfaceBody",
+            result_type_swc: "TsInterfaceBody",
+            read_conversion: "",
+            write_conversion: "",
+        }),
+        ("TsInterfaceBody", "body") => Some(TypedFieldMapping {
+            rustscript_field: "body",
+            swc_field: "body",
+            needs_deref: false,
+            result_type_rs: "Vec<TsTypeElement>",
+            result_type_swc: "Vec<TsTypeElement>",
+            read_conversion: "",
+            write_conversion: "",
+        }),
+
+        // TypeScript PropertySignature fields
+        ("TsPropertySignature", "key") => Some(TypedFieldMapping {
+            rustscript_field: "key",
+            swc_field: "key",
+            needs_deref: true,
+            result_type_rs: "Expr",
+            result_type_swc: "Expr",
             read_conversion: "",
             write_conversion: "",
         }),
