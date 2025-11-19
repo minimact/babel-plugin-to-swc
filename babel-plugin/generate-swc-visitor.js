@@ -27,12 +27,17 @@ function generateMainPlugin() {
 };
 use swc_core::common::DUMMY_SP;
 use swc_core::plugin::{plugin_transform, proxies::TransformPluginProgramMetadata};
+use swc_core::plugin::metadata::TransformPluginMetadataContextKind as PluginContext;
 use std::collections::{HashMap, HashSet};
+use serde_json;
 
 mod component;
 mod extractors;
 mod generators;
 mod utils;
+mod helpers; // Generated from template JSON files
+
+use helpers::*; // Import all helper function stubs
 
 use component::Component;
 
@@ -63,6 +68,9 @@ pub struct MinimactTransformer {
 
     /// External imports (non-Minimact, non-relative)
     external_imports: HashSet<String>,
+
+    /// Input file path for output generation
+    input_file_path: String,
 }
 
 /// Visitor for extracting hooks from component body
@@ -146,12 +154,13 @@ pub struct TopLevelFunction {
 }
 
 impl MinimactTransformer {
-    pub fn new() -> Self {
+    pub fn new(input_file_path: String) -> Self {
         Self {
             parent_stack: vec![ParentContext::Program],
             components: Vec::new(),
             top_level_functions: Vec::new(),
             external_imports: HashSet::new(),
+            input_file_path,
         }
     }
 
@@ -658,9 +667,217 @@ impl MinimactTransformer {
 
     /// Generate outputs (C# code, templates, etc.)
     fn generate_outputs(&self) {
-        // TODO: Generate C# file
-        // TODO: Generate template JSON
-        // TODO: Generate .tsx.keys file
+        use std::fs;
+        use std::path::Path;
+
+        if self.input_file_path.is_empty() || self.components.is_empty() {
+            return;
+        }
+
+        let input_path = Path::new(&self.input_file_path);
+        let output_dir = input_path.parent().unwrap_or(Path::new("."));
+
+        for component in &self.components {
+            // 1. Generate C# file
+            let cs_code = self.generate_csharp_code(component);
+            let cs_file_path = output_dir.join(format!("{}.cs", component.name));
+
+            if let Err(e) = fs::write(&cs_file_path, &cs_code) {
+                eprintln!("[Minimact C#] Failed to write {:?}: {}", cs_file_path, e);
+            } else {
+                println!("[Minimact C#] Generated {:?}", cs_file_path);
+            }
+
+            // 2. Generate .templates.json file
+            if !component.templates.is_empty() {
+                let templates_json = self.generate_templates_json(component);
+                let templates_file_path = output_dir.join(format!("{}.templates.json", component.name));
+
+                if let Err(e) = fs::write(&templates_file_path, &templates_json) {
+                    eprintln!("[Minimact Templates] Failed to write {:?}: {}", templates_file_path, e);
+                } else {
+                    println!("[Minimact Templates] Generated {:?}", templates_file_path);
+                }
+            }
+
+            // 3. Generate .timeline-templates.json if timeline exists
+            // TODO: Implement when timeline analysis is complete
+
+            // 4. Generate .structural-changes.json for hot reload
+            // This would require comparing with previous state
+            // TODO: Implement structural change detection
+        }
+
+        // Note: .tsx.keys file generation requires access to original source
+        // which is handled differently in SWC vs Babel
+    }
+
+    /// Generate C# code for a component
+    fn generate_csharp_code(&self, component: &Component) -> String {
+        let mut code = String::new();
+
+        // Using statements
+        code.push_str("using System;\\n");
+        code.push_str("using System.Collections.Generic;\\n");
+        code.push_str("using Minimact;\\n\\n");
+
+        // Namespace and class
+        code.push_str(&format!("public class {} : MinimactComponent\\n{{\\n", component.name));
+
+        // Properties from props
+        for prop in &component.props {
+            code.push_str(&format!("    public {} {} {{ get; set; }}\\n", prop.prop_type, prop.name));
+        }
+
+        // State properties
+        for state in &component.use_state {
+            code.push_str(&format!("    private {} _{};\\n", state.state_type, state.var_name));
+            code.push_str(&format!("    public {} {} {{ get => _{}; set {{ _{} = value; StateHasChanged(); }} }}\\n\\n",
+                state.state_type, state.var_name, state.var_name, state.var_name));
+        }
+
+        // Refs
+        for ref_info in &component.use_ref {
+            code.push_str(&format!("    public dynamic {} {{ get; set; }} = {};\\n",
+                ref_info.name, ref_info.initial_value));
+        }
+
+        // Constructor
+        code.push_str(&format!("\\n    public {}()\\n    {{\\n", component.name));
+        for state in &component.use_state {
+            code.push_str(&format!("        _{} = {};\\n", state.var_name, state.initial_value));
+        }
+        code.push_str("    }\\n");
+
+        // Helper functions
+        for func in &component.helper_functions {
+            let params = func.params.iter()
+                .map(|p| format!("{} {}", p.param_type, p.name))
+                .collect::<Vec<_>>()
+                .join(", ");
+
+            let async_modifier = if func.is_async { "async " } else { "" };
+            code.push_str(&format!("\\n    public {}{}{}({})\\n    {{\\n        // TODO: Implement\\n    }}\\n",
+                async_modifier, func.return_type, func.name, params));
+        }
+
+        // Render method
+        code.push_str("\\n    public override void Render()\\n    {\\n");
+        code.push_str("        // JSX rendering handled by runtime\\n");
+        code.push_str("    }\\n");
+
+        code.push_str("}\\n");
+
+        code
+    }
+
+    /// Generate templates JSON for a component
+    fn generate_templates_json(&self, component: &Component) -> String {
+        use serde_json::{json, to_string_pretty};
+
+        let mut template_map = serde_json::Map::new();
+
+        // Text and attribute templates
+        for (key, template) in &component.templates {
+            template_map.insert(key.clone(), json!({
+                "path": template.path,
+                "template": template.template,
+                "bindings": template.bindings
+            }));
+        }
+
+        // Loop templates
+        let loop_templates: Vec<_> = component.loop_templates.iter().map(|lt| {
+            json!({
+                "stateKey": lt.state_key,
+                "itemVar": lt.item_var,
+                "indexVar": lt.index_var,
+                "keyExpression": lt.key_expression
+            })
+        }).collect();
+
+        // Structural templates
+        let structural_templates: Vec<_> = component.structural_templates.iter().map(|st| {
+            json!({
+                "type": st.template_type,
+                "conditionBinding": st.condition_binding
+            })
+        }).collect();
+
+        // Conditional element templates
+        let mut conditional_map = serde_json::Map::new();
+        for (key, cet) in &component.conditional_element_templates {
+            conditional_map.insert(key.clone(), json!({
+                "path": cet.path,
+                "conditionExpression": cet.condition_expression,
+                "evaluable": cet.evaluable
+            }));
+        }
+
+        // Expression templates
+        let expression_templates: Vec<_> = component.expression_templates.iter().map(|et| {
+            json!({
+                "type": et.template_type,
+                "stateKey": et.state_key,
+                "binding": et.binding,
+                "method": et.method,
+                "args": et.args
+            })
+        }).collect();
+
+        let result = json!({
+            "componentName": component.name,
+            "templates": template_map,
+            "loopTemplates": loop_templates,
+            "structuralTemplates": structural_templates,
+            "conditionalElementTemplates": conditional_map,
+            "expressionTemplates": expression_templates
+        });
+
+        to_string_pretty(&result).unwrap_or_else(|_| "{}".to_string())
+    }
+
+    /// Get parent context
+    fn get_parent(&self) -> Option<&ParentContext> {
+        self.parent_stack.last()
+    }
+
+    /// Push parent context
+    fn push_parent(&mut self, ctx: ParentContext) {
+        self.parent_stack.push(ctx);
+    }
+
+    /// Pop parent context
+    fn pop_parent(&mut self) {
+        self.parent_stack.pop();
+    }
+
+    /// Process import declaration
+    fn process_import(&mut self, import: &ImportDecl) {
+        let source = import.src.value.to_string();
+
+        // Skip internal imports
+        if source.starts_with("minimact") ||
+           source.starts_with('.') ||
+           source.starts_with('/') ||
+           source.ends_with(".css") {
+            return;
+        }
+
+        // Track external identifiers
+        for spec in &import.specifiers {
+            match spec {
+                ImportSpecifier::Default(default) => {
+                    self.external_imports.insert(default.local.sym.to_string());
+                }
+                ImportSpecifier::Named(named) => {
+                    self.external_imports.insert(named.local.sym.to_string());
+                }
+                ImportSpecifier::Namespace(ns) => {
+                    self.external_imports.insert(ns.local.sym.to_string());
+                }
+            }
+        }
     }
 }
 
@@ -691,27 +908,99 @@ impl VisitMut for HookExtractor<'_> {
 
                         // Route to appropriate hook extractor
                         match callee_name.as_str() {
+                            // State hooks
                             "useState" => {
-                                extract_use_state(call, &var.name, self.component);
+                                extract_use_state(call, &var.name, self.component, "useState");
                             }
+                            "useClientState" => {
+                                extract_use_state(call, &var.name, self.component, "useClientState");
+                            }
+                            "useProtectedState" => {
+                                extract_use_protected_state(call, &var.name, self.component);
+                            }
+                            "useStateX" => {
+                                extract_use_state_x(call, &var.name, self.component);
+                            }
+
+                            // Effect and ref hooks
                             "useEffect" => {
                                 extract_use_effect(call, self.component);
                             }
                             "useRef" => {
                                 extract_use_ref(call, &var.name, self.component);
                             }
-                            "useClientState" => {
-                                extract_use_client_state(call, &var.name, self.component);
-                            }
+
+                            // Content hooks
                             "useMarkdown" => {
                                 extract_use_markdown(call, &var.name, self.component);
                             }
+                            "useRazorMarkdown" => {
+                                extract_use_razor_markdown(call, &var.name, self.component);
+                            }
+                            "useTemplate" => {
+                                extract_use_template(call, self.component);
+                            }
+
+                            // UI state hooks
+                            "useValidation" => {
+                                extract_use_validation(call, &var.name, self.component);
+                            }
+                            "useModal" => {
+                                extract_use_modal(call, &var.name, self.component);
+                            }
+                            "useToggle" => {
+                                extract_use_toggle(call, &var.name, self.component);
+                            }
+                            "useDropdown" => {
+                                extract_use_dropdown(call, &var.name, self.component);
+                            }
+
+                            // Pub/Sub hooks
+                            "usePub" => {
+                                extract_use_pub(call, &var.name, self.component);
+                            }
+                            "useSub" => {
+                                extract_use_sub(call, &var.name, self.component);
+                            }
+
+                            // Task scheduling hooks
+                            "useMicroTask" => {
+                                extract_use_micro_task(call, self.component);
+                            }
+                            "useMacroTask" => {
+                                extract_use_macro_task(call, self.component);
+                            }
+
+                            // Server communication hooks
+                            "useSignalR" => {
+                                extract_use_signalr(call, &var.name, self.component);
+                            }
+                            "useServerTask" => {
+                                extract_use_server_task(call, &var.name, self.component);
+                            }
+                            "usePaginatedServerTask" => {
+                                extract_use_paginated_server_task(call, &var.name, self.component);
+                            }
+
+                            // MVC integration hooks
+                            "useMvcState" => {
+                                extract_use_mvc_state(call, &var.name, self.component);
+                            }
+                            "useMvcViewModel" => {
+                                extract_use_mvc_view_model(call, &var.name, self.component);
+                            }
+
+                            // Optimization hooks
+                            "usePredictHint" => {
+                                extract_use_predict_hint(call, self.component);
+                            }
+
                             _ => {
                                 // Check for custom hooks (useXxx)
                                 if callee_name.starts_with("use") && callee_name.len() > 3 {
                                     if let Some(c) = callee_name.chars().nth(3) {
                                         if c.is_uppercase() {
-                                            extract_custom_hook(call, &var.name, &callee_name, self.component);
+                                            extract_custom_hook_call(call, &var.name, &callee_name, self.component);
                                         }
                                     }
                                 }
@@ -1470,8 +1759,12 @@ fn expr_to_csharp(expr: &Expr) -> String {
 }
 
 #[plugin_transform]
-pub fn process_transform(program: Program, _metadata: TransformPluginProgramMetadata) -> Program {
-    let mut transformer = MinimactTransformer::new();
+pub fn process_transform(program: Program, metadata: TransformPluginProgramMetadata) -> Program {
+    // Get input file path from metadata
+    let input_file_path = metadata.get_context(&PluginContext::Filename)
+        .unwrap_or_default();
+
+    let mut transformer = MinimactTransformer::new(input_file_path);
     let mut program = program;
     program.visit_mut_with(&mut transformer);
     program
@@ -1491,29 +1784,56 @@ use swc_core::ecma::ast::*;
 pub struct Component {
     pub name: String,
     pub props: Vec<Prop>,
+    // State hooks
     pub use_state: Vec<UseStateInfo>,
-    pub use_client_state: Vec<UseClientStateInfo>,
+    pub use_client_state: Vec<UseStateInfo>,
+    pub use_protected_state: Vec<UseStateInfo>,
     pub use_state_x: Vec<UseStateXInfo>,
+    // Effect and ref hooks
     pub use_effect: Vec<UseEffectInfo>,
     pub use_ref: Vec<UseRefInfo>,
+    // Content hooks
     pub use_markdown: Vec<UseMarkdownInfo>,
+    pub use_razor_markdown: Vec<UseRazorMarkdownInfo>,
     pub use_template: Option<UseTemplateInfo>,
+    // UI state hooks
     pub use_validation: Vec<UseValidationInfo>,
     pub use_modal: Vec<UseModalInfo>,
     pub use_toggle: Vec<UseToggleInfo>,
     pub use_dropdown: Vec<UseDropdownInfo>,
+    // Pub/Sub hooks
+    pub use_pub: Vec<UsePubInfo>,
+    pub use_sub: Vec<UseSubInfo>,
+    // Task scheduling hooks
+    pub use_micro_task: Vec<UseMicroTaskInfo>,
+    pub use_macro_task: Vec<UseMacroTaskInfo>,
+    // Server communication hooks
+    pub use_signalr: Vec<UseSignalRInfo>,
+    pub use_server_task: Vec<UseServerTaskInfo>,
+    pub paginated_tasks: Vec<PaginatedTaskInfo>,
+    // MVC integration hooks
+    pub use_mvc_state: Vec<UseMvcStateInfo>,
+    pub use_mvc_view_model: Vec<UseMvcViewModelInfo>,
+    // Optimization hooks
+    pub use_predict_hint: Vec<UsePredictHintInfo>,
+    // Custom hooks
     pub custom_hooks: Vec<CustomHookInstance>,
+    pub imported_hook_metadata: HashMap<String, HookMetadata>,
+    // Handlers and effects
     pub event_handlers: Vec<EventHandler>,
     pub client_handlers: Vec<ClientHandler>,
     pub client_effects: Vec<ClientEffect>,
+    // Variables and functions
     pub local_variables: Vec<LocalVariable>,
     pub helper_functions: Vec<HelperFunction>,
     pub render_body: Option<Box<Expr>>,
+    // Plugin and state tracking
     pub plugin_usages: Vec<PluginUsage>,
     pub state_types: HashMap<String, String>,
     pub dependencies: HashMap<String, Vec<String>>,
     pub external_imports: HashSet<String>,
     pub client_computed_vars: HashSet<String>,
+    // Templates
     pub templates: HashMap<String, Template>,
     pub loop_templates: Vec<LoopTemplate>,
     pub structural_templates: Vec<StructuralTemplate>,
@@ -1526,29 +1846,56 @@ impl Component {
         Self {
             name,
             props: Vec::new(),
+            // State hooks
             use_state: Vec::new(),
             use_client_state: Vec::new(),
+            use_protected_state: Vec::new(),
             use_state_x: Vec::new(),
+            // Effect and ref hooks
             use_effect: Vec::new(),
             use_ref: Vec::new(),
+            // Content hooks
             use_markdown: Vec::new(),
+            use_razor_markdown: Vec::new(),
             use_template: None,
+            // UI state hooks
             use_validation: Vec::new(),
             use_modal: Vec::new(),
             use_toggle: Vec::new(),
             use_dropdown: Vec::new(),
+            // Pub/Sub hooks
+            use_pub: Vec::new(),
+            use_sub: Vec::new(),
+            // Task scheduling hooks
+            use_micro_task: Vec::new(),
+            use_macro_task: Vec::new(),
+            // Server communication hooks
+            use_signalr: Vec::new(),
+            use_server_task: Vec::new(),
+            paginated_tasks: Vec::new(),
+            // MVC integration hooks
+            use_mvc_state: Vec::new(),
+            use_mvc_view_model: Vec::new(),
+            // Optimization hooks
+            use_predict_hint: Vec::new(),
+            // Custom hooks
             custom_hooks: Vec::new(),
+            imported_hook_metadata: HashMap::new(),
+            // Handlers and effects
             event_handlers: Vec::new(),
             client_handlers: Vec::new(),
             client_effects: Vec::new(),
+            // Variables and functions
             local_variables: Vec::new(),
             helper_functions: Vec::new(),
             render_body: None,
+            // Plugin and state tracking
             plugin_usages: Vec::new(),
             state_types: HashMap::new(),
             dependencies: HashMap::new(),
             external_imports: HashSet::new(),
             client_computed_vars: HashSet::new(),
+            // Templates
             templates: HashMap::new(),
             loop_templates: Vec::new(),
             structural_templates: Vec::new(),
@@ -1567,16 +1914,10 @@ pub struct Prop {
 #[derive(Clone, Debug)]
 pub struct UseStateInfo {
     pub var_name: String,
-    pub setter_name: String,
+    pub setter_name: Option<String>,
     pub initial_value: String,
     pub state_type: String,
-}
-
-#[derive(Clone, Debug)]
-pub struct UseClientStateInfo {
-    pub var_name: String,
-    pub setter_name: String,
-    pub initial_value: String,
+    pub is_client_state: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -1735,6 +2076,537 @@ pub struct ExpressionTemplate {
     pub binding: String,
     pub method: Option<String>,
     pub args: Vec<String>,
+}
+
+// =============================================================================
+// Additional Hook Info Structs
+// =============================================================================
+
+#[derive(Clone, Debug)]
+pub struct UseRazorMarkdownInfo {
+    pub name: String,
+    pub setter: String,
+    pub initial_value: String,
+    pub has_razor_syntax: bool,
+    pub referenced_variables: Vec<String>,
+}
+
+#[derive(Clone, Debug)]
+pub struct UsePubInfo {
+    pub name: String,
+    pub channel: Option<String>,
+}
+
+#[derive(Clone, Debug)]
+pub struct UseSubInfo {
+    pub name: String,
+    pub channel: Option<String>,
+    pub has_callback: bool,
+}
+
+#[derive(Clone, Debug)]
+pub struct UseMicroTaskInfo {
+    pub body: Option<Box<Expr>>,
+}
+
+#[derive(Clone, Debug)]
+pub struct UseMacroTaskInfo {
+    pub body: Option<Box<Expr>>,
+    pub delay: u32,
+}
+
+#[derive(Clone, Debug)]
+pub struct UseSignalRInfo {
+    pub name: String,
+    pub hub_url: Option<String>,
+    pub has_on_message: bool,
+}
+
+#[derive(Clone, Debug)]
+pub struct UseServerTaskInfo {
+    pub name: String,
+    pub async_function: Option<Box<Expr>>,
+    pub parameters: Vec<TaskParameter>,
+    pub is_streaming: bool,
+    pub estimated_chunks: Option<u32>,
+    pub return_type: String,
+    pub runtime: String,
+    pub parallel: bool,
+}
+
+#[derive(Clone, Debug)]
+pub struct TaskParameter {
+    pub name: String,
+    pub param_type: String,
+}
+
+#[derive(Clone, Debug)]
+pub struct PaginatedTaskInfo {
+    pub name: String,
+    pub fetch_task_name: String,
+    pub count_task_name: Option<String>,
+    pub page_size: u32,
+    pub runtime: String,
+    pub parallel: bool,
+}
+
+#[derive(Clone, Debug)]
+pub struct UseMvcStateInfo {
+    pub name: Option<String>,
+    pub setter: Option<String>,
+    pub property_name: String,
+    pub mvc_type: String,
+}
+
+#[derive(Clone, Debug)]
+pub struct UseMvcViewModelInfo {
+    pub name: String,
+}
+
+#[derive(Clone, Debug)]
+pub struct UsePredictHintInfo {
+    pub hint_id: Option<String>,
+    pub predicted_state: Option<Box<Expr>>,
+}
+
+#[derive(Clone, Debug)]
+pub struct HookMetadata {
+    pub class_name: String,
+    pub states: Vec<UseStateInfo>,
+    pub methods: Vec<HelperFunction>,
+    pub event_handlers: Vec<EventHandler>,
+    pub return_values: Vec<HookReturnValue>,
+    pub jsx_elements: Option<Box<Expr>>,
+}
+
+#[derive(Clone, Debug)]
+pub struct HookReturnValue {
+    pub name: String,
+    pub value_type: String, // "state", "function", "jsx", etc.
+}
+`;
+}
+
+/**
+ * Generate the helpers stub module
+ * These are placeholders for functions that will be generated from template JSON files
+ */
+function generateHelpersStub() {
+  return `//! Helper function stubs
+//!
+//! These functions will be generated from the template JSON files.
+//! For now, they are stubs that provide the correct signatures.
+
+use swc_core::ecma::ast::*;
+use crate::component::*;
+
+// =============================================================================
+// Type Conversion Helpers (from types/typeConversion.cjs)
+// =============================================================================
+
+/// Convert TypeScript type to C# type
+pub fn ts_type_to_csharp_type(ts_type: &TsType) -> String {
+    // TODO: Generate from tsTypeToCSharpType template
+    "dynamic".to_string()
+}
+
+/// Infer C# type from JavaScript value
+pub fn infer_csharp_type(value: &Expr) -> String {
+    // TODO: Generate from inferCSharpType template
+    match value {
+        Expr::Lit(Lit::Str(_)) => "string".to_string(),
+        Expr::Lit(Lit::Num(_)) => "int".to_string(),
+        Expr::Lit(Lit::Bool(_)) => "bool".to_string(),
+        Expr::Array(_) => "List<dynamic>".to_string(),
+        Expr::Object(_) => "Dictionary<string, dynamic>".to_string(),
+        _ => "dynamic".to_string(),
+    }
+}
+
+// =============================================================================
+// Expression Generation Helpers (from generators/)
+// =============================================================================
+
+/// Generate C# expression from AST
+pub fn generate_csharp_expression(expr: Option<&Expr>) -> String {
+    // TODO: Generate from generateCSharpExpression template
+    match expr {
+        Some(Expr::Lit(lit)) => match lit {
+            Lit::Str(s) => format!("\\\"{}\\\"", s.value),
+            Lit::Num(n) => n.value.to_string(),
+            Lit::Bool(b) => b.value.to_string(),
+            Lit::Null(_) => "null".to_string(),
+            _ => "null".to_string(),
+        },
+        Some(Expr::Ident(ident)) => ident.sym.to_string(),
+        Some(Expr::Array(_)) => "new List<dynamic>()".to_string(),
+        Some(Expr::Object(_)) => "new Dictionary<string, dynamic>()".to_string(),
+        _ => "null".to_string(),
+    }
+}
+
+/// Escape string for C#
+pub fn escape_csharp_string(s: &str) -> String {
+    s.replace("\\\\", "\\\\\\\\")
+        .replace("\\"", "\\\\\\"")
+        .replace("\\n", "\\\\n")
+        .replace("\\r", "\\\\r")
+        .replace("\\t", "\\\\t")
+}
+
+/// Get default value for C# type
+pub fn get_default_value(csharp_type: &str) -> String {
+    if csharp_type.starts_with("List<") {
+        return format!("new {}()", csharp_type);
+    }
+
+    match csharp_type {
+        "int" => "0".to_string(),
+        "bool" => "false".to_string(),
+        "string" => "\\"\\"".to_string(),
+        "dynamic" | "object" => "null".to_string(),
+        _ => "null".to_string(),
+    }
+}
+
+// =============================================================================
+// Hook Detection Helpers (from analyzers/hookDetector.cjs)
+// =============================================================================
+
+/// Check if a function is a custom hook
+pub fn is_custom_hook_name(name: &str) -> bool {
+    name.starts_with("use") &&
+        name.len() > 3 &&
+        name.chars().nth(3).map(|c| c.is_uppercase()).unwrap_or(false)
+}
+
+// =============================================================================
+// Prop Type Inference (from analyzers/propTypeInference.cjs)
+// =============================================================================
+
+/// Infer prop types from usage patterns
+pub fn infer_prop_types(component: &mut Component, body: &BlockStmt) {
+    // TODO: Generate from inferPropTypes template
+    // Analyze how props are used in JSX and expressions
+}
+
+// =============================================================================
+// Template Extraction Helpers (from extractors/templates.cjs)
+// =============================================================================
+
+/// Extract templates from JSX
+pub fn extract_templates(render_body: &Expr, component: &Component) -> HashMap<String, Template> {
+    // TODO: Generate from extractTemplates template
+    HashMap::new()
+}
+
+/// Extract attribute templates
+pub fn extract_attribute_templates(render_body: &Expr, component: &Component) -> HashMap<String, Template> {
+    // TODO: Generate from extractAttributeTemplates template
+    HashMap::new()
+}
+
+/// Add template metadata to component
+pub fn add_template_metadata(component: &mut Component, templates: HashMap<String, Template>) {
+    // TODO: Generate from addTemplateMetadata template
+    component.templates = templates;
+}
+
+// =============================================================================
+// Conditional Element Templates (from extractors/conditionalElementTemplates.cjs)
+// =============================================================================
+
+/// Extract conditional element templates
+pub fn extract_conditional_element_templates(
+    render_body: &Expr,
+    component: &Component
+) -> HashMap<String, ConditionalElementTemplate> {
+    // TODO: Generate from extractConditionalElementTemplates template
+    HashMap::new()
+}
+
+// =============================================================================
+// Hook Analysis (from analyzers/hookAnalyzer.cjs)
+// =============================================================================
+
+/// Analyze a custom hook function
+pub fn analyze_hook(func: &FnDecl) -> Option<HookAnalysis> {
+    // TODO: Generate from analyzeHook template
+    None
+}
+
+#[derive(Clone, Debug)]
+pub struct HookAnalysis {
+    pub class_name: String,
+    pub states: Vec<UseStateInfo>,
+    pub methods: Vec<HelperFunction>,
+    pub event_handlers: Vec<EventHandler>,
+    pub return_values: Vec<String>,
+    pub jsx_elements: Option<Box<Expr>>,
+}
+
+// =============================================================================
+// Hook Class Generation (from generators/hookClassGenerator.cjs)
+// =============================================================================
+
+/// Generate C# class for custom hook
+pub fn generate_hook_class(analysis: &HookAnalysis, context: &Component) -> GeneratedHookClass {
+    // TODO: Generate from generateHookClass template
+    GeneratedHookClass {
+        name: analysis.class_name.clone(),
+        code: String::new(),
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct GeneratedHookClass {
+    pub name: String,
+    pub code: String,
+}
+
+// =============================================================================
+// Plugin Usage Analysis (from analyzers/analyzePluginUsage.cjs)
+// =============================================================================
+
+/// Analyze plugin usage in component
+pub fn analyze_plugin_usage(func: &FnDecl, component: &Component) -> Vec<PluginUsage> {
+    // TODO: Generate from analyzePluginUsage template
+    Vec::new()
+}
+
+/// Validate plugin usage
+pub fn validate_plugin_usage(usages: &[PluginUsage]) {
+    // TODO: Generate from validatePluginUsage template
+}
+
+// =============================================================================
+// Timeline Analysis (from analyzers/timelineAnalyzer.cjs)
+// =============================================================================
+
+/// Analyze timeline usage
+pub fn analyze_timeline(func: &FnDecl, component_name: &str) -> Option<Timeline> {
+    // TODO: Generate from analyzeTimeline template
+    None
+}
+
+#[derive(Clone, Debug)]
+pub struct Timeline {
+    pub duration: u32,
+    pub keyframes: Vec<Keyframe>,
+    pub state_bindings: HashSet<String>,
+}
+
+#[derive(Clone, Debug)]
+pub struct Keyframe {
+    pub time: u32,
+    pub state: String,
+    pub value: String,
+}
+
+// =============================================================================
+// Imported Hook Analysis (from analyzers/hookImports.cjs)
+// =============================================================================
+
+/// Analyze imported hooks from other files
+pub fn analyze_imported_hooks(
+    program: &Program,
+    file_path: Option<&str>
+) -> HashMap<String, HookAnalysis> {
+    // TODO: Generate from analyzeImportedHooks template
+    HashMap::new()
+}
+
+// =============================================================================
+// Hook Extraction Functions (from extractors/hooks.cjs)
+// =============================================================================
+
+/// Extract useState or useClientState
+pub fn extract_use_state(call: &CallExpr, var_name: &Pat, component: &mut Component, hook_type: &str) {
+    // TODO: Generate from extractUseState template
+    // Extract from ArrayPattern: const [value, setValue] = useState(initial)
+    if let Pat::Array(arr) = var_name {
+        let state_var = arr.elems.get(0)
+            .and_then(|e| e.as_ref())
+            .and_then(|p| if let Pat::Ident(id) = p { Some(id.id.sym.to_string()) } else { None });
+        let setter_var = arr.elems.get(1)
+            .and_then(|e| e.as_ref())
+            .and_then(|p| if let Pat::Ident(id) = p { Some(id.id.sym.to_string()) } else { None });
+
+        if let Some(name) = state_var {
+            let initial_value = call.args.get(0)
+                .map(|arg| generate_csharp_expression(Some(&arg.expr)))
+                .unwrap_or_else(|| "null".to_string());
+
+            let state_type = call.args.get(0)
+                .map(|arg| infer_csharp_type(&arg.expr))
+                .unwrap_or_else(|| "dynamic".to_string());
+
+            let info = UseStateInfo {
+                var_name: name.clone(),
+                setter_name: setter_var,
+                initial_value,
+                state_type,
+                is_client_state: hook_type == "useClientState",
+            };
+
+            if hook_type == "useClientState" {
+                component.use_client_state.push(info);
+            } else {
+                component.use_state.push(info);
+            }
+        }
+    }
+}
+
+/// Extract useProtectedState
+pub fn extract_use_protected_state(call: &CallExpr, var_name: &Pat, component: &mut Component) {
+    // TODO: Generate from extractUseProtectedState template
+}
+
+/// Extract useStateX (declarative state projections)
+pub fn extract_use_state_x(call: &CallExpr, var_name: &Pat, component: &mut Component) {
+    // TODO: Generate from extractUseStateX template
+}
+
+/// Extract useEffect
+pub fn extract_use_effect(call: &CallExpr, component: &mut Component) {
+    // TODO: Generate from extractUseEffect template
+    let callback = call.args.get(0).map(|arg| &*arg.expr);
+    let dependencies = call.args.get(1).map(|arg| &*arg.expr);
+
+    component.use_effect.push(UseEffectInfo {
+        callback: callback.cloned(),
+        dependencies: dependencies.cloned(),
+        is_client_side: false, // TODO: Analyze callback for client-side APIs
+    });
+}
+
+/// Extract useRef
+pub fn extract_use_ref(call: &CallExpr, var_name: &Pat, component: &mut Component) {
+    // TODO: Generate from extractUseRef template
+    if let Pat::Ident(ident) = var_name {
+        let ref_name = ident.id.sym.to_string();
+        let initial_value = call.args.get(0)
+            .map(|arg| generate_csharp_expression(Some(&arg.expr)))
+            .unwrap_or_else(|| "null".to_string());
+
+        component.use_ref.push(UseRefInfo {
+            name: ref_name,
+            initial_value,
+        });
+    }
+}
+
+/// Extract useMarkdown
+pub fn extract_use_markdown(call: &CallExpr, var_name: &Pat, component: &mut Component) {
+    // TODO: Generate from extractUseMarkdown template
+}
+
+/// Extract useRazorMarkdown
+pub fn extract_use_razor_markdown(call: &CallExpr, var_name: &Pat, component: &mut Component) {
+    // TODO: Generate from extractUseRazorMarkdown template
+}
+
+/// Extract useTemplate
+pub fn extract_use_template(call: &CallExpr, component: &mut Component) {
+    // TODO: Generate from extractUseTemplate template
+}
+
+/// Extract useValidation
+pub fn extract_use_validation(call: &CallExpr, var_name: &Pat, component: &mut Component) {
+    // TODO: Generate from extractUseValidation template
+}
+
+/// Extract useModal
+pub fn extract_use_modal(call: &CallExpr, var_name: &Pat, component: &mut Component) {
+    // TODO: Generate from extractUseModal template
+}
+
+/// Extract useToggle
+pub fn extract_use_toggle(call: &CallExpr, var_name: &Pat, component: &mut Component) {
+    // TODO: Generate from extractUseToggle template
+}
+
+/// Extract useDropdown
+pub fn extract_use_dropdown(call: &CallExpr, var_name: &Pat, component: &mut Component) {
+    // TODO: Generate from extractUseDropdown template
+}
+
+/// Extract usePub
+pub fn extract_use_pub(call: &CallExpr, var_name: &Pat, component: &mut Component) {
+    // TODO: Generate from extractUsePub template
+}
+
+/// Extract useSub
+pub fn extract_use_sub(call: &CallExpr, var_name: &Pat, component: &mut Component) {
+    // TODO: Generate from extractUseSub template
+}
+
+/// Extract useMicroTask
+pub fn extract_use_micro_task(call: &CallExpr, component: &mut Component) {
+    // TODO: Generate from extractUseMicroTask template
+}
+
+/// Extract useMacroTask
+pub fn extract_use_macro_task(call: &CallExpr, component: &mut Component) {
+    // TODO: Generate from extractUseMacroTask template
+}
+
+/// Extract useSignalR
+pub fn extract_use_signalr(call: &CallExpr, var_name: &Pat, component: &mut Component) {
+    // TODO: Generate from extractUseSignalR template
+}
+
+/// Extract useServerTask
+pub fn extract_use_server_task(call: &CallExpr, var_name: &Pat, component: &mut Component) {
+    // TODO: Generate from extractUseServerTask template
+}
+
+/// Extract usePaginatedServerTask
+pub fn extract_use_paginated_server_task(call: &CallExpr, var_name: &Pat, component: &mut Component) {
+    // TODO: Generate from extractUsePaginatedServerTask template
+}
+
+/// Extract useMvcState
+pub fn extract_use_mvc_state(call: &CallExpr, var_name: &Pat, component: &mut Component) {
+    // TODO: Generate from extractUseMvcState template
+}
+
+/// Extract useMvcViewModel
+pub fn extract_use_mvc_view_model(call: &CallExpr, var_name: &Pat, component: &mut Component) {
+    // TODO: Generate from extractUseMvcViewModel template
+}
+
+/// Extract usePredictHint
+pub fn extract_use_predict_hint(call: &CallExpr, component: &mut Component) {
+    // TODO: Generate from extractUsePredictHint template
+}
+
+/// Extract custom hook call
+pub fn extract_custom_hook_call(call: &CallExpr, var_name: &Pat, hook_name: &str, component: &mut Component) {
+    // TODO: Generate from extractCustomHookCall template
+}
+
+// =============================================================================
+// Client-Side Execution Helpers (from extractors/hooks.cjs)
+// =============================================================================
+
+/// Analyze which hooks are used in a function body
+pub fn analyze_hook_usage(callback: &Expr) -> Vec<String> {
+    // TODO: Generate from analyzeHookUsage template
+    Vec::new()
+}
+
+/// Transform effect callback for client-side execution
+pub fn transform_effect_callback(callback: &Expr, hook_calls: &[String]) -> Expr {
+    // TODO: Generate from transformEffectCallback template
+    callback.clone()
+}
+
+/// Transform event handler function for client-side execution
+pub fn transform_handler_function(body: &Expr, params: &[Pat], hook_calls: &[String]) -> Expr {
+    // TODO: Generate from transformHandlerFunction template
+    body.clone()
 }
 `;
 }
@@ -1946,7 +2818,35 @@ function main() {
   fs.writeFileSync(path.join(extractorsDir, 'mod.rs'), 'pub mod hooks;\n');
   console.log('Generated extractors/mod.rs');
 
+  // Generate helpers stub module
+  const helpersStub = generateHelpersStub();
+  fs.writeFileSync(path.join(outputDir, 'helpers.rs'), helpersStub);
+  console.log('Generated helpers.rs (stubs for template-generated functions)');
+
+  // Create generators directory
+  const generatorsDir = path.join(outputDir, 'generators');
+  if (!fs.existsSync(generatorsDir)) {
+    fs.mkdirSync(generatorsDir, { recursive: true });
+  }
+  fs.writeFileSync(path.join(generatorsDir, 'mod.rs'), '// C# code generators will be added here\n');
+  console.log('Generated generators/mod.rs');
+
+  // Create utils directory
+  const utilsDir = path.join(outputDir, 'utils');
+  if (!fs.existsSync(utilsDir)) {
+    fs.mkdirSync(utilsDir, { recursive: true });
+  }
+  fs.writeFileSync(path.join(utilsDir, 'mod.rs'), '// Utility functions will be added here\n');
+  console.log('Generated utils/mod.rs');
+
   console.log('\nSWC visitor code generated in:', outputDir);
+  console.log('\nGenerated files:');
+  console.log('  - lib.rs (main plugin with visitors)');
+  console.log('  - component.rs (Component struct and related types)');
+  console.log('  - helpers.rs (stubs for helper functions)');
+  console.log('  - extractors/hooks.rs');
+  console.log('  - generators/mod.rs');
+  console.log('  - utils/mod.rs');
 }
 
 main();
