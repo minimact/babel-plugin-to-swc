@@ -623,8 +623,148 @@ impl Parser {
     /// This is used in contexts where `{` starts a block, not a struct
     fn parse_expr_no_struct(&mut self) -> ParseResult<Expr> {
         // Parse the expression but stop if we see an identifier followed by {
-        // For now, just parse unary/primary without struct init check
-        self.parse_unary_no_struct()
+        // We need to support binary operators like ==, &&, ||
+        self.parse_or_no_struct()
+    }
+
+    fn parse_or_no_struct(&mut self) -> ParseResult<Expr> {
+        let mut expr = self.parse_and_no_struct()?;
+
+        while self.match_token(TokenKind::Or) {
+            let right = self.parse_and_no_struct()?;
+            let span = self.current_span();
+            expr = Expr::Binary(BinaryExpr {
+                op: BinaryOp::Or,
+                left: Box::new(expr),
+                right: Box::new(right),
+                span,
+            });
+        }
+
+        Ok(expr)
+    }
+
+    fn parse_and_no_struct(&mut self) -> ParseResult<Expr> {
+        let mut expr = self.parse_equality_no_struct()?;
+
+        while self.match_token(TokenKind::And) {
+            let right = self.parse_equality_no_struct()?;
+            let span = self.current_span();
+            expr = Expr::Binary(BinaryExpr {
+                op: BinaryOp::And,
+                left: Box::new(expr),
+                right: Box::new(right),
+                span,
+            });
+        }
+
+        Ok(expr)
+    }
+
+    fn parse_equality_no_struct(&mut self) -> ParseResult<Expr> {
+        let mut expr = self.parse_comparison_no_struct()?;
+
+        loop {
+            let op = if self.match_token(TokenKind::EqEq) {
+                BinaryOp::Eq
+            } else if self.match_token(TokenKind::NotEq) {
+                BinaryOp::NotEq
+            } else {
+                break;
+            };
+
+            let right = self.parse_comparison_no_struct()?;
+            let span = self.current_span();
+            expr = Expr::Binary(BinaryExpr {
+                op,
+                left: Box::new(expr),
+                right: Box::new(right),
+                span,
+            });
+        }
+
+        Ok(expr)
+    }
+
+    fn parse_comparison_no_struct(&mut self) -> ParseResult<Expr> {
+        let mut expr = self.parse_term_no_struct()?;
+
+        loop {
+            let op = if self.match_token(TokenKind::Lt) {
+                BinaryOp::Lt
+            } else if self.match_token(TokenKind::Gt) {
+                BinaryOp::Gt
+            } else if self.match_token(TokenKind::LtEq) {
+                BinaryOp::LtEq
+            } else if self.match_token(TokenKind::GtEq) {
+                BinaryOp::GtEq
+            } else {
+                break;
+            };
+
+            let right = self.parse_term_no_struct()?;
+            let span = self.current_span();
+            expr = Expr::Binary(BinaryExpr {
+                op,
+                left: Box::new(expr),
+                right: Box::new(right),
+                span,
+            });
+        }
+
+        Ok(expr)
+    }
+
+    fn parse_term_no_struct(&mut self) -> ParseResult<Expr> {
+        let mut expr = self.parse_factor_no_struct()?;
+
+        loop {
+            let op = if self.match_token(TokenKind::Plus) {
+                BinaryOp::Add
+            } else if self.match_token(TokenKind::Minus) {
+                BinaryOp::Sub
+            } else {
+                break;
+            };
+
+            let right = self.parse_factor_no_struct()?;
+            let span = self.current_span();
+            expr = Expr::Binary(BinaryExpr {
+                op,
+                left: Box::new(expr),
+                right: Box::new(right),
+                span,
+            });
+        }
+
+        Ok(expr)
+    }
+
+    fn parse_factor_no_struct(&mut self) -> ParseResult<Expr> {
+        let mut expr = self.parse_unary_no_struct()?;
+
+        loop {
+            let op = if self.match_token(TokenKind::Star) {
+                BinaryOp::Mul
+            } else if self.match_token(TokenKind::Slash) {
+                BinaryOp::Div
+            } else if self.match_token(TokenKind::Percent) {
+                BinaryOp::Mod
+            } else {
+                break;
+            };
+
+            let right = self.parse_unary_no_struct()?;
+            let span = self.current_span();
+            expr = Expr::Binary(BinaryExpr {
+                op,
+                left: Box::new(expr),
+                right: Box::new(right),
+                span,
+            });
+        }
+
+        Ok(expr)
     }
 
     fn parse_unary_no_struct(&mut self) -> ParseResult<Expr> {
