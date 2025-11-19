@@ -25,6 +25,7 @@ function generateMainPlugin() {
     ast::*,
     visit::{VisitMut, VisitMutWith},
 };
+use swc_core::common::DUMMY_SP;
 use swc_core::plugin::{plugin_transform, proxies::TransformPluginProgramMetadata};
 use std::collections::{HashMap, HashSet};
 
@@ -98,6 +99,44 @@ struct TemplateExtractor<'a> {
 /// Visitor for tracking external imports
 struct ImportExtractor<'a> {
     external_imports: &'a mut HashSet<String>,
+}
+
+/// Visitor for JSX template extraction
+struct JSXTemplateExtractor<'a> {
+    component: &'a mut Component,
+    current_path: Vec<usize>,
+}
+
+/// Visitor for loop (.map) pattern extraction
+struct LoopExtractor<'a> {
+    component: &'a mut Component,
+}
+
+/// Visitor for structural template extraction (conditionals)
+struct StructuralExtractor<'a> {
+    component: &'a mut Component,
+}
+
+/// Visitor for expression template extraction
+struct ExpressionExtractor<'a> {
+    component: &'a mut Component,
+}
+
+/// Hex path generator for JSX elements
+pub struct HexPathGenerator {
+    counter: u32,
+}
+
+impl HexPathGenerator {
+    pub fn new() -> Self {
+        Self { counter: 0 }
+    }
+
+    pub fn next(&mut self) -> String {
+        let path = format!("{:x}", self.counter);
+        self.counter += 1;
+        path
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -178,8 +217,111 @@ impl MinimactTransformer {
             body.visit_mut_with(&mut render_extractor);
         }
 
+        // Extract templates from render body (after capturing it)
+        if let Some(render_body) = &mut component.render_body.clone() {
+            // 5. Assign hex paths to JSX elements
+            let mut path_gen = HexPathGenerator::new();
+            assign_hex_paths_to_jsx(render_body, &mut path_gen);
+
+            // 6. Extract text and attribute templates
+            let mut template_extractor = JSXTemplateExtractor {
+                component: &mut component,
+                current_path: Vec::new(),
+            };
+            render_body.visit_mut_with(&mut template_extractor);
+
+            // 7. Extract loop templates (.map patterns)
+            let mut loop_extractor = LoopExtractor {
+                component: &mut component,
+            };
+            render_body.visit_mut_with(&mut loop_extractor);
+
+            // 8. Extract structural templates (conditionals)
+            let mut structural_extractor = StructuralExtractor {
+                component: &mut component,
+            };
+            render_body.visit_mut_with(&mut structural_extractor);
+
+            // 9. Extract expression templates
+            let mut expr_extractor = ExpressionExtractor {
+                component: &mut component,
+            };
+            render_body.visit_mut_with(&mut expr_extractor);
+        }
+
         // Add component to list
         self.components.push(component);
+    }
+
+    /// Assign hex paths to all JSX elements in the tree
+    fn assign_hex_paths_to_jsx(expr: &mut Expr, path_gen: &mut HexPathGenerator) {
+        match expr {
+            Expr::JSXElement(jsx) => {
+                // Generate and assign key to this element
+                let hex_key = path_gen.next();
+
+                // Add key attribute if not present
+                let has_key = jsx.opening.attrs.iter().any(|attr| {
+                    if let JSXAttrOrSpread::JSXAttr(a) = attr {
+                        if let JSXAttrName::Ident(name) = &a.name {
+                            return name.sym.to_string() == "key";
+                        }
+                    }
+                    false
+                });
+
+                if !has_key {
+                    // Add data-minimact-key attribute
+                    jsx.opening.attrs.push(JSXAttrOrSpread::JSXAttr(JSXAttr {
+                        span: DUMMY_SP,
+                        name: JSXAttrName::Ident(Ident::new("data-minimact-key".into(), DUMMY_SP)),
+                        value: Some(JSXAttrValue::Lit(Lit::Str(Str {
+                            span: DUMMY_SP,
+                            value: hex_key.into(),
+                            raw: None,
+                        }))),
+                    }));
+                }
+
+                // Recurse into children
+                for child in &mut jsx.children {
+                    match child {
+                        JSXElementChild::JSXElement(child_jsx) => {
+                            Self::assign_hex_paths_to_jsx(&mut Expr::JSXElement(child_jsx.clone()), path_gen);
+                        }
+                        JSXElementChild::JSXExprContainer(container) => {
+                            if let JSXExpr::Expr(expr) = &mut container.expr {
+                                Self::assign_hex_paths_to_jsx(expr, path_gen);
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+            }
+            Expr::JSXFragment(frag) => {
+                for child in &mut frag.children {
+                    match child {
+                        JSXElementChild::JSXElement(child_jsx) => {
+                            Self::assign_hex_paths_to_jsx(&mut Expr::JSXElement(child_jsx.clone()), path_gen);
+                        }
+                        JSXElementChild::JSXExprContainer(container) => {
+                            if let JSXExpr::Expr(expr) = &mut container.expr {
+                                Self::assign_hex_paths_to_jsx(expr, path_gen);
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+            }
+            Expr::Cond(cond) => {
+                Self::assign_hex_paths_to_jsx(&mut cond.cons, path_gen);
+                Self::assign_hex_paths_to_jsx(&mut cond.alt, path_gen);
+            }
+            Expr::Paren(paren) => {
+                Self::assign_hex_paths_to_jsx(&mut paren.expr, path_gen);
+            }
+            _ => {}
+        }
     }
 
     /// Process an arrow function component
@@ -232,10 +374,39 @@ impl MinimactTransformer {
         self.components.push(component);
     }
 
-    /// Extract props from function parameters
+    /// Extract props from function parameters with TypeScript type support
     fn extract_props(&mut self, params: &[Param], component: &mut Component) {
         if params.is_empty() {
             return;
+        }
+
+        // Get type annotation from parameter if present
+        let type_annotation = params[0].pat.as_ident()
+            .and_then(|id| id.type_ann.as_ref())
+            .or_else(|| {
+                if let Pat::Object(obj) = &params[0].pat {
+                    obj.type_ann.as_ref()
+                } else {
+                    None
+                }
+            });
+
+        // Build a map of prop names to types from TSTypeLiteral
+        let mut prop_types: HashMap<String, String> = HashMap::new();
+        if let Some(ann) = type_annotation {
+            if let TsType::TsTypeLit(type_lit) = &*ann.type_ann {
+                for member in &type_lit.members {
+                    if let TsTypeElement::TsPropertySignature(prop_sig) = member {
+                        if let Expr::Ident(ident) = &*prop_sig.key {
+                            let prop_name = ident.sym.to_string();
+                            let prop_type = prop_sig.type_ann.as_ref()
+                                .map(|ann| ts_type_to_csharp(&ann.type_ann))
+                                .unwrap_or_else(|| "dynamic".to_string());
+                            prop_types.insert(prop_name, prop_type);
+                        }
+                    }
+                }
+            }
         }
 
         match &params[0].pat {
@@ -245,16 +416,24 @@ impl MinimactTransformer {
                     match prop {
                         ObjectPatProp::KeyValue(kv) => {
                             if let PropName::Ident(ident) = &kv.key {
+                                let name = ident.sym.to_string();
+                                let prop_type = prop_types.get(&name)
+                                    .cloned()
+                                    .unwrap_or_else(|| "dynamic".to_string());
                                 component.props.push(crate::component::Prop {
-                                    name: ident.sym.to_string(),
-                                    prop_type: "dynamic".to_string(),
+                                    name,
+                                    prop_type,
                                 });
                             }
                         }
                         ObjectPatProp::Assign(assign) => {
+                            let name = assign.key.sym.to_string();
+                            let prop_type = prop_types.get(&name)
+                                .cloned()
+                                .unwrap_or_else(|| "dynamic".to_string());
                             component.props.push(crate::component::Prop {
-                                name: assign.key.sym.to_string(),
-                                prop_type: "dynamic".to_string(),
+                                name,
+                                prop_type,
                             });
                         }
                         ObjectPatProp::Rest(_) => {}
@@ -269,6 +448,60 @@ impl MinimactTransformer {
                 });
             }
             _ => {}
+        }
+    }
+
+    /// Convert TypeScript type to C# type
+    fn ts_type_to_csharp(ts_type: &TsType) -> String {
+        match ts_type {
+            TsType::TsKeywordType(kw) => {
+                match kw.kind {
+                    TsKeywordTypeKind::TsStringKeyword => "string".to_string(),
+                    TsKeywordTypeKind::TsNumberKeyword => "int".to_string(),
+                    TsKeywordTypeKind::TsBooleanKeyword => "bool".to_string(),
+                    TsKeywordTypeKind::TsVoidKeyword => "void".to_string(),
+                    TsKeywordTypeKind::TsNullKeyword => "object".to_string(),
+                    TsKeywordTypeKind::TsUndefinedKeyword => "object".to_string(),
+                    TsKeywordTypeKind::TsAnyKeyword => "dynamic".to_string(),
+                    _ => "dynamic".to_string(),
+                }
+            }
+            TsType::TsArrayType(arr) => {
+                let elem_type = Self::ts_type_to_csharp(&arr.elem_type);
+                format!("List<{}>", elem_type)
+            }
+            TsType::TsTypeRef(type_ref) => {
+                if let TsEntityName::Ident(ident) = &type_ref.type_name {
+                    let name = ident.sym.to_string();
+                    match name.as_str() {
+                        "Array" => {
+                            if let Some(params) = &type_ref.type_params {
+                                if let Some(param) = params.params.get(0) {
+                                    let elem_type = Self::ts_type_to_csharp(param);
+                                    return format!("List<{}>", elem_type);
+                                }
+                            }
+                            "List<dynamic>".to_string()
+                        }
+                        "Record" | "object" => "Dictionary<string, dynamic>".to_string(),
+                        "Function" => "Action".to_string(),
+                        _ => name, // Use type name as-is for custom types
+                    }
+                } else {
+                    "dynamic".to_string()
+                }
+            }
+            TsType::TsFnOrConstructorType(_) => "Action".to_string(),
+            TsType::TsUnionOrIntersectionType(_) => "dynamic".to_string(),
+            TsType::TsLitType(lit) => {
+                match &lit.lit {
+                    TsLit::Str(_) => "string".to_string(),
+                    TsLit::Number(_) => "int".to_string(),
+                    TsLit::Bool(_) => "bool".to_string(),
+                    _ => "dynamic".to_string(),
+                }
+            }
+            _ => "dynamic".to_string(),
         }
     }
 
@@ -645,6 +878,433 @@ impl VisitMut for ImportExtractor<'_> {
                 }
             }
         }
+    }
+}
+
+/// JSXTemplateExtractor - extracts text and attribute templates from JSX
+impl VisitMut for JSXTemplateExtractor<'_> {
+    fn visit_mut_jsx_element(&mut self, jsx: &mut JSXElement) {
+        let path = self.current_path.iter()
+            .map(|i| i.to_string())
+            .collect::<Vec<_>>()
+            .join(".");
+
+        // Extract attribute templates
+        for attr in &jsx.opening.attrs {
+            if let JSXAttrOrSpread::JSXAttr(jsx_attr) = attr {
+                if let Some(JSXAttrValue::JSXExprContainer(container)) = &jsx_attr.value {
+                    if let JSXExpr::Expr(expr) = &container.expr {
+                        // Extract bindings from expression
+                        let bindings = extract_bindings_from_expr(expr);
+                        if !bindings.is_empty() {
+                            let attr_name = match &jsx_attr.name {
+                                JSXAttrName::Ident(ident) => ident.sym.to_string(),
+                                JSXAttrName::JSXNamespacedName(ns) => {
+                                    format!("{}:{}", ns.ns.sym, ns.name.sym)
+                                }
+                            };
+
+                            let template_key = format!("{}@{}", path, attr_name);
+                            self.component.templates.insert(template_key, Template {
+                                path: path.clone(),
+                                template: generate_template_string(expr),
+                                bindings,
+                            });
+                        }
+                    }
+                }
+            }
+        }
+
+        // Traverse children
+        for (i, child) in jsx.children.iter_mut().enumerate() {
+            self.current_path.push(i);
+
+            match child {
+                JSXElementChild::JSXText(text) => {
+                    // Check for text with interpolations
+                    let content = text.value.to_string();
+                    if content.trim().is_empty() {
+                        self.current_path.pop();
+                        continue;
+                    }
+                }
+                JSXElementChild::JSXExprContainer(container) => {
+                    if let JSXExpr::Expr(expr) = &container.expr {
+                        let bindings = extract_bindings_from_expr(expr);
+                        if !bindings.is_empty() {
+                            let child_path = self.current_path.iter()
+                                .map(|i| i.to_string())
+                                .collect::<Vec<_>>()
+                                .join(".");
+
+                            self.component.templates.insert(child_path.clone(), Template {
+                                path: child_path,
+                                template: generate_template_string(expr),
+                                bindings,
+                            });
+                        }
+                    }
+                }
+                JSXElementChild::JSXElement(child_jsx) => {
+                    child_jsx.visit_mut_with(self);
+                }
+                _ => {}
+            }
+
+            self.current_path.pop();
+        }
+    }
+}
+
+/// LoopExtractor - extracts .map() patterns for loop templates
+impl VisitMut for LoopExtractor<'_> {
+    fn visit_mut_call_expr(&mut self, call: &mut CallExpr) {
+        // Check if this is a .map() call
+        if let Callee::Expr(callee) = &call.callee {
+            if let Expr::Member(member) = &**callee {
+                if let MemberProp::Ident(prop) = &member.prop {
+                    if prop.sym.to_string() == "map" {
+                        // Extract the array being mapped
+                        let state_key = extract_binding_from_expr(&member.obj);
+
+                        if let Some(state_key) = state_key {
+                            // Get the callback function
+                            if let Some(arg) = call.args.get(0) {
+                                if let Expr::Arrow(arrow) = &*arg.expr {
+                                    // Extract item and index variables
+                                    let item_var = arrow.params.get(0)
+                                        .and_then(|p| {
+                                            if let Pat::Ident(id) = p {
+                                                Some(id.id.sym.to_string())
+                                            } else {
+                                                None
+                                            }
+                                        })
+                                        .unwrap_or_else(|| "item".to_string());
+
+                                    let index_var = arrow.params.get(1)
+                                        .and_then(|p| {
+                                            if let Pat::Ident(id) = p {
+                                                Some(id.id.sym.to_string())
+                                            } else {
+                                                None
+                                            }
+                                        });
+
+                                    // Extract key expression from JSX
+                                    let key_expression = extract_key_from_jsx(&arrow.body);
+
+                                    self.component.loop_templates.push(LoopTemplate {
+                                        state_key,
+                                        item_var,
+                                        index_var,
+                                        key_expression: key_expression.unwrap_or_default(),
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Continue traversal
+        call.visit_mut_children_with(self);
+    }
+}
+
+/// StructuralExtractor - extracts conditional rendering patterns
+impl VisitMut for StructuralExtractor<'_> {
+    // Ternary conditional: condition ? <A /> : <B />
+    fn visit_mut_cond_expr(&mut self, cond: &mut CondExpr) {
+        // Check if consequent or alternate is JSX
+        let cons_is_jsx = is_jsx_expr(&cond.cons);
+        let alt_is_jsx = is_jsx_expr(&cond.alt);
+
+        if cons_is_jsx || alt_is_jsx {
+            let condition_binding = extract_binding_from_expr(&cond.test)
+                .unwrap_or_else(|| generate_expr_string(&cond.test));
+
+            self.component.structural_templates.push(StructuralTemplate {
+                template_type: "conditional".to_string(),
+                condition_binding,
+            });
+        }
+
+        // Continue traversal
+        cond.visit_mut_children_with(self);
+    }
+
+    // Logical AND: condition && <A />
+    fn visit_mut_bin_expr(&mut self, bin: &mut BinExpr) {
+        if bin.op == BinaryOp::LogicalAnd {
+            // Check if right side is JSX
+            if is_jsx_expr(&bin.right) {
+                let condition_binding = extract_binding_from_expr(&bin.left)
+                    .unwrap_or_else(|| generate_expr_string(&bin.left));
+
+                self.component.structural_templates.push(StructuralTemplate {
+                    template_type: "logical".to_string(),
+                    condition_binding,
+                });
+            }
+        }
+
+        // Continue traversal
+        bin.visit_mut_children_with(self);
+    }
+}
+
+/// ExpressionExtractor - extracts expression templates (method calls, binary ops, etc.)
+impl VisitMut for ExpressionExtractor<'_> {
+    fn visit_mut_jsx_expr_container(&mut self, container: &mut JSXExprContainer) {
+        if let JSXExpr::Expr(expr) = &container.expr {
+            match &**expr {
+                // Method call: price.toFixed(2)
+                Expr::Call(call) => {
+                    if let Callee::Expr(callee) = &call.callee {
+                        if let Expr::Member(member) = &**callee {
+                            if let MemberProp::Ident(method) = &member.prop {
+                                let method_name = method.sym.to_string();
+
+                                // Check if this is a supported transform
+                                if is_supported_transform(&method_name) {
+                                    let binding = extract_binding_from_expr(&member.obj)
+                                        .unwrap_or_default();
+                                    let state_key = binding.split('.').next()
+                                        .unwrap_or(&binding).to_string();
+
+                                    let args: Vec<String> = call.args.iter()
+                                        .filter_map(|arg| literal_to_string(&arg.expr))
+                                        .collect();
+
+                                    self.component.expression_templates.push(ExpressionTemplate {
+                                        template_type: "methodCall".to_string(),
+                                        state_key,
+                                        binding,
+                                        method: Some(method_name),
+                                        args,
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+                // Binary expression: count * 2 + 1
+                Expr::Bin(bin) => {
+                    let bindings = extract_all_bindings(expr);
+                    if !bindings.is_empty() {
+                        let state_key = bindings[0].split('.').next()
+                            .unwrap_or(&bindings[0]).to_string();
+
+                        self.component.expression_templates.push(ExpressionTemplate {
+                            template_type: "binaryExpression".to_string(),
+                            state_key,
+                            binding: bindings.join(", "),
+                            method: None,
+                            args: Vec::new(),
+                        });
+                    }
+                }
+                // Unary expression: -count
+                Expr::Unary(unary) => {
+                    if let Some(binding) = extract_binding_from_expr(&unary.arg) {
+                        let state_key = binding.split('.').next()
+                            .unwrap_or(&binding).to_string();
+
+                        self.component.expression_templates.push(ExpressionTemplate {
+                            template_type: "unaryExpression".to_string(),
+                            state_key,
+                            binding,
+                            method: None,
+                            args: vec![unary.op.to_string()],
+                        });
+                    }
+                }
+                // Member expression: items.length
+                Expr::Member(member) => {
+                    if let MemberProp::Ident(prop) = &member.prop {
+                        let prop_name = prop.sym.to_string();
+                        if is_supported_transform(&prop_name) {
+                            let binding = build_member_path(member);
+                            let state_key = binding.split('.').next()
+                                .unwrap_or(&binding).to_string();
+
+                            self.component.expression_templates.push(ExpressionTemplate {
+                                template_type: "memberExpression".to_string(),
+                                state_key,
+                                binding,
+                                method: Some(prop_name),
+                                args: Vec::new(),
+                            });
+                        }
+                    }
+                }
+                _ => {}
+            }
+        }
+    }
+}
+
+// =============================================================================
+// Helper Functions for Template Extraction
+// =============================================================================
+
+fn extract_bindings_from_expr(expr: &Expr) -> Vec<String> {
+    let mut bindings = Vec::new();
+    extract_all_bindings_inner(expr, &mut bindings);
+    bindings
+}
+
+fn extract_all_bindings_inner(expr: &Expr, bindings: &mut Vec<String>) {
+    match expr {
+        Expr::Ident(ident) => {
+            bindings.push(ident.sym.to_string());
+        }
+        Expr::Member(member) => {
+            let path = build_member_path(member);
+            bindings.push(path);
+        }
+        Expr::Bin(bin) => {
+            extract_all_bindings_inner(&bin.left, bindings);
+            extract_all_bindings_inner(&bin.right, bindings);
+        }
+        Expr::Unary(unary) => {
+            extract_all_bindings_inner(&unary.arg, bindings);
+        }
+        Expr::Cond(cond) => {
+            extract_all_bindings_inner(&cond.test, bindings);
+            extract_all_bindings_inner(&cond.cons, bindings);
+            extract_all_bindings_inner(&cond.alt, bindings);
+        }
+        Expr::Call(call) => {
+            if let Callee::Expr(callee) = &call.callee {
+                extract_all_bindings_inner(callee, bindings);
+            }
+        }
+        _ => {}
+    }
+}
+
+fn extract_all_bindings(expr: &Expr) -> Vec<String> {
+    let mut bindings = Vec::new();
+    extract_all_bindings_inner(expr, &mut bindings);
+    bindings
+}
+
+fn extract_binding_from_expr(expr: &Expr) -> Option<String> {
+    match expr {
+        Expr::Ident(ident) => Some(ident.sym.to_string()),
+        Expr::Member(member) => Some(build_member_path(member)),
+        _ => None,
+    }
+}
+
+fn build_member_path(member: &MemberExpr) -> String {
+    let mut parts = Vec::new();
+    let mut current: &Expr = &member.obj;
+
+    // Get property name
+    if let MemberProp::Ident(prop) = &member.prop {
+        parts.push(prop.sym.to_string());
+    }
+
+    // Walk up the member chain
+    while let Expr::Member(m) = current {
+        if let MemberProp::Ident(prop) = &m.prop {
+            parts.push(prop.sym.to_string());
+        }
+        current = &m.obj;
+    }
+
+    // Get root identifier
+    if let Expr::Ident(ident) = current {
+        parts.push(ident.sym.to_string());
+    }
+
+    parts.reverse();
+    parts.join(".")
+}
+
+fn generate_template_string(expr: &Expr) -> String {
+    // Generate a template string representation
+    match expr {
+        Expr::Ident(ident) => format!("${{{}}}", ident.sym),
+        Expr::Member(member) => format!("${{{}}}", build_member_path(member)),
+        Expr::Bin(bin) => {
+            let left = generate_template_string(&bin.left);
+            let right = generate_template_string(&bin.right);
+            format!("{} {} {}", left, bin.op, right)
+        }
+        _ => "?".to_string(),
+    }
+}
+
+fn generate_expr_string(expr: &Expr) -> String {
+    match expr {
+        Expr::Ident(ident) => ident.sym.to_string(),
+        Expr::Member(member) => build_member_path(member),
+        Expr::Unary(unary) => {
+            let arg = generate_expr_string(&unary.arg);
+            format!("{}{}", unary.op, arg)
+        }
+        Expr::Bin(bin) => {
+            let left = generate_expr_string(&bin.left);
+            let right = generate_expr_string(&bin.right);
+            format!("{} {} {}", left, bin.op, right)
+        }
+        _ => "?".to_string(),
+    }
+}
+
+fn is_jsx_expr(expr: &Expr) -> bool {
+    matches!(expr, Expr::JSXElement(_) | Expr::JSXFragment(_))
+}
+
+fn extract_key_from_jsx(body: &BlockStmtOrExpr) -> Option<String> {
+    // Look for key attribute in JSX element
+    match body {
+        BlockStmtOrExpr::Expr(expr) => {
+            if let Expr::JSXElement(jsx) = &**expr {
+                for attr in &jsx.opening.attrs {
+                    if let JSXAttrOrSpread::JSXAttr(jsx_attr) = attr {
+                        if let JSXAttrName::Ident(name) = &jsx_attr.name {
+                            if name.sym.to_string() == "key" {
+                                if let Some(JSXAttrValue::JSXExprContainer(container)) = &jsx_attr.value {
+                                    if let JSXExpr::Expr(expr) = &container.expr {
+                                        return Some(generate_expr_string(expr));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        _ => {}
+    }
+    None
+}
+
+fn is_supported_transform(name: &str) -> bool {
+    matches!(name,
+        "toFixed" | "toPrecision" | "toExponential" |
+        "toUpperCase" | "toLowerCase" | "trim" |
+        "substring" | "substr" | "slice" |
+        "length" | "join"
+    )
+}
+
+fn literal_to_string(expr: &Expr) -> Option<String> {
+    match expr {
+        Expr::Lit(lit) => match lit {
+            Lit::Str(s) => Some(s.value.to_string()),
+            Lit::Num(n) => Some(n.value.to_string()),
+            Lit::Bool(b) => Some(b.value.to_string()),
+            _ => None,
+        },
+        _ => None,
     }
 }
 
