@@ -25,21 +25,21 @@ impl FieldTypesTest {
     }
     
     pub fn extract_use_state(decl: &VariableDeclarator) {
-        if let Unknown::ArrayPattern(decl.id) = &decl.id {
+        if let Pat::Array(id) = &decl.id {
             let arr = decl.name.clone();
             if (arr.elems.len() > 0) {
                 let first_elem = &arr.elems[0];
                 if let Some(pat) = first_elem {
-                    if let Expr::Ident(pat) = &pat {
-                        let state_var = pat.sym.clone();
+                    if let Pat::Ident(pat) = &pat {
+                        let state_var = pat.id.sym.clone();
                     }
                 }
             }
             if (arr.elems.len() > 1) {
                 let second_elem = &arr.elems[1];
                 if let Some(pat) = second_elem {
-                    if let Expr::Ident(pat) = &pat {
-                        let setter_var = pat.sym.clone();
+                    if let Pat::Ident(pat) = &pat {
+                        let setter_var = pat.id.sym.clone();
                     }
                 }
             }
@@ -93,10 +93,10 @@ impl VisitMut for FieldTypesTest {
     fn visit_mut_variable_declarator(&mut self, n: &mut VariableDeclarator) {
         if let Some(init) = &n.init {
             if let Expr::Call(init) = &init {
-                if let Expr::Ident(init.callee) = &init.callee {
+                if let Callee::Expr(callee) = &init.callee {
                     let callee_name = { let __callee = &init.callee; match __callee { Callee::Expr(e) => match e.as_ref() { Expr::Ident(i) => i.sym.clone(), _ => "".into() }, _ => "".into() } }.clone();
                     if (callee_name == "useState") {
-                        if let Unknown::ArrayPattern(decl.id) = &decl.id {
+                        if let Pat::Array(id) = &decl.id {
                             let arr = n.name.clone();
                             if (arr.elems.len() > 0) {
                                 if let Some(pat) = &arr.elems[0] {

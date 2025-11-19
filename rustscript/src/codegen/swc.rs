@@ -531,12 +531,16 @@ impl SwcGenerator {
                 // Check for if-let pattern first
                 if let Some(pattern) = &if_stmt.pattern {
                     self.gen_if_let_stmt(if_stmt, pattern);
-                } else if let Some((var_name, type_name, field_path)) = self.extract_matches_pattern(&if_stmt.condition) {
+                } else if let Some((var_name, type_name, field_path, match_expr)) = self.extract_matches_pattern(&if_stmt.condition) {
                     // Check if condition is matches!(var, Type) or matches!(obj.field, Type)
                     // Look up the variable's type to determine the correct context
-                    let var_type = if field_path.is_some() {
-                        // For field access like decl.id, infer from the expression
-                        self.infer_type(&if_stmt.condition).swc_type.clone()
+                    // Extract the first argument to infer its type
+                    let var_type = if let Expr::Call(call) = &if_stmt.condition {
+                        if call.args.len() >= 1 {
+                            self.infer_type(&call.args[0]).swc_type.clone()
+                        } else {
+                            "Expr".to_string()
+                        }
                     } else {
                         self.type_env.lookup(&var_name)
                             .map(|ctx| ctx.swc_type.clone())
@@ -547,13 +551,13 @@ impl SwcGenerator {
                     let (swc_enum, swc_variant, swc_struct) = get_swc_variant_in_context(&type_name, &var_type);
                     #[cfg(debug_assertions)]
                     eprintln!("[swc] matches!({}, {}) -> var_type={}, enum={}, variant={}, struct={}",
-                        var_name, type_name, var_type, swc_enum, swc_variant, swc_struct);
+                        match_expr, type_name, var_type, swc_enum, swc_variant, swc_struct);
 
                     self.emit_indent();
                     // Handle nested patterns like Expr::Lit(Lit::Str(x))
                     let extra_close = if swc_variant.contains('(') { ")" } else { "" };
                     self.emit(&format!("if let {}::{}({}){} = &{} {{\n",
-                        swc_enum, swc_variant, var_name, extra_close, var_name));
+                        swc_enum, swc_variant, var_name, extra_close, match_expr));
 
                     self.indent += 1;
                     self.type_env.push_scope();
@@ -574,10 +578,15 @@ impl SwcGenerator {
 
                     // Handle else-if branches - each might also be a matches! pattern
                     for (cond, block) in &if_stmt.else_if_branches {
-                        if let Some((else_var_name, else_type_name, else_field_path)) = self.extract_matches_pattern(cond) {
+                        if let Some((else_var_name, else_type_name, else_field_path, else_match_expr)) = self.extract_matches_pattern(cond) {
                             // This else-if is also a matches! pattern
-                            let else_var_type = if else_field_path.is_some() {
-                                self.infer_type(cond).swc_type.clone()
+                            // Infer type from the first argument of matches!
+                            let else_var_type = if let Expr::Call(call) = cond {
+                                if call.args.len() >= 1 {
+                                    self.infer_type(&call.args[0]).swc_type.clone()
+                                } else {
+                                    "Expr".to_string()
+                                }
                             } else {
                                 self.type_env.lookup(&else_var_name)
                                     .map(|ctx| ctx.swc_type.clone())
@@ -589,13 +598,13 @@ impl SwcGenerator {
 
                             #[cfg(debug_assertions)]
                             eprintln!("[swc] else if matches!({}, {}) -> var_type={}, enum={}, variant={}, struct={}",
-                                else_var_name, else_type_name, else_var_type, else_swc_enum, else_swc_variant, else_swc_struct);
+                                else_match_expr, else_type_name, else_var_type, else_swc_enum, else_swc_variant, else_swc_struct);
 
                             self.emit_indent();
                             // Handle nested patterns like Expr::Lit(Lit::Str(x))
                             let else_extra_close = if else_swc_variant.contains('(') { ")" } else { "" };
                             self.emit(&format!("}} else if let {}::{}({}){} = &{} {{\n",
-                                else_swc_enum, else_swc_variant, else_var_name, else_extra_close, else_var_name));
+                                else_swc_enum, else_swc_variant, else_var_name, else_extra_close, else_match_expr));
 
                             self.indent += 1;
                             self.type_env.push_scope();
@@ -705,10 +714,15 @@ impl SwcGenerator {
             }
             Stmt::While(while_stmt) => {
                 // Check if condition is matches!(var, Type)
-                if let Some((var_name, type_name, field_path)) = self.extract_matches_pattern(&while_stmt.condition) {
+                if let Some((var_name, type_name, field_path, match_expr)) = self.extract_matches_pattern(&while_stmt.condition) {
                     // Look up the variable's type to determine the correct context
-                    let var_type = if field_path.is_some() {
-                        self.infer_type(&while_stmt.condition).swc_type.clone()
+                    // Infer type from the first argument of matches!
+                    let var_type = if let Expr::Call(call) = &while_stmt.condition {
+                        if call.args.len() >= 1 {
+                            self.infer_type(&call.args[0]).swc_type.clone()
+                        } else {
+                            "Expr".to_string()
+                        }
                     } else {
                         self.type_env.lookup(&var_name)
                             .map(|ctx| ctx.swc_type.clone())
@@ -720,7 +734,7 @@ impl SwcGenerator {
 
                     self.emit_indent();
                     self.emit(&format!("while let {}::{}({}) = {} {{\n",
-                        swc_enum, swc_variant, var_name, var_name));
+                        swc_enum, swc_variant, var_name, match_expr));
 
                     self.indent += 1;
                     self.type_env.push_scope();
@@ -995,20 +1009,26 @@ impl SwcGenerator {
     }
 
     /// Extract matches!(var, Type) pattern from an expression
-    /// Returns (variable_or_expr_name, type_name, optional_field_path) if found
-    /// field_path is Some("obj.field") for matches!(obj.field, Type)
-    fn extract_matches_pattern(&self, expr: &Expr) -> Option<(String, String, Option<String>)> {
+    /// Returns (var_name, type_name, field_path, match_expr) if found
+    /// - var_name: the binding variable name (just "id" for "decl.id")
+    /// - type_name: the type being matched against
+    /// - field_path: Some("decl.id") for field refinement, None for simple var
+    /// - match_expr: the full expression to match against ("decl.id" or "var")
+    fn extract_matches_pattern(&self, expr: &Expr) -> Option<(String, String, Option<String>, String)> {
         if let Expr::Call(call) = expr {
             if let Expr::Ident(ident) = call.callee.as_ref() {
                 if ident.name == "matches!" && call.args.len() == 2 {
                     // First arg can be variable or member expression
-                    let (var_name, field_path) = match &call.args[0] {
-                        Expr::Ident(id) => (id.name.clone(), None),
+                    let (var_name, field_path, match_expr) = match &call.args[0] {
+                        Expr::Ident(id) => (id.name.clone(), None, id.name.clone()),
                         Expr::Member(mem) => {
-                            // For obj.field, extract the full path
+                            // For obj.field, extract the full path for refinement
+                            // but use just the field name for the pattern binding
                             if let Expr::Ident(obj_id) = &*mem.object {
                                 let path = format!("{}.{}", obj_id.name, mem.property);
-                                (path.clone(), Some(path))
+                                let match_expr = format!("{}.{}", obj_id.name, mem.property);
+                                // Use the field name as the binding variable
+                                (mem.property.clone(), Some(path), match_expr)
                             } else {
                                 return None;
                             }
@@ -1023,7 +1043,7 @@ impl SwcGenerator {
                         return None;
                     };
 
-                    return Some((var_name, type_name, field_path));
+                    return Some((var_name, type_name, field_path, match_expr));
                 }
             }
         }
