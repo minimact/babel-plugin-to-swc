@@ -4,21 +4,21 @@
   "params": [
     {
       "name": "fullExpr",
-      "inferredType": "&Expr",
+      "inferredType": "&str",
       "defaultValue": null
     },
     {
       "name": "object",
-      "inferredType": "unknown",
+      "inferredType": "&str",
       "defaultValue": null
     },
     {
       "name": "property",
-      "inferredType": "unknown",
+      "inferredType": "&str",
       "defaultValue": null
     }
   ],
-  "inferredReturnType": "unknown",
+  "inferredReturnType": "String",
   "babel_source": "function transpileMemberExpression(fullExpr, object, property) {\r\n  // progress.report() → progress.Report()\r\n  if (object === 'progress' && property === '.report') {\r\n    return 'progress.Report';\r\n  }\r\n\r\n  // cancellationToken.requested → cancellationToken.IsCancellationRequested\r\n  if ((object === 'cancellationToken' || object === 'cancel') && property === '.requested') {\r\n    return 'cancellationToken.IsCancellationRequested';\r\n  }\r\n\r\n  return fullExpr;\r\n}",
   "body_templates": [
     {
@@ -34,7 +34,7 @@
           "property"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "if object == \"progress\" && property == \".report\" {\n    return \"progress.Report\".to_string();\n}"
     },
     {
       "hash": "2107954b",
@@ -49,7 +49,7 @@
           "property"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "object == \"progress\" && property == \".report\""
     },
     {
       "hash": "e428baf3",
@@ -64,7 +64,7 @@
           "property"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "object == \"progress\""
     },
     {
       "hash": "1be3e0a8",
@@ -79,7 +79,7 @@
           "property"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "property == \".report\""
     },
     {
       "hash": "e445f69c",
@@ -93,7 +93,7 @@
           "property"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "return \"progress.Report\".to_string();"
     },
     {
       "hash": "dda6ed3e",
@@ -108,7 +108,7 @@
           "property"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "if (object == \"cancellationToken\" || object == \"cancel\") && property == \".requested\" {\n    return \"cancellationToken.IsCancellationRequested\".to_string();\n}"
     },
     {
       "hash": "bab6a7c1",
@@ -123,7 +123,7 @@
           "property"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "(object == \"cancellationToken\" || object == \"cancel\") && property == \".requested\""
     },
     {
       "hash": "aef9f1b3",
@@ -138,7 +138,7 @@
           "property"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "object == \"cancellationToken\" || object == \"cancel\""
     },
     {
       "hash": "b9d2b80a",
@@ -153,7 +153,7 @@
           "property"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "object == \"cancellationToken\""
     },
     {
       "hash": "a6df8eb4",
@@ -168,7 +168,7 @@
           "property"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "object == \"cancel\""
     },
     {
       "hash": "1380408d",
@@ -183,7 +183,7 @@
           "property"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "property == \".requested\""
     },
     {
       "hash": "c54d9ad7",
@@ -197,7 +197,7 @@
           "property"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "return \"cancellationToken.IsCancellationRequested\".to_string();"
     },
     {
       "hash": "fe625a65",
@@ -211,10 +211,10 @@
           "property"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "full_expr.to_string()"
     }
   ],
-  "rust_translation": null,
+  "rust_translation": "pub fn transpile_member_expression(full_expr: &str, object: &str, property: &str) -> String {\n    // progress.report() → progress.Report()\n    if object == \"progress\" && property == \".report\" {\n        return \"progress.Report\".to_string();\n    }\n\n    // cancellationToken.requested → cancellationToken.IsCancellationRequested\n    if (object == \"cancellationToken\" || object == \"cancel\") && property == \".requested\" {\n        return \"cancellationToken.IsCancellationRequested\".to_string();\n    }\n\n    full_expr.to_string()\n}",
   "found_in": [
     "transpilers/typescriptToCSharp.cjs"
   ]

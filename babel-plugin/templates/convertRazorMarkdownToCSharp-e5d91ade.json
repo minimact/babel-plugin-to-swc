@@ -4,11 +4,11 @@
   "params": [
     {
       "name": "razorMarkdown",
-      "inferredType": "unknown",
+      "inferredType": "Option<&str>",
       "defaultValue": null
     }
   ],
-  "inferredReturnType": "unknown",
+  "inferredReturnType": "String",
   "babel_source": "function convertRazorMarkdownToCSharp(razorMarkdown) {\r\n  if (!razorMarkdown || typeof razorMarkdown !== 'string') {\r\n    return '$@\"\"';\r\n  }\r\n\r\n  let markdown = razorMarkdown;\r\n\r\n  // Step 1: Convert @if blocks (must come before variable references)\r\n  markdown = convertIfBlocks(markdown);\r\n\r\n  // Step 2: Convert @foreach blocks\r\n  markdown = convertForeachBlocks(markdown);\r\n\r\n  // Step 3: Convert @for blocks\r\n  markdown = convertForBlocks(markdown);\r\n\r\n  // Step 4: Convert @switch blocks\r\n  markdown = convertSwitchBlocks(markdown);\r\n\r\n  // Step 5: Convert @(expression)\r\n  markdown = convertInlineExpressions(markdown);\r\n\r\n  // Step 6: Convert @variableName (must come last)\r\n  markdown = convertVariableReferences(markdown);\r\n\r\n  // Step 7: Escape any remaining unescaped quotes\r\n  // Already handled by nested verbatim strings (@\"...\")\r\n\r\n  // Step 8: Wrap in $@\"...\"\r\n  return `$@\"${markdown}\"`;\r\n}",
   "body_templates": [
     {
@@ -22,7 +22,7 @@
           "razorMarkdown"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "let razor_markdown = match razor_markdown {\n    Some(s) => s,\n    None => return \"$@\\\"\\\"\".to_string(),\n};"
     },
     {
       "hash": "8689b9e6",
@@ -35,7 +35,7 @@
           "razorMarkdown"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "razor_markdown.is_none()"
     },
     {
       "hash": "1756a4ff",
@@ -48,7 +48,7 @@
           "razorMarkdown"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "razor_markdown.is_none()"
     },
     {
       "hash": "75c1fa69",
@@ -61,7 +61,7 @@
           "razorMarkdown"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "// In Rust, type is known at compile time - this check is implicit"
     },
     {
       "hash": "057f70e4",
@@ -74,7 +74,7 @@
           "razorMarkdown"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "// typeof not needed in Rust - types are static"
     },
     {
       "hash": "aed7e1bd",
@@ -86,7 +86,7 @@
           "razorMarkdown"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "return \"$@\\\"\\\"\".to_string();"
     },
     {
       "hash": "c25f44b7",
@@ -98,7 +98,7 @@
           "razorMarkdown"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "let mut markdown = razor_markdown.to_string();"
     },
     {
       "hash": "21ef6625",
@@ -111,7 +111,7 @@
           "razorMarkdown"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "markdown = convert_if_blocks(&markdown);"
     },
     {
       "hash": "375954fd",
@@ -124,7 +124,7 @@
           "razorMarkdown"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "markdown = convert_foreach_blocks(&markdown);"
     },
     {
       "hash": "c119a5ae",
@@ -137,7 +137,7 @@
           "razorMarkdown"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "markdown = convert_for_blocks(&markdown);"
     },
     {
       "hash": "8f16f990",
@@ -150,7 +150,7 @@
           "razorMarkdown"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "markdown = convert_switch_blocks(&markdown);"
     },
     {
       "hash": "75026e30",
@@ -163,7 +163,7 @@
           "razorMarkdown"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "markdown = convert_inline_expressions(&markdown);"
     },
     {
       "hash": "b79b6af9",
@@ -176,7 +176,7 @@
           "razorMarkdown"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "markdown = convert_variable_references(&markdown);"
     },
     {
       "hash": "6b81e370",
@@ -188,7 +188,7 @@
           "razorMarkdown"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "format!(\"$@\\\"{}\\\"\", markdown)"
     },
     {
       "hash": "7b95f295",
@@ -200,10 +200,10 @@
           "razorMarkdown"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "format!(\"$@\\\"{}\\\"\", markdown)"
     }
   ],
-  "rust_translation": null,
+  "rust_translation": "fn convert_razor_markdown_to_csharp(razor_markdown: Option<&str>) -> String {\n    let razor_markdown = match razor_markdown {\n        Some(s) => s,\n        None => return \"$@\\\"\\\"\".to_string(),\n    };\n\n    let mut markdown = razor_markdown.to_string();\n\n    // Step 1: Convert @if blocks (must come before variable references)\n    markdown = convert_if_blocks(&markdown);\n\n    // Step 2: Convert @foreach blocks\n    markdown = convert_foreach_blocks(&markdown);\n\n    // Step 3: Convert @for blocks\n    markdown = convert_for_blocks(&markdown);\n\n    // Step 4: Convert @switch blocks\n    markdown = convert_switch_blocks(&markdown);\n\n    // Step 5: Convert @(expression)\n    markdown = convert_inline_expressions(&markdown);\n\n    // Step 6: Convert @variableName (must come last)\n    markdown = convert_variable_references(&markdown);\n\n    // Step 8: Wrap in $@\"...\"\n    format!(\"$@\\\"{}\\\"\", markdown)\n}",
   "found_in": [
     "generators/razorMarkdown.cjs"
   ]
