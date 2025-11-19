@@ -8,7 +8,7 @@
       "defaultValue": null
     }
   ],
-  "inferredReturnType": "Option<T>",
+  "inferredReturnType": "String",
   "babel_source": "function extractBinaryExpressionBinding(expr) {\r\n  const identifiers = [];\r\n  extractIdentifiersShared(expr, identifiers);\r\n\r\n  // Use __expr__ prefix to indicate this is a computed expression\r\n  return `__expr__:${identifiers.join(',')}`;\r\n}",
   "body_templates": [
     {
@@ -21,7 +21,7 @@
           "expr"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "let mut identifiers: Vec<String> = Vec::new();"
     },
     {
       "hash": "4f53cda1",
@@ -33,7 +33,7 @@
           "expr"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "Vec::new()"
     },
     {
       "hash": "0ef2fb73",
@@ -45,7 +45,7 @@
           "expr"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "format!(\"__expr__:{}\", identifiers.join(\",\"))"
     },
     {
       "hash": "80700c94",
@@ -57,10 +57,10 @@
           "expr"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "format!(\"__expr__:{}\", identifiers.join(\",\"))"
     }
   ],
-  "rust_translation": null,
+  "rust_translation": "pub fn extract_binary_expression_binding(expr: &Expr) -> String {\n    let mut identifiers: Vec<String> = Vec::new();\n    extract_identifiers_shared(expr, &mut identifiers);\n    \n    // Use __expr__ prefix to indicate this is a computed expression\n    format!(\"__expr__:{}\", identifiers.join(\",\"))\n}",
   "found_in": [
     "extractors/templates.cjs"
   ]

@@ -8,7 +8,7 @@
       "defaultValue": null
     }
   ],
-  "inferredReturnType": "unknown",
+  "inferredReturnType": "String",
   "babel_source": "function escapeString(str) {\r\n  return str\r\n    .replace(/\\\\/g, '\\\\\\\\')\r\n    .replace(/\"/g, '\\\\\"')\r\n    .replace(/\\n/g, '\\\\n')\r\n    .replace(/\\r/g, '\\\\r')\r\n    .replace(/\\t/g, '\\\\t');\r\n}",
   "body_templates": [
     {
@@ -21,7 +21,7 @@
           "str"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "str.replace(\"\\\\\", \"\\\\\\\\\").replace(\"\\\"\", \"\\\\\\\"\").replace(\"\\n\", \"\\\\n\").replace(\"\\r\", \"\\\\r\").replace(\"\\t\", \"\\\\t\")"
     },
     {
       "hash": "7de23ca2",
@@ -35,7 +35,7 @@
           "str"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "\"\\\\\""
     },
     {
       "hash": "ab9aeb8a",
@@ -49,7 +49,7 @@
           "str"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "\"\\\"\""
     },
     {
       "hash": "5ddaeb03",
@@ -63,7 +63,7 @@
           "str"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "\"\\n\""
     },
     {
       "hash": "549672df",
@@ -77,7 +77,7 @@
           "str"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "\"\\r\""
     },
     {
       "hash": "55487d66",
@@ -91,10 +91,10 @@
           "str"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "\"\\t\""
     }
   ],
-  "rust_translation": null,
+  "rust_translation": "pub fn escape_string(str: &str) -> String {\n    str.replace(\"\\\\\", \"\\\\\\\\\").replace(\"\\\"\", \"\\\\\\\"\").replace(\"\\n\", \"\\\\n\").replace(\"\\r\", \"\\\\r\").replace(\"\\t\", \"\\\\t\")\n}",
   "found_in": [
     "transpilers/typescriptToCSharp.cjs",
     "transpilers/typescriptToRust.cjs"

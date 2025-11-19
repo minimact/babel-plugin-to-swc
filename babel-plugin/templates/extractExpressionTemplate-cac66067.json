@@ -9,16 +9,16 @@
     },
     {
       "name": "component",
-      "inferredType": "unknown",
+      "inferredType": "&mut Component",
       "defaultValue": null
     },
     {
       "name": "path",
-      "inferredType": "&Path",
+      "inferredType": "&str",
       "defaultValue": null
     }
   ],
-  "inferredReturnType": "Option<T>",
+  "inferredReturnType": "Option<ExpressionTemplate>",
   "babel_source": "function extractExpressionTemplate(expr, component, path) {\r\n    // Skip if it's a simple identifier (no transformation)\r\n    if (t.isIdentifier(expr)) {\r\n      return null;\r\n    }\r\n\r\n    // Skip conditionals (handled by structural templates)\r\n    if (t.isConditionalExpression(expr) || t.isLogicalExpression(expr)) {\r\n      return null;\r\n    }\r\n\r\n    // Method call: price.toFixed(2)\r\n    if (t.isCallExpression(expr) && t.isMemberExpression(expr.callee)) {\r\n      return extractMethodCallTemplate(expr, component, path);\r\n    }\r\n\r\n    // Binary expression: count * 2 + 1\r\n    if (t.isBinaryExpression(expr)) {\r\n      return extractBinaryExpressionTemplate(expr, component, path);\r\n    }\r\n\r\n    // Member expression: user.name, items.length\r\n    if (t.isMemberExpression(expr)) {\r\n      return extractMemberExpressionTemplate(expr, component, path);\r\n    }\r\n\r\n    // Unary expression: -count, +value\r\n    if (t.isUnaryExpression(expr)) {\r\n      return extractUnaryExpressionTemplate(expr, component, path);\r\n    }\r\n\r\n    return null;\r\n  }",
   "body_templates": [
     {
@@ -34,7 +34,7 @@
           "path"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "if matches!(expr, Expr::Ident(_)) {\n    return None;\n}"
     },
     {
       "hash": "42d26fd4",
@@ -49,7 +49,7 @@
           "path"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(expr, Expr::Ident(_))"
     },
     {
       "hash": "4ad2292c",
@@ -63,7 +63,7 @@
           "path"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "return None;"
     },
     {
       "hash": "caea504b",
@@ -78,7 +78,7 @@
           "path"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "if matches!(expr, Expr::Cond(_) | Expr::Bin(BinExpr { op: BinaryOp::LogicalAnd | BinaryOp::LogicalOr, .. })) {\n    return None;\n}"
     },
     {
       "hash": "1a0e00de",
@@ -93,7 +93,7 @@
           "path"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(expr, Expr::Cond(_)) || matches!(expr, Expr::Bin(BinExpr { op: BinaryOp::LogicalAnd | BinaryOp::LogicalOr, .. }))"
     },
     {
       "hash": "5574ecc1",
@@ -108,7 +108,7 @@
           "path"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(expr, Expr::Cond(_))"
     },
     {
       "hash": "c20dd732",
@@ -123,21 +123,7 @@
           "path"
         ]
       },
-      "rust_translation": null
-    },
-    {
-      "hash": "4ad2292c",
-      "type": "ReturnStatement",
-      "babel_source": "return null;",
-      "parentContext": {
-        "functionName": "extractExpressionTemplate",
-        "functionParams": [
-          "expr",
-          "component",
-          "path"
-        ]
-      },
-      "rust_translation": null
+      "rust_translation": "matches!(expr, Expr::Bin(BinExpr { op: BinaryOp::LogicalAnd | BinaryOp::LogicalOr, .. }))"
     },
     {
       "hash": "579174d2",
@@ -152,7 +138,7 @@
           "path"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "if let Expr::Call(call_expr) = expr {\n    if let Callee::Expr(callee) = &call_expr.callee {\n        if matches!(**callee, Expr::Member(_)) {\n            return extract_method_call_template(call_expr, component, path);\n        }\n    }\n}"
     },
     {
       "hash": "c2656421",
@@ -167,7 +153,7 @@
           "path"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(expr, Expr::Call(c) if matches!(&c.callee, Callee::Expr(e) if matches!(**e, Expr::Member(_))))"
     },
     {
       "hash": "46479f62",
@@ -182,7 +168,7 @@
           "path"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(expr, Expr::Call(_))"
     },
     {
       "hash": "d6c41024",
@@ -197,7 +183,7 @@
           "path"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(callee, Expr::Member(_))"
     },
     {
       "hash": "b63d78da",
@@ -211,7 +197,7 @@
           "path"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "return extract_method_call_template(call_expr, component, path);"
     },
     {
       "hash": "8118ee5e",
@@ -226,7 +212,7 @@
           "path"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "if let Expr::Bin(bin_expr) = expr {\n    return extract_binary_expression_template(bin_expr, component, path);\n}"
     },
     {
       "hash": "8db0ee56",
@@ -241,7 +227,7 @@
           "path"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(expr, Expr::Bin(_))"
     },
     {
       "hash": "9d23400b",
@@ -255,7 +241,7 @@
           "path"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "return extract_binary_expression_template(bin_expr, component, path);"
     },
     {
       "hash": "79b73aa9",
@@ -270,7 +256,7 @@
           "path"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "if let Expr::Member(member_expr) = expr {\n    return extract_member_expression_template(member_expr, component, path);\n}"
     },
     {
       "hash": "c8858c63",
@@ -285,7 +271,7 @@
           "path"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(expr, Expr::Member(_))"
     },
     {
       "hash": "06a46a2d",
@@ -299,7 +285,7 @@
           "path"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "return extract_member_expression_template(member_expr, component, path);"
     },
     {
       "hash": "dc70bfa3",
@@ -314,7 +300,7 @@
           "path"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "if let Expr::Unary(unary_expr) = expr {\n    return extract_unary_expression_template(unary_expr, component, path);\n}"
     },
     {
       "hash": "4b2e045a",
@@ -329,7 +315,7 @@
           "path"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(expr, Expr::Unary(_))"
     },
     {
       "hash": "874beb04",
@@ -343,24 +329,10 @@
           "path"
         ]
       },
-      "rust_translation": null
-    },
-    {
-      "hash": "4ad2292c",
-      "type": "ReturnStatement",
-      "babel_source": "return null;",
-      "parentContext": {
-        "functionName": "extractExpressionTemplate",
-        "functionParams": [
-          "expr",
-          "component",
-          "path"
-        ]
-      },
-      "rust_translation": null
+      "rust_translation": "return extract_unary_expression_template(unary_expr, component, path);"
     }
   ],
-  "rust_translation": null,
+  "rust_translation": "fn extract_expression_template(expr: &Expr, component: &mut Component, path: &str) -> Option<ExpressionTemplate> {\n    // Skip if it's a simple identifier (no transformation)\n    if matches!(expr, Expr::Ident(_)) {\n        return None;\n    }\n\n    // Skip conditionals (handled by structural templates)\n    if matches!(expr, Expr::Cond(_) | Expr::Bin(BinExpr { op: BinaryOp::LogicalAnd | BinaryOp::LogicalOr, .. })) {\n        return None;\n    }\n\n    // Method call: price.toFixed(2)\n    if let Expr::Call(call_expr) = expr {\n        if let Callee::Expr(callee) = &call_expr.callee {\n            if matches!(**callee, Expr::Member(_)) {\n                return extract_method_call_template(call_expr, component, path);\n            }\n        }\n    }\n\n    // Binary expression: count * 2 + 1\n    if let Expr::Bin(bin_expr) = expr {\n        return extract_binary_expression_template(bin_expr, component, path);\n    }\n\n    // Member expression: user.name, items.length\n    if let Expr::Member(member_expr) = expr {\n        return extract_member_expression_template(member_expr, component, path);\n    }\n\n    // Unary expression: -count, +value\n    if let Expr::Unary(unary_expr) = expr {\n        return extract_unary_expression_template(unary_expr, component, path);\n    }\n\n    None\n}",
   "found_in": [
     "extractors/expressionTemplates.cjs"
   ]

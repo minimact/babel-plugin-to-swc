@@ -9,12 +9,12 @@
     },
     {
       "name": "index",
-      "inferredType": "unknown",
+      "inferredType": "usize",
       "defaultValue": null
     },
     {
       "name": "parentPath",
-      "inferredType": "&Path",
+      "inferredType": "&[usize]",
       "defaultValue": null
     }
   ],
@@ -33,7 +33,7 @@
           "parentPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "let mut parent_keys: Vec<String> = Vec::new();"
     },
     {
       "hash": "4f53cda1",
@@ -47,7 +47,7 @@
           "parentPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "Vec::new()"
     },
     {
       "hash": "4ed88e99",
@@ -61,7 +61,7 @@
           "parentPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "let current_path = parent_path;"
     },
     {
       "hash": "bd8dbe75",
@@ -75,7 +75,7 @@
           "parentPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "for i in 0..current_path.len() {\n    parent_keys.push(format!(\"[{}]\", current_path[i]));\n}"
     },
     {
       "hash": "ecb911a1",
@@ -89,7 +89,7 @@
           "parentPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "// Part of for loop: for i in 0.."
     },
     {
       "hash": "e8ebefd1",
@@ -104,7 +104,7 @@
           "parentPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "i < current_path.len()"
     },
     {
       "hash": "e8dee0e1",
@@ -120,7 +120,7 @@
           "parentPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "// Implicit in Rust for loop"
     },
     {
       "hash": "cff87f7e",
@@ -134,7 +134,7 @@
           "parentPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "format!(\"[{}]\", current_path[i])"
     },
     {
       "hash": "398bb6f9",
@@ -148,7 +148,7 @@
           "parentPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "let result = format!(\"{}.{}[{}]\", parent_keys.join(\".\"), tag_name, index);\nresult.trim_start_matches('.').to_string()"
     },
     {
       "hash": "d6a0ed0a",
@@ -162,7 +162,7 @@
           "parentPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "format!(\"{}.{}[{}]\", parent_keys.join(\".\"), tag_name, index)"
     },
     {
       "hash": "f51f176e",
@@ -178,10 +178,10 @@
           "parentPath"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "// Use trim_start_matches('.') instead of regex"
     }
   ],
-  "rust_translation": null,
+  "rust_translation": "pub fn build_path_key(tag_name: &str, index: usize, parent_path: &[usize]) -> String {\n    let mut parent_keys: Vec<String> = Vec::new();\n    \n    // Build parent path from indices\n    for i in 0..parent_path.len() {\n        parent_keys.push(format!(\"[{}]\", parent_path[i]));\n    }\n    \n    let result = format!(\"{}.{}[{}]\", parent_keys.join(\".\"), tag_name, index);\n    result.trim_start_matches('.').to_string()\n}",
   "found_in": [
     "extractors/templates.cjs"
   ]

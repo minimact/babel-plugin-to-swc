@@ -4,11 +4,11 @@
   "params": [
     {
       "name": "pluginUsages",
-      "inferredType": "unknown",
+      "inferredType": "&[PluginUsage]",
       "defaultValue": null
     }
   ],
-  "inferredReturnType": "unknown",
+  "inferredReturnType": "Result<(), String>",
   "babel_source": "function validatePluginUsage(pluginUsages) {\r\n  for (const plugin of pluginUsages) {\r\n    // Validate plugin name format\r\n    if (!/^[A-Za-z][A-Za-z0-9]*$/.test(plugin.pluginName)) {\r\n      throw new Error(\r\n        `Invalid plugin name \"${plugin.pluginName}\". ` +\r\n        `Plugin names must start with a letter and contain only letters and numbers.`\r\n      );\r\n    }\r\n\r\n    // Validate state binding\r\n    if (plugin.stateBinding.binding === '__complex__') {\r\n      console.warn(\r\n        `[analyzePluginUsage] Complex expression used for plugin \"${plugin.pluginName}\" state. ` +\r\n        `This will be evaluated at runtime.`\r\n      );\r\n    }\r\n\r\n    // Validate version format if provided\r\n    if (plugin.version && !/^\\d+\\.\\d+\\.\\d+$/.test(plugin.version)) {\r\n      console.warn(\r\n        `[analyzePluginUsage] Invalid semver format for plugin \"${plugin.pluginName}\": ${plugin.version}`\r\n      );\r\n    }\r\n  }\r\n}",
   "body_templates": [
     {
@@ -21,7 +21,7 @@
           "pluginUsages"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "for plugin in plugin_usages {"
     },
     {
       "hash": "2f813a80",
@@ -33,7 +33,7 @@
           "pluginUsages"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "plugin"
     },
     {
       "hash": "c08256dc",
@@ -46,7 +46,7 @@
           "pluginUsages"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "let name_re = Regex::new(r\"^[A-Za-z][A-Za-z0-9]*$\").unwrap();\nif !name_re.is_match(&plugin.plugin_name) {\n    return Err(format!(\n        \"Invalid plugin name \\\"{}\\\". Plugin names must start with a letter and contain only letters and numbers.\",\n        plugin.plugin_name\n    ));\n}"
     },
     {
       "hash": "d7901bb9",
@@ -59,7 +59,7 @@
           "pluginUsages"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "!name_re.is_match(&plugin.plugin_name)"
     },
     {
       "hash": "077836a8",
@@ -73,7 +73,7 @@
           "pluginUsages"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "Regex::new(r\"^[A-Za-z][A-Za-z0-9]*$\").unwrap()"
     },
     {
       "hash": "f63d83f9",
@@ -85,7 +85,7 @@
           "pluginUsages"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "return Err(format!(\n    \"Invalid plugin name \\\"{}\\\". Plugin names must start with a letter and contain only letters and numbers.\",\n    plugin.plugin_name\n));"
     },
     {
       "hash": "fbce8b50",
@@ -97,7 +97,7 @@
           "pluginUsages"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "format!(\n    \"Invalid plugin name \\\"{}\\\". Plugin names must start with a letter and contain only letters and numbers.\",\n    plugin.plugin_name\n)"
     },
     {
       "hash": "0915caa2",
@@ -110,7 +110,7 @@
           "pluginUsages"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "format!(\"Invalid plugin name \\\"{}\\\". Plugin names must start with a letter and contain only letters and numbers.\", plugin.plugin_name)"
     },
     {
       "hash": "a71aad44",
@@ -122,7 +122,7 @@
           "pluginUsages"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "format!(\"Invalid plugin name \\\"{}\\\". \", plugin.plugin_name)"
     },
     {
       "hash": "02867150",
@@ -134,7 +134,7 @@
           "pluginUsages"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "\"Plugin names must start with a letter and contain only letters and numbers.\""
     },
     {
       "hash": "c3eff5e0",
@@ -147,7 +147,7 @@
           "pluginUsages"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "if plugin.state_binding.binding == \"__complex__\" {\n    eprintln!(\n        \"[analyzePluginUsage] Complex expression used for plugin \\\"{}\\\" state. This will be evaluated at runtime.\",\n        plugin.plugin_name\n    );\n}"
     },
     {
       "hash": "8e11b8f2",
@@ -160,7 +160,7 @@
           "pluginUsages"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "plugin.state_binding.binding == \"__complex__\""
     },
     {
       "hash": "bd2ea97b",
@@ -173,7 +173,7 @@
           "pluginUsages"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "format!(\"[analyzePluginUsage] Complex expression used for plugin \\\"{}\\\" state. This will be evaluated at runtime.\", plugin.plugin_name)"
     },
     {
       "hash": "6c577d9d",
@@ -185,7 +185,7 @@
           "pluginUsages"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "format!(\"[analyzePluginUsage] Complex expression used for plugin \\\"{}\\\" state. \", plugin.plugin_name)"
     },
     {
       "hash": "6522293a",
@@ -197,7 +197,7 @@
           "pluginUsages"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "\"This will be evaluated at runtime.\""
     },
     {
       "hash": "9fadc147",
@@ -210,7 +210,7 @@
           "pluginUsages"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "if let Some(version) = &plugin.version {\n    let semver_re = Regex::new(r\"^\\d+\\.\\d+\\.\\d+$\").unwrap();\n    if !semver_re.is_match(version) {\n        eprintln!(\n            \"[analyzePluginUsage] Invalid semver format for plugin \\\"{}\\\": {}\",\n            plugin.plugin_name, version\n        );\n    }\n}"
     },
     {
       "hash": "f2c0f91a",
@@ -223,7 +223,7 @@
           "pluginUsages"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "plugin.version.is_some() && !semver_re.is_match(plugin.version.as_ref().unwrap())"
     },
     {
       "hash": "724ec58f",
@@ -236,7 +236,7 @@
           "pluginUsages"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "!semver_re.is_match(version)"
     },
     {
       "hash": "0dc72720",
@@ -250,7 +250,7 @@
           "pluginUsages"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "Regex::new(r\"^\\d+\\.\\d+\\.\\d+$\").unwrap()"
     },
     {
       "hash": "0ced582d",
@@ -262,10 +262,10 @@
           "pluginUsages"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "format!(\"[analyzePluginUsage] Invalid semver format for plugin \\\"{}\\\": {}\", plugin.plugin_name, version)"
     }
   ],
-  "rust_translation": null,
+  "rust_translation": "pub fn validate_plugin_usage(plugin_usages: &[PluginUsage]) -> Result<(), String> {\n    let name_re = Regex::new(r\"^[A-Za-z][A-Za-z0-9]*$\").unwrap();\n    let semver_re = Regex::new(r\"^\\d+\\.\\d+\\.\\d+$\").unwrap();\n\n    for plugin in plugin_usages {\n        // Validate plugin name format\n        if !name_re.is_match(&plugin.plugin_name) {\n            return Err(format!(\n                \"Invalid plugin name \\\"{}\\\". Plugin names must start with a letter and contain only letters and numbers.\",\n                plugin.plugin_name\n            ));\n        }\n\n        // Validate state binding\n        if plugin.state_binding.binding == \"__complex__\" {\n            eprintln!(\n                \"[analyzePluginUsage] Complex expression used for plugin \\\"{}\\\" state. This will be evaluated at runtime.\",\n                plugin.plugin_name\n            );\n        }\n\n        // Validate version format if provided\n        if let Some(version) = &plugin.version {\n            if !semver_re.is_match(version) {\n                eprintln!(\n                    \"[analyzePluginUsage] Invalid semver format for plugin \\\"{}\\\": {}\",\n                    plugin.plugin_name, version\n                );\n            }\n        }\n    }\n\n    Ok(())\n}",
   "found_in": [
     "analyzers/analyzePluginUsage.cjs"
   ]

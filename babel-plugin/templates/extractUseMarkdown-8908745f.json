@@ -4,16 +4,16 @@
   "params": [
     {
       "name": "path",
-      "inferredType": "&Path",
+      "inferredType": "visitor_method",
       "defaultValue": null
     },
     {
       "name": "component",
-      "inferredType": "unknown",
+      "inferredType": "&mut Component",
       "defaultValue": null
     }
   ],
-  "inferredReturnType": "Option<T>",
+  "inferredReturnType": "()",
   "babel_source": "function extractUseMarkdown(path, component) {\r\n  const parent = path.parent;\r\n\r\n  if (!t.isVariableDeclarator(parent)) return;\r\n  if (!t.isArrayPattern(parent.id)) return;\r\n\r\n  const [contentVar, setterVar] = parent.id.elements;\r\n  const initialValue = path.node.arguments[0];\r\n\r\n  component.useMarkdown.push({\r\n    name: contentVar.name,\r\n    setter: setterVar.name,\r\n    initialValue: generateCSharpExpression(initialValue)\r\n  });\r\n\r\n  // Track as markdown state type\r\n  component.stateTypes.set(contentVar.name, 'markdown');\r\n}",
   "body_templates": [
     {
@@ -27,7 +27,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "let parent = self.get_parent();"
     },
     {
       "hash": "1cfe78c4",
@@ -41,7 +41,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "let parent = match self.get_parent() {\n    Some(ParentContext::VarDeclarator(_)) => self.get_parent().unwrap(),\n    _ => return,\n};"
     },
     {
       "hash": "dc772752",
@@ -55,7 +55,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "!matches!(parent, ParentContext::VarDeclarator(_))"
     },
     {
       "hash": "27a39ea7",
@@ -69,7 +69,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(parent, ParentContext::VarDeclarator(_))"
     },
     {
       "hash": "8beaabe2",
@@ -82,7 +82,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "return;"
     },
     {
       "hash": "a5d71bd4",
@@ -96,7 +96,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "// Check if VarDeclarator has ArrayPattern - requires access to actual VarDeclarator node\n// This would be handled in the visitor when visiting VarDeclarator"
     },
     {
       "hash": "8b6a1332",
@@ -110,7 +110,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "!matches!(var_decl.name, Pat::Array(_))"
     },
     {
       "hash": "ac18b505",
@@ -124,20 +124,7 @@
           "component"
         ]
       },
-      "rust_translation": null
-    },
-    {
-      "hash": "8beaabe2",
-      "type": "ReturnStatement",
-      "babel_source": "return;",
-      "parentContext": {
-        "functionName": "extractUseMarkdown",
-        "functionParams": [
-          "path",
-          "component"
-        ]
-      },
-      "rust_translation": null
+      "rust_translation": "matches!(var_decl.name, Pat::Array(_))"
     },
     {
       "hash": "83a37b64",
@@ -150,7 +137,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "if let Pat::Array(arr_pat) = &var_decl.name {\n    let content_var = arr_pat.elems.get(0).and_then(|e| e.as_ref()).and_then(|p| {\n        if let Pat::Ident(id) = p { Some(id.id.sym.to_string()) } else { None }\n    });\n    let setter_var = arr_pat.elems.get(1).and_then(|e| e.as_ref()).and_then(|p| {\n        if let Pat::Ident(id) = p { Some(id.id.sym.to_string()) } else { None }\n    });\n}"
     },
     {
       "hash": "32d467fb",
@@ -163,7 +150,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "let initial_value = call_expr.args.get(0).map(|arg| &*arg.expr);"
     },
     {
       "hash": "d05f0fa8",
@@ -176,10 +163,10 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "UseMarkdown {\n    name: content_var.unwrap_or_default(),\n    setter: setter_var.unwrap_or_default(),\n    initial_value: generate_csharp_expression(initial_value),\n}"
     }
   ],
-  "rust_translation": null,
+  "rust_translation": "fn extract_use_markdown(&mut self, call_expr: &CallExpr, var_decl: &VarDeclarator) {\n    // Check if parent is VarDeclarator with ArrayPattern\n    let (content_var, setter_var) = match &var_decl.name {\n        Pat::Array(arr_pat) => {\n            let content = arr_pat.elems.get(0)\n                .and_then(|e| e.as_ref())\n                .and_then(|p| if let Pat::Ident(id) = p { Some(id.id.sym.to_string()) } else { None });\n            let setter = arr_pat.elems.get(1)\n                .and_then(|e| e.as_ref())\n                .and_then(|p| if let Pat::Ident(id) = p { Some(id.id.sym.to_string()) } else { None });\n            (content, setter)\n        }\n        _ => return,\n    };\n\n    let initial_value = call_expr.args.get(0).map(|arg| &*arg.expr);\n\n    if let Some(component) = &mut self.current_component {\n        component.use_markdown.push(UseMarkdown {\n            name: content_var.unwrap_or_default(),\n            setter: setter_var.unwrap_or_default(),\n            initial_value: self.generate_csharp_expression(initial_value),\n        });\n\n        // Track as markdown state type\n        if let Some(name) = content_var {\n            component.state_types.insert(name, \"markdown\".to_string());\n        }\n    }\n}",
   "found_in": [
     "extractors/hooks.cjs"
   ]

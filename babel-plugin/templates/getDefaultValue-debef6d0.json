@@ -4,11 +4,11 @@
   "params": [
     {
       "name": "csharpType",
-      "inferredType": "&TsType",
+      "inferredType": "&str",
       "defaultValue": null
     }
   ],
-  "inferredReturnType": "Option<T>",
+  "inferredReturnType": "&'static str",
   "babel_source": "function getDefaultValue(csharpType) {\r\n  const defaults = {\r\n    'int': '0',\r\n    'bool': 'false',\r\n    'string': '\"\"',\r\n    'dynamic': 'null',\r\n    'object': 'null'\r\n  };\r\n\r\n  // Handle List types\r\n  if (csharpType.startsWith('List<')) {\r\n    return `new ${csharpType}()`;\r\n  }\r\n\r\n  return defaults[csharpType] || 'null';\r\n}",
   "body_templates": [
     {
@@ -21,7 +21,7 @@
           "csharpType"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "// Handled inline with match expression"
     },
     {
       "hash": "e2d7de99",
@@ -33,7 +33,7 @@
           "csharpType"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "match csharp_type {\n    \"int\" => \"0\",\n    \"bool\" => \"false\",\n    \"string\" => \"\\\"\\\"\",\n    \"dynamic\" => \"null\",\n    \"object\" => \"null\",\n    _ => \"null\"\n}"
     },
     {
       "hash": "f978a3ad",
@@ -46,7 +46,7 @@
           "csharpType"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "if csharp_type.starts_with(\"List<\") {\n    return format!(\"new {}()\", csharp_type);\n}"
     },
     {
       "hash": "92fd42af",
@@ -58,7 +58,7 @@
           "csharpType"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "return format!(\"new {}()\", csharp_type);"
     },
     {
       "hash": "a78a2fce",
@@ -70,7 +70,7 @@
           "csharpType"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "format!(\"new {}()\", csharp_type)"
     },
     {
       "hash": "46ac6921",
@@ -82,7 +82,7 @@
           "csharpType"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "match csharp_type {\n    \"int\" => \"0\",\n    \"bool\" => \"false\",\n    \"string\" => \"\\\"\\\"\",\n    \"dynamic\" | \"object\" => \"null\",\n    _ => \"null\"\n}"
     },
     {
       "hash": "fb43c810",
@@ -95,10 +95,10 @@
           "csharpType"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "defaults.get(csharp_type).unwrap_or(\"null\")"
     }
   ],
-  "rust_translation": null,
+  "rust_translation": "pub fn get_default_value(csharp_type: &str) -> String {\n    // Handle List types\n    if csharp_type.starts_with(\"List<\") {\n        return format!(\"new {}()\", csharp_type);\n    }\n\n    match csharp_type {\n        \"int\" => \"0\".to_string(),\n        \"bool\" => \"false\".to_string(),\n        \"string\" => \"\\\"\\\"\".to_string(),\n        \"dynamic\" | \"object\" => \"null\".to_string(),\n        _ => \"null\".to_string()\n    }\n}",
   "found_in": [
     "generators/hookClassGenerator.cjs"
   ]

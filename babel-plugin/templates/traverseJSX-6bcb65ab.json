@@ -4,16 +4,16 @@
   "params": [
     {
       "name": "node",
-      "inferredType": "&Node",
+      "inferredType": "&JSXElement",
       "defaultValue": null
     },
     {
       "name": "path",
-      "inferredType": "&Path",
-      "defaultValue": "[]"
+      "inferredType": "Vec<usize>",
+      "defaultValue": "vec![]"
     }
   ],
-  "inferredReturnType": "unknown",
+  "inferredReturnType": "Vec<ExpressionTemplate>",
   "babel_source": "function traverseJSX(node, path = []) {\r\n    if (t.isJSXElement(node)) {\r\n      // Check children for expressions\r\n      for (let i = 0; i < node.children.length; i++) {\r\n        const child = node.children[i];\r\n\r\n        if (t.isJSXExpressionContainer(child)) {\r\n          const template = extractExpressionTemplate(child.expression, component, [...path, i]);\r\n          if (template) {\r\n            expressionTemplates.push(template);\r\n          }\r\n        } else if (t.isJSXElement(child)) {\r\n          traverseJSX(child, [...path, i]);\r\n        }\r\n      }\r\n\r\n      // Check attributes for expressions\r\n      for (const attr of node.openingElement.attributes) {\r\n        if (t.isJSXAttribute(attr) && t.isJSXExpressionContainer(attr.value)) {\r\n          const template = extractExpressionTemplate(attr.value.expression, component, path);\r\n          if (template) {\r\n            template.attribute = attr.name.name;\r\n            expressionTemplates.push(template);\r\n          }\r\n        }\r\n      }\r\n    }\r\n  }",
   "body_templates": [
     {
@@ -22,26 +22,20 @@
       "babel_source": "[]",
       "parentContext": {
         "functionName": "traverseJSX",
-        "functionParams": [
-          "node",
-          "path"
-        ]
+        "functionParams": ["node", "path"]
       },
-      "rust_translation": null
+      "rust_translation": "vec![]"
     },
     {
       "hash": "c6644532",
       "type": "IfStatement",
       "condition": "t.isJSXElement(node)",
-      "babel_source": "if (t.isJSXElement(node)) {\r\n      // Check children for expressions\r\n      for (let i = 0; i < node.children.length; i++) {\r\n        const child = node.children[i];\r\n\r\n        if (t.isJSXExpressionContainer(child)) {\r\n          const template = extractExpressionTemplate(child.expression, component, [...path, i]);\r\n          if (template) {\r\n            expressionTemplates.push(template);\r\n          }\r\n        } else if (t.isJSXElement(child)) {\r\n          traverseJSX(child, [...path, i]);\r\n        }\r\n      }\r\n\r\n      // Check attributes for expressions\r\n      for (const attr of node.openingElement.attributes) {\r\n        if (t.isJSXAttribute(attr) && t.isJSXExpressionContainer(attr.value)) {\r\n          const template = extractExpressionTemplate(attr.value.expression, component, path);\r\n          if (template) {\r\n            template.attribute = attr.name.name;\r\n            expressionTemplates.push(template);\r\n          }\r\n        }\r\n      }\r\n    }",
+      "babel_source": "if (t.isJSXElement(node)) { ... }",
       "parentContext": {
         "functionName": "traverseJSX",
-        "functionParams": [
-          "node",
-          "path"
-        ]
+        "functionParams": ["node", "path"]
       },
-      "rust_translation": null
+      "rust_translation": "// Already a JSXElement, no need to check"
     },
     {
       "hash": "606ccdc5",
@@ -50,25 +44,19 @@
       "babel_source": "t.isJSXElement(node)",
       "parentContext": {
         "functionName": "traverseJSX",
-        "functionParams": [
-          "node",
-          "path"
-        ]
+        "functionParams": ["node", "path"]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(node, JSXElementChild::JSXElement(_))"
     },
     {
       "hash": "be449466",
       "type": "ForStatement",
-      "babel_source": "for (let i = 0; i < node.children.length; i++) {\r\n        const child = node.children[i];\r\n\r\n        if (t.isJSXExpressionContainer(child)) {\r\n          const template = extractExpressionTemplate(child.expression, component, [...path, i]);\r\n          if (template) {\r\n            expressionTemplates.push(template);\r\n          }\r\n        } else if (t.isJSXElement(child)) {\r\n          traverseJSX(child, [...path, i]);\r\n        }\r\n      }",
+      "babel_source": "for (let i = 0; i < node.children.length; i++) { ... }",
       "parentContext": {
         "functionName": "traverseJSX",
-        "functionParams": [
-          "node",
-          "path"
-        ]
+        "functionParams": ["node", "path"]
       },
-      "rust_translation": null
+      "rust_translation": "for (i, child) in node.children.iter().enumerate() {"
     },
     {
       "hash": "ecb911a1",
@@ -76,12 +64,9 @@
       "babel_source": "let i = 0",
       "parentContext": {
         "functionName": "traverseJSX",
-        "functionParams": [
-          "node",
-          "path"
-        ]
+        "functionParams": ["node", "path"]
       },
-      "rust_translation": null
+      "rust_translation": "// handled by enumerate()"
     },
     {
       "hash": "a6e11c46",
@@ -90,12 +75,9 @@
       "babel_source": "i < node.children.length",
       "parentContext": {
         "functionName": "traverseJSX",
-        "functionParams": [
-          "node",
-          "path"
-        ]
+        "functionParams": ["node", "path"]
       },
-      "rust_translation": null
+      "rust_translation": "// handled by iter()"
     },
     {
       "hash": "e8dee0e1",
@@ -105,12 +87,9 @@
       "babel_source": "i++",
       "parentContext": {
         "functionName": "traverseJSX",
-        "functionParams": [
-          "node",
-          "path"
-        ]
+        "functionParams": ["node", "path"]
       },
-      "rust_translation": null
+      "rust_translation": "// handled by enumerate()"
     },
     {
       "hash": "489e538d",
@@ -118,26 +97,20 @@
       "babel_source": "const child = node.children[i];",
       "parentContext": {
         "functionName": "traverseJSX",
-        "functionParams": [
-          "node",
-          "path"
-        ]
+        "functionParams": ["node", "path"]
       },
-      "rust_translation": null
+      "rust_translation": "let child = &node.children[i];"
     },
     {
       "hash": "a2ea0454",
       "type": "IfStatement",
       "condition": "t.isJSXExpressionContainer(child)",
-      "babel_source": "if (t.isJSXExpressionContainer(child)) {\r\n          const template = extractExpressionTemplate(child.expression, component, [...path, i]);\r\n          if (template) {\r\n            expressionTemplates.push(template);\r\n          }\r\n        } else if (t.isJSXElement(child)) {\r\n          traverseJSX(child, [...path, i]);\r\n        }",
+      "babel_source": "if (t.isJSXExpressionContainer(child)) { ... } else if (t.isJSXElement(child)) { ... }",
       "parentContext": {
         "functionName": "traverseJSX",
-        "functionParams": [
-          "node",
-          "path"
-        ]
+        "functionParams": ["node", "path"]
       },
-      "rust_translation": null
+      "rust_translation": "match child {\n    JSXElementChild::JSXExprContainer(container) => {\n        // handle expression container\n    }\n    JSXElementChild::JSXElement(element) => {\n        // recurse\n    }\n    _ => {}\n}"
     },
     {
       "hash": "c53c8d32",
@@ -146,12 +119,9 @@
       "babel_source": "t.isJSXExpressionContainer(child)",
       "parentContext": {
         "functionName": "traverseJSX",
-        "functionParams": [
-          "node",
-          "path"
-        ]
+        "functionParams": ["node", "path"]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(child, JSXElementChild::JSXExprContainer(_))"
     },
     {
       "hash": "0d1ae79d",
@@ -159,12 +129,9 @@
       "babel_source": "const template = extractExpressionTemplate(child.expression, component, [...path, i]);",
       "parentContext": {
         "functionName": "traverseJSX",
-        "functionParams": [
-          "node",
-          "path"
-        ]
+        "functionParams": ["node", "path"]
       },
-      "rust_translation": null
+      "rust_translation": "let mut new_path = path.clone();\nnew_path.push(i);\nlet template = extract_expression_template(&container.expr, component, new_path);"
     },
     {
       "hash": "31f59839",
@@ -172,12 +139,9 @@
       "babel_source": "[...path, i]",
       "parentContext": {
         "functionName": "traverseJSX",
-        "functionParams": [
-          "node",
-          "path"
-        ]
+        "functionParams": ["node", "path"]
       },
-      "rust_translation": null
+      "rust_translation": "{ let mut p = path.clone(); p.push(i); p }"
     },
     {
       "hash": "1d557abe",
@@ -185,40 +149,31 @@
       "babel_source": "...path",
       "parentContext": {
         "functionName": "traverseJSX",
-        "functionParams": [
-          "node",
-          "path"
-        ]
+        "functionParams": ["node", "path"]
       },
-      "rust_translation": null
+      "rust_translation": "path.clone()"
     },
     {
       "hash": "462b0c72",
       "type": "IfStatement",
       "condition": "template",
-      "babel_source": "if (template) {\r\n            expressionTemplates.push(template);\r\n          }",
+      "babel_source": "if (template) { expressionTemplates.push(template); }",
       "parentContext": {
         "functionName": "traverseJSX",
-        "functionParams": [
-          "node",
-          "path"
-        ]
+        "functionParams": ["node", "path"]
       },
-      "rust_translation": null
+      "rust_translation": "if let Some(template) = template {\n    expression_templates.push(template);\n}"
     },
     {
       "hash": "c300e860",
       "type": "IfStatement",
       "condition": "t.isJSXElement(child)",
-      "babel_source": "if (t.isJSXElement(child)) {\r\n          traverseJSX(child, [...path, i]);\r\n        }",
+      "babel_source": "if (t.isJSXElement(child)) { traverseJSX(child, [...path, i]); }",
       "parentContext": {
         "functionName": "traverseJSX",
-        "functionParams": [
-          "node",
-          "path"
-        ]
+        "functionParams": ["node", "path"]
       },
-      "rust_translation": null
+      "rust_translation": "if let JSXElementChild::JSXElement(element) = child {\n    let mut new_path = path.clone();\n    new_path.push(i);\n    traverse_jsx(element, new_path, component, expression_templates);\n}"
     },
     {
       "hash": "d44bd174",
@@ -227,51 +182,19 @@
       "babel_source": "t.isJSXElement(child)",
       "parentContext": {
         "functionName": "traverseJSX",
-        "functionParams": [
-          "node",
-          "path"
-        ]
+        "functionParams": ["node", "path"]
       },
-      "rust_translation": null
-    },
-    {
-      "hash": "31f59839",
-      "type": "ArrayExpression",
-      "babel_source": "[...path, i]",
-      "parentContext": {
-        "functionName": "traverseJSX",
-        "functionParams": [
-          "node",
-          "path"
-        ]
-      },
-      "rust_translation": null
-    },
-    {
-      "hash": "1d557abe",
-      "type": "SpreadElement",
-      "babel_source": "...path",
-      "parentContext": {
-        "functionName": "traverseJSX",
-        "functionParams": [
-          "node",
-          "path"
-        ]
-      },
-      "rust_translation": null
+      "rust_translation": "matches!(child, JSXElementChild::JSXElement(_))"
     },
     {
       "hash": "ef50a03b",
       "type": "ForOfStatement",
-      "babel_source": "for (const attr of node.openingElement.attributes) {\r\n        if (t.isJSXAttribute(attr) && t.isJSXExpressionContainer(attr.value)) {\r\n          const template = extractExpressionTemplate(attr.value.expression, component, path);\r\n          if (template) {\r\n            template.attribute = attr.name.name;\r\n            expressionTemplates.push(template);\r\n          }\r\n        }\r\n      }",
+      "babel_source": "for (const attr of node.openingElement.attributes) { ... }",
       "parentContext": {
         "functionName": "traverseJSX",
-        "functionParams": [
-          "node",
-          "path"
-        ]
+        "functionParams": ["node", "path"]
       },
-      "rust_translation": null
+      "rust_translation": "for attr in &node.opening.attrs {"
     },
     {
       "hash": "02ca2e7f",
@@ -279,26 +202,20 @@
       "babel_source": "const attr",
       "parentContext": {
         "functionName": "traverseJSX",
-        "functionParams": [
-          "node",
-          "path"
-        ]
+        "functionParams": ["node", "path"]
       },
-      "rust_translation": null
+      "rust_translation": "// handled by for loop"
     },
     {
       "hash": "8f775337",
       "type": "IfStatement",
       "condition": "t.isJSXAttribute(attr) && t.isJSXExpressionContainer(attr.value)",
-      "babel_source": "if (t.isJSXAttribute(attr) && t.isJSXExpressionContainer(attr.value)) {\r\n          const template = extractExpressionTemplate(attr.value.expression, component, path);\r\n          if (template) {\r\n            template.attribute = attr.name.name;\r\n            expressionTemplates.push(template);\r\n          }\r\n        }",
+      "babel_source": "if (t.isJSXAttribute(attr) && t.isJSXExpressionContainer(attr.value)) { ... }",
       "parentContext": {
         "functionName": "traverseJSX",
-        "functionParams": [
-          "node",
-          "path"
-        ]
+        "functionParams": ["node", "path"]
       },
-      "rust_translation": null
+      "rust_translation": "if let JSXAttrOrSpread::JSXAttr(jsx_attr) = attr {\n    if let Some(JSXAttrValue::JSXExprContainer(container)) = &jsx_attr.value {"
     },
     {
       "hash": "4e918ac0",
@@ -307,12 +224,9 @@
       "babel_source": "t.isJSXAttribute(attr) && t.isJSXExpressionContainer(attr.value)",
       "parentContext": {
         "functionName": "traverseJSX",
-        "functionParams": [
-          "node",
-          "path"
-        ]
+        "functionParams": ["node", "path"]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(attr, JSXAttrOrSpread::JSXAttr(a) if matches!(&a.value, Some(JSXAttrValue::JSXExprContainer(_))))"
     },
     {
       "hash": "7468026c",
@@ -321,12 +235,9 @@
       "babel_source": "t.isJSXAttribute(attr)",
       "parentContext": {
         "functionName": "traverseJSX",
-        "functionParams": [
-          "node",
-          "path"
-        ]
+        "functionParams": ["node", "path"]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(attr, JSXAttrOrSpread::JSXAttr(_))"
     },
     {
       "hash": "7bbf8e47",
@@ -335,12 +246,9 @@
       "babel_source": "t.isJSXExpressionContainer(attr.value)",
       "parentContext": {
         "functionName": "traverseJSX",
-        "functionParams": [
-          "node",
-          "path"
-        ]
+        "functionParams": ["node", "path"]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(&attr.value, Some(JSXAttrValue::JSXExprContainer(_)))"
     },
     {
       "hash": "13cba7d5",
@@ -348,26 +256,20 @@
       "babel_source": "const template = extractExpressionTemplate(attr.value.expression, component, path);",
       "parentContext": {
         "functionName": "traverseJSX",
-        "functionParams": [
-          "node",
-          "path"
-        ]
+        "functionParams": ["node", "path"]
       },
-      "rust_translation": null
+      "rust_translation": "let template = extract_expression_template(&container.expr, component, path.clone());"
     },
     {
       "hash": "0e648a0e",
       "type": "IfStatement",
       "condition": "template",
-      "babel_source": "if (template) {\r\n            template.attribute = attr.name.name;\r\n            expressionTemplates.push(template);\r\n          }",
+      "babel_source": "if (template) { template.attribute = attr.name.name; expressionTemplates.push(template); }",
       "parentContext": {
         "functionName": "traverseJSX",
-        "functionParams": [
-          "node",
-          "path"
-        ]
+        "functionParams": ["node", "path"]
       },
-      "rust_translation": null
+      "rust_translation": "if let Some(mut template) = template {\n    if let JSXAttrName::Ident(ident) = &jsx_attr.name {\n        template.attribute = Some(ident.sym.to_string());\n    }\n    expression_templates.push(template);\n}"
     },
     {
       "hash": "aaba6fa7",
@@ -376,15 +278,12 @@
       "babel_source": "template.attribute = attr.name.name",
       "parentContext": {
         "functionName": "traverseJSX",
-        "functionParams": [
-          "node",
-          "path"
-        ]
+        "functionParams": ["node", "path"]
       },
-      "rust_translation": null
+      "rust_translation": "template.attribute = Some(ident.sym.to_string());"
     }
   ],
-  "rust_translation": null,
+  "rust_translation": "fn traverse_jsx(\n    node: &JSXElement,\n    path: Vec<usize>,\n    component: &Component,\n    expression_templates: &mut Vec<ExpressionTemplate>,\n) {\n    // Check children for expressions\n    for (i, child) in node.children.iter().enumerate() {\n        match child {\n            JSXElementChild::JSXExprContainer(container) => {\n                let mut new_path = path.clone();\n                new_path.push(i);\n                if let Some(template) = extract_expression_template(&container.expr, component, new_path) {\n                    expression_templates.push(template);\n                }\n            }\n            JSXElementChild::JSXElement(element) => {\n                let mut new_path = path.clone();\n                new_path.push(i);\n                traverse_jsx(element, new_path, component, expression_templates);\n            }\n            _ => {}\n        }\n    }\n\n    // Check attributes for expressions\n    for attr in &node.opening.attrs {\n        if let JSXAttrOrSpread::JSXAttr(jsx_attr) = attr {\n            if let Some(JSXAttrValue::JSXExprContainer(container)) = &jsx_attr.value {\n                if let Some(mut template) = extract_expression_template(&container.expr, component, path.clone()) {\n                    if let JSXAttrName::Ident(ident) = &jsx_attr.name {\n                        template.attribute = Some(ident.sym.to_string());\n                    }\n                    expression_templates.push(template);\n                }\n            }\n        }\n    }\n}",
   "found_in": [
     "extractors/expressionTemplates.cjs"
   ]
