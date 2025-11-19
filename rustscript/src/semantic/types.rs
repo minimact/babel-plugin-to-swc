@@ -112,6 +112,44 @@ impl TypeInfo {
                 (*m1 || !*m2) && i1.is_assignable_to(i2)
             }
 
+            // Vec<Unknown> is assignable to any Vec<T> (inference fallback)
+            (TypeInfo::Vec(elem), TypeInfo::Vec(expected_elem)) => {
+                match elem.as_ref() {
+                    TypeInfo::Unknown => true,
+                    _ => elem.is_assignable_to(expected_elem),
+                }
+            }
+
+            // HashMap<Unknown, Unknown> is assignable to any HashMap<K, V>
+            (TypeInfo::HashMap(k, v), TypeInfo::HashMap(ek, ev)) => {
+                let k_ok = matches!(k.as_ref(), TypeInfo::Unknown) || k.is_assignable_to(ek);
+                let v_ok = matches!(v.as_ref(), TypeInfo::Unknown) || v.is_assignable_to(ev);
+                k_ok && v_ok
+            }
+
+            // HashSet<Unknown> is assignable to any HashSet<T>
+            (TypeInfo::HashSet(elem), TypeInfo::HashSet(expected_elem)) => {
+                match elem.as_ref() {
+                    TypeInfo::Unknown => true,
+                    _ => elem.is_assignable_to(expected_elem),
+                }
+            }
+
+            // Option<Unknown> is assignable to any Option<T>
+            (TypeInfo::Option(inner), TypeInfo::Option(expected_inner)) => {
+                match inner.as_ref() {
+                    TypeInfo::Unknown => true,
+                    _ => inner.is_assignable_to(expected_inner),
+                }
+            }
+
+            // Result<Unknown, Unknown> is assignable to any Result<T, E>
+            (TypeInfo::Result(ok, err), TypeInfo::Result(eok, eerr)) => {
+                let ok_ok = matches!(ok.as_ref(), TypeInfo::Unknown) || ok.is_assignable_to(eok);
+                let err_ok = matches!(err.as_ref(), TypeInfo::Unknown) || err.is_assignable_to(eerr);
+                ok_ok && err_ok
+            }
+
             // Unknown matches anything (for error recovery)
             (TypeInfo::Unknown, _) | (_, TypeInfo::Unknown) => true,
 

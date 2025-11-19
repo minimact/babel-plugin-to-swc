@@ -96,10 +96,11 @@ impl TypeChecker {
     fn check_stmt(&mut self, stmt: &Stmt) {
         match stmt {
             Stmt::Let(let_stmt) => {
-                let init_type = self.infer_expr(&let_stmt.init);
+                // If there's a type annotation, use it as the expected type for bidirectional inference
+                let expected_type = let_stmt.ty.as_ref().map(ast_type_to_type_info);
+                let init_type = self.infer_expr_with_expected(&let_stmt.init, expected_type.as_ref());
 
-                if let Some(ref type_ann) = let_stmt.ty {
-                    let declared_type = ast_type_to_type_info(type_ann);
+                if let Some(declared_type) = expected_type {
                     if !init_type.is_assignable_to(&declared_type) {
                         self.errors.push(SemanticError::new(
                             "RS003",
@@ -145,7 +146,10 @@ impl TypeChecker {
 
             Stmt::If(if_stmt) => {
                 let cond_type = self.infer_expr(&if_stmt.condition);
-                if !matches!(cond_type, TypeInfo::Bool | TypeInfo::Unknown) {
+
+                // For if-let, the condition is a pattern match expression, not a boolean
+                // Only check for bool if there's no pattern
+                if if_stmt.pattern.is_none() && !matches!(cond_type, TypeInfo::Bool | TypeInfo::Unknown) {
                     self.errors.push(SemanticError::new(
                         "RS003",
                         format!(
@@ -321,7 +325,13 @@ impl TypeChecker {
     }
 
     /// Infer the type of an expression
+    /// `expected` is an optional hint from the context (e.g., struct field type, variable annotation)
     fn infer_expr(&mut self, expr: &Expr) -> TypeInfo {
+        self.infer_expr_with_expected(expr, None)
+    }
+
+    /// Infer expression type with an expected type hint for bidirectional inference
+    fn infer_expr_with_expected(&mut self, expr: &Expr, expected: Option<&TypeInfo>) -> TypeInfo {
         match expr {
             Expr::Literal(lit) => match lit {
                 Literal::String(_) => TypeInfo::Str,
@@ -429,15 +439,17 @@ impl TypeChecker {
                 if let Some(fields) = self.env.get_struct_fields(&init.name) {
                     let fields = fields.clone();
                     for (field_name, value) in &init.fields {
-                        let value_type = self.infer_expr(value);
-                        if let Some(expected) = fields.get(field_name) {
-                            if !value_type.is_assignable_to(expected) {
+                        // Pass expected field type for bidirectional inference
+                        let field_expected = fields.get(field_name);
+                        let value_type = self.infer_expr_with_expected(value, field_expected);
+                        if let Some(expected_type) = field_expected {
+                            if !value_type.is_assignable_to(expected_type) {
                                 self.errors.push(SemanticError::new(
                                     "RS003",
                                     format!(
                                         "Field '{}' type mismatch: expected {}, found {}",
                                         field_name,
-                                        expected.display_name(),
+                                        expected_type.display_name(),
                                         value_type.display_name()
                                     ),
                                     init.span,
@@ -460,8 +472,14 @@ impl TypeChecker {
 
             Expr::VecInit(vec_init) => {
                 if vec_init.elements.is_empty() {
-                    TypeInfo::Vec(Box::new(TypeInfo::Unknown))
+                    // Use expected type if available (e.g., from struct field or variable annotation)
+                    if let Some(TypeInfo::Vec(inner)) = expected {
+                        TypeInfo::Vec(inner.clone())
+                    } else {
+                        TypeInfo::Vec(Box::new(TypeInfo::Unknown))
+                    }
                 } else {
+                    // Infer from first element, but could also check against expected
                     let elem_type = self.infer_expr(&vec_init.elements[0]);
                     TypeInfo::Vec(Box::new(elem_type))
                 }
