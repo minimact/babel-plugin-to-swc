@@ -770,6 +770,41 @@ pub static FIELD_MAPPINGS: Lazy<Vec<FieldMapping>> = Lazy::new(|| vec![
         read_conversion: None,
         write_conversion: None,
     },
+
+    // === TSPropertySignature ===
+    FieldMapping {
+        node_type: "TSPropertySignature",
+        rustscript: "key",
+        babel: "key",
+        swc: "key",
+        swc_type: "Box<Expr>",
+        needs_box_unwrap: true,
+        optional: false,
+        read_conversion: None,
+        write_conversion: None,
+    },
+    FieldMapping {
+        node_type: "TSPropertySignature",
+        rustscript: "optional",
+        babel: "optional",
+        swc: "optional",
+        swc_type: "bool",
+        needs_box_unwrap: false,
+        optional: false,
+        read_conversion: None,
+        write_conversion: None,
+    },
+    FieldMapping {
+        node_type: "TSPropertySignature",
+        rustscript: "typeAnnotation",
+        babel: "typeAnnotation",
+        swc: "type_ann",
+        swc_type: "Option<Box<TsTypeAnn>>",
+        needs_box_unwrap: true,
+        optional: true,
+        read_conversion: None,
+        write_conversion: None,
+    },
 ]);
 
 /// Index for fast lookup by (node_type, field_name)

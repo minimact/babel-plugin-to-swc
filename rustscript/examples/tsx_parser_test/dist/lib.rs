@@ -22,8 +22,8 @@ impl VisitMut for InterfaceExtractor {
         let interface_name = n.id.sym.clone();
         parts.push(interface_name);
         for member in &n.body.body {
-            if let Unknown::TSPropertySignature(member) = &member {
-                let prop_name = member.key.sym.clone();
+            if let TsTypeElement::TsPropertySignature(member) = &member {
+                let prop_name = { match member.key.as_ref() { Expr::Ident(i) => i.sym.clone(), _ => "".into() } }.clone();
                 parts.push(prop_name);
             }
         }
@@ -35,7 +35,7 @@ impl VisitMut for InterfaceExtractor {
             let __matched = matches!(n.callee, Expr::Ident(_));
             __matched
         } {
-            let callee_name = n.callee.sym.clone();
+            let callee_name = { let __callee = &n.callee; match __callee { Callee::Expr(e) => match e.as_ref() { Expr::Ident(i) => i.sym.clone(), _ => "".into() }, _ => "".into() } }.clone();
             if (callee_name == "useState") {
                 return callee_name;
             }

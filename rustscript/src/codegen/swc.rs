@@ -309,7 +309,13 @@ impl SwcGenerator {
         // Track the parameter's type in the environment
         // Both "n" and the original parameter name should map to the swc_type
         self.type_env.push_scope();
-        let param_ctx = TypeContext::from_rustscript(&swc_type);
+        let param_ctx = TypeContext {
+            rustscript_type: swc_type.clone(),
+            swc_type: swc_type.clone(),
+            kind: super::type_context::SwcTypeKind::Struct,
+            known_variant: None,
+            needs_deref: false,
+        };
         self.type_env.define("n", param_ctx.clone());
         if let Some(first_param) = f.params.first() {
             self.type_env.define(&first_param.name, param_ctx);
@@ -514,6 +520,9 @@ impl SwcGenerator {
 
                     // Generate if let with type narrowing using context
                     let (swc_enum, swc_variant, swc_struct) = get_swc_variant_in_context(&type_name, &var_type);
+                    #[cfg(debug_assertions)]
+                    eprintln!("[swc] matches!({}, {}) -> var_type={}, enum={}, variant={}, struct={}",
+                        var_name, type_name, var_type, swc_enum, swc_variant, swc_struct);
 
                     self.emit_indent();
                     self.emit(&format!("if let {}::{}({}) = &{} {{\n",
@@ -599,6 +608,9 @@ impl SwcGenerator {
                 self.type_env.push_scope();
                 let iter_type = self.infer_type(&for_stmt.iter);
                 let elem_type = self.get_element_type(&iter_type);
+                #[cfg(debug_assertions)]
+                eprintln!("[swc] for {} in {:?} -> iter_type={:?}, elem_type={:?}",
+                    for_stmt.var, for_stmt.iter, iter_type, elem_type);
                 self.type_env.define(&for_stmt.var, elem_type);
 
                 self.gen_block(&for_stmt.body);
@@ -854,6 +866,11 @@ impl SwcGenerator {
                 TypeContext::unknown()
             }
 
+            Expr::Ref(ref_expr) => {
+                // Reference expression - infer the inner type
+                self.infer_type(&ref_expr.expr)
+            }
+
             _ => TypeContext::unknown(),
         }
     }
@@ -1013,7 +1030,31 @@ impl SwcGenerator {
                 self.emit(")");
             }
             Expr::Member(mem) => {
-                // Simple member access - auto-unwrap is handled by the UnwrapHoister pass
+                // Check for nested member access that needs unwrapping
+                // e.g., node.callee.name or member.key.name
+                if mem.property == "name" || mem.property == "sym" {
+                    if let Expr::Member(inner) = mem.object.as_ref() {
+                        let inner_prop = &inner.property;
+                        // Handle callee.name -> need to unwrap Callee::Expr then Expr::Ident
+                        if inner_prop == "callee" {
+                            // Generate: if let Callee::Expr(e) = &obj.callee { if let Expr::Ident(i) = e.as_ref() { i.sym.clone() } }
+                            // For now, emit a simpler pattern that assumes Ident
+                            self.emit("{ let __callee = &");
+                            self.gen_expr(&inner.object);
+                            self.emit(".callee; match __callee { Callee::Expr(e) => match e.as_ref() { Expr::Ident(i) => i.sym.clone(), _ => \"\".into() }, _ => \"\".into() } }");
+                            return;
+                        }
+                        // Handle key.name -> need to unwrap Box<Expr> then Expr::Ident
+                        if inner_prop == "key" {
+                            self.emit("{ match ");
+                            self.gen_expr(&inner.object);
+                            self.emit(".key.as_ref() { Expr::Ident(i) => i.sym.clone(), _ => \"\".into() } }");
+                            return;
+                        }
+                    }
+                }
+
+                // Simple member access
                 self.gen_expr(&mem.object);
                 self.emit(".");
                 // Map RustScript field names to SWC field names
