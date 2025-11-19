@@ -272,6 +272,7 @@ impl fmt::Display for TokenKind {
             TokenKind::FatArrow => write!(f, "=>"),
             TokenKind::ColonColon => write!(f, "::"),
             TokenKind::Question => write!(f, "?"),
+            TokenKind::QuestionDot => write!(f, "?."),
 
             TokenKind::Comment(s) => write!(f, "// {}", s),
             TokenKind::DocComment(s) => write!(f, "/// {}", s),

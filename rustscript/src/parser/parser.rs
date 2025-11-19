@@ -981,6 +981,17 @@ impl Parser {
                     computed: false,
                     span,
                 });
+            } else if self.match_token(TokenKind::QuestionDot) {
+                // Optional member access ?.
+                let property = self.expect_ident()?;
+                let span = self.current_span();
+                expr = Expr::Member(MemberExpr {
+                    object: Box::new(expr),
+                    property,
+                    optional: true,
+                    computed: false,
+                    span,
+                });
             } else if self.match_token(TokenKind::LBracket) {
                 // Index access
                 let index = self.parse_expr()?;

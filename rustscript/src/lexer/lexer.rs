@@ -58,7 +58,14 @@ impl<'a> Lexer<'a> {
                 ']' => TokenKind::RBracket,
                 ',' => TokenKind::Comma,
                 ';' => TokenKind::Semicolon,
-                '?' => TokenKind::Question,
+                '?' => {
+                    if self.peek_char() == Some('.') {
+                        self.advance();
+                        TokenKind::QuestionDot
+                    } else {
+                        TokenKind::Question
+                    }
+                }
                 '^' => TokenKind::Caret,
                 '%' => TokenKind::Percent,
 
