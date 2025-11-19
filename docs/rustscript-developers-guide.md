@@ -17,11 +17,12 @@ A comprehensive guide for writing AST transformation plugins in RustScript that 
 6. [Writing Writers (Transpilers)](#6-writing-writers-transpilers)
 7. [Pattern Matching](#7-pattern-matching)
 8. [Scoped Traversal](#8-scoped-traversal)
-9. [Type System](#9-type-system)
-10. [Best Practices](#10-best-practices)
-11. [Platform Differences](#11-platform-differences)
-12. [Troubleshooting](#12-troubleshooting)
-13. [API Reference](#13-api-reference)
+9. [Working with TypeScript AST](#9-working-with-typescript-ast)
+10. [Type System](#10-type-system)
+11. [Best Practices](#11-best-practices)
+12. [Platform Differences](#12-platform-differences)
+13. [Troubleshooting](#13-troubleshooting)
+14. [API Reference](#14-api-reference)
 
 ---
 
@@ -249,6 +250,9 @@ RustScript uses unified node type names that map to both platforms:
 | `BinaryExpression` | `BinaryExpression` | `BinExpr` |
 | `StringLiteral` | `StringLiteral` | `Str` |
 | `NumericLiteral` | `NumericLiteral` | `Number` |
+| `TSInterfaceDeclaration` | `TSInterfaceDeclaration` | `TsInterfaceDecl` |
+| `TSPropertySignature` | `TSPropertySignature` | `TsPropertySignature` |
+| `TSTypeReference` | `TSTypeReference` | `TsTypeRef` |
 
 ### Field Access
 
@@ -594,7 +598,84 @@ fn visit_block_statement(node: &mut BlockStatement, ctx: &Context) {
 
 ---
 
-## 9. Type System
+## 9. Working with TypeScript AST
+
+RustScript can parse and transform TypeScript/TSX files by visiting TypeScript-specific AST nodes.
+
+### Visiting TypeScript Nodes
+
+```rustscript
+plugin InterfaceExtractor {
+    /// Visit TypeScript interface declarations
+    pub fn visit_interface_declaration(node: &TSInterfaceDeclaration) -> Str {
+        let mut parts = vec![];
+
+        // Get interface name
+        let interface_name = node.id.name.clone();
+        parts.push(interface_name);
+
+        // Iterate over interface body members
+        for member in &node.body.body {
+            // Check if this is a property signature
+            if matches!(member, TSPropertySignature) {
+                let prop_name = member.key.name.clone();
+                parts.push(prop_name);
+            }
+        }
+
+        return parts.join(",");
+    }
+}
+```
+
+### Accessing Type Arguments
+
+CallExpressions can have type arguments (generics):
+
+```rustscript
+fn visit_call_expression(node: &CallExpression) -> Str {
+    // Check if this is a useState call with type args
+    if matches!(node.callee, Identifier) {
+        let callee_name = node.callee.name.clone();
+        if callee_name == "useState" {
+            // Access type arguments like useState<string>
+            if node.type_args.len() > 0 {
+                // First type argument is available
+                return "has_type_arg";
+            }
+        }
+    }
+    return "";
+}
+```
+
+### TypeScript Field Access Patterns
+
+When accessing fields on TypeScript nodes, be aware of wrapper types:
+
+```rustscript
+// TSPropertySignature.key is Box<Expr>, not directly an Identifier
+// The codegen handles this automatically with pattern matching:
+let prop_name = member.key.name.clone();
+
+// Generates (in SWC):
+// match member.key.as_ref() {
+//     Expr::Ident(i) => i.sym.clone(),
+//     _ => "".into()
+// }
+```
+
+### Common TypeScript Visitor Methods
+
+```rustscript
+fn visit_interface_declaration(node: &mut TSInterfaceDeclaration, ctx: &Context) { }
+fn visit_type_alias_declaration(node: &mut TSTypeAliasDeclaration, ctx: &Context) { }
+fn visit_property_signature(node: &mut TSPropertySignature, ctx: &Context) { }
+```
+
+---
+
+## 10. Type System
 
 ### Ownership and Borrowing
 
@@ -639,7 +720,7 @@ let v: Vec<Str> = vec![];  // Explicit when needed
 
 ---
 
-## 10. Best Practices
+## 11. Best Practices
 
 ### 1. Prefer Immutable Bindings
 
@@ -709,7 +790,7 @@ fn visit_call_expression(node: &mut CallExpression, ctx: &Context) {
 
 ---
 
-## 11. Platform Differences
+## 12. Platform Differences
 
 ### String Interning
 
@@ -738,7 +819,7 @@ RustScript handles this in pattern matching, but be aware when debugging generat
 
 ---
 
-## 12. Troubleshooting
+## 13. Troubleshooting
 
 ### Common Errors
 
@@ -775,7 +856,7 @@ Make sure your `matches!` pattern uses the correct node type name (RustScript na
 
 ---
 
-## 13. API Reference
+## 14. API Reference
 
 ### Built-in Functions
 

@@ -715,7 +715,22 @@ if let Some(name) = get_identifier_name(node) {
 | `JSXExpressionContainer` | `t.JSXExpressionContainer` | `JSXExprContainer` |
 | `JSXText` | `t.JSXText` | `JSXText` |
 
-### 7.2 Node Construction
+### 7.2 TypeScript Node Mapping
+
+| RustScript | Babel (ESTree) | SWC |
+|------------|----------------|-----|
+| `TSInterfaceDeclaration` | `TSInterfaceDeclaration` | `TsInterfaceDecl` |
+| `TSPropertySignature` | `TSPropertySignature` | `TsPropertySignature` |
+| `TSMethodSignature` | `TSMethodSignature` | `TsMethodSignature` |
+| `TSTypeReference` | `TSTypeReference` | `TsTypeRef` |
+| `TSTypeAnnotation` | `TSTypeAnnotation` | `TsTypeAnn` |
+| `TSTypeAliasDeclaration` | `TSTypeAliasDeclaration` | `TsTypeAliasDecl` |
+
+**Note:** TypeScript nodes use the `TS` prefix in RustScript to distinguish them from JavaScript nodes. When accessing fields on TypeScript nodes, be aware that:
+- `key` on `TSPropertySignature` is `Box<Expr>` in SWC (requires pattern matching to extract identifier name)
+- `type_args` on `CallExpression` provides access to generic type arguments like `useState<string>`
+
+### 7.3 Node Construction
 
 ```rustscript
 // Creating nodes
@@ -747,7 +762,7 @@ let call = CallExpr {
 };
 ```
 
-### 7.3 Node Type Checking
+### 7.4 Node Type Checking
 
 ```rustscript
 // Type checking
