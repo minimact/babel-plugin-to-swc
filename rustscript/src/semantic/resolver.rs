@@ -285,6 +285,42 @@ impl Resolver {
             }
 
             Stmt::Break(_) | Stmt::Continue(_) => {}
+
+            Stmt::Traverse(traverse_stmt) => {
+                // Resolve the target expression
+                self.resolve_expr(&traverse_stmt.target);
+
+                // Handle the traverse kind
+                match &traverse_stmt.kind {
+                    crate::parser::TraverseKind::Inline(inline) => {
+                        // Create a new scope for the inline visitor
+                        self.env.push_scope();
+
+                        // Resolve state variables
+                        for let_stmt in &inline.state {
+                            self.resolve_expr(&let_stmt.init);
+                            let ty = if let Some(ref type_ann) = let_stmt.ty {
+                                ast_type_to_type_info(type_ann)
+                            } else {
+                                self.env.fresh_var()
+                            };
+                            self.env.define(let_stmt.name.clone(), ty);
+                        }
+
+                        // Resolve methods
+                        for method in &inline.methods {
+                            self.resolve_function(method);
+                        }
+
+                        self.env.pop_scope();
+                    }
+                    crate::parser::TraverseKind::Delegated(visitor_name) => {
+                        // Check if the visitor exists (would need to track plugin definitions)
+                        // For now, just note it for later validation
+                        let _ = visitor_name;
+                    }
+                }
+            }
         }
     }
 
@@ -313,8 +349,11 @@ impl Resolver {
         match expr {
             Expr::Ident(ident) => {
                 if self.env.lookup(&ident.name).is_none() {
-                    // Check for special names
-                    if ident.name != "self" && ident.name != "Self" {
+                    // Check for special names and built-in macros
+                    let is_special = matches!(ident.name.as_str(),
+                        "self" | "Self" | "matches!" | "format!" | "vec!" | "Some" | "None" | "Ok" | "Err"
+                    );
+                    if !is_special {
                         self.errors.push(SemanticError::new(
                             "RS006",
                             format!("Undefined variable: {}", ident.name),

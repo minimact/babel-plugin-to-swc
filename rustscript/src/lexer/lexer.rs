@@ -454,6 +454,8 @@ impl<'a> Lexer<'a> {
             "self" => TokenKind::Self_,
             "Self" => TokenKind::SelfType,
             "match" => TokenKind::Match,
+            "traverse" => TokenKind::Traverse,
+            "using" => TokenKind::Using,
 
             // Type keywords
             "Str" => TokenKind::Str,

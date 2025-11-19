@@ -117,6 +117,30 @@ impl OwnershipChecker {
             }
 
             Stmt::Break(_) | Stmt::Continue(_) => {}
+
+            Stmt::Traverse(traverse_stmt) => {
+                // Check the target expression
+                self.check_expr(&traverse_stmt.target);
+
+                // Check the traverse kind
+                match &traverse_stmt.kind {
+                    crate::parser::TraverseKind::Inline(inline) => {
+                        // Check state variables
+                        for let_stmt in &inline.state {
+                            self.check_needs_clone(&let_stmt.init, let_stmt.span);
+                            self.check_expr(&let_stmt.init);
+                        }
+
+                        // Check methods
+                        for method in &inline.methods {
+                            self.check_function(method);
+                        }
+                    }
+                    crate::parser::TraverseKind::Delegated(_) => {
+                        // No ownership checks needed for delegated traversal
+                    }
+                }
+            }
         }
     }
 

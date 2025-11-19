@@ -140,6 +140,7 @@ pub enum Stmt {
     Return(ReturnStmt),
     Break(BreakStmt),
     Continue(ContinueStmt),
+    Traverse(TraverseStmt),
 }
 
 /// Let statement: `let [mut] name [: Type] = expr;`
@@ -248,6 +249,44 @@ pub struct BreakStmt {
 #[derive(Debug, Clone)]
 pub struct ContinueStmt {
     pub span: Span,
+}
+
+/// Traverse statement: `traverse(node) { ... }` or `traverse(node) using Visitor;`
+/// This is the scoped traversal construct that bridges Babel's path.traverse and SWC's visit_mut_with
+#[derive(Debug, Clone)]
+pub struct TraverseStmt {
+    /// The node to traverse
+    pub target: Expr,
+    /// The kind of traversal (inline visitor or delegated to another visitor)
+    pub kind: TraverseKind,
+    pub span: Span,
+}
+
+/// Kind of traverse operation
+#[derive(Debug, Clone)]
+pub enum TraverseKind {
+    /// Inline visitor block with local state and visitor methods
+    /// `traverse(node) { let count = 0; fn visit_identifier(...) { ... } }`
+    Inline(InlineVisitor),
+    /// Delegate to another visitor
+    /// `traverse(node) using OtherVisitor;`
+    Delegated(String),
+}
+
+/// Inline visitor defined within a traverse block
+#[derive(Debug, Clone)]
+pub struct InlineVisitor {
+    /// Local state declarations (let statements)
+    pub state: Vec<LetStmt>,
+    /// Visitor methods
+    pub methods: Vec<FnDecl>,
+    pub span: Span,
+}
+
+impl TraverseStmt {
+    pub fn span(&self) -> Span {
+        self.span
+    }
 }
 
 /// Expression

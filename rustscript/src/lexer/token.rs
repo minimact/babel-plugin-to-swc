@@ -61,6 +61,8 @@ pub enum TokenKind {
     SelfType,
     Match,
     Matches,
+    Traverse,
+    Using,
 
     // Types
     Str,
@@ -187,6 +189,8 @@ impl fmt::Display for TokenKind {
             TokenKind::SelfType => write!(f, "Self"),
             TokenKind::Match => write!(f, "match"),
             TokenKind::Matches => write!(f, "matches!"),
+            TokenKind::Traverse => write!(f, "traverse"),
+            TokenKind::Using => write!(f, "using"),
 
             TokenKind::Str => write!(f, "Str"),
             TokenKind::Bool => write!(f, "bool"),

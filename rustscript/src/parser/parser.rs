@@ -371,6 +371,8 @@ impl Parser {
             self.parse_break_stmt()
         } else if self.check(TokenKind::Continue) {
             self.parse_continue_stmt()
+        } else if self.check(TokenKind::Traverse) {
+            self.parse_traverse_stmt()
         } else {
             self.parse_expr_stmt()
         }
@@ -626,6 +628,83 @@ impl Parser {
         self.expect(TokenKind::Continue)?;
         self.expect(TokenKind::Semicolon)?;
         Ok(Stmt::Continue(ContinueStmt { span: start_span }))
+    }
+
+    /// Parse traverse statement
+    /// `traverse(node) { ... }` or `traverse(node) using Visitor;`
+    fn parse_traverse_stmt(&mut self) -> ParseResult<Stmt> {
+        let start_span = self.current_span();
+        self.expect(TokenKind::Traverse)?;
+        self.expect(TokenKind::LParen)?;
+        let target = self.parse_expr()?;
+        self.expect(TokenKind::RParen)?;
+
+        let kind = if self.match_token(TokenKind::Using) {
+            // Delegated traversal: `traverse(node) using OtherVisitor;`
+            let visitor_name = self.expect_ident()?;
+            self.expect(TokenKind::Semicolon)?;
+            TraverseKind::Delegated(visitor_name)
+        } else {
+            // Inline traversal: `traverse(node) { ... }`
+            let inline_span = self.current_span();
+            self.expect(TokenKind::LBrace)?;
+
+            let mut state = Vec::new();
+            let mut methods = Vec::new();
+
+            loop {
+                self.skip_newlines();
+                if self.check(TokenKind::RBrace) {
+                    break;
+                }
+
+                // Parse either let statements (state) or fn declarations (methods)
+                if self.check(TokenKind::Let) {
+                    // Parse let statement for state
+                    let let_span = self.current_span();
+                    self.expect(TokenKind::Let)?;
+                    let mutable = self.match_token(TokenKind::Mut);
+                    let name = self.expect_ident()?;
+
+                    let ty = if self.match_token(TokenKind::Colon) {
+                        Some(self.parse_type()?)
+                    } else {
+                        None
+                    };
+
+                    self.expect(TokenKind::Eq)?;
+                    let init = self.parse_expr()?;
+                    self.expect(TokenKind::Semicolon)?;
+
+                    state.push(LetStmt {
+                        mutable,
+                        name,
+                        ty,
+                        init,
+                        span: let_span,
+                    });
+                } else if self.check(TokenKind::Fn) || self.check(TokenKind::Pub) {
+                    // Parse visitor method
+                    methods.push(self.parse_function()?);
+                } else {
+                    return Err(self.error("Expected 'let' or 'fn' in traverse block"));
+                }
+            }
+
+            self.expect(TokenKind::RBrace)?;
+
+            TraverseKind::Inline(InlineVisitor {
+                state,
+                methods,
+                span: inline_span,
+            })
+        };
+
+        Ok(Stmt::Traverse(TraverseStmt {
+            target,
+            kind,
+            span: start_span,
+        }))
     }
 
     /// Parse expression statement

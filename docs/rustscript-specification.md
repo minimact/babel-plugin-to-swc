@@ -1,7 +1,7 @@
 # RustScript Language Specification
 
-**Version:** 0.2.0
-**Status:** Draft (Refined)
+**Version:** 0.3.0
+**Status:** Draft (with Scoped Traversal)
 **Target Platforms:** Babel (JavaScript) & SWC (Rust/WASM)
 
 ---
@@ -33,6 +33,7 @@ plugin      fn          let         const       if          else
 match       return      true        false       null        for
 in          while       break       continue    struct      enum
 impl        use         pub         mut         self        Self
+traverse    using       writer
 ```
 
 ### 2.2 Reserved Keywords (Future Use)
@@ -472,6 +473,133 @@ fn visit_call_expression(node: &mut CallExpression, ctx: &Context) {
     // (don't call visit_children)
 }
 ```
+
+### 5.8 Scoped Traversal (`traverse`)
+
+RustScript allows interrupting the current visitor to perform a scoped traversal on a specific node using a different set of rules. This bridges the impedance mismatch between Babel's `path.traverse` (graph walk) and SWC's `visit_mut_with` (recursive function call).
+
+#### 5.8.1 Inline Traversal
+
+Use `traverse(node) { ... }` to define a one-off visitor for a subtree:
+
+```rustscript
+fn visit_function_declaration(func: &mut FunctionDeclaration, ctx: &Context) {
+    for stmt in &mut func.body.stmts {
+        if stmt.is_if_statement() {
+            // Spawn a nested visitor for just this statement
+            traverse(stmt) {
+                // Local state (becomes struct fields in Rust, object properties in JS)
+                let found_returns = 0;
+
+                fn visit_return_statement(ret: &mut ReturnStatement, ctx: &Context) {
+                    ret.argument = None;
+                    self.found_returns += 1;
+                }
+            }
+        }
+    }
+}
+```
+
+**Compiles to:**
+
+```javascript
+// Babel
+const __nestedVisitor = {
+    state: { found_returns: 0 },
+    ReturnStatement(path) {
+        const ret = path.node;
+        ret.argument = null;
+        this.state.found_returns++;
+    },
+};
+stmt.traverse(__nestedVisitor);
+```
+
+```rust
+// SWC (with hoisted struct)
+struct __InlineVisitor_0 {
+    found_returns: i32,
+}
+
+impl VisitMut for __InlineVisitor_0 {
+    fn visit_mut_return_stmt(&mut self, ret: &mut ReturnStmt) {
+        ret.arg = None;
+        self.found_returns += 1;
+    }
+}
+
+// At usage site:
+let mut __visitor = __InlineVisitor_0 { found_returns: 0 };
+stmt.visit_mut_with(&mut __visitor);
+```
+
+**Capture Rules:**
+- **Immutable**: Ambient variables from the parent scope can be read (cloned into the new visitor)
+- **Mutable**: Ambient variables cannot be mutated from inside `traverse` (Rust borrow checker). Pass data via initial state instead.
+
+#### 5.8.2 Delegated Traversal (`using`)
+
+Use `traverse(node) using VisitorName` to apply a separately defined plugin/visitor:
+
+```rustscript
+plugin CleanUp {
+    fn visit_identifier(n: &mut Identifier, ctx: &Context) {
+        // cleanup logic
+    }
+}
+
+plugin Main {
+    fn visit_function(node: &mut Function, ctx: &Context) {
+        if node.is_async {
+            // Route this subtree through the CleanUp visitor
+            traverse(node) using CleanUp;
+        }
+    }
+}
+```
+
+**Compiles to:**
+
+```javascript
+// Babel
+node.traverse(CleanUp);
+```
+
+```rust
+// SWC
+let mut __visitor = CleanUp::default();
+node.visit_mut_with(&mut __visitor);
+```
+
+#### 5.8.3 Manual Iteration Pattern
+
+This pattern is required when you want to selectively visit children:
+
+```rustscript
+fn visit_block_statement(node: &mut BlockStatement, ctx: &Context) {
+    // 1. Do NOT call node.visit_children(self);
+
+    // 2. Manually iterate
+    for stmt in &mut node.stmts {
+        if needs_special_handling(stmt) {
+            traverse(stmt) using SpecialVisitor;
+        } else {
+            // Continue with current visitor
+            stmt.visit_with(self);
+        }
+    }
+}
+```
+
+#### 5.8.4 The "Root Node" Guarantee
+
+RustScript guarantees that the visitor runs on the node passed to `traverse`, not just its children:
+
+- **SWC**: Maps to `node.visit_mut_with(&mut visitor)`
+- **Babel**: Maps to `path.traverse(visitor)` + manual visit of `path.node`
+
+This ensures consistent behavior across both targets.
 
 ---
 

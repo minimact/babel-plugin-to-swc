@@ -4,7 +4,7 @@ use clap::{Parser as ClapParser, Subcommand};
 use std::fs;
 use std::path::PathBuf;
 
-use rustscript::{Lexer, Parser, analyze};
+use rustscript::{Lexer, Parser, analyze, generate, Target};
 
 #[derive(ClapParser)]
 #[command(name = "rustscript")]
@@ -34,9 +34,14 @@ enum Commands {
     },
     /// Build a RustScript project
     Build {
-        /// Target platform
+        /// Input file
+        file: PathBuf,
+        /// Target platform (babel, swc, both)
         #[arg(short, long, default_value = "both")]
         target: String,
+        /// Output directory
+        #[arg(short, long, default_value = "dist")]
+        output: PathBuf,
     },
 }
 
@@ -149,9 +154,81 @@ fn main() {
                 std::process::exit(1);
             }
         }
-        Commands::Build { target: _ } => {
-            eprintln!("Build not implemented yet");
-            std::process::exit(1);
+        Commands::Build { file, target, output } => {
+            let source = match fs::read_to_string(&file) {
+                Ok(s) => s,
+                Err(e) => {
+                    eprintln!("Error reading file: {}", e);
+                    std::process::exit(1);
+                }
+            };
+
+            // Parse
+            let mut lexer = Lexer::new(&source);
+            let tokens = lexer.tokenize();
+            let mut parser = Parser::new(tokens);
+
+            let program = match parser.parse() {
+                Ok(p) => p,
+                Err(e) => {
+                    eprintln!("Parse error at {}:{}: {}", e.span.line, e.span.column, e.message);
+                    std::process::exit(1);
+                }
+            };
+
+            // Semantic analysis
+            let result = analyze(&program);
+            if !result.errors.is_empty() {
+                for error in &result.errors {
+                    eprintln!(
+                        "error[{}]: {} at {}:{}",
+                        error.code, error.message, error.span.line, error.span.column
+                    );
+                }
+                eprintln!("Build failed: {} error(s)", result.errors.len());
+                std::process::exit(1);
+            }
+
+            // Determine target
+            let target_enum = match target.as_str() {
+                "babel" => Target::Babel,
+                "swc" => Target::Swc,
+                "both" => Target::Both,
+                _ => {
+                    eprintln!("Unknown target: {}. Use 'babel', 'swc', or 'both'", target);
+                    std::process::exit(1);
+                }
+            };
+
+            // Generate code
+            let generated = generate(&program, target_enum);
+
+            // Create output directory
+            if let Err(e) = fs::create_dir_all(&output) {
+                eprintln!("Error creating output directory: {}", e);
+                std::process::exit(1);
+            }
+
+            // Write generated files
+            if let Some(babel_code) = generated.babel {
+                let babel_path = output.join("index.js");
+                if let Err(e) = fs::write(&babel_path, babel_code) {
+                    eprintln!("Error writing Babel output: {}", e);
+                    std::process::exit(1);
+                }
+                println!("Generated Babel plugin: {:?}", babel_path);
+            }
+
+            if let Some(swc_code) = generated.swc {
+                let swc_path = output.join("lib.rs");
+                if let Err(e) = fs::write(&swc_path, swc_code) {
+                    eprintln!("Error writing SWC output: {}", e);
+                    std::process::exit(1);
+                }
+                println!("Generated SWC plugin: {:?}", swc_path);
+            }
+
+            println!("Build complete!");
         }
     }
 }

@@ -272,6 +272,50 @@ impl TypeChecker {
             }
 
             Stmt::Break(_) | Stmt::Continue(_) => {}
+
+            Stmt::Traverse(traverse_stmt) => {
+                // Check the target expression
+                self.infer_expr(&traverse_stmt.target);
+
+                // Check the traverse kind
+                match &traverse_stmt.kind {
+                    crate::parser::TraverseKind::Inline(inline) => {
+                        self.env.push_scope();
+
+                        // Check state variables
+                        for let_stmt in &inline.state {
+                            let init_type = self.infer_expr(&let_stmt.init);
+                            if let Some(ref type_ann) = let_stmt.ty {
+                                let declared_type = ast_type_to_type_info(type_ann);
+                                if !init_type.is_assignable_to(&declared_type) {
+                                    self.errors.push(SemanticError::new(
+                                        "RS003",
+                                        format!(
+                                            "Type mismatch: expected {}, found {}",
+                                            declared_type.display_name(),
+                                            init_type.display_name()
+                                        ),
+                                        let_stmt.span,
+                                    ));
+                                }
+                                self.env.define(let_stmt.name.clone(), declared_type);
+                            } else {
+                                self.env.define(let_stmt.name.clone(), init_type);
+                            }
+                        }
+
+                        // Check methods
+                        for method in &inline.methods {
+                            self.check_function(method);
+                        }
+
+                        self.env.pop_scope();
+                    }
+                    crate::parser::TraverseKind::Delegated(_visitor_name) => {
+                        // Visitor name validation would happen here
+                    }
+                }
+            }
         }
     }
 
