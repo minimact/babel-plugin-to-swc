@@ -1026,7 +1026,16 @@ impl SwcGenerator {
                             // but use just the field name for the pattern binding
                             if let Expr::Ident(obj_id) = &*mem.object {
                                 let path = format!("{}.{}", obj_id.name, mem.property);
-                                let match_expr = format!("{}.{}", obj_id.name, mem.property);
+
+                                // Translate field name to SWC using object's type
+                                let obj_type = self.type_env.lookup(&obj_id.name)
+                                    .map(|ctx| ctx.swc_type.clone())
+                                    .unwrap_or_else(|| "Unknown".to_string());
+                                let swc_field = get_typed_field_mapping(&obj_type, &mem.property)
+                                    .map(|m| m.swc_field.to_string())
+                                    .unwrap_or_else(|| mem.property.clone());
+
+                                let match_expr = format!("{}.{}", obj_id.name, swc_field);
                                 // Use the field name as the binding variable
                                 (mem.property.clone(), Some(path), match_expr)
                             } else {
@@ -1119,6 +1128,16 @@ impl SwcGenerator {
             Expr::Ref(ref_expr) => {
                 // Reference expression - infer the inner type
                 self.infer_type(&ref_expr.expr)
+            }
+
+            Expr::Unary(un) => {
+                // Unary expression - for Ref/RefMut, infer the inner type
+                match un.op {
+                    crate::parser::UnaryOp::Ref | crate::parser::UnaryOp::RefMut => {
+                        self.infer_type(&un.operand)
+                    }
+                    _ => TypeContext::unknown(),
+                }
             }
 
             Expr::Index(idx) => {

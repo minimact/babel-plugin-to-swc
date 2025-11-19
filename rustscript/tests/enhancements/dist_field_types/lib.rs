@@ -17,15 +17,15 @@ impl FieldTypesTest {
     pub fn test_array_pattern_elements(pat: &ArrayPat) {
         for elem in &pat.elems {
             if let Some(p) = elem {
-                if let Expr::Ident(p) = &p {
-                    let name = p.sym.clone();
+                if let Pat::Ident(p) = &p {
+                    let name = p.id.sym.clone();
                 }
             }
         }
     }
     
     pub fn extract_use_state(decl: &VariableDeclarator) {
-        if let Pat::Array(id) = &decl.id {
+        if let Pat::Array(id) = &decl.name {
             let arr = decl.name.clone();
             if (arr.elems.len() > 0) {
                 let first_elem = &arr.elems[0];
@@ -96,12 +96,12 @@ impl VisitMut for FieldTypesTest {
                 if let Callee::Expr(callee) = &init.callee {
                     let callee_name = { let __callee = &init.callee; match __callee { Callee::Expr(e) => match e.as_ref() { Expr::Ident(i) => i.sym.clone(), _ => "".into() }, _ => "".into() } }.clone();
                     if (callee_name == "useState") {
-                        if let Pat::Array(id) = &decl.id {
+                        if let Pat::Array(id) = &decl.name {
                             let arr = n.name.clone();
                             if (arr.elems.len() > 0) {
                                 if let Some(pat) = &arr.elems[0] {
-                                    if let Expr::Ident(pat) = &pat {
-                                        let state_name = pat.sym.clone();
+                                    if let Pat::Ident(pat) = &pat {
+                                        let state_name = pat.id.sym.clone();
                                     }
                                 }
                             }
