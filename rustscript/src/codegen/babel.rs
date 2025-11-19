@@ -730,6 +730,11 @@ impl BabelGenerator {
                         self.emit(")");
                         return;
                     }
+                    // Check for format! macro -> template literal
+                    if ident.name == "format" && !call.args.is_empty() {
+                        self.gen_format_macro(&call.args);
+                        return;
+                    }
                     // Check for Default::default() -> undefined or appropriate default
                     if ident.name == "Default::default()" || ident.name == "Default::default" {
                         self.emit("undefined");
@@ -1028,6 +1033,75 @@ impl BabelGenerator {
         self.emit("(");
         self.gen_matches_pattern(scrutinee, pattern);
         self.emit(")");
+    }
+
+    /// Generate format! macro as JavaScript template literal
+    fn gen_format_macro(&mut self, args: &[Expr]) {
+        if args.is_empty() {
+            self.emit("\"\"");
+            return;
+        }
+
+        // First argument is the format string
+        let format_str = match &args[0] {
+            Expr::Literal(Literal::String(s)) => s.clone(),
+            _ => {
+                // If not a string literal, fall back to regular function call
+                self.emit("String(");
+                self.gen_expr(&args[0]);
+                self.emit(")");
+                return;
+            }
+        };
+
+        // Parse the format string and replace {} with ${arg}
+        let remaining_args = &args[1..];
+        let mut arg_index = 0;
+        let mut result = String::new();
+        let mut chars = format_str.chars().peekable();
+
+        while let Some(ch) = chars.next() {
+            if ch == '{' {
+                if chars.peek() == Some(&'{') {
+                    // Escaped {{ -> {
+                    chars.next();
+                    result.push('{');
+                } else if chars.peek() == Some(&'}') {
+                    // {} placeholder
+                    chars.next();
+                    if arg_index < remaining_args.len() {
+                        result.push_str("${");
+                        result.push_str(&self.expr_to_string(&remaining_args[arg_index]));
+                        result.push('}');
+                        arg_index += 1;
+                    } else {
+                        result.push_str("{}");
+                    }
+                } else {
+                    result.push(ch);
+                }
+            } else if ch == '}' {
+                if chars.peek() == Some(&'}') {
+                    // Escaped }} -> }
+                    chars.next();
+                    result.push('}');
+                } else {
+                    result.push(ch);
+                }
+            } else if ch == '`' {
+                // Escape backticks in template literal
+                result.push_str("\\`");
+            } else if ch == '$' {
+                // Escape $ to prevent unintended interpolation
+                result.push_str("\\$");
+            } else {
+                result.push(ch);
+            }
+        }
+
+        self.emit("`");
+        self.emit(&result);
+        self.emit("`");
     }
 
     /// Recursively generate type checks for a pattern

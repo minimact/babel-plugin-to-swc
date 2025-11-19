@@ -163,11 +163,71 @@ let data = ExtractedData {
 let items: Vec<Str> = vec![];  // Inferred from annotation
 ```
 
+## Strengthened Assignability
+
+To handle cases where expected type propagation didn't reach (e.g., complex expressions), `is_assignable_to` was updated to treat `Unknown` element types as compatible:
+
+```rust
+// In src/semantic/types.rs
+
+pub fn is_assignable_to(&self, target: &TypeInfo) -> bool {
+    match (self, target) {
+        // ... exact match, null to Option, etc. ...
+
+        // Vec<Unknown> is assignable to any Vec<T> (inference fallback)
+        (TypeInfo::Vec(elem), TypeInfo::Vec(expected_elem)) => {
+            match elem.as_ref() {
+                TypeInfo::Unknown => true,
+                _ => elem.is_assignable_to(expected_elem),
+            }
+        }
+
+        // HashMap<Unknown, Unknown> is assignable to any HashMap<K, V>
+        (TypeInfo::HashMap(k, v), TypeInfo::HashMap(ek, ev)) => {
+            let k_ok = matches!(k.as_ref(), TypeInfo::Unknown) || k.is_assignable_to(ek);
+            let v_ok = matches!(v.as_ref(), TypeInfo::Unknown) || v.is_assignable_to(ev);
+            k_ok && v_ok
+        }
+
+        // HashSet<Unknown> is assignable to any HashSet<T>
+        (TypeInfo::HashSet(elem), TypeInfo::HashSet(expected_elem)) => {
+            match elem.as_ref() {
+                TypeInfo::Unknown => true,
+                _ => elem.is_assignable_to(expected_elem),
+            }
+        }
+
+        // Option<Unknown> is assignable to any Option<T>
+        (TypeInfo::Option(inner), TypeInfo::Option(expected_inner)) => {
+            match inner.as_ref() {
+                TypeInfo::Unknown => true,
+                _ => inner.is_assignable_to(expected_inner),
+            }
+        }
+
+        // Result<Unknown, Unknown> is assignable to any Result<T, E>
+        (TypeInfo::Result(ok, err), TypeInfo::Result(eok, eerr)) => {
+            let ok_ok = matches!(ok.as_ref(), TypeInfo::Unknown) || ok.is_assignable_to(eok);
+            let err_ok = matches!(err.as_ref(), TypeInfo::Unknown) || err.is_assignable_to(eerr);
+            ok_ok && err_ok
+        }
+
+        // Unknown matches anything (for error recovery)
+        (TypeInfo::Unknown, _) | (_, TypeInfo::Unknown) => true,
+
+        _ => false,
+    }
+}
+```
+
+This ensures that even if expected type propagation doesn't reach a `vec![]` expression, it can still be assigned to a typed variable or field.
+
 ## Future Improvements
 
 This implementation handles the most common cases. Future enhancements could include:
 
-1. **Full unification-based inference** - Handle more complex type relationships
-2. **Nested expected types** - Pass expected types through blocks, closures, etc.
-3. **Return type inference** - Use function return type to infer expressions in return statements
-4. **Generic type inference** - Infer type parameters from usage
+1. **Function call argument inference** - Pass expected parameter types to arguments
+2. **Return statement inference** - Use function return type to infer expressions
+3. **Match arm inference** - Ensure all arms return compatible types
+4. **Better error messages** - Suggest adding type annotations when inference fails
+5. **Generic type inference** - Infer type parameters from usage

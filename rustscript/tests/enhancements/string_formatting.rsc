@@ -122,10 +122,11 @@ plugin StringFormattingTest {
     }
 
     /// Test path building with format
-    pub fn build_jsx_path(indices: &Vec<usize>) -> Str {
-        let parts: Vec<Str> = vec![];
-        for i in indices {
-            parts.push(i.to_string());
+    pub fn build_jsx_path(indices: &Vec<i32>) -> Str {
+        let mut parts: Vec<Str> = vec![];
+        for idx in &indices {
+            let s = format!("index: {}", idx);
+            parts.push(s);
         }
         return parts.join(".");
     }

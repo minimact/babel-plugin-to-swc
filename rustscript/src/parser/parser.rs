@@ -437,10 +437,11 @@ impl Parser {
         let (pattern, condition) = if self.match_token(TokenKind::Let) {
             let pat = self.parse_pattern()?;
             self.expect(TokenKind::Eq)?;
-            let expr = self.parse_expr()?;
+            let expr = self.parse_expr_no_struct()?;
             (Some(pat), expr)
         } else {
-            (None, self.parse_expr()?)
+            // Use parse_expr_no_struct to avoid ambiguity with block
+            (None, self.parse_expr_no_struct()?)
         };
 
         let then_branch = self.parse_block()?;
@@ -451,7 +452,7 @@ impl Parser {
         while self.match_token(TokenKind::Else) {
             if self.match_token(TokenKind::If) {
                 // Note: else-if with let not supported yet, just regular condition
-                let cond = self.parse_expr()?;
+                let cond = self.parse_expr_no_struct()?;
                 let block = self.parse_block()?;
                 else_if_branches.push((cond, block));
             } else {
@@ -585,7 +586,8 @@ impl Parser {
         self.expect(TokenKind::For)?;
         let var = self.expect_ident()?;
         self.expect(TokenKind::In)?;
-        let iter = self.parse_expr()?;
+        // Use parse_expr_no_struct to avoid ambiguity with block
+        let iter = self.parse_expr_no_struct()?;
         let body = self.parse_block()?;
 
         Ok(Stmt::For(ForStmt {
@@ -596,11 +598,114 @@ impl Parser {
         }))
     }
 
+    /// Parse expression without allowing struct initialization
+    /// This is used in contexts where `{` starts a block, not a struct
+    fn parse_expr_no_struct(&mut self) -> ParseResult<Expr> {
+        // Parse the expression but stop if we see an identifier followed by {
+        // For now, just parse unary/primary without struct init check
+        self.parse_unary_no_struct()
+    }
+
+    fn parse_unary_no_struct(&mut self) -> ParseResult<Expr> {
+        let span = self.current_span();
+
+        // Handle unary operators
+        if self.match_token(TokenKind::Not) {
+            let operand = self.parse_unary_no_struct()?;
+            return Ok(Expr::Unary(UnaryExpr {
+                op: UnaryOp::Not,
+                operand: Box::new(operand),
+                span,
+            }));
+        }
+        if self.match_token(TokenKind::Minus) {
+            let operand = self.parse_unary_no_struct()?;
+            return Ok(Expr::Unary(UnaryExpr {
+                op: UnaryOp::Neg,
+                operand: Box::new(operand),
+                span,
+            }));
+        }
+        if self.match_token(TokenKind::Star) {
+            let operand = self.parse_unary_no_struct()?;
+            return Ok(Expr::Unary(UnaryExpr {
+                op: UnaryOp::Deref,
+                operand: Box::new(operand),
+                span,
+            }));
+        }
+        if self.match_token(TokenKind::Ampersand) {
+            let is_mut = self.match_token(TokenKind::Mut);
+            let operand = self.parse_unary_no_struct()?;
+            return Ok(Expr::Unary(UnaryExpr {
+                op: if is_mut { UnaryOp::RefMut } else { UnaryOp::Ref },
+                operand: Box::new(operand),
+                span,
+            }));
+        }
+
+        self.parse_primary_no_struct()
+    }
+
+    fn parse_primary_no_struct(&mut self) -> ParseResult<Expr> {
+        let span = self.current_span();
+
+        // Identifier (no struct init)
+        if let Some(name) = self.try_expect_ident() {
+            // Don't check for LBrace here - just return the identifier
+            let mut expr = Expr::Ident(IdentExpr { name, span });
+
+            // Handle postfix operators (member access, calls, etc.) but not struct init
+            loop {
+                if self.match_token(TokenKind::Dot) {
+                    let property = self.expect_ident()?;
+                    let span = self.current_span();
+                    expr = Expr::Member(MemberExpr {
+                        object: Box::new(expr),
+                        property,
+                        optional: false,
+                        computed: false,
+                        span,
+                    });
+                } else if self.match_token(TokenKind::LParen) {
+                    let args = self.parse_args()?;
+                    self.expect(TokenKind::RParen)?;
+                    let span = self.current_span();
+                    expr = Expr::Call(CallExpr {
+                        callee: Box::new(expr),
+                        args,
+                        type_args: Vec::new(),
+                        optional: false,
+                        span,
+                    });
+                } else if self.match_token(TokenKind::LBracket) {
+                    let index = self.parse_expr()?;
+                    self.expect(TokenKind::RBracket)?;
+                    let span = self.current_span();
+                    expr = Expr::Index(IndexExpr {
+                        object: Box::new(expr),
+                        index: Box::new(index),
+                        span,
+                    });
+                } else {
+                    // Don't handle LBrace here - that would be struct init
+                    break;
+                }
+            }
+
+            return Ok(expr);
+        }
+
+        // For other cases, delegate to normal parse_primary
+        self.parse_primary()
+    }
+
     /// Parse while statement
     fn parse_while_stmt(&mut self) -> ParseResult<Stmt> {
         let start_span = self.current_span();
         self.expect(TokenKind::While)?;
-        let condition = self.parse_expr()?;
+        // Use parse_expr_no_struct to avoid ambiguity with block
+        let condition = self.parse_expr_no_struct()?;
         let body = self.parse_block()?;
 
         Ok(Stmt::While(WhileStmt {
@@ -1098,12 +1203,15 @@ impl Parser {
     fn parse_args(&mut self) -> ParseResult<Vec<Expr>> {
         let mut args = Vec::new();
 
+        self.skip_newlines();
         if self.check(TokenKind::RParen) {
             return Ok(args);
         }
 
         loop {
+            self.skip_newlines();
             args.push(self.parse_expr()?);
+            self.skip_newlines();
             if !self.match_token(TokenKind::Comma) {
                 break;
             }

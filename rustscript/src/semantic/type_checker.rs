@@ -248,8 +248,11 @@ impl TypeChecker {
 
             Stmt::Return(return_stmt) => {
                 if let Some(ref value) = return_stmt.value {
-                    let value_type = self.infer_expr(value);
-                    if let Some(ref expected) = self.current_return_type {
+                    // Clone expected type to avoid borrow issues
+                    let expected_return = self.current_return_type.clone();
+                    // Pass expected return type for bidirectional inference
+                    let value_type = self.infer_expr_with_expected(value, expected_return.as_ref());
+                    if let Some(ref expected) = expected_return {
                         if !value_type.is_assignable_to(expected) {
                             self.errors.push(SemanticError::new(
                                 "RS003",
@@ -400,18 +403,24 @@ impl TypeChecker {
             Expr::Call(call) => {
                 let callee_type = self.infer_expr(&call.callee);
 
-                // Check arguments
-                for arg in &call.args {
-                    self.infer_expr(arg);
-                }
-
-                match callee_type {
-                    TypeInfo::Function { ret, .. } => *ret,
+                // Check arguments with expected parameter types for bidirectional inference
+                match &callee_type {
+                    TypeInfo::Function { params, ret } => {
+                        for (i, arg) in call.args.iter().enumerate() {
+                            let expected_param = params.get(i);
+                            self.infer_expr_with_expected(arg, expected_param);
+                        }
+                        *ret.clone()
+                    }
                     _ => {
                         // Method calls on known types
                         if let Expr::Member(member) = call.callee.as_ref() {
                             let obj_type = self.infer_expr(&member.object);
                             return self.infer_method_call(&obj_type, &member.property, &call.args);
+                        }
+                        // Unknown callee - just check arguments without expected types
+                        for arg in &call.args {
+                            self.infer_expr(arg);
                         }
                         TypeInfo::Unknown
                     }
@@ -500,13 +509,31 @@ impl TypeChecker {
 
             Expr::Match(match_expr) => {
                 self.infer_expr(&match_expr.scrutinee);
-                let mut result_type = TypeInfo::Unknown;
-                for arm in &match_expr.arms {
+
+                // Infer first arm to establish expected type for other arms
+                let first_arm_type = if !match_expr.arms.is_empty() {
                     self.env.push_scope();
-                    result_type = self.infer_expr(&arm.body);
+                    let t = self.infer_expr_with_expected(&match_expr.arms[0].body, expected);
+                    self.env.pop_scope();
+                    t
+                } else {
+                    TypeInfo::Unknown
+                };
+
+                // Clone the type to avoid borrow issues
+                let arm_expected_owned = if matches!(first_arm_type, TypeInfo::Unknown) {
+                    expected.cloned()
+                } else {
+                    Some(first_arm_type.clone())
+                };
+
+                for arm in match_expr.arms.iter().skip(1) {
+                    self.env.push_scope();
+                    self.infer_expr_with_expected(&arm.body, arm_expected_owned.as_ref());
                     self.env.pop_scope();
                 }
-                result_type
+
+                first_arm_type
             }
 
             Expr::Closure(closure) => {

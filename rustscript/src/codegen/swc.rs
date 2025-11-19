@@ -1115,6 +1115,18 @@ impl SwcGenerator {
                         self.gen_matches_macro(&call.args[0], &call.args[1]);
                         return;
                     }
+                    // Check for format! macro - pass through as-is
+                    if ident.name == "format" && !call.args.is_empty() {
+                        self.emit("format!(");
+                        for (i, arg) in call.args.iter().enumerate() {
+                            if i > 0 {
+                                self.emit(", ");
+                            }
+                            self.gen_expr(arg);
+                        }
+                        self.emit(")");
+                        return;
+                    }
                 }
 
                 // Check for visitor traversal methods
