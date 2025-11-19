@@ -9,11 +9,11 @@
     },
     {
       "name": "component",
-      "inferredType": "unknown",
+      "inferredType": "&Component",
       "defaultValue": null
     }
   ],
-  "inferredReturnType": "AnalysisResult",
+  "inferredReturnType": "HashSet<Dependency>",
   "babel_source": "function analyzeDependencies(jsxExpr, component) {\r\n  const deps = new Set();\r\n\r\n  function walk(node) {\r\n    if (!node) return;\r\n\r\n    // Check if this is an identifier that's a state variable\r\n    if (t.isIdentifier(node)) {\r\n      const name = node.name;\r\n      if (component.stateTypes.has(name)) {\r\n        deps.add({\r\n          name: name,\r\n          type: component.stateTypes.get(name) // 'client' or 'server'\r\n        });\r\n      }\r\n    }\r\n\r\n    // Recursively walk the tree\r\n    if (t.isConditionalExpression(node)) {\r\n      walk(node.test);\r\n      walk(node.consequent);\r\n      walk(node.alternate);\r\n    } else if (t.isLogicalExpression(node)) {\r\n      walk(node.left);\r\n      walk(node.right);\r\n    } else if (t.isMemberExpression(node)) {\r\n      walk(node.object);\r\n      walk(node.property);\r\n    } else if (t.isCallExpression(node)) {\r\n      walk(node.callee);\r\n      node.arguments.forEach(walk);\r\n    } else if (t.isBinaryExpression(node)) {\r\n      walk(node.left);\r\n      walk(node.right);\r\n    } else if (t.isUnaryExpression(node)) {\r\n      walk(node.argument);\r\n    } else if (t.isArrowFunctionExpression(node) || t.isFunctionExpression(node)) {\r\n      walk(node.body);\r\n    }\r\n  }\r\n\r\n  walk(jsxExpr);\r\n  return deps;\r\n}",
   "body_templates": [
     {
@@ -27,7 +27,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "let mut deps: HashSet<Dependency> = HashSet::new();"
     },
     {
       "hash": "1ae36cea",
@@ -40,7 +40,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "HashSet::new()"
     },
     {
       "hash": "38309af2",
@@ -54,7 +54,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "// In Rust, Option types handle this - we match on the expression directly"
     },
     {
       "hash": "e10d47ee",
@@ -68,7 +68,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "node.is_none()"
     },
     {
       "hash": "8beaabe2",
@@ -81,7 +81,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "return;"
     },
     {
       "hash": "c69e169b",
@@ -95,7 +95,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "Expr::Ident(ident) => {\n    let name = ident.sym.to_string();\n    if let Some(state_type) = component.state_types.get(&name) {\n        deps.insert(Dependency {\n            name: name.clone(),\n            dep_type: state_type.clone(),\n        });\n    }\n}"
     },
     {
       "hash": "458e4c81",
@@ -109,7 +109,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(expr, Expr::Ident(_))"
     },
     {
       "hash": "47e9392c",
@@ -122,7 +122,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "let name = ident.sym.to_string();"
     },
     {
       "hash": "ecc27495",
@@ -136,7 +136,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "if let Some(state_type) = component.state_types.get(&name) {\n    deps.insert(Dependency {\n        name: name.clone(),\n        dep_type: state_type.clone(),\n    });\n}"
     },
     {
       "hash": "d2f89b9a",
@@ -149,7 +149,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "Dependency {\n    name: name.clone(),\n    dep_type: state_type.clone(),\n}"
     },
     {
       "hash": "74b945db",
@@ -163,7 +163,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "Expr::Cond(cond) => {\n    walk(&cond.test, component, deps);\n    walk(&cond.cons, component, deps);\n    if let Some(alt) = &cond.alt {\n        walk(alt, component, deps);\n    }\n}"
     },
     {
       "hash": "1459577d",
@@ -177,7 +177,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(expr, Expr::Cond(_))"
     },
     {
       "hash": "1eee5164",
@@ -191,7 +191,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "Expr::Bin(bin) if matches!(bin.op, BinaryOp::LogicalAnd | BinaryOp::LogicalOr) => {\n    walk(&bin.left, component, deps);\n    walk(&bin.right, component, deps);\n}"
     },
     {
       "hash": "00fb4fd3",
@@ -205,7 +205,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(expr, Expr::Bin(bin) if matches!(bin.op, BinaryOp::LogicalAnd | BinaryOp::LogicalOr))"
     },
     {
       "hash": "cbb363f4",
@@ -219,7 +219,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "Expr::Member(member) => {\n    walk(&member.obj, component, deps);\n    if let MemberProp::Computed(computed) = &member.prop {\n        walk(&computed.expr, component, deps);\n    }\n}"
     },
     {
       "hash": "e4025d71",
@@ -233,7 +233,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(expr, Expr::Member(_))"
     },
     {
       "hash": "fe85050b",
@@ -247,7 +247,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "Expr::Call(call) => {\n    if let Callee::Expr(callee) = &call.callee {\n        walk(callee, component, deps);\n    }\n    for arg in &call.args {\n        walk(&arg.expr, component, deps);\n    }\n}"
     },
     {
       "hash": "1088dc62",
@@ -261,7 +261,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(expr, Expr::Call(_))"
     },
     {
       "hash": "c584786c",
@@ -275,7 +275,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "Expr::Bin(bin) => {\n    walk(&bin.left, component, deps);\n    walk(&bin.right, component, deps);\n}"
     },
     {
       "hash": "ae0955e9",
@@ -289,7 +289,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(expr, Expr::Bin(_))"
     },
     {
       "hash": "eff5f781",
@@ -303,7 +303,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "Expr::Unary(unary) => {\n    walk(&unary.arg, component, deps);\n}"
     },
     {
       "hash": "27f27257",
@@ -317,7 +317,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(expr, Expr::Unary(_))"
     },
     {
       "hash": "58b5c305",
@@ -331,7 +331,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "Expr::Arrow(arrow) => {\n    match &*arrow.body {\n        BlockStmtOrExpr::Expr(expr) => walk(expr, component, deps),\n        _ => {}\n    }\n}\nExpr::Fn(fn_expr) => {\n    // Walk function body if needed\n}"
     },
     {
       "hash": "0909c72d",
@@ -345,7 +345,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(expr, Expr::Arrow(_) | Expr::Fn(_))"
     },
     {
       "hash": "4d2a5749",
@@ -359,7 +359,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(expr, Expr::Arrow(_))"
     },
     {
       "hash": "630f2645",
@@ -373,7 +373,7 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "matches!(expr, Expr::Fn(_))"
     },
     {
       "hash": "fc03d702",
@@ -386,10 +386,10 @@
           "component"
         ]
       },
-      "rust_translation": null
+      "rust_translation": "deps"
     }
   ],
-  "rust_translation": null,
+  "rust_translation": "fn analyze_dependencies(expr: &Expr, component: &Component) -> HashSet<Dependency> {\n    let mut deps: HashSet<Dependency> = HashSet::new();\n    \n    fn walk(expr: &Expr, component: &Component, deps: &mut HashSet<Dependency>) {\n        match expr {\n            Expr::Ident(ident) => {\n                let name = ident.sym.to_string();\n                if let Some(state_type) = component.state_types.get(&name) {\n                    deps.insert(Dependency {\n                        name: name.clone(),\n                        dep_type: state_type.clone(),\n                    });\n                }\n            }\n            Expr::Cond(cond) => {\n                walk(&cond.test, component, deps);\n                walk(&cond.cons, component, deps);\n                walk(&cond.alt, component, deps);\n            }\n            Expr::Bin(bin) => {\n                walk(&bin.left, component, deps);\n                walk(&bin.right, component, deps);\n            }\n            Expr::Member(member) => {\n                walk(&member.obj, component, deps);\n                if let MemberProp::Computed(computed) = &member.prop {\n                    walk(&computed.expr, component, deps);\n                }\n            }\n            Expr::Call(call) => {\n                if let Callee::Expr(callee) = &call.callee {\n                    walk(callee, component, deps);\n                }\n                for arg in &call.args {\n                    walk(&arg.expr, component, deps);\n                }\n            }\n            Expr::Unary(unary) => {\n                walk(&unary.arg, component, deps);\n            }\n            Expr::Arrow(arrow) => {\n                if let BlockStmtOrExpr::Expr(body) = &*arrow.body {\n                    walk(body, component, deps);\n                }\n            }\n            _ => {}\n        }\n    }\n    \n    walk(expr, component, &mut deps);\n    deps\n}",
   "found_in": [
     "analyzers/dependencies.cjs"
   ]
