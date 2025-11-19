@@ -564,6 +564,17 @@ impl BabelGenerator {
                         self.gen_expr(&mem.object);
                         return;
                     }
+                    // visit_children(self) -> Babel auto-traverses, so this is a no-op
+                    // We emit nothing since Babel handles traversal automatically
+                    if prop == "visit_children" {
+                        self.emit("/* Babel auto-traverses */");
+                        return;
+                    }
+                    // visit_with(self) -> for manual iteration, also skip
+                    if prop == "visit_with" {
+                        self.emit("/* manual traversal handled by Babel */");
+                        return;
+                    }
                 }
 
                 self.gen_expr(&call.callee);

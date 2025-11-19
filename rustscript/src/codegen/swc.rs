@@ -41,6 +41,17 @@ impl SwcGenerator {
             TopLevelDecl::Writer(writer) => self.gen_writer(writer),
         }
 
+        // Emit hoisted inline visitors at the end
+        if !self.hoisted_visitors.is_empty() {
+            self.emit_line("");
+            self.emit_line("// Hoisted inline visitors for traverse blocks");
+            let visitors = std::mem::take(&mut self.hoisted_visitors);
+            for visitor in visitors {
+                self.emit(&visitor);
+                self.emit_line("");
+            }
+        }
+
         std::mem::take(&mut self.output)
     }
 
@@ -346,23 +357,25 @@ impl SwcGenerator {
 
     fn rustscript_to_swc_type(&self, name: &str) -> String {
         // Convert RustScript node names to SWC AST types
-        match name {
-            "call_expression" => "CallExpr".to_string(),
-            "member_expression" => "MemberExpr".to_string(),
-            "binary_expression" => "BinExpr".to_string(),
-            "unary_expression" => "UnaryExpr".to_string(),
-            "function_declaration" => "FnDecl".to_string(),
-            "variable_declaration" => "VarDecl".to_string(),
-            "if_statement" => "IfStmt".to_string(),
-            "return_statement" => "ReturnStmt".to_string(),
-            "block_statement" => "BlockStmt".to_string(),
-            "expression_statement" => "ExprStmt".to_string(),
-            "for_statement" => "ForStmt".to_string(),
-            "while_statement" => "WhileStmt".to_string(),
+        // Handle both snake_case and PascalCase inputs
+        match name.to_lowercase().as_str() {
+            "call_expression" | "callexpression" => "CallExpr".to_string(),
+            "member_expression" | "memberexpression" => "MemberExpr".to_string(),
+            "binary_expression" | "binaryexpression" => "BinExpr".to_string(),
+            "unary_expression" | "unaryexpression" => "UnaryExpr".to_string(),
+            "function_declaration" | "functiondeclaration" => "FnDecl".to_string(),
+            "variable_declaration" | "variabledeclaration" => "VarDecl".to_string(),
+            "if_statement" | "ifstatement" => "IfStmt".to_string(),
+            "return_statement" | "returnstatement" => "ReturnStmt".to_string(),
+            "block_statement" | "blockstatement" => "BlockStmt".to_string(),
+            "expression_statement" | "expressionstatement" => "ExprStmt".to_string(),
+            "for_statement" | "forstatement" => "ForStmt".to_string(),
+            "while_statement" | "whilestatement" => "WhileStmt".to_string(),
             "identifier" => "Ident".to_string(),
-            "jsx_element" => "JSXElement".to_string(),
-            "jsx_attribute" => "JSXAttr".to_string(),
+            "jsx_element" | "jsxelement" => "JSXElement".to_string(),
+            "jsx_attribute" | "jsxattribute" => "JSXAttr".to_string(),
             "program" => "Program".to_string(),
+            "literal" => "Lit".to_string(),
             _ => {
                 // Convert snake_case to PascalCase for unknown types
                 name.split('_')
@@ -733,6 +746,23 @@ impl SwcGenerator {
                     }
                 }
 
+                // Check for visitor traversal methods
+                if let Expr::Member(mem) = call.callee.as_ref() {
+                    let prop = &mem.property;
+                    // visit_children(self) -> n.visit_mut_children_with(self)
+                    if prop == "visit_children" {
+                        self.gen_expr(&mem.object);
+                        self.emit(".visit_mut_children_with(self)");
+                        return;
+                    }
+                    // visit_with(self) -> n.visit_mut_with(self)
+                    if prop == "visit_with" {
+                        self.gen_expr(&mem.object);
+                        self.emit(".visit_mut_with(self)");
+                        return;
+                    }
+                }
+
                 self.gen_expr(&call.callee);
                 self.emit("(");
                 for (i, arg) in call.args.iter().enumerate() {
@@ -763,11 +793,14 @@ impl SwcGenerator {
             Expr::StructInit(init) => {
                 // Map RustScript AST types to SWC types
                 let swc_type = self.rustscript_to_swc_type(&init.name.to_lowercase());
-                self.emit(&swc_type);
-                self.emit(" { ");
 
                 // Handle special SWC struct field mappings
                 let is_ident = swc_type == "Ident";
+                let is_call_expr = swc_type == "CallExpr";
+                let is_literal = swc_type == "Lit";
+
+                self.emit(&swc_type);
+                self.emit(" { ");
 
                 for (i, (name, value)) in init.fields.iter().enumerate() {
                     if i > 0 {
@@ -779,12 +812,41 @@ impl SwcGenerator {
                         self.emit("sym: ");
                         self.gen_expr(value);
                         self.emit(".into(), span: DUMMY_SP");
+                    } else if is_call_expr && name == "callee" {
+                        // CallExpr.callee is Callee enum
+                        self.emit("callee: Callee::Expr(Box::new(Expr::Ident(Ident { sym: ");
+                        // Extract the name from the nested Identifier
+                        if let Expr::StructInit(nested) = value {
+                            for (nested_name, nested_val) in &nested.fields {
+                                if nested_name == "name" {
+                                    self.gen_expr(nested_val);
+                                }
+                            }
+                        } else {
+                            self.gen_expr(value);
+                        }
+                        self.emit(".into(), span: DUMMY_SP, ..Default::default() })))");
+                    } else if is_call_expr && name == "arguments" {
+                        // CallExpr.args is Vec<ExprOrSpread>
+                        self.emit("args: vec![]"); // Simplified for now
+                        // TODO: properly handle ExprOrSpread
+                    } else if is_literal && name == "value" {
+                        // Literal needs proper Lit enum variant
+                        self.emit("value: Lit::Num(Number { value: ");
+                        self.gen_expr(value);
+                        self.emit(".0, span: DUMMY_SP, raw: None })");
                     } else {
                         self.emit(name);
                         self.emit(": ");
                         self.gen_expr(value);
                     }
                 }
+
+                // Add required fields for CallExpr
+                if is_call_expr {
+                    self.emit(", span: DUMMY_SP, ..Default::default()");
+                }
+
                 self.emit(" }");
             }
             Expr::VecInit(vec) => {
@@ -1000,12 +1062,31 @@ impl SwcGenerator {
                                 _ => field_name,
                             };
 
-                            // Create a synthetic expression for the field access
-                            let field_access = Expr::Ident(IdentExpr {
-                                name: format!("(*{}.{})", obj_var, swc_field),
-                                span: crate::lexer::Span::new(0, 0, 0, 0),
-                            });
-                            self.gen_swc_pattern_check(&field_access, &Expr::StructInit(nested.clone()), depth + 1);
+                            // Handle MemberProp specially - it's not an Expr
+                            if init.name == "MemberExpression" && field_name == "property" {
+                                // MemberProp needs special handling
+                                if nested.name == "Identifier" {
+                                    // MemberProp::Ident
+                                    self.emit(&format!("matches!({}.prop, MemberProp::Ident(_))", obj_var));
+                                    // Check name if specified
+                                    for (nested_field, nested_val) in &nested.fields {
+                                        if nested_field == "name" {
+                                            if let Expr::Literal(Literal::String(s)) = nested_val {
+                                                self.emit(&format!(" && {{ if let MemberProp::Ident(id) = &{}.prop {{ &*id.sym == \"{}\" }} else {{ false }} }}", obj_var, s));
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    self.emit("true /* unsupported MemberProp pattern */");
+                                }
+                            } else {
+                                // Create a synthetic expression for the field access
+                                let field_access = Expr::Ident(IdentExpr {
+                                    name: format!("(*{}.{})", obj_var, swc_field),
+                                    span: crate::lexer::Span::new(0, 0, 0, 0),
+                                });
+                                self.gen_swc_pattern_check(&field_access, &Expr::StructInit(nested.clone()), depth + 1);
+                            }
                         }
                         _ => {
                             self.emit("true");
