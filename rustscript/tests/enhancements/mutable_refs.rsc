@@ -26,7 +26,8 @@ plugin MutableRefsTest {
                         if matches!(init, CallExpression) {
                             let call = init.clone();
                             if matches!(call.callee, Identifier) {
-                                if call.callee.name == "useState" {
+                                let callee_name = call.callee.name.clone();
+                                if callee_name == "useState" {
                                     // Mutate captured component
                                     if matches!(decl.id, ArrayPattern) {
                                         let arr = decl.id.clone();
@@ -43,7 +44,8 @@ plugin MutableRefsTest {
 
                 fn visit_call_expression(call: &CallExpression) {
                     if matches!(call.callee, Identifier) {
-                        if call.callee.name == "useEffect" {
+                        let callee_name = call.callee.name.clone();
+                        if callee_name == "useEffect" {
                             // Extract dependencies
                             if call.arguments.len() > 1 {
                                 let deps_arg = &call.arguments[1];
