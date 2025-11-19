@@ -439,8 +439,14 @@ impl SwcGenerator {
     fn gen_stmt(&mut self, stmt: &Stmt) {
         match stmt {
             Stmt::Let(let_stmt) => {
-                // Infer the type from the initializer expression
-                let init_type = self.infer_type(&let_stmt.init);
+                // Determine the type: use explicit annotation if available, else infer
+                let var_type = if let Some(ty) = &let_stmt.ty {
+                    // Use explicit type annotation
+                    self.type_from_ast(ty)
+                } else {
+                    // Infer the type from the initializer expression
+                    self.infer_type(&let_stmt.init)
+                };
 
                 self.emit_indent();
                 if let_stmt.mutable {
@@ -449,15 +455,14 @@ impl SwcGenerator {
                     self.emit("let ");
                 }
                 self.emit(&let_stmt.name);
-                if let Some(ty) = &let_stmt.ty {
-                    self.emit(&format!(": {}", self.type_to_rust(ty)));
-                }
+                // Don't emit type annotations for internal temp variables
+                // The type environment tracking is what matters
                 self.emit(" = ");
                 self.gen_expr(&let_stmt.init);
                 self.emit(";\n");
 
                 // Track the variable's type in the environment
-                self.type_env.define(&let_stmt.name, init_type);
+                self.type_env.define(&let_stmt.name, var_type);
             }
             Stmt::Const(const_stmt) => {
                 self.emit_indent();
@@ -817,6 +822,19 @@ impl SwcGenerator {
             }
 
             _ => TypeContext::unknown(),
+        }
+    }
+
+    /// Convert an AST type to a TypeContext
+    fn type_from_ast(&self, ty: &Type) -> TypeContext {
+        match ty {
+            Type::Named(name) => TypeContext::from_rustscript(name),
+            Type::Primitive(name) => TypeContext::from_rustscript(name),
+            Type::Reference { inner, .. } => self.type_from_ast(inner),
+            Type::Container { name, .. } => {
+                // Handle Vec, Option, etc.
+                TypeContext::from_rustscript(name)
+            }
         }
     }
 

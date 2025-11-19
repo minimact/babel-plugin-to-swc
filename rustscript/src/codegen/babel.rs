@@ -532,6 +532,8 @@ impl BabelGenerator {
                 // Handle special cases
                 match ident.name.as_str() {
                     "self" => self.emit("this"),
+                    // Handle Default::default() which the hoister uses as a placeholder
+                    name if name.starts_with("Default::default") => self.emit("undefined"),
                     _ => {
                         // Check if this identifier has an alias
                         let output = if let Some(alias) = self.param_aliases.get(&ident.name) {
@@ -575,6 +577,29 @@ impl BabelGenerator {
                 if let Expr::Ident(ident) = call.callee.as_ref() {
                     if ident.name == "matches!" && call.args.len() >= 2 {
                         self.gen_matches_macro(&call.args[0], &call.args[1]);
+                        return;
+                    }
+                    // Check for panic! macro -> throw new Error()
+                    if ident.name == "panic!" {
+                        self.emit("throw new Error(");
+                        if let Some(arg) = call.args.first() {
+                            self.gen_expr(arg);
+                        } else {
+                            self.emit("\"panic\"");
+                        }
+                        self.emit(")");
+                        return;
+                    }
+                    // Check for Default::default() -> undefined or appropriate default
+                    if ident.name == "Default::default()" || ident.name == "Default::default" {
+                        self.emit("undefined");
+                        return;
+                    }
+                }
+                // Also check as a standalone identifier (no parens in name)
+                if let Expr::Ident(ident) = call.callee.as_ref() {
+                    if ident.name.starts_with("Default::default") {
+                        self.emit("undefined");
                         return;
                     }
                 }
