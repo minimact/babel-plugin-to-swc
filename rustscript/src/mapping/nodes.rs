@@ -403,6 +403,16 @@ pub static NODE_MAPPINGS: Lazy<Vec<NodeMapping>> = Lazy::new(|| vec![
         visitor_method: "visit_template_literal",
         swc_visitor: "visit_mut_tpl",
     },
+    NodeMapping {
+        rustscript: "TemplateElement",
+        babel: "TemplateElement",
+        swc: "TplElement",
+        swc_enum: None,
+        babel_checker: "isTemplateElement",
+        swc_pattern: "TplElement",
+        visitor_method: "visit_template_element",
+        swc_visitor: "visit_mut_tpl_element",
+    },
 
     // === JSX ===
     NodeMapping {

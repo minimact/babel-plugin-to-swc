@@ -722,6 +722,54 @@ pub static FIELD_MAPPINGS: Lazy<Vec<FieldMapping>> = Lazy::new(|| vec![
         read_conversion: None,
         write_conversion: None,
     },
+
+    // === TemplateLiteral ===
+    FieldMapping {
+        node_type: "TemplateLiteral",
+        rustscript: "quasis",
+        babel: "quasis",
+        swc: "quasis",
+        swc_type: "Vec<TplElement>",
+        needs_box_unwrap: false,
+        optional: false,
+        read_conversion: None,
+        write_conversion: None,
+    },
+    FieldMapping {
+        node_type: "TemplateLiteral",
+        rustscript: "expressions",
+        babel: "expressions",
+        swc: "exprs",
+        swc_type: "Vec<Box<Expr>>",
+        needs_box_unwrap: false,
+        optional: false,
+        read_conversion: None,
+        write_conversion: None,
+    },
+
+    // === TemplateElement ===
+    FieldMapping {
+        node_type: "TemplateElement",
+        rustscript: "value",
+        babel: "value",
+        swc: "raw",  // SWC has raw and cooked directly on TplElement
+        swc_type: "Atom",
+        needs_box_unwrap: false,
+        optional: false,
+        read_conversion: None,
+        write_conversion: None,
+    },
+    FieldMapping {
+        node_type: "TemplateElement",
+        rustscript: "tail",
+        babel: "tail",
+        swc: "tail",
+        swc_type: "bool",
+        needs_box_unwrap: false,
+        optional: false,
+        read_conversion: None,
+        write_conversion: None,
+    },
 ]);
 
 /// Index for fast lookup by (node_type, field_name)
