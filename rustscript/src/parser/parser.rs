@@ -826,6 +826,7 @@ impl Parser {
                         property,
                         optional: false,
                         computed: false,
+                        is_path: false,
                         span,
                     });
                 } else if self.match_token(TokenKind::LParen) {
@@ -849,7 +850,7 @@ impl Parser {
                         span,
                     });
                 } else if self.match_token(TokenKind::ColonColon) {
-                    // Path expression like fs::write
+                    // Path expression like fs::write or HashMap::new
                     let method = self.expect_ident()?;
                     let span = self.current_span();
                     expr = Expr::Member(MemberExpr {
@@ -857,6 +858,7 @@ impl Parser {
                         property: method,
                         optional: false,
                         computed: false,
+                        is_path: true,
                         span,
                     });
                 } else {
@@ -1329,6 +1331,7 @@ impl Parser {
                     property,
                     optional: false,
                     computed: false,
+                    is_path: false,
                     span,
                 });
             } else if self.match_token(TokenKind::QuestionDot) {
@@ -1340,6 +1343,7 @@ impl Parser {
                     property,
                     optional: true,
                     computed: false,
+                    is_path: false,
                     span,
                 });
             } else if self.match_token(TokenKind::LBracket) {
@@ -1353,7 +1357,7 @@ impl Parser {
                     span,
                 });
             } else if self.match_token(TokenKind::ColonColon) {
-                // Static method call (treat as member for now)
+                // Static method call like HashMap::new
                 let method = self.expect_ident()?;
                 let span = self.current_span();
                 expr = Expr::Member(MemberExpr {
@@ -1361,6 +1365,7 @@ impl Parser {
                     property: method,
                     optional: false,
                     computed: false,
+                    is_path: true,
                     span,
                 });
             } else {

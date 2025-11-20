@@ -425,6 +425,7 @@ impl UnwrapHoister {
                 property: step.clone(),
                 optional: false,
                 computed: false,
+                is_path: false,
                 span,
             });
         }
@@ -441,6 +442,7 @@ impl UnwrapHoister {
                 property: unwrap.field_name.clone(),
                 optional: false,
                 computed: false,
+                is_path: false,
                 span,
             });
 
@@ -509,6 +511,7 @@ impl UnwrapHoister {
                 property: analysis.final_field.clone(),
                 optional: false,
                 computed: false,
+                is_path: false,
                 span,
             });
 
@@ -519,6 +522,7 @@ impl UnwrapHoister {
                     property: "clone".to_string(),
                     optional: false,
                     computed: false,
+                    is_path: false,
                     span,
                 })),
                 args: vec![],
@@ -594,6 +598,7 @@ impl UnwrapHoister {
                 property: analysis.final_field,
                 optional: false,
                 computed: false,
+                is_path: false,
                 span,
             }),
             span,
@@ -683,6 +688,7 @@ mod tests {
             property: "property".to_string(),
             optional: false,
             computed: false,
+            is_path: false,
             span: Span::new(0, 0, 0, 0),
         });
 
@@ -709,11 +715,13 @@ mod tests {
                 property: "property".to_string(),
                 optional: false,
                 computed: false,
+                is_path: false,
                 span: Span::new(0, 0, 0, 0),
             })),
             property: "name".to_string(),
             optional: false,
             computed: false,
+            is_path: false,
             span: Span::new(0, 0, 0, 0),
         });
 

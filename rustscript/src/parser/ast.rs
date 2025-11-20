@@ -589,6 +589,8 @@ pub struct MemberExpr {
     pub property: String,
     pub optional: bool,
     pub computed: bool,
+    /// True if this is a path expression (::) rather than member access (.)
+    pub is_path: bool,
     pub span: Span,
 }
 
