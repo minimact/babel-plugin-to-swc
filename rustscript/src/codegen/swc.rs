@@ -1606,6 +1606,89 @@ impl SwcGenerator {
                     }
                 }
 
+                // Check for CodeBuilder methods
+                if let Expr::Member(mem) = call.callee.as_ref() {
+                    // CodeBuilder::new() -> String::new()
+                    if let Expr::Ident(type_name) = mem.object.as_ref() {
+                        if type_name.name == "CodeBuilder" && mem.property == "new" {
+                            self.emit("String::new()");
+                            return;
+                        }
+                    }
+
+                    // builder.append(s) -> builder.push_str(s)
+                    if mem.property == "append" {
+                        // Check if object is CodeBuilder type
+                        let obj_type = self.infer_type(&mem.object);
+                        if obj_type.swc_type == "CodeBuilder" {
+                            self.gen_expr(&mem.object);
+                            self.emit(".push_str(");
+                            if !call.args.is_empty() {
+                                self.gen_expr(&call.args[0]);
+                            }
+                            self.emit(")");
+                            return;
+                        }
+                    }
+
+                    // builder.append_line(s) -> builder.push_str(s); builder.push_str("\n")
+                    if mem.property == "append_line" {
+                        let obj_type = self.infer_type(&mem.object);
+                        if obj_type.swc_type == "CodeBuilder" {
+                            self.emit("{ ");
+                            self.gen_expr(&mem.object);
+                            self.emit(".push_str(");
+                            if !call.args.is_empty() {
+                                self.gen_expr(&call.args[0]);
+                            }
+                            self.emit("); ");
+                            self.gen_expr(&mem.object);
+                            self.emit(".push_str(\"\\n\"); }");
+                            return;
+                        }
+                    }
+
+                    // builder.newline() -> builder.push_str("\n")
+                    if mem.property == "newline" {
+                        let obj_type = self.infer_type(&mem.object);
+                        if obj_type.swc_type == "CodeBuilder" {
+                            self.gen_expr(&mem.object);
+                            self.emit(".push_str(\"\\n\")");
+                            return;
+                        }
+                    }
+
+                    // builder.indent() - no-op for now (would need state tracking)
+                    if mem.property == "indent" {
+                        let obj_type = self.infer_type(&mem.object);
+                        if obj_type.swc_type == "CodeBuilder" {
+                            // TODO: Implement indent tracking
+                            self.emit("()");
+                            return;
+                        }
+                    }
+
+                    // builder.dedent() - no-op for now
+                    if mem.property == "dedent" {
+                        let obj_type = self.infer_type(&mem.object);
+                        if obj_type.swc_type == "CodeBuilder" {
+                            // TODO: Implement indent tracking
+                            self.emit("()");
+                            return;
+                        }
+                    }
+
+                    // builder.to_string() -> builder.clone()
+                    if mem.property == "to_string" {
+                        let obj_type = self.infer_type(&mem.object);
+                        if obj_type.swc_type == "CodeBuilder" {
+                            self.gen_expr(&mem.object);
+                            self.emit(".clone()");
+                            return;
+                        }
+                    }
+                }
+
                 // Check for visitor traversal methods
                 if let Expr::Member(mem) = call.callee.as_ref() {
                     let prop = &mem.property;

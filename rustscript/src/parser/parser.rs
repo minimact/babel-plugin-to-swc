@@ -269,6 +269,60 @@ impl Parser {
 
         loop {
             let param_span = self.current_span();
+
+            // Check for self parameters (self, &self, &mut self)
+            if let Some(token) = self.peek() {
+                if let TokenKind::Ident(name) = &token.kind {
+                    if name == "self" {
+                        // Just 'self' - consuming parameter
+                        self.advance();
+                        params.push(Param {
+                            name: "self".to_string(),
+                            ty: Type::Named("Self".to_string()),
+                            span: param_span,
+                        });
+
+                        if !self.match_token(TokenKind::Comma) {
+                            break;
+                        }
+                        continue;
+                    }
+                }
+            }
+
+            // Check for &self or &mut self
+            if self.check(TokenKind::Ampersand) {
+                let amp_pos = self.pos;
+                self.advance(); // consume &
+
+                let is_mut = self.match_token(TokenKind::Mut);
+
+                if let Some(token) = self.peek() {
+                    if let TokenKind::Ident(name) = &token.kind {
+                        if name == "self" {
+                            self.advance(); // consume 'self'
+                            params.push(Param {
+                                name: "self".to_string(),
+                                ty: Type::Reference {
+                                    mutable: is_mut,
+                                    inner: Box::new(Type::Named("Self".to_string())),
+                                },
+                                span: param_span,
+                            });
+
+                            if !self.match_token(TokenKind::Comma) {
+                                break;
+                            }
+                            continue;
+                        }
+                    }
+                }
+
+                // Not a self parameter, backtrack
+                self.pos = amp_pos;
+            }
+
+            // Regular parameter: name: Type
             let name = self.expect_ident()?;
             self.expect(TokenKind::Colon)?;
             let ty = self.parse_type()?;
@@ -1685,6 +1739,32 @@ impl Parser {
                 let name = name.clone();
                 self.advance();
                 Some(name)
+            }
+            // Also accept type keywords as identifiers in expression position
+            // This allows HashMap::new(), CodeBuilder::new(), etc.
+            Some(Token { kind: TokenKind::HashMap, .. }) => {
+                self.advance();
+                Some("HashMap".to_string())
+            }
+            Some(Token { kind: TokenKind::HashSet, .. }) => {
+                self.advance();
+                Some("HashSet".to_string())
+            }
+            Some(Token { kind: TokenKind::CodeBuilder, .. }) => {
+                self.advance();
+                Some("CodeBuilder".to_string())
+            }
+            Some(Token { kind: TokenKind::Vec, .. }) => {
+                self.advance();
+                Some("Vec".to_string())
+            }
+            Some(Token { kind: TokenKind::Option, .. }) => {
+                self.advance();
+                Some("Option".to_string())
+            }
+            Some(Token { kind: TokenKind::Result, .. }) => {
+                self.advance();
+                Some("Result".to_string())
             }
             _ => None,
         }

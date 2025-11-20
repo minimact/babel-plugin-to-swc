@@ -1077,9 +1077,59 @@ impl BabelGenerator {
                                     self.emit("\"\"");
                                     return;
                                 }
+                                // CodeBuilder::new() -> []
+                                "CodeBuilder" => {
+                                    self.emit("[]");
+                                    return;
+                                }
                                 _ => {}
                             }
                         }
+                    }
+
+                    // CodeBuilder method calls
+                    if mem.property == "append" {
+                        // builder.append(s) -> builder.push(s)
+                        self.gen_expr(&mem.object);
+                        self.emit(".push(");
+                        if !call.args.is_empty() {
+                            self.gen_expr(&call.args[0]);
+                        }
+                        self.emit(")");
+                        return;
+                    }
+                    if mem.property == "append_line" {
+                        // builder.append_line(s) -> (builder.push(s), builder.push("\n"))
+                        self.emit("(");
+                        self.gen_expr(&mem.object);
+                        self.emit(".push(");
+                        if !call.args.is_empty() {
+                            self.gen_expr(&call.args[0]);
+                        }
+                        self.emit("), ");
+                        self.gen_expr(&mem.object);
+                        self.emit(".push(\"\\n\"))");
+                        return;
+                    }
+                    if mem.property == "newline" {
+                        // builder.newline() -> builder.push("\n")
+                        self.gen_expr(&mem.object);
+                        self.emit(".push(\"\\n\")");
+                        return;
+                    }
+                    if mem.property == "to_string" && call.args.is_empty() {
+                        // Check if this might be CodeBuilder
+                        // builder.to_string() -> builder.join("")
+                        // We need to be careful not to override all to_string calls
+                        // For now, we'll handle it generically
+                        self.gen_expr(&mem.object);
+                        self.emit(".join(\"\")");
+                        return;
+                    }
+                    if mem.property == "indent" || mem.property == "dedent" {
+                        // indent/dedent are no-ops for now in Babel (would need state tracking)
+                        self.emit("undefined");
+                        return;
                     }
                 }
                 // Also check as a standalone identifier (no parens in name)

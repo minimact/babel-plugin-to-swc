@@ -41,7 +41,10 @@ State {
 ## Feature Gaps
 
 ### 1. `impl` blocks for custom structs
-**Status**: Not supported in RustScript input (only generated in output)
+**Status**: Parser accepts `impl` blocks (parser.rs:128-129) BUT they fail at runtime
+**Error**: `Parse error at 83:15: Expected identifier` on line `fn finish(self) -> TranspilerOutput {`
+**Test Case**: `impl CodeBuilder { fn new() -> Self { ... } }` in writer body
+**Theory**: Parser accepts `impl` keyword but function parser doesn't handle `self`/`&self`/`&mut self` parameters
 **Workaround**: Use standalone functions like `fn code_builder_new() -> CodeBuilder`
 **Impact**: HIGH - This is a significant limitation that makes code verbose and non-idiomatic. Every method call becomes `code_builder_append(&mut builder, text)` instead of `builder.append(text)`.
 
@@ -51,6 +54,13 @@ State {
 
 ### 3. Method chaining on custom types
 **Status**: Unknown - need to test if custom methods can be called with `.`
+
+### 4. Writer lifecycle (`init()` and `finish()`)
+**Status**: Unclear how these are supposed to work
+**Issue**: Writer needs state across visits, and a final output method
+**Current approach**: `fn init() -> State` and `fn finish(&self) -> Output` both fail
+**Theory**: Writer might need special lifecycle methods that aren't regular functions
+**Needs investigation**: How does writer state management actually work?
 
 ---
 
