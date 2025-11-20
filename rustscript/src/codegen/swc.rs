@@ -1420,9 +1420,25 @@ impl SwcGenerator {
             Type::Named(name) => TypeContext::from_rustscript(name),
             Type::Primitive(name) => TypeContext::from_rustscript(name),
             Type::Reference { inner, .. } => self.type_from_ast(inner),
-            Type::Container { name, .. } => {
-                // Handle Vec, Option, etc.
-                TypeContext::from_rustscript(name)
+            Type::Container { name, type_args } => {
+                // Handle Vec, Option, etc. - preserve type arguments
+                if type_args.is_empty() {
+                    TypeContext::from_rustscript(name)
+                } else {
+                    // Build type with arguments, e.g., Vec<i32>
+                    let args: Vec<String> = type_args.iter().map(|t| {
+                        let ctx = self.type_from_ast(t);
+                        ctx.swc_type
+                    }).collect();
+                    let full_type = format!("{}<{}>", name, args.join(", "));
+                    TypeContext {
+                        rustscript_type: full_type.clone(),
+                        swc_type: full_type,
+                        kind: super::type_context::SwcTypeKind::Unknown,
+                        known_variant: None,
+                        needs_deref: false,
+                    }
+                }
             }
             Type::Array { element } => {
                 let _elem_type = self.type_from_ast(element);

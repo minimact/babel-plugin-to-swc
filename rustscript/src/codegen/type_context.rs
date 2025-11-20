@@ -370,6 +370,10 @@ pub fn classify_swc_type(type_name: &str) -> SwcTypeKind {
         "DoWhileStmt" | "BreakStmt" | "ContinueStmt" | "ExprStmt" |
         // Structs - Declarations
         "FnDecl" | "VarDecl" | "ClassDecl" |
+        // Structs - Function components
+        "Param" | "Function" | "BlockStmtOrExpr" |
+        // Structs - Variable components
+        "VarDeclarator" |
         // Structs - Patterns
         "BindingIdent" | "ArrayPat" | "ObjectPat" | "RestPat" | "AssignPat" |
         // Structs - Literals
