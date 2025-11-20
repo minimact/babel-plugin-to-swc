@@ -121,12 +121,12 @@ public class ${class_name} {
         const node = path.node;
         const func_name = node.id.name;
         let params = [];
-        for (const param of node.params) {
+        node.params.forEach((param, __idx_0) => {
           if ((t.isIdentifier(param))) {
             const param_str = `dynamic ${param.name}`;
             params.push(param_str);
           }
-        }
+        });
         const param_list = params.join(", ");
         const signature = `public void ${func_name}(${param_list})`;
         return signature;
