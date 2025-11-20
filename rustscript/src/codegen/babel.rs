@@ -3,12 +3,54 @@
 use crate::parser::*;
 use crate::mapping::{get_node_mapping, get_node_mapping_by_visitor, get_field_mapping};
 
+/// Context for tracking traverse block state
+#[derive(Clone)]
+struct TraverseContext {
+    /// State variable names defined in this traverse block
+    state_vars: std::collections::HashSet<String>,
+    /// Unique ID for this traverse block (for generating unique visitor names)
+    id: usize,
+    /// The path variable name that should be used for traverse calls
+    path_var: String,
+}
+
+/// Tracks whether a variable holds a path or a node
+#[derive(Clone, Debug, PartialEq)]
+enum VarKind {
+    /// Variable holds a Babel path
+    Path,
+    /// Variable holds a node, with optional info about which path and property it came from
+    Node {
+        /// The path variable this node came from (e.g., "path")
+        from_path: Option<String>,
+        /// The property accessed (e.g., "body" for path.node.body)
+        property: Option<String>,
+    },
+    /// Variable is a loop iteration variable over a node array
+    LoopItem {
+        /// The path that contains the array
+        from_path: String,
+        /// The array property (e.g., "body")
+        array_prop: String,
+        /// The loop index variable name
+        index_var: String,
+    },
+}
+
 /// Generator for Babel plugin JavaScript code
 pub struct BabelGenerator {
     output: String,
     indent: usize,
     /// Maps parameter names to their aliases (e.g., "func" -> "node")
     param_aliases: std::collections::HashMap<String, String>,
+    /// Stack of traverse contexts (for nested traverse blocks)
+    traverse_stack: Vec<TraverseContext>,
+    /// Counter for generating unique traverse visitor names
+    traverse_counter: usize,
+    /// Tracks what kind of value each variable holds (path vs node)
+    var_kinds: std::collections::HashMap<String, VarKind>,
+    /// Counter for generating unique loop index variables
+    loop_index_counter: usize,
 }
 
 impl BabelGenerator {
@@ -17,7 +59,92 @@ impl BabelGenerator {
             output: String::new(),
             indent: 0,
             param_aliases: std::collections::HashMap::new(),
+            traverse_stack: Vec::new(),
+            traverse_counter: 0,
+            var_kinds: std::collections::HashMap::new(),
+            loop_index_counter: 0,
         }
+    }
+
+    /// Register a variable as holding a path
+    fn register_path_var(&mut self, name: &str) {
+        self.var_kinds.insert(name.to_string(), VarKind::Path);
+    }
+
+    /// Register a variable as holding a node
+    fn register_node_var(&mut self, name: &str, from_path: Option<&str>, property: Option<&str>) {
+        self.var_kinds.insert(name.to_string(), VarKind::Node {
+            from_path: from_path.map(|s| s.to_string()),
+            property: property.map(|s| s.to_string()),
+        });
+    }
+
+    /// Register a variable as a loop item over a node array
+    fn register_loop_item(&mut self, name: &str, from_path: &str, array_prop: &str, index_var: &str) {
+        self.var_kinds.insert(name.to_string(), VarKind::LoopItem {
+            from_path: from_path.to_string(),
+            array_prop: array_prop.to_string(),
+            index_var: index_var.to_string(),
+        });
+    }
+
+    /// Get the VarKind for a variable
+    fn get_var_kind(&self, name: &str) -> Option<&VarKind> {
+        self.var_kinds.get(name)
+    }
+
+    /// Generate the path expression to traverse for a given variable and property
+    fn gen_traverse_path(&self, var_name: &str, property: &str) -> String {
+        match self.get_var_kind(var_name) {
+            Some(VarKind::Path) => {
+                // Direct path variable - just get the property
+                format!("{}.get('{}')", var_name, property)
+            }
+            Some(VarKind::Node { from_path: Some(path), property: Some(node_prop) }) => {
+                // Node from a path property - chain the gets
+                format!("{}.get('{}').get('{}')", path, node_prop, property)
+            }
+            Some(VarKind::Node { from_path: Some(path), property: None }) => {
+                // Node directly from path.node
+                format!("{}.get('{}')", path, property)
+            }
+            Some(VarKind::LoopItem { from_path, array_prop, index_var }) => {
+                // Loop item - need to index into the array, then get the property
+                format!("{}.get(`{}.${{{}}}.{}`)", from_path, array_prop, index_var, property)
+            }
+            _ => {
+                // Unknown - fall back to direct traverse (may not work)
+                format!("{}.get('{}')", var_name, property)
+            }
+        }
+    }
+
+    /// Get a unique loop index variable name
+    fn next_loop_index(&mut self) -> String {
+        let name = format!("__idx_{}", self.loop_index_counter);
+        self.loop_index_counter += 1;
+        name
+    }
+
+    /// Check if we're currently inside a traverse block
+    fn in_traverse(&self) -> bool {
+        !self.traverse_stack.is_empty()
+    }
+
+    /// Check if a variable is a state variable in the current traverse
+    fn is_traverse_state_var(&self, name: &str) -> bool {
+        if let Some(ctx) = self.traverse_stack.last() {
+            ctx.state_vars.contains(name)
+        } else {
+            false
+        }
+    }
+
+    /// Get a unique visitor name for a traverse block
+    fn next_visitor_name(&mut self) -> String {
+        let name = format!("__visitor_{}", self.traverse_counter);
+        self.traverse_counter += 1;
+        name
     }
 
     /// Generate JavaScript code for a Babel plugin
@@ -196,10 +323,16 @@ impl BabelGenerator {
         // Add node alias and track the parameter rename
         self.emit_line("const node = path.node;");
 
+        // Register path and node variable kinds
+        self.register_path_var("path");
+        self.register_node_var("node", Some("path"), None);
+
         // Set up parameter alias: original param name -> "node"
         if !f.params.is_empty() {
             let original_name = &f.params[0].name;
             self.param_aliases.insert(original_name.clone(), "node".to_string());
+            // Also register the original name as a node
+            self.register_node_var(original_name, Some("path"), None);
         }
 
         self.gen_block(&f.body);
@@ -253,6 +386,25 @@ impl BabelGenerator {
                 self.emit(" = ");
                 self.gen_expr(&let_stmt.init);
                 self.emit(";\n");
+
+                // Track var_kind for the new variable
+                // If initializing from another variable, copy its var_kind
+                if let Expr::Ident(ident) = &let_stmt.init {
+                    if let Some(var_kind) = self.get_var_kind(&ident.name).cloned() {
+                        self.var_kinds.insert(let_stmt.name.clone(), var_kind);
+                    }
+                } else if let Expr::Call(call) = &let_stmt.init {
+                    // Check for .clone() calls
+                    if let Expr::Member(mem) = call.callee.as_ref() {
+                        if mem.property == "clone" && call.args.is_empty() {
+                            if let Expr::Ident(obj) = mem.object.as_ref() {
+                                if let Some(var_kind) = self.get_var_kind(&obj.name).cloned() {
+                                    self.var_kinds.insert(let_stmt.name.clone(), var_kind);
+                                }
+                            }
+                        }
+                    }
+                }
             }
             Stmt::Const(const_stmt) => {
                 self.emit_indent();
@@ -303,14 +455,72 @@ impl BabelGenerator {
                 }
             }
             Stmt::For(for_stmt) => {
-                self.emit_indent();
-                self.emit(&format!("for (const {} of ", for_stmt.var));
-                self.gen_expr(&for_stmt.iter);
-                self.emit(") {\n");
-                self.indent += 1;
-                self.gen_block(&for_stmt.body);
-                self.indent -= 1;
-                self.emit_line("}");
+                // Check if we're iterating over a node property (e.g., node.body or &node.body)
+                // This is needed for proper path tracking when using traverse inside the loop
+
+                // Unwrap reference if present
+                let iter_expr = match &for_stmt.iter {
+                    Expr::Unary(unary) if matches!(unary.op, UnaryOp::Ref | UnaryOp::RefMut) => {
+                        unary.operand.as_ref()
+                    }
+                    other => other,
+                };
+
+                let loop_item_info = if let Expr::Member(mem) = iter_expr {
+                    if let Expr::Ident(obj_ident) = mem.object.as_ref() {
+                        // Check if the object is a node variable
+                        let obj_name = if let Some(alias) = self.param_aliases.get(&obj_ident.name) {
+                            alias.clone()
+                        } else {
+                            obj_ident.name.clone()
+                        };
+
+                        // Find the path this node came from
+                        match self.get_var_kind(&obj_name).cloned() {
+                            Some(VarKind::Node { from_path: Some(path), property: Some(node_prop) }) => {
+                                // Node from path.node.property - chain the properties
+                                Some((path, format!("{}.{}", node_prop, mem.property)))
+                            }
+                            Some(VarKind::Node { from_path: Some(path), property: None }) => {
+                                // Node from path.node - use the array property directly
+                                Some((path, mem.property.clone()))
+                            }
+                            _ => None
+                        }
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                };
+
+                if let Some((from_path, array_prop)) = loop_item_info {
+                    // Generate indexed for loop to track which item we're on
+                    let index_var = self.next_loop_index();
+
+                    self.emit_indent();
+                    self.gen_expr(&for_stmt.iter);
+                    self.emit(&format!(".forEach(({}, {}) => {{\n", for_stmt.var, index_var));
+                    self.indent += 1;
+
+                    // Register the loop variable as a loop item
+                    self.register_loop_item(&for_stmt.var, &from_path, &array_prop, &index_var);
+
+                    self.gen_block(&for_stmt.body);
+
+                    self.indent -= 1;
+                    self.emit_line("});");
+                } else {
+                    // Standard for-of loop
+                    self.emit_indent();
+                    self.emit(&format!("for (const {} of ", for_stmt.var));
+                    self.gen_expr(&for_stmt.iter);
+                    self.emit(") {\n");
+                    self.indent += 1;
+                    self.gen_block(&for_stmt.body);
+                    self.indent -= 1;
+                    self.emit_line("}");
+                }
             }
             Stmt::While(while_stmt) => {
                 self.emit_indent();
@@ -357,6 +567,25 @@ impl BabelGenerator {
     fn gen_traverse_stmt(&mut self, traverse_stmt: &crate::parser::TraverseStmt) {
         match &traverse_stmt.kind {
             crate::parser::TraverseKind::Inline(inline) => {
+                // Generate unique visitor name
+                let visitor_name = self.next_visitor_name();
+
+                // Create traverse context with state variables
+                let mut state_vars = std::collections::HashSet::new();
+                for let_stmt in &inline.state {
+                    state_vars.insert(let_stmt.name.clone());
+                }
+
+                // Determine the path variable for traverse call
+                // If target is an identifier bound from if-let, we need to find its path
+                let path_var = self.determine_traverse_path(&traverse_stmt.target);
+
+                let ctx = TraverseContext {
+                    state_vars,
+                    id: self.traverse_counter - 1,
+                    path_var: path_var.clone(),
+                };
+
                 // Note: In JavaScript, captured variables are automatically available
                 // via closure semantics. The captures list is for documentation.
                 if !traverse_stmt.captures.is_empty() {
@@ -369,7 +598,7 @@ impl BabelGenerator {
 
                 // Generate inline visitor object
                 self.emit_indent();
-                self.emit("const __nestedVisitor = {\n");
+                self.emit(&format!("const {} = {{\n", visitor_name));
                 self.indent += 1;
 
                 // Generate state
@@ -388,6 +617,9 @@ impl BabelGenerator {
                     self.emit_indent();
                     self.emit("},\n");
                 }
+
+                // Push context before generating methods
+                self.traverse_stack.push(ctx);
 
                 // Generate visitor methods
                 for method in &inline.methods {
@@ -410,20 +642,102 @@ impl BabelGenerator {
                     self.emit("},\n");
                 }
 
+                // Pop context after generating methods
+                self.traverse_stack.pop();
+
                 self.indent -= 1;
                 self.emit_indent();
                 self.emit("};\n");
 
-                // Generate traversal call
+                // Generate traversal call using path.traverse()
                 self.emit_indent();
-                self.gen_expr(&traverse_stmt.target);
-                self.emit(".traverse(__nestedVisitor);\n");
+                self.emit(&format!("{}.traverse({});\n", path_var, visitor_name));
             }
             crate::parser::TraverseKind::Delegated(visitor_name) => {
                 // Generate delegation to another visitor
+                let path_var = self.determine_traverse_path(&traverse_stmt.target);
                 self.emit_indent();
-                self.gen_expr(&traverse_stmt.target);
-                self.emit(&format!(".traverse({});\n", visitor_name));
+                self.emit(&format!("{}.traverse({});\n", path_var, visitor_name));
+            }
+        }
+    }
+
+    /// Determine the path variable to use for traverse calls
+    /// In Babel, we need to call path.traverse(), not node.traverse()
+    fn determine_traverse_path(&self, target: &Expr) -> String {
+        match target {
+            Expr::Ident(ident) => {
+                let name = &ident.name;
+
+                // Check alias first
+                let actual_name = if let Some(alias) = self.param_aliases.get(name) {
+                    alias.clone()
+                } else {
+                    name.clone()
+                };
+
+                // Check if this is "node" - use path directly
+                if actual_name == "node" {
+                    return "path".to_string();
+                }
+
+                // Look up the variable kind to determine the correct path
+                match self.get_var_kind(&actual_name) {
+                    Some(VarKind::Path) => {
+                        // Direct path variable
+                        actual_name
+                    }
+                    Some(VarKind::Node { from_path: Some(path), property: Some(prop) }) => {
+                        // Node from path.node.property - use path.get(property)
+                        format!("{}.get('{}')", path, prop)
+                    }
+                    Some(VarKind::Node { from_path: Some(path), property: None }) => {
+                        // Node from path.node - use path directly
+                        path.clone()
+                    }
+                    Some(VarKind::LoopItem { from_path, array_prop, index_var }) => {
+                        // Loop item - index into the array path
+                        format!("{}.get(`{}.${{{}}}`)", from_path, array_prop, index_var)
+                    }
+                    _ => {
+                        // Unknown - check common patterns
+                        if name == "body" || name.ends_with("_body") {
+                            format!("path.get('body')")
+                        } else {
+                            // Fallback to scope lookup
+                            format!("path.scope.getBinding('{}')?.path || path", name)
+                        }
+                    }
+                }
+            }
+            Expr::Member(mem) => {
+                // For member expressions like func.body, generate path.get() chain
+                if let Expr::Ident(obj_ident) = mem.object.as_ref() {
+                    let obj_name = if let Some(alias) = self.param_aliases.get(&obj_ident.name) {
+                        alias.clone()
+                    } else {
+                        obj_ident.name.clone()
+                    };
+
+                    let prop = &mem.property;
+
+                    // Use gen_traverse_path which handles VarKind properly
+                    self.gen_traverse_path(&obj_name, prop)
+                } else {
+                    // Complex object expression - fallback
+                    let obj_str = self.expr_to_string(&mem.object);
+                    let prop = &mem.property;
+
+                    if obj_str == "node" {
+                        format!("path.get('{}')", prop)
+                    } else {
+                        format!("path.get('{}')", prop)
+                    }
+                }
+            }
+            _ => {
+                // Fallback: use path directly
+                "path".to_string()
             }
         }
     }
@@ -675,13 +989,15 @@ impl BabelGenerator {
                     // Handle Default::default() which the hoister uses as a placeholder
                     name if name.starts_with("Default::default") => self.emit("undefined"),
                     _ => {
-                        // Check if this identifier has an alias
-                        let output = if let Some(alias) = self.param_aliases.get(&ident.name) {
-                            alias.clone()
+                        // Check if this is a traverse state variable
+                        if self.is_traverse_state_var(&ident.name) {
+                            self.emit(&format!("this.state.{}", ident.name));
+                        } else if let Some(alias) = self.param_aliases.get(&ident.name).cloned() {
+                            // Check if this identifier has an alias
+                            self.emit(&alias);
                         } else {
-                            ident.name.clone()
-                        };
-                        self.emit(&output);
+                            self.emit(&ident.name);
+                        }
                     }
                 }
             }
@@ -741,6 +1057,31 @@ impl BabelGenerator {
                         return;
                     }
                 }
+                // Check for Type::new() patterns
+                if let Expr::Member(mem) = call.callee.as_ref() {
+                    if mem.property == "new" {
+                        if let Expr::Ident(type_ident) = mem.object.as_ref() {
+                            match type_ident.name.as_str() {
+                                // HashMap::new() -> new Map()
+                                "HashMap" => {
+                                    self.emit("new Map()");
+                                    return;
+                                }
+                                // HashSet::new() -> new Set()
+                                "HashSet" => {
+                                    self.emit("new Set()");
+                                    return;
+                                }
+                                // String::new() -> ""
+                                "String" => {
+                                    self.emit("\"\"");
+                                    return;
+                                }
+                                _ => {}
+                            }
+                        }
+                    }
+                }
                 // Also check as a standalone identifier (no parens in name)
                 if let Expr::Ident(ident) = call.callee.as_ref() {
                     if ident.name.starts_with("Default::default") {
@@ -752,10 +1093,18 @@ impl BabelGenerator {
                 // Check if this is a method call that should be a property in JS
                 if let Expr::Member(mem) = call.callee.as_ref() {
                     let prop = &mem.property;
-                    // len() -> .length (property, no parens)
+                    // len() -> .length for arrays, .size for Map/Set
+                    // Since we can't easily distinguish, we'll use .length which works for arrays
+                    // Map/Set should use .size but that requires type tracking
                     if prop == "len" {
                         self.gen_expr(&mem.object);
                         self.emit(".length");
+                        return;
+                    }
+                    // keys() and values() for Maps
+                    if prop == "keys" || prop == "values" {
+                        self.gen_expr(&mem.object);
+                        self.emit(&format!(".{}()", prop));
                         return;
                     }
                     // is_empty() -> .length === 0
@@ -770,21 +1119,191 @@ impl BabelGenerator {
                         self.gen_expr(&mem.object);
                         return;
                     }
-                    // insert(0, x) -> unshift(x) when first arg is 0
-                    if prop == "insert" && call.args.len() == 2 {
-                        if let Expr::Literal(Literal::Int(0)) = &call.args[0] {
-                            self.gen_expr(&mem.object);
-                            self.emit(".unshift(");
-                            self.gen_expr(&call.args[1]);
-                            self.emit(")");
-                            return;
+                    // insert() has different meanings for Vec vs HashMap vs HashSet
+                    // We need to distinguish based on arg count and types
+                    if prop == "insert" {
+                        match call.args.len() {
+                            // set.insert(v) -> set.add(v)
+                            1 => {
+                                self.gen_expr(&mem.object);
+                                self.emit(".add(");
+                                self.gen_expr(&call.args[0]);
+                                self.emit(")");
+                                return;
+                            }
+                            // 2 args: could be Vec.insert(idx, val) or Map.insert(key, val)
+                            // Vec.insert uses numeric index, Map uses any key type
+                            // Check if first arg is a numeric literal for Vec case
+                            2 => {
+                                if let Expr::Literal(Literal::Int(idx)) = &call.args[0] {
+                                    // Vec.insert(0, x) -> unshift(x)
+                                    if *idx == 0 {
+                                        self.gen_expr(&mem.object);
+                                        self.emit(".unshift(");
+                                        self.gen_expr(&call.args[1]);
+                                        self.emit(")");
+                                        return;
+                                    }
+                                    // Vec.insert(n, x) -> splice(n, 0, x)
+                                    self.gen_expr(&mem.object);
+                                    self.emit(".splice(");
+                                    self.gen_expr(&call.args[0]);
+                                    self.emit(", 0, ");
+                                    self.gen_expr(&call.args[1]);
+                                    self.emit(")");
+                                    return;
+                                }
+                                // Map.insert(key, val) -> map.set(key, val)
+                                self.gen_expr(&mem.object);
+                                self.emit(".set(");
+                                self.gen_expr(&call.args[0]);
+                                self.emit(", ");
+                                self.gen_expr(&call.args[1]);
+                                self.emit(")");
+                                return;
+                            }
+                            _ => {}
                         }
-                        // Otherwise use splice for insert at arbitrary index
+                    }
+                    // map.get(&k) -> map.get(k)
+                    if prop == "get" {
                         self.gen_expr(&mem.object);
-                        self.emit(".splice(");
+                        self.emit(".get(");
+                        if !call.args.is_empty() {
+                            self.gen_expr(&call.args[0]);
+                        }
+                        self.emit(")");
+                        return;
+                    }
+                    // map.get_mut(&k) -> map.get(k)
+                    if prop == "get_mut" {
+                        self.gen_expr(&mem.object);
+                        self.emit(".get(");
+                        if !call.args.is_empty() {
+                            self.gen_expr(&call.args[0]);
+                        }
+                        self.emit(")");
+                        return;
+                    }
+                    // map.contains_key(&k) -> map.has(k)
+                    if prop == "contains_key" {
+                        self.gen_expr(&mem.object);
+                        self.emit(".has(");
+                        if !call.args.is_empty() {
+                            self.gen_expr(&call.args[0]);
+                        }
+                        self.emit(")");
+                        return;
+                    }
+                    // set.contains(&v) -> set.has(v)
+                    if prop == "contains" {
+                        self.gen_expr(&mem.object);
+                        self.emit(".has(");
+                        if !call.args.is_empty() {
+                            self.gen_expr(&call.args[0]);
+                        }
+                        self.emit(")");
+                        return;
+                    }
+                    // map.remove(&k) -> map.delete(k)
+                    if prop == "remove" {
+                        self.gen_expr(&mem.object);
+                        self.emit(".delete(");
+                        if !call.args.is_empty() {
+                            self.gen_expr(&call.args[0]);
+                        }
+                        self.emit(")");
+                        return;
+                    }
+                    // s.push_str(&t) -> s += t
+                    if prop == "push_str" && call.args.len() == 1 {
+                        self.gen_expr(&mem.object);
+                        self.emit(" += ");
                         self.gen_expr(&call.args[0]);
-                        self.emit(", 0, ");
-                        self.gen_expr(&call.args[1]);
+                        return;
+                    }
+                    // fs::write(path, content) -> fs.writeFileSync(path, content)
+                    if prop == "write" {
+                        self.gen_expr(&mem.object);
+                        self.emit(".writeFileSync(");
+                        for (i, arg) in call.args.iter().enumerate() {
+                            if i > 0 {
+                                self.emit(", ");
+                            }
+                            self.gen_expr(arg);
+                        }
+                        self.emit(")");
+                        return;
+                    }
+                    // fs::read_to_string(path) -> fs.readFileSync(path, 'utf8')
+                    if prop == "read_to_string" {
+                        self.gen_expr(&mem.object);
+                        self.emit(".readFileSync(");
+                        if !call.args.is_empty() {
+                            self.gen_expr(&call.args[0]);
+                        }
+                        self.emit(", 'utf8')");
+                        return;
+                    }
+                    // fs::exists(path) -> fs.existsSync(path)
+                    if prop == "exists" {
+                        self.gen_expr(&mem.object);
+                        self.emit(".existsSync(");
+                        if !call.args.is_empty() {
+                            self.gen_expr(&call.args[0]);
+                        }
+                        self.emit(")");
+                        return;
+                    }
+                    // fs::create_dir_all(path) -> fs.mkdirSync(path, { recursive: true })
+                    if prop == "create_dir_all" {
+                        self.gen_expr(&mem.object);
+                        self.emit(".mkdirSync(");
+                        if !call.args.is_empty() {
+                            self.gen_expr(&call.args[0]);
+                        }
+                        self.emit(", { recursive: true })");
+                        return;
+                    }
+                    // fs::remove_file(path) -> fs.unlinkSync(path)
+                    if prop == "remove_file" {
+                        self.gen_expr(&mem.object);
+                        self.emit(".unlinkSync(");
+                        if !call.args.is_empty() {
+                            self.gen_expr(&call.args[0]);
+                        }
+                        self.emit(")");
+                        return;
+                    }
+                    // json::to_string(&v) -> JSON.stringify(v)
+                    if prop == "to_string" {
+                        // Check if it's json module
+                        if let Expr::Ident(ident) = mem.object.as_ref() {
+                            if ident.name == "json" {
+                                self.emit("JSON.stringify(");
+                                if !call.args.is_empty() {
+                                    self.gen_expr(&call.args[0]);
+                                }
+                                self.emit(")");
+                                return;
+                            }
+                        }
+                    }
+                    // json::to_string_pretty(&v) -> JSON.stringify(v, null, 2)
+                    if prop == "to_string_pretty" {
+                        self.emit("JSON.stringify(");
+                        if !call.args.is_empty() {
+                            self.gen_expr(&call.args[0]);
+                        }
+                        self.emit(", null, 2)");
+                        return;
+                    }
+                    // json::from_str(&s) -> JSON.parse(s)
+                    if prop == "from_str" {
+                        self.emit("JSON.parse(");
+                        if !call.args.is_empty() {
+                            self.gen_expr(&call.args[0]);
+                        }
                         self.emit(")");
                         return;
                     }
@@ -937,6 +1456,15 @@ impl BabelGenerator {
                 self.gen_expr(&assign.value);
             }
             Expr::CompoundAssign(compound) => {
+                // Check if target is a traverse state variable
+                if let Expr::Ident(ident) = compound.target.as_ref() {
+                    if self.is_traverse_state_var(&ident.name) {
+                        self.emit(&format!("this.state.{}", ident.name));
+                        self.emit(&format!(" {}= ", self.compound_op_to_js(&compound.op)));
+                        self.gen_expr(&compound.value);
+                        return;
+                    }
+                }
                 self.gen_expr(&compound.target);
                 self.emit(&format!(" {}= ", self.compound_op_to_js(&compound.op)));
                 self.gen_expr(&compound.value);
