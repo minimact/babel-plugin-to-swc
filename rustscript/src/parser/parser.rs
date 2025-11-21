@@ -270,6 +270,25 @@ impl Parser {
         loop {
             let param_span = self.current_span();
 
+            // Check for 'mut self' parameter
+            if self.check(TokenKind::Mut) {
+                let peek_ahead = self.tokens.get(self.pos + 1);
+                if matches!(peek_ahead, Some(Token { kind: TokenKind::Self_, .. })) {
+                    self.advance(); // consume 'mut'
+                    self.advance(); // consume 'self'
+                    params.push(Param {
+                        name: "self".to_string(),
+                        ty: Type::Named("Self".to_string()), // mut self consumes Self
+                        span: param_span,
+                    });
+
+                    if !self.match_token(TokenKind::Comma) {
+                        break;
+                    }
+                    continue;
+                }
+            }
+
             // Check for self parameters (self, &self, &mut self)
             if self.check(TokenKind::Self_) {
                 // Just 'self' - consuming parameter
@@ -1430,6 +1449,9 @@ impl Parser {
         let mut expr = self.parse_primary()?;
 
         loop {
+            // Skip newlines to allow method chaining across lines
+            self.skip_newlines();
+
             if self.match_token(TokenKind::LParen) {
                 // Function call
                 let args = self.parse_args()?;
@@ -1885,6 +1907,7 @@ impl Parser {
             Some(Token { kind: TokenKind::HashMap, .. }) => "HashMap",
             Some(Token { kind: TokenKind::HashSet, .. }) => "HashSet",
             Some(Token { kind: TokenKind::CodeBuilder, .. }) => "CodeBuilder",
+            Some(Token { kind: TokenKind::SelfType, .. }) => "Self",
             Some(Token { kind: TokenKind::Ident(n), .. }) => {
                 let name = n.clone();
                 self.advance();
