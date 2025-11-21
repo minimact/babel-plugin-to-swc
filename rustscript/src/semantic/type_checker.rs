@@ -642,6 +642,25 @@ impl TypeChecker {
             }
 
             Expr::Paren(inner) => self.infer_expr(inner),
+
+            Expr::Block(block) => {
+                // Type of a block is the type of its last expression (if any)
+                self.env.push_scope();
+                let mut result_type = TypeInfo::Unit;
+                for stmt in &block.stmts {
+                    match stmt {
+                        Stmt::Expr(expr_stmt) => {
+                            // Last expression statement determines block type
+                            result_type = self.infer_expr(&expr_stmt.expr);
+                        }
+                        _ => {
+                            self.check_stmt(stmt);
+                        }
+                    }
+                }
+                self.env.pop_scope();
+                result_type
+            }
         }
     }
 

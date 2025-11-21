@@ -242,6 +242,12 @@ impl OwnershipChecker {
                 self.check_expr(inner);
             }
 
+            Expr::Block(block) => {
+                for stmt in &block.stmts {
+                    self.check_stmt(stmt);
+                }
+            }
+
             Expr::Literal(_) | Expr::Ident(_) => {}
         }
     }
@@ -280,6 +286,9 @@ impl OwnershipChecker {
             Expr::Paren(inner) => {
                 self.check_needs_clone(inner, span);
             }
+
+            // Block expressions produce owned values
+            Expr::Block(_) => {}
 
             // These are OK - they produce owned values
             Expr::Literal(_)

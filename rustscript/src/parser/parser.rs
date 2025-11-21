@@ -469,7 +469,9 @@ impl Parser {
         let start_span = self.current_span();
         self.expect(TokenKind::Let)?;
         let mutable = self.match_token(TokenKind::Mut);
-        let name = self.expect_ident()?;
+
+        // Parse pattern (supports simple identifiers and tuple destructuring)
+        let pattern = self.parse_pattern()?;
 
         let ty = if self.match_token(TokenKind::Colon) {
             Some(self.parse_type()?)
@@ -483,7 +485,7 @@ impl Parser {
 
         Ok(Stmt::Let(LetStmt {
             mutable,
-            name,
+            pattern,
             ty,
             init,
             span: start_span,
@@ -1569,13 +1571,16 @@ impl Parser {
             self.advance();
             if self.match_token(TokenKind::Not) {
                 self.expect(TokenKind::LBracket)?;
+                self.skip_newlines();
                 let mut elements = Vec::new();
                 if !self.check(TokenKind::RBracket) {
                     loop {
                         elements.push(self.parse_expr()?);
+                        self.skip_newlines();
                         if !self.match_token(TokenKind::Comma) {
                             break;
                         }
+                        self.skip_newlines();
                     }
                 }
                 self.expect(TokenKind::RBracket)?;
@@ -1699,7 +1704,15 @@ impl Parser {
             }
         }
         self.expect(TokenKind::Pipe)?;
-        let body = self.parse_expr()?;
+
+        // Closure body can be either an expression or a block
+        let body = if self.check(TokenKind::LBrace) {
+            let block = self.parse_block()?;
+            Expr::Block(block)
+        } else {
+            self.parse_expr()?
+        };
+
         Ok(Expr::Closure(ClosureExpr {
             params,
             body: Box::new(body),

@@ -4,16 +4,16 @@
 /// &self, and &mut self parameters.
 
 plugin ImplBlocksTest {
-    struct CodeBuilder {
+    struct StringBuilder {
         lines: Vec<Str>,
         indent_level: i32,
     }
 
     /// Test basic impl block with self parameters
-    impl CodeBuilder {
+    impl StringBuilder {
         /// Associated function (no self)
-        fn new() -> CodeBuilder {
-            return CodeBuilder {
+        fn new() -> StringBuilder {
+            return StringBuilder {
                 lines: vec![],
                 indent_level: 0,
             };
@@ -70,7 +70,7 @@ plugin ImplBlocksTest {
 
     /// Test calling methods
     pub fn test_method_calls() {
-        let mut builder = CodeBuilder::new();
+        let mut builder = StringBuilder::new();
 
         // Mutable method call
         builder.add_line("using System;");
@@ -86,7 +86,7 @@ plugin ImplBlocksTest {
 
     /// Test method chaining
     pub fn test_chaining() {
-        let code = CodeBuilder::new()
+        let code = StringBuilder::new()
             .with_line("using System;")
             .with_line("namespace MyApp {")
             .finish();
@@ -94,7 +94,7 @@ plugin ImplBlocksTest {
 
     /// Test in visitor context
     pub fn visit_function_declaration(node: &FunctionDeclaration) {
-        let mut builder = CodeBuilder::new();
+        let mut builder = StringBuilder::new();
 
         builder.add_line("public void " + &node.id.name + "() {");
         builder.indent();
@@ -105,7 +105,7 @@ plugin ImplBlocksTest {
     }
 
     pub fn test_multiple_impls() {
-        let mut builder = CodeBuilder::new();
+        let mut builder = StringBuilder::new();
         let mut template = Template::new("0.1");
 
         builder.add_line("test");

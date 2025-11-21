@@ -306,7 +306,7 @@ pub enum Stmt {
 #[derive(Debug, Clone)]
 pub struct LetStmt {
     pub mutable: bool,
-    pub name: String,
+    pub pattern: Pattern,  // Changed from name: String to support destructuring
     pub ty: Option<Type>,
     pub init: Expr,
     pub span: Span,
@@ -528,6 +528,8 @@ pub enum Expr {
     Range(RangeExpr),
     /// Parenthesized expression
     Paren(Box<Expr>),
+    /// Block expression (used in closures, if/match arms, etc.)
+    Block(Block),
 }
 
 /// Literal values

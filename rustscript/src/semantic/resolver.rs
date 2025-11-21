@@ -210,14 +210,19 @@ impl Resolver {
                 // Resolve initializer first
                 self.resolve_expr(&let_stmt.init);
 
-                // Check for redefinition in same scope
-                if self.env.is_defined_in_current_scope(&let_stmt.name) {
-                    self.errors.push(SemanticError::new(
-                        "RS005",
-                        format!("Variable '{}' already defined in this scope", let_stmt.name),
-                        let_stmt.span,
-                    ));
+                // Check for redefinition in same scope (only for simple identifiers)
+                if let Pattern::Ident(ref name) = let_stmt.pattern {
+                    if self.env.is_defined_in_current_scope(name) {
+                        self.errors.push(SemanticError::new(
+                            "RS005",
+                            format!("Variable '{}' already defined in this scope", name),
+                            let_stmt.span,
+                        ));
+                    }
                 }
+
+                // Resolve the pattern and define variables
+                self.resolve_pattern(&let_stmt.pattern);
 
                 // Determine type
                 let ty = if let Some(ref type_ann) = let_stmt.ty {
@@ -227,7 +232,8 @@ impl Resolver {
                     self.env.fresh_var()
                 };
 
-                self.env.define(let_stmt.name.clone(), ty);
+                // Define variables from the pattern
+                self.define_pattern(&let_stmt.pattern, ty);
             }
 
             Stmt::Const(const_stmt) => {
@@ -595,6 +601,15 @@ impl Resolver {
 
             Expr::Paren(inner) => {
                 self.resolve_expr(inner);
+            }
+
+            Expr::Block(block) => {
+                // Block expressions create a new scope
+                self.env.push_scope();
+                for stmt in &block.stmts {
+                    self.resolve_stmt(stmt);
+                }
+                self.env.pop_scope();
             }
 
             Expr::Literal(_) => {}

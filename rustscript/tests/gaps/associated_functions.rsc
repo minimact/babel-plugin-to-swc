@@ -4,7 +4,7 @@
 /// using the :: syntax, not just on built-in types.
 
 plugin AssociatedFunctionsTest {
-    struct CodeBuilder {
+    struct StringBuilder {
         lines: Vec<Str>,
     }
 
@@ -20,20 +20,20 @@ plugin AssociatedFunctionsTest {
         let str = String::new();
 
         // This should also work (custom type)
-        let builder = CodeBuilder::new();
+        let builder = StringBuilder::new();
         let template = Template::empty();
     }
 
     /// Define the associated functions
-    impl CodeBuilder {
-        fn new() -> CodeBuilder {
-            return CodeBuilder {
+    impl StringBuilder {
+        fn new() -> StringBuilder {
+            return StringBuilder {
                 lines: vec![],
             };
         }
 
-        fn with_capacity(cap: usize) -> CodeBuilder {
-            return CodeBuilder {
+        fn with_capacity(cap: usize) -> StringBuilder {
+            return StringBuilder {
                 lines: vec![],
             };
         }
@@ -58,7 +58,7 @@ plugin AssociatedFunctionsTest {
     /// Test in visitor context
     pub fn visit_function_declaration(node: &FunctionDeclaration) {
         // Should work
-        let builder = CodeBuilder::new();
+        let builder = StringBuilder::new();
 
         // Should also work
         let template = Template::from_path("0.1");

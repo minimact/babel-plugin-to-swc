@@ -4,12 +4,12 @@
 /// field initializer position.
 
 plugin FunctionCallInStructTest {
-    struct CodeBuilder {
+    struct StringBuilder {
         lines: Vec<Str>,
     }
 
     struct State {
-        csharp: CodeBuilder,
+        csharp: StringBuilder,
         templates: HashMap<Str, Str>,
         imports: HashSet<Str>,
     }
@@ -18,15 +18,15 @@ plugin FunctionCallInStructTest {
     pub fn test_direct_call_in_struct() {
         // Should work - function calls as field values
         let state = State {
-            csharp: CodeBuilder::new(),
+            csharp: StringBuilder::new(),
             templates: HashMap::new(),
             imports: HashSet::new(),
         };
     }
 
     /// Test with custom functions
-    pub fn create_builder() -> CodeBuilder {
-        return CodeBuilder {
+    pub fn create_builder() -> StringBuilder {
+        return StringBuilder {
             lines: vec![],
         };
     }
@@ -42,7 +42,7 @@ plugin FunctionCallInStructTest {
     /// Test nested calls
     pub fn test_nested_calls() {
         let state = State {
-            csharp: CodeBuilder::new(),
+            csharp: StringBuilder::new(),
             templates: create_empty_map(),
             imports: HashSet::new(),
         };
@@ -55,7 +55,7 @@ plugin FunctionCallInStructTest {
     /// Test in visitor context
     pub fn visit_program(node: &Program) {
         let state = State {
-            csharp: CodeBuilder::new(),
+            csharp: StringBuilder::new(),
             templates: HashMap::new(),
             imports: HashSet::new(),
         };
@@ -63,9 +63,9 @@ plugin FunctionCallInStructTest {
         // Use state...
     }
 
-    impl CodeBuilder {
-        fn new() -> CodeBuilder {
-            return CodeBuilder {
+    impl StringBuilder {
+        fn new() -> StringBuilder {
+            return StringBuilder {
                 lines: vec![],
             };
         }
