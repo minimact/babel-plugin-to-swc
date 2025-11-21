@@ -149,20 +149,26 @@ impl UnwrapHoister {
         for stmt in block.stmts.drain(..) {
             match stmt {
                 Stmt::Let(let_stmt) => {
-                    // Check if the init expression has a chain that needs unwrapping
-                    if let Some(analysis) = self.detect_unwrap_chain(&let_stmt.init) {
-                        // Transform into statements with pattern matching
-                        let transformed = self.lower_chain_to_block(
-                            let_stmt.name.clone(),
-                            let_stmt.mutable,
-                            analysis,
-                            let_stmt.span,
-                        );
-                        new_stmts.extend(transformed);
+                    // Only handle simple identifier patterns for now
+                    if let Pattern::Ident(ref name) = let_stmt.pattern {
+                        // Check if the init expression has a chain that needs unwrapping
+                        if let Some(analysis) = self.detect_unwrap_chain(&let_stmt.init) {
+                            // Transform into statements with pattern matching
+                            let transformed = self.lower_chain_to_block(
+                                name.clone(),
+                                let_stmt.mutable,
+                                analysis,
+                                let_stmt.span,
+                            );
+                            new_stmts.extend(transformed);
+                        } else {
+                            // No transformation needed - but still track the type
+                            let init_type = self.infer_expr_type(&let_stmt.init);
+                            self.type_env.define(name, init_type);
+                            new_stmts.push(Stmt::Let(let_stmt));
+                        }
                     } else {
-                        // No transformation needed - but still track the type
-                        let init_type = self.infer_expr_type(&let_stmt.init);
-                        self.type_env.define(&let_stmt.name, init_type);
+                        // Complex patterns - just pass through without transformation
                         new_stmts.push(Stmt::Let(let_stmt));
                     }
                 }
@@ -472,7 +478,7 @@ impl UnwrapHoister {
             // Add explicit type annotation so codegen knows this is a MemberProp
             let temp_let = Stmt::Let(LetStmt {
                 mutable: false,
-                name: temp_name.clone(),
+                pattern: Pattern::Ident(temp_name.clone()),
                 ty: Some(Type::Named(unwrap.swc_enum_type.clone())),
                 init: temp_access,
                 span,
@@ -514,7 +520,7 @@ impl UnwrapHoister {
             // let mut name = Default::default();
             let target_decl = Stmt::Let(LetStmt {
                 mutable: true,  // Must be mutable since we assign in the if block
-                name: target_var.clone(),
+                pattern: Pattern::Ident(target_var.clone()),
                 ty: None,
                 // Use a placeholder that will be assigned in the if
                 init: Expr::Ident(IdentExpr {
@@ -614,7 +620,7 @@ impl UnwrapHoister {
         // No unwrap needed - return original as single statement
         vec![Stmt::Let(LetStmt {
             mutable,
-            name: target_var,
+            pattern: Pattern::Ident(target_var),
             ty: None,
             init: Expr::Member(MemberExpr {
                 object: Box::new(analysis.base_expr),

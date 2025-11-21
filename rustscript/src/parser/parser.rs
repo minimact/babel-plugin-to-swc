@@ -437,6 +437,7 @@ impl Parser {
     fn parse_statement(&mut self) -> ParseResult<Stmt> {
         self.skip_newlines();
 
+
         if self.check(TokenKind::Let) {
             self.parse_let_stmt()
         } else if self.check(TokenKind::Const) {
@@ -563,7 +564,11 @@ impl Parser {
     fn parse_match_stmt(&mut self) -> ParseResult<Stmt> {
         let start_span = self.current_span();
         self.expect(TokenKind::Match)?;
-        let scrutinee = self.parse_expr()?;
+
+        // Parse scrutinee - must not consume the { that starts match arms
+        // We parse a restricted expression that stops at {
+        let scrutinee = self.parse_match_scrutinee()?;
+
         self.expect(TokenKind::LBrace)?;
 
         let mut arms = Vec::new();
@@ -582,6 +587,12 @@ impl Parser {
             arms,
             span: start_span,
         }))
+    }
+
+    /// Parse match scrutinee (expression that doesn't consume {)
+    fn parse_match_scrutinee(&mut self) -> ParseResult<Expr> {
+        // Use parse_or_no_struct to avoid consuming { as struct init
+        self.parse_or_no_struct()
     }
 
     /// Parse match arm
@@ -604,6 +615,7 @@ impl Parser {
 
     /// Parse pattern
     fn parse_pattern(&mut self) -> ParseResult<Pattern> {
+
         // Check for wildcard
         if self.check_ident("_") {
             self.advance();
@@ -650,6 +662,7 @@ impl Parser {
 
         // Identifier, struct pattern, or variant pattern
         let name = self.expect_ident()?;
+
 
         if self.check(TokenKind::LBrace) {
             // Struct pattern: Name { field: pattern, ... }
@@ -1122,7 +1135,7 @@ impl Parser {
 
                     state.push(LetStmt {
                         mutable,
-                        name,
+                        pattern: Pattern::Ident(name),
                         ty,
                         init,
                         span: let_span,
@@ -1545,6 +1558,12 @@ impl Parser {
     fn parse_primary(&mut self) -> ParseResult<Expr> {
         let span = self.current_span();
 
+        // Block expression
+        if self.check(TokenKind::LBrace) {
+            let block = self.parse_block()?;
+            return Ok(Expr::Block(block));
+        }
+
         // Parenthesized expression
         if self.match_token(TokenKind::LParen) {
             // Check for closure: |params| expr
@@ -1581,6 +1600,10 @@ impl Parser {
                             break;
                         }
                         self.skip_newlines();
+                        // Allow trailing comma
+                        if self.check(TokenKind::RBracket) {
+                            break;
+                        }
                     }
                 }
                 self.expect(TokenKind::RBracket)?;
@@ -1645,8 +1668,12 @@ impl Parser {
         }
 
         if self.match_token(TokenKind::SelfType) {
+            let name = "Self".to_string();
+            if self.check(TokenKind::LBrace) {
+                return self.parse_struct_init(name, span);
+            }
             return Ok(Expr::Ident(IdentExpr {
-                name: "Self".to_string(),
+                name,
                 span,
             }));
         }
@@ -1662,6 +1689,15 @@ impl Parser {
 
         // AST node type as identifier
         if let Some(name) = self.try_expect_ast_type() {
+            if self.check(TokenKind::LBrace) {
+                return self.parse_struct_init(name, span);
+            }
+            return Ok(Expr::Ident(IdentExpr { name, span }));
+        }
+
+        // Self type (can be used for struct initialization)
+        if self.match_token(TokenKind::SelfType) {
+            let name = "Self".to_string();
             if self.check(TokenKind::LBrace) {
                 return self.parse_struct_init(name, span);
             }

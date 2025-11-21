@@ -112,9 +112,9 @@ impl TypeChecker {
                             let_stmt.span,
                         ));
                     }
-                    self.env.define(let_stmt.name.clone(), declared_type);
+                    self.define_pattern_in_env(&let_stmt.pattern, declared_type);
                 } else {
-                    self.env.define(let_stmt.name.clone(), init_type);
+                    self.define_pattern_in_env(&let_stmt.pattern, init_type);
                 }
             }
 
@@ -307,9 +307,9 @@ impl TypeChecker {
                                         let_stmt.span,
                                     ));
                                 }
-                                self.env.define(let_stmt.name.clone(), declared_type);
+                                self.define_pattern_in_env(&let_stmt.pattern, declared_type);
                             } else {
-                                self.env.define(let_stmt.name.clone(), init_type);
+                                self.define_pattern_in_env(&let_stmt.pattern, init_type);
                             }
                         }
 

@@ -338,12 +338,13 @@ impl Resolver {
                         // Resolve state variables
                         for let_stmt in &inline.state {
                             self.resolve_expr(&let_stmt.init);
+                            self.resolve_pattern(&let_stmt.pattern);
                             let ty = if let Some(ref type_ann) = let_stmt.ty {
                                 ast_type_to_type_info(type_ann)
                             } else {
                                 self.env.fresh_var()
                             };
-                            self.env.define(let_stmt.name.clone(), ty);
+                            self.define_pattern(&let_stmt.pattern, ty);
                         }
 
                         // Resolve methods
