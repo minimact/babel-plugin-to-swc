@@ -4,7 +4,10 @@ use clap::{Parser as ClapParser, Subcommand};
 use std::fs;
 use std::path::PathBuf;
 
-use rustscript::{Lexer, Parser, analyze, lower, generate, Target};
+use rustscript::{Lexer, Parser, analyze};
+
+#[cfg(feature = "codegen")]
+use rustscript::{generate, Target, lower};
 
 #[derive(ClapParser)]
 #[command(name = "rustscript")]
@@ -33,6 +36,7 @@ enum Commands {
         file: PathBuf,
     },
     /// Build a RustScript project
+    #[cfg(feature = "codegen")]
     Build {
         /// Input file
         file: PathBuf,
@@ -154,6 +158,7 @@ fn main() {
                 std::process::exit(1);
             }
         }
+        #[cfg(feature = "codegen")]
         Commands::Build { file, target, output } => {
             let source = match fs::read_to_string(&file) {
                 Ok(s) => s,

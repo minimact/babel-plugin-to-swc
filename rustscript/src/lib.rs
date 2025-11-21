@@ -4,7 +4,9 @@
 
 pub mod lexer;
 pub mod parser;
+pub mod type_system;
 pub mod semantic;
+#[cfg(feature = "codegen")]
 pub mod codegen;
 pub mod mapping;
 // pub mod error;
@@ -13,6 +15,7 @@ pub mod mapping;
 pub use lexer::{Lexer, Token, TokenKind, Span};
 pub use parser::{Parser, Program, ParseError};
 pub use semantic::{analyze, lower, SemanticError, SemanticResult, UnwrapHoister};
+#[cfg(feature = "codegen")]
 pub use codegen::{generate, Target, GeneratedCode};
 pub use mapping::{
     NodeMapping, FieldMapping, HelperMapping, PatternMapping,

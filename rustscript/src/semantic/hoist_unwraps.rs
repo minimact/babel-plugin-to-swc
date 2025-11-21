@@ -22,12 +22,12 @@
 use crate::parser::{
     Program, TopLevelDecl, PluginDecl, PluginItem, WriterDecl,
     FnDecl, Block, Stmt, Expr, LetStmt, MemberExpr, IdentExpr, CallExpr,
-    IfStmt, ExprStmt, Literal, Type, AssignExpr,
+    IfStmt, ExprStmt, Literal, Type, AssignExpr, Pattern,
 };
 use crate::lexer::Span;
-use crate::codegen::type_context::{
+use crate::type_system::{
     TypeContext, TypeEnvironment, get_typed_field_mapping, classify_swc_type,
-    SwcTypeKind, infer_expected_variant,
+    SwcTypeKind, infer_expected_variant, map_rustscript_to_swc,
 };
 
 /// The UnwrapHoister pass that lowers deep chains to explicit pattern matching
@@ -110,6 +110,25 @@ impl UnwrapHoister {
         }
     }
 
+    /// Define variables from a pattern in the type environment
+    fn define_pattern_vars(&mut self, pattern: &Pattern, type_ctx: TypeContext) {
+        match pattern {
+            Pattern::Ident(name) => {
+                self.type_env.define(name, type_ctx);
+            }
+            Pattern::Tuple(patterns) => {
+                // For tuple destructuring, give each element the base type
+                // (Proper implementation would track tuple element types)
+                for pat in patterns {
+                    self.define_pattern_vars(pat, type_ctx.clone());
+                }
+            }
+            _ => {
+                // Other patterns not yet implemented
+            }
+        }
+    }
+
     fn visit_function(&mut self, func: &mut FnDecl) {
         // Set up parameter types in the environment
         self.type_env.push_scope();
@@ -167,7 +186,8 @@ impl UnwrapHoister {
                     self.type_env.push_scope();
                     // Infer iterator element type
                     let iter_type = self.infer_expr_type(&for_stmt.iter);
-                    self.type_env.define(&for_stmt.var, iter_type);
+                    // Define variables from pattern
+                    self.define_pattern_vars(&for_stmt.pattern, iter_type);
                     self.visit_block(&mut for_stmt.body);
                     self.type_env.pop_scope();
                     new_stmts.push(Stmt::For(for_stmt));
@@ -300,7 +320,7 @@ impl UnwrapHoister {
             let mapping = get_typed_field_mapping(&current_type.swc_type, field);
 
             if let Some(m) = mapping {
-                let result_kind = classify_swc_type(m.result_type_swc);
+                let result_kind = classify_swc_type(m.swc_type);
 
                 // Check if this step needs unwrapping
                 if matches!(result_kind, SwcTypeKind::WrapperEnum | SwcTypeKind::Enum) {
@@ -314,21 +334,24 @@ impl UnwrapHoister {
                     };
 
                     if let Some(next) = next_field {
-                        if let Some((variant, struct_name)) = infer_expected_variant(m.result_type_swc, next) {
+                        if let Some(variant) = infer_expected_variant(m.swc_type, next) {
+                            // For now, use the variant name as struct name too
+                            // (proper implementation would look this up properly)
+                            let struct_name = variant.clone();
                             unwrap_steps.push(ChainLink {
                                 field_name: field.clone(),
-                                swc_field: m.swc_field.to_string(),
-                                swc_enum_type: m.result_type_swc.to_string(),
+                                swc_field: m.swc.to_string(),
+                                swc_enum_type: m.swc_type.to_string(),
                                 swc_variant: variant,
-                                swc_struct: struct_name,
-                                is_boxed: m.needs_deref,
+                                swc_struct: struct_name.clone(),
+                                is_boxed: m.needs_box_unwrap,
                             });
 
                             // Update current type to the unwrapped struct
                             // We need to look up the struct type
-                            let (_, kind) = crate::codegen::type_context::map_rustscript_to_swc(&unwrap_steps.last().unwrap().swc_struct);
+                            let (_, kind) = map_rustscript_to_swc(&unwrap_steps.last().unwrap().swc_struct);
                             current_type = TypeContext {
-                                rustscript_type: m.result_type_rs.to_string(),
+                                rustscript_type: m.rustscript.to_string(),
                                 swc_type: unwrap_steps.last().unwrap().swc_struct.clone(),
                                 kind,
                                 known_variant: None,
@@ -346,13 +369,13 @@ impl UnwrapHoister {
                 }
 
                 // Update current type
-                let (_, kind) = crate::codegen::type_context::map_rustscript_to_swc(m.result_type_rs);
+                let (_, kind) = map_rustscript_to_swc(m.rustscript);
                 current_type = TypeContext {
-                    rustscript_type: m.result_type_rs.to_string(),
-                    swc_type: m.result_type_swc.to_string(),
+                    rustscript_type: m.rustscript.to_string(),
+                    swc_type: m.swc_type.to_string(),
                     kind,
                     known_variant: None,
-                    needs_deref: m.needs_deref,
+                    needs_deref: m.needs_box_unwrap,
                 };
             } else {
                 // Unknown field - can't analyze
@@ -360,7 +383,7 @@ impl UnwrapHoister {
                     // We're after an unwrap, this must be the final field
                     // Get the final field mapping
                     let final_mapping = get_typed_field_mapping(&current_type.swc_type, field);
-                    let final_swc = final_mapping.map(|m| m.swc_field.to_string())
+                    let final_swc = final_mapping.map(|m| m.swc.to_string())
                         .unwrap_or_else(|| field.clone());
 
                     return Some(ChainAnalysis {
@@ -383,7 +406,7 @@ impl UnwrapHoister {
         // Get final field info
         let last_field = &chain_parts.last()?.1;
         let final_mapping = get_typed_field_mapping(&current_type.swc_type, last_field);
-        let final_swc = final_mapping.map(|m| m.swc_field.to_string())
+        let final_swc = final_mapping.map(|m| m.swc.to_string())
             .unwrap_or_else(|| last_field.clone());
 
         Some(ChainAnalysis {
@@ -639,13 +662,13 @@ impl UnwrapHoister {
             Expr::Member(mem) => {
                 let obj_type = self.infer_expr_type(&mem.object);
                 if let Some(mapping) = get_typed_field_mapping(&obj_type.swc_type, &mem.property) {
-                    let (_, kind) = crate::codegen::type_context::map_rustscript_to_swc(mapping.result_type_rs);
+                    let (_, kind) = map_rustscript_to_swc(mapping.rustscript);
                     TypeContext {
-                        rustscript_type: mapping.result_type_rs.to_string(),
-                        swc_type: mapping.result_type_swc.to_string(),
+                        rustscript_type: mapping.rustscript.to_string(),
+                        swc_type: mapping.swc_type.to_string(),
                         kind,
                         known_variant: None,
-                        needs_deref: mapping.needs_deref,
+                        needs_deref: mapping.needs_box_unwrap,
                     }
                 } else {
                     TypeContext::unknown()

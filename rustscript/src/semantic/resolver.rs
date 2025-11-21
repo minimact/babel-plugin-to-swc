@@ -291,9 +291,9 @@ impl Resolver {
             Stmt::For(for_stmt) => {
                 self.resolve_expr(&for_stmt.iter);
                 self.env.push_scope();
-                // Define loop variable
-                let var_type = self.env.fresh_var();
-                self.env.define(for_stmt.var.clone(), var_type);
+                // Define variables from pattern
+                // Use Unknown type for loop variables (type checker will refine this)
+                self.define_pattern(&for_stmt.pattern, TypeInfo::Unknown);
                 self.resolve_block(&for_stmt.body);
                 self.env.pop_scope();
             }
@@ -364,6 +364,42 @@ impl Resolver {
                 let var_type = self.env.fresh_var();
                 self.env.define(name.clone(), var_type);
             }
+            Pattern::Tuple(patterns) => {
+                for pat in patterns {
+                    self.resolve_pattern(pat);
+                }
+            }
+            Pattern::Array(patterns) => {
+                for pat in patterns {
+                    self.resolve_pattern(pat);
+                }
+            }
+            Pattern::Object(props) => {
+                for prop in props {
+                    match prop {
+                        crate::parser::ObjectPatternProp::Shorthand(name) => {
+                            let var_type = self.env.fresh_var();
+                            self.env.define(name.clone(), var_type);
+                        }
+                        crate::parser::ObjectPatternProp::KeyValue { value, .. } => {
+                            self.resolve_pattern(value);
+                        }
+                        crate::parser::ObjectPatternProp::Rest(name) => {
+                            let var_type = self.env.fresh_var();
+                            self.env.define(name.clone(), var_type);
+                        }
+                        crate::parser::ObjectPatternProp::Or(patterns) => {
+                            // For OR patterns in object props, resolve all branches
+                            for pat in patterns {
+                                self.resolve_pattern(pat);
+                            }
+                        }
+                    }
+                }
+            }
+            Pattern::Rest(inner) => {
+                self.resolve_pattern(inner);
+            }
             Pattern::Struct { fields, .. } => {
                 for (_, pat) in fields {
                     self.resolve_pattern(pat);
@@ -381,6 +417,53 @@ impl Resolver {
                 }
             }
             Pattern::Literal(_) | Pattern::Wildcard => {}
+        }
+    }
+
+    /// Define variables from a pattern with a given type info
+    fn define_pattern(&mut self, pattern: &Pattern, type_info: TypeInfo) {
+        match pattern {
+            Pattern::Ident(name) => {
+                self.env.define(name.clone(), type_info);
+            }
+            Pattern::Tuple(patterns) => {
+                // Extract tuple element types if available
+                match &type_info {
+                    TypeInfo::Tuple(elem_types) => {
+                        for (i, pat) in patterns.iter().enumerate() {
+                            let elem_type = elem_types.get(i)
+                                .cloned()
+                                .unwrap_or(TypeInfo::Unknown);
+                            self.define_pattern(pat, elem_type);
+                        }
+                    }
+                    _ => {
+                        // If not a tuple type, give all elements Unknown type
+                        for pat in patterns {
+                            self.define_pattern(pat, TypeInfo::Unknown);
+                        }
+                    }
+                }
+            }
+            Pattern::Array(_) => {
+                // Array destructuring not yet implemented
+            }
+            Pattern::Object(_) => {
+                // Object destructuring not yet implemented
+            }
+            Pattern::Rest(_) => {
+                // Rest pattern not yet implemented
+            }
+            Pattern::Or(patterns) => {
+                // For OR patterns, all branches must bind the same variables with same types
+                // For now, just define variables from the first pattern
+                if let Some(first) = patterns.first() {
+                    self.define_pattern(first, type_info);
+                }
+            }
+            Pattern::Struct { .. } | Pattern::Variant { .. } | Pattern::Literal(_) | Pattern::Wildcard => {
+                // No variables to define
+            }
         }
     }
 

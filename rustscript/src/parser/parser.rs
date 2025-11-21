@@ -1173,7 +1173,17 @@ impl Parser {
     fn parse_expr_stmt(&mut self) -> ParseResult<Stmt> {
         let start_span = self.current_span();
         let expr = self.parse_expr()?;
-        self.expect(TokenKind::Semicolon)?;
+
+        // Semicolon is optional if this is the last expression in a block (before RBrace)
+        // This allows the expression to serve as the block's return value
+        self.skip_newlines();
+        if !self.check(TokenKind::RBrace) {
+            self.expect(TokenKind::Semicolon)?;
+        } else {
+            // Try to consume semicolon if present, but don't require it
+            self.match_token(TokenKind::Semicolon);
+        }
+
         Ok(Stmt::Expr(ExprStmt {
             expr,
             span: start_span,

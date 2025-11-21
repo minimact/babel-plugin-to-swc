@@ -27,6 +27,9 @@ pub enum TypeInfo {
     HashMap(Box<TypeInfo>, Box<TypeInfo>),
     HashSet(Box<TypeInfo>),
 
+    /// Tuple type
+    Tuple(Vec<TypeInfo>),
+
     /// Function type
     Function {
         params: Vec<TypeInfo>,
@@ -188,6 +191,14 @@ impl TypeInfo {
                 format!("HashMap<{}, {}>", k.display_name(), v.display_name())
             }
             TypeInfo::HashSet(inner) => format!("HashSet<{}>", inner.display_name()),
+            TypeInfo::Tuple(elements) => {
+                let elems_str = elements
+                    .iter()
+                    .map(|e| e.display_name())
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                format!("({})", elems_str)
+            }
             TypeInfo::Function { params, ret } => {
                 let params_str = params
                     .iter()

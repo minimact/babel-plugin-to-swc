@@ -217,7 +217,8 @@ impl TypeChecker {
                 };
 
                 self.env.push_scope();
-                self.env.define(for_stmt.var.clone(), elem_type);
+                // Define variables from pattern
+                self.define_pattern_in_env(&for_stmt.pattern, elem_type);
                 self.check_block(&for_stmt.body);
                 self.env.pop_scope();
             }
@@ -323,6 +324,60 @@ impl TypeChecker {
                         // Visitor name validation would happen here
                     }
                 }
+            }
+        }
+    }
+
+    /// Define variables from a pattern in the current environment
+    fn define_pattern_in_env(&mut self, pattern: &Pattern, type_info: TypeInfo) {
+        match pattern {
+            Pattern::Ident(name) => {
+                self.env.define(name.clone(), type_info);
+            }
+            Pattern::Tuple(patterns) => {
+                // Extract tuple element types if available
+                match &type_info {
+                    TypeInfo::Tuple(elem_types) => {
+                        // Match each pattern with its corresponding type
+                        for (i, pat) in patterns.iter().enumerate() {
+                            let elem_type = elem_types.get(i)
+                                .cloned()
+                                .unwrap_or(TypeInfo::Unknown);
+                            self.define_pattern_in_env(pat, elem_type);
+                        }
+                    }
+                    _ => {
+                        // If not a tuple type, give all elements Unknown type
+                        for pat in patterns {
+                            self.define_pattern_in_env(pat, TypeInfo::Unknown);
+                        }
+                    }
+                }
+            }
+            Pattern::Array(_) => {
+                // Array destructuring not yet implemented
+            }
+            Pattern::Object(_) => {
+                // Object destructuring not yet implemented
+            }
+            Pattern::Rest(_) => {
+                // Rest pattern not yet implemented
+            }
+            Pattern::Or(patterns) => {
+                // For OR patterns, all branches must bind the same variables with same types
+                // For now, just define variables from the first pattern
+                if let Some(first) = patterns.first() {
+                    self.define_pattern_in_env(first, type_info);
+                }
+            }
+            Pattern::Literal(_) | Pattern::Wildcard => {
+                // No variables to define
+            }
+            Pattern::Struct { .. } => {
+                // Struct patterns not yet implemented
+            }
+            Pattern::Variant { .. } => {
+                // Variant patterns not yet implemented
             }
         }
     }

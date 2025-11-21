@@ -372,6 +372,25 @@ pub enum Pattern {
         name: String,
         inner: Option<Box<Pattern>>,
     },
+    /// Array destructuring: [a, b, c]
+    Array(Vec<Pattern>),
+    /// Object destructuring: { x, y, z } or { x: a, y: b }
+    Object(Vec<ObjectPatternProp>),
+    /// Rest pattern: ...rest
+    Rest(Box<Pattern>),
+    /// Or pattern: pattern1 | pattern2
+    Or(Vec<Pattern>),
+}
+
+/// Object pattern property
+#[derive(Debug, Clone)]
+pub enum ObjectPatternProp {
+    /// Shorthand: { x } binds x
+    Shorthand(String),
+    /// Key-value: { x: renamed } binds renamed
+    KeyValue { key: String, value: Pattern },
+    /// Rest: { ...rest }
+    Rest(String),
     Or(Vec<Pattern>),
 }
 
