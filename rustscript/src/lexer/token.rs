@@ -150,6 +150,7 @@ pub enum TokenKind {
     ColonColon,     // ::
     Question,       // ?
     QuestionDot,    // ?.
+    Hash,           // #
 
     // Special
     Comment(String),
@@ -275,6 +276,7 @@ impl fmt::Display for TokenKind {
             TokenKind::ColonColon => write!(f, "::"),
             TokenKind::Question => write!(f, "?"),
             TokenKind::QuestionDot => write!(f, "?."),
+            TokenKind::Hash => write!(f, "#"),
 
             TokenKind::Comment(s) => write!(f, "// {}", s),
             TokenKind::DocComment(s) => write!(f, "/// {}", s),

@@ -271,55 +271,47 @@ impl Parser {
             let param_span = self.current_span();
 
             // Check for self parameters (self, &self, &mut self)
-            if let Some(token) = self.peek() {
-                if let TokenKind::Ident(name) = &token.kind {
-                    if name == "self" {
-                        // Just 'self' - consuming parameter
-                        self.advance();
-                        params.push(Param {
-                            name: "self".to_string(),
-                            ty: Type::Named("Self".to_string()),
-                            span: param_span,
-                        });
+            if self.check(TokenKind::Self_) {
+                // Just 'self' - consuming parameter
+                self.advance();
+                params.push(Param {
+                    name: "self".to_string(),
+                    ty: Type::Named("Self".to_string()),
+                    span: param_span,
+                });
 
-                        if !self.match_token(TokenKind::Comma) {
-                            break;
-                        }
-                        continue;
-                    }
+                if !self.match_token(TokenKind::Comma) {
+                    break;
                 }
+                continue;
             }
 
             // Check for &self or &mut self
             if self.check(TokenKind::Ampersand) {
-                let amp_pos = self.pos;
                 self.advance(); // consume &
 
                 let is_mut = self.match_token(TokenKind::Mut);
 
-                if let Some(token) = self.peek() {
-                    if let TokenKind::Ident(name) = &token.kind {
-                        if name == "self" {
-                            self.advance(); // consume 'self'
-                            params.push(Param {
-                                name: "self".to_string(),
-                                ty: Type::Reference {
-                                    mutable: is_mut,
-                                    inner: Box::new(Type::Named("Self".to_string())),
-                                },
-                                span: param_span,
-                            });
+                if self.check(TokenKind::Self_) {
+                    self.advance(); // consume 'self'
+                    params.push(Param {
+                        name: "self".to_string(),
+                        ty: Type::Reference {
+                            mutable: is_mut,
+                            inner: Box::new(Type::Named("Self".to_string())),
+                        },
+                        span: param_span,
+                    });
 
-                            if !self.match_token(TokenKind::Comma) {
-                                break;
-                            }
-                            continue;
-                        }
+                    if !self.match_token(TokenKind::Comma) {
+                        break;
                     }
+                    continue;
                 }
 
-                // Not a self parameter, backtrack
-                self.pos = amp_pos;
+                // Not a self parameter - this is an error
+                // RustScript doesn't support &param syntax, only param: &Type
+                return Err(self.error("Unexpected '&' - use 'param: &Type' syntax instead"));
             }
 
             // Regular parameter: name: Type
@@ -602,6 +594,39 @@ impl Parser {
             return Ok(Pattern::Literal(lit));
         }
 
+        // Check for tuple pattern: (a, b, c)
+        if self.check(TokenKind::LParen) {
+            self.advance();
+            let mut elements = Vec::new();
+
+            // Empty tuple ()
+            if self.check(TokenKind::RParen) {
+                self.advance();
+                return Ok(Pattern::Tuple(elements));
+            }
+
+            // Parse tuple elements
+            loop {
+                elements.push(self.parse_pattern()?);
+                if !self.match_token(TokenKind::Comma) {
+                    break;
+                }
+                // Allow trailing comma
+                if self.check(TokenKind::RParen) {
+                    break;
+                }
+            }
+
+            self.expect(TokenKind::RParen)?;
+
+            // Single element is not a tuple, just a parenthesized pattern
+            if elements.len() == 1 {
+                return Ok(elements.into_iter().next().unwrap());
+            }
+
+            return Ok(Pattern::Tuple(elements));
+        }
+
         // Identifier, struct pattern, or variant pattern
         let name = self.expect_ident()?;
 
@@ -659,14 +684,17 @@ impl Parser {
     fn parse_for_stmt(&mut self) -> ParseResult<Stmt> {
         let start_span = self.current_span();
         self.expect(TokenKind::For)?;
-        let var = self.expect_ident()?;
+
+        // Parse pattern (identifier or tuple destructuring)
+        let pattern = self.parse_pattern()?;
+
         self.expect(TokenKind::In)?;
         // Use parse_expr_no_struct to avoid ambiguity with block
         let iter = self.parse_expr_no_struct()?;
         let body = self.parse_block()?;
 
         Ok(Stmt::For(ForStmt {
-            var,
+            pattern,
             iter,
             body,
             span: start_span,
@@ -864,6 +892,34 @@ impl Parser {
 
     fn parse_primary_no_struct(&mut self) -> ParseResult<Expr> {
         let span = self.current_span();
+
+        // Handle 'self' keyword
+        if self.match_token(TokenKind::Self_) {
+            let mut expr = Expr::Ident(IdentExpr {
+                name: "self".to_string(),
+                span,
+            });
+
+            // Handle member access on self
+            loop {
+                if self.match_token(TokenKind::Dot) {
+                    let property = self.expect_ident()?;
+                    let span = self.current_span();
+                    expr = Expr::Member(MemberExpr {
+                        object: Box::new(expr),
+                        property,
+                        optional: false,
+                        computed: false,
+                        is_path: false,
+                        span,
+                    });
+                } else {
+                    break;
+                }
+            }
+
+            return Ok(expr);
+        }
 
         // Identifier (no struct init)
         if let Some(name) = self.try_expect_ident() {

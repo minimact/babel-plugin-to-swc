@@ -66,6 +66,7 @@ impl<'a> Lexer<'a> {
                         TokenKind::Question
                     }
                 }
+                '#' => TokenKind::Hash,
                 '^' => TokenKind::Caret,
                 '%' => TokenKind::Percent,
 

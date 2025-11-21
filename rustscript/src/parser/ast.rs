@@ -362,6 +362,7 @@ pub enum Pattern {
     Literal(Literal),
     Ident(String),
     Wildcard,
+    Tuple(Vec<Pattern>),
     Struct {
         name: String,
         fields: Vec<(String, Pattern)>,
@@ -377,7 +378,7 @@ pub enum Pattern {
 /// For loop
 #[derive(Debug, Clone)]
 pub struct ForStmt {
-    pub var: String,
+    pub pattern: Pattern,  // Changed from var: String to support tuple destructuring
     pub iter: Expr,
     pub body: Block,
     pub span: Span,
