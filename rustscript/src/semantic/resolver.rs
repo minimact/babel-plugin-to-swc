@@ -613,6 +613,10 @@ impl Resolver {
                 self.env.pop_scope();
             }
 
+            Expr::Try(inner) => {
+                self.resolve_expr(inner);
+            }
+
             Expr::Literal(_) => {}
         }
     }

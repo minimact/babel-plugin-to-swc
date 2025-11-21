@@ -397,6 +397,7 @@ impl TypeChecker {
                 Literal::Float(_) => TypeInfo::F64,
                 Literal::Bool(_) => TypeInfo::Bool,
                 Literal::Null => TypeInfo::Null,
+                Literal::Unit => TypeInfo::Unit,
             },
 
             Expr::Ident(ident) => {
@@ -660,6 +661,14 @@ impl TypeChecker {
                 }
                 self.env.pop_scope();
                 result_type
+            }
+
+            Expr::Try(inner) => {
+                // Type of expr? is the Ok variant of Result<T, E>
+                let inner_type = self.infer_expr(inner);
+                // If inner is Result<T, E>, type is T
+                // For now, just return the inner type (simplified)
+                inner_type
             }
         }
     }

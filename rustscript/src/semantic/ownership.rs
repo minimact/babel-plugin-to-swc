@@ -248,6 +248,10 @@ impl OwnershipChecker {
                 }
             }
 
+            Expr::Try(inner) => {
+                self.check_expr(inner);
+            }
+
             Expr::Literal(_) | Expr::Ident(_) => {}
         }
     }
@@ -289,6 +293,9 @@ impl OwnershipChecker {
 
             // Block expressions produce owned values
             Expr::Block(_) => {}
+
+            // Try expressions produce owned values (unwrapped from Result)
+            Expr::Try(_) => {}
 
             // These are OK - they produce owned values
             Expr::Literal(_)

@@ -389,6 +389,11 @@ impl Parser {
             });
         }
 
+        // Check for tuple type: (T1, T2, ...)
+        if self.check(TokenKind::LParen) {
+            return self.parse_tuple_type();
+        }
+
         // Get the type name
         let name = self.expect_type_name()?;
 
@@ -409,6 +414,38 @@ impl Parser {
                 _ => Ok(Type::Named(name)),
             }
         }
+    }
+
+    /// Parse tuple type: (T1, T2, ...)
+    fn parse_tuple_type(&mut self) -> ParseResult<Type> {
+        self.expect(TokenKind::LParen)?;
+
+        // Empty tuple () is the unit type
+        if self.check(TokenKind::RParen) {
+            self.advance();
+            return Ok(Type::Unit);
+        }
+
+        // Parse tuple element types
+        let mut types = Vec::new();
+        loop {
+            types.push(self.parse_type()?);
+            if !self.match_token(TokenKind::Comma) {
+                break;
+            }
+            // Allow trailing comma
+            if self.check(TokenKind::RParen) {
+                break;
+            }
+        }
+        self.expect(TokenKind::RParen)?;
+
+        // Single element with no trailing comma is just a parenthesized type, not a tuple
+        if types.len() == 1 {
+            return Ok(types.into_iter().next().unwrap());
+        }
+
+        Ok(Type::Tuple(types))
     }
 
     /// Parse a block
@@ -1525,6 +1562,10 @@ impl Parser {
                     is_path: true,
                     span,
                 });
+            } else if self.match_token(TokenKind::Question) {
+                // Try operator: expr?
+                let span = self.current_span();
+                expr = Expr::Try(Box::new(expr));
             } else {
                 break;
             }
@@ -1564,8 +1605,13 @@ impl Parser {
             return Ok(Expr::Block(block));
         }
 
-        // Parenthesized expression
+        // Parenthesized expression or unit literal ()
         if self.match_token(TokenKind::LParen) {
+            // Check for unit literal ()
+            if self.check(TokenKind::RParen) {
+                self.advance();
+                return Ok(Expr::Literal(Literal::Unit));
+            }
             // Check for closure: |params| expr
             if self.check(TokenKind::Pipe) {
                 return self.parse_closure(span);

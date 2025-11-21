@@ -530,6 +530,8 @@ pub enum Expr {
     Paren(Box<Expr>),
     /// Block expression (used in closures, if/match arms, etc.)
     Block(Block),
+    /// Try expression: expr?
+    Try(Box<Expr>),
 }
 
 /// Literal values
@@ -540,6 +542,7 @@ pub enum Literal {
     Float(f64),
     Bool(bool),
     Null,
+    Unit,
 }
 
 /// Identifier expression
