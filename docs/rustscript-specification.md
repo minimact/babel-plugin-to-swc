@@ -1,7 +1,7 @@
 # RustScript Language Specification
 
-**Version:** 0.3.0
-**Status:** Draft (with Scoped Traversal)
+**Version:** 0.4.0
+**Status:** Draft (Parser Complete)
 **Target Platforms:** Babel (JavaScript) & SWC (Rust/WASM)
 
 ---
@@ -62,10 +62,13 @@ loop        mod         crate       super       dyn         static
 &   *
 
 // Member Access
-.   ::
+.   ::  ?.
 
 // Special
-=>  ->  ..  ...
+=>  ->  ..  ...  ?
+
+// Delimiters
+|   (for closures)
 ```
 
 ### 2.4 Comments
@@ -99,6 +102,9 @@ false
 
 // Null
 null
+
+// Unit (empty value)
+()
 ```
 
 ---
@@ -144,7 +150,35 @@ HashSet<T>  // Unique set
 | `HashMap<K,V>` | `Map` or `Object` | `HashMap<K,V>` |
 | `HashSet<T>` | `Set` | `HashSet<T>` |
 
-### 3.4 The CodeBuilder Type
+### 3.4 Tuple Types
+
+```rustscript
+(T1, T2)       // Two-element tuple
+(T1, T2, T3)   // Three-element tuple
+()             // Unit type (zero-element tuple)
+```
+
+**Usage:**
+```rustscript
+// Tuple types in function signatures
+fn get_coords() -> (i32, i32) {
+    (10, 20)
+}
+
+// Tuple destructuring
+let (x, y) = get_coords();
+
+// As Result type parameter
+fn validate() -> Result<(), Str> {
+    Ok(())
+}
+```
+
+**Compilation:**
+- **Babel**: Tuples become arrays `[T1, T2]`; unit `()` becomes `undefined`
+- **SWC**: Tuples preserved as `(T1, T2)`; unit as `()`
+
+### 3.5 The CodeBuilder Type
 
 For generating code (transpiler use case):
 
@@ -1470,11 +1504,12 @@ fn_decl         = ["pub"] "fn" IDENT "(" params ")" ["->" type] block ;
 params          = [ param { "," param } ] ;
 param           = IDENT ":" type ;
 
-type            = primitive_type | reference_type | container_type | IDENT ;
+type            = primitive_type | reference_type | container_type | tuple_type | IDENT ;
 primitive_type  = "Str" | "i32" | "f64" | "bool" | "()" ;
 reference_type  = "&" ["mut"] type ;
-container_type  = ("Vec" | "Option" | "HashMap" | "HashSet") "<" type_args ">" ;
+container_type  = ("Vec" | "Option" | "HashMap" | "HashSet" | "Result") "<" type_args ">" ;
 type_args       = type { "," type } ;
+tuple_type      = "(" [ type { "," type } ] ")" ;
 
 block           = "{" { statement } "}" ;
 statement       = let_stmt | expr_stmt | if_stmt | match_stmt | for_stmt
@@ -1498,14 +1533,17 @@ comparison      = term { ("<" | ">" | "<=" | ">=") term } ;
 term            = factor { ("+" | "-") factor } ;
 factor          = unary { ("*" | "/" | "%") unary } ;
 unary           = ("!" | "-" | "*" | "&" ["mut"]) unary | call ;
-call            = primary { "(" args ")" | "." IDENT | "[" expr "]" } ;
-primary         = IDENT | literal | "(" expr ")" | struct_init | vec_init ;
+call            = primary { "(" args ")" | "." IDENT | "[" expr "]" | "?" } ;
+primary         = IDENT | literal | "(" expr ")" | struct_init | vec_init | closure | block_expr ;
 
-literal         = STRING | NUMBER | "true" | "false" | "null" ;
+literal         = STRING | NUMBER | "true" | "false" | "null" | "()" ;
 struct_init     = IDENT "{" { IDENT ":" expr "," } "}" ;
 vec_init        = "vec!" "[" [ expr { "," expr } ] "]" ;
+closure         = "|" [ IDENT { "," IDENT } ] "|" ( expr | block ) ;
+block_expr      = block ;
 args            = [ expr { "," expr } ] ;
-pattern         = literal | IDENT | "_" | struct_pattern ;
+pattern         = literal | IDENT | "_" | struct_pattern | tuple_pattern ;
+tuple_pattern   = "(" [ pattern { "," pattern } ] ")" ;
 deref           = "*" IDENT ;
 member          = expr "." IDENT ;
 ```
