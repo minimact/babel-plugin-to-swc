@@ -2389,6 +2389,30 @@ impl SwcGenerator {
     fn gen_swc_pattern_check(&mut self, scrutinee: &Expr, pattern: &Expr, depth: usize) {
         match pattern {
             Expr::StructInit(init) => {
+                // Check if this is a wildcard pattern TypeName(_)
+                if init.fields.len() == 1 && init.fields[0].0 == "_wildcard" {
+                    // Wildcard pattern - just check the type
+                    self.emit("matches!(");
+                    self.gen_expr(scrutinee);
+                    self.emit(", ");
+
+                    // Use mapping module for SWC enum variants
+                    if let Some(mapping) = get_node_mapping(&init.name) {
+                        // Extract the enum variant pattern (e.g., "Expr::Call(_)")
+                        let pattern_parts: Vec<&str> = mapping.swc_pattern.split('(').collect();
+                        if let Some(variant) = pattern_parts.get(0) {
+                            self.emit(&format!("{}(_)", variant));
+                        } else {
+                            self.emit(&format!("{}(_)", mapping.swc_pattern));
+                        }
+                    } else {
+                        // Fallback for unknown types
+                        self.emit(&format!("{}(_)", init.name));
+                    }
+                    self.emit(")");
+                    return;
+                }
+
                 let swc_type = self.rustscript_to_swc_type(&init.name.to_lowercase());
 
                 // For nested patterns, we need to check the type and fields

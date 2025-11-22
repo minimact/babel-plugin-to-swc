@@ -528,7 +528,7 @@ impl Resolver {
                 if self.env.lookup(&ident.name).is_none() {
                     // Check for special names and built-in macros
                     let is_special = matches!(ident.name.as_str(),
-                        "self" | "Self" | "matches!" | "format!" | "format" | "vec!" | "Some" | "None" | "Ok" | "Err" | "String" | "HashMap" | "HashSet" | "Vec" | "Option" | "Result"
+                        "self" | "Self" | "matches!" | "format!" | "format" | "vec!" | "Some" | "None" | "Ok" | "Err" | "String" | "HashMap" | "HashSet" | "Vec" | "Option" | "Result" | "_"
                     );
                     // Check if it's a known AST node type (used in matches!)
                     let is_ast_type = get_node_mapping(&ident.name).is_some();

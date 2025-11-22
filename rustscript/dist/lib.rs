@@ -5,75 +5,23 @@ use swc_common::{Span, DUMMY_SP};
 use swc_ecma_ast::*;
 use swc_ecma_visit::{VisitMut, VisitMutWith};
 
-pub struct TestHexPath {
+pub struct MatchesTest {
     // Plugin state
 }
 
-impl TestHexPath {
+impl MatchesTest {
     pub fn new() -> Self {
         Self {}
     }
     
-    fn test_hex_path_generation() {
-        let mut generator = HexPathGenerator::default();
-        let path1 = generator.next("");
-        let path2 = generator.next("");
-        let path3 = generator.next("");
-        let child1 = generator.next(&path1);
-        let child2 = generator.next(&path1);
-        let full_child1 = generator.build_path(&path1, &child1);
-        let full_child2 = generator.build_path(&path1, &child2);
-    }
-    
-    fn test_path_parsing() {
-        let generator = HexPathGenerator::default();
-        let segments1 = generator.parse_path("10000000");
-        let segments2 = generator.parse_path("10000000.20000000.30000000");
-    }
-    
-    fn test_depth_calculation() {
-        let generator = HexPathGenerator::default();
-        let depth1 = generator.get_depth("");
-        let depth2 = generator.get_depth("10000000");
-        let depth3 = generator.get_depth("10000000.20000000");
-        let depth4 = generator.get_depth("10000000.20000000.30000000");
-    }
-    
-    fn test_parent_path() {
-        let generator = HexPathGenerator::default();
-        let parent1 = generator.get_parent_path("");
-        let parent2 = generator.get_parent_path("10000000");
-        let parent3 = generator.get_parent_path("10000000.20000000.30000000");
-    }
-    
-    fn test_ancestry() {
-        let generator = HexPathGenerator::default();
-        let is_ancestor1 = generator.is_ancestor_of("10000000", "10000000.20000000");
-        let is_ancestor2 = generator.is_ancestor_of("10000000", "10000000.20000000.30000000");
-        let is_ancestor3 = generator.is_ancestor_of("10000000", "20000000");
-        let is_ancestor4 = generator.is_ancestor_of("10000000", "10000000");
-        let is_ancestor5 = generator.is_ancestor_of("", "10000000.20000000");
-    }
-    
-    fn test_reset() {
-        let mut generator = HexPathGenerator::default();
-        let path1 = generator.next("");
-        let path2 = generator.next("");
-        generator.reset("");
-        let path3 = generator.next("");
-        generator.reset_all();
-        let path4 = generator.next("");
-    }
-    
-    fn test_path_between() {
-        let mid_path = HexPathGenerator::generate_path_between("10000000", "20000000");
-    }
-    
-    fn test_gap_checking() {
-        let has_gap1 = HexPathGenerator::has_sufficient_gap("10000000", "20000000", 1000);
-        let has_gap2 = HexPathGenerator::has_sufficient_gap("10000000", "10000001", 100);
+    fn test(expr: &CallExpr) {
+        if {
+            let __matched = matches!(expr, Expr::Call(_));
+            __matched
+        } {
+        }
     }
 }
 
-impl VisitMut for TestHexPath {
+impl VisitMut for MatchesTest {
 }

@@ -1623,8 +1623,12 @@ impl Parser {
                     span,
                 });
             } else if self.match_token(TokenKind::ColonColon) {
-                // Static method call like HashMap::new
-                let method = self.expect_ident()?;
+                // Static method call like HashMap::new or Expr::CallExpression
+                let method = if let Some(ast_type) = self.try_expect_ast_type() {
+                    ast_type
+                } else {
+                    self.expect_ident()?
+                };
                 let span = self.current_span();
                 expr = Expr::Member(MemberExpr {
                     object: Box::new(expr),
@@ -1798,17 +1802,73 @@ impl Parser {
 
         // Identifier or struct init
         if let Some(name) = self.try_expect_ident() {
-            // Check for struct initialization
+            // Check for struct initialization or wildcard pattern TypeName(_)
             if self.check(TokenKind::LBrace) {
                 return self.parse_struct_init(name, span);
+            }
+            // Check for wildcard pattern: TypeName(_)
+            if self.check(TokenKind::LParen) {
+                self.advance(); // consume (
+                // Check if next token is underscore (as identifier)
+                if self.check_ident("_") {
+                    self.advance(); // consume _
+                    self.expect(TokenKind::RParen)?;
+                    // Return a struct init with a special marker for wildcard
+                    return Ok(Expr::StructInit(StructInitExpr {
+                        name,
+                        fields: vec![("_wildcard".to_string(), Expr::Ident(IdentExpr {
+                            name: "_".to_string(),
+                            span,
+                        }))],
+                        span,
+                    }));
+                }
+                // Not a wildcard pattern, parse as call
+                let mut args = vec![];
+                if !self.check(TokenKind::RParen) {
+                    args = self.parse_args()?;
+                }
+                self.expect(TokenKind::RParen)?;
+                return Ok(Expr::Call(CallExpr {
+                    callee: Box::new(Expr::Ident(IdentExpr { name, span })),
+                    args,
+                    type_args: Vec::new(),
+                    optional: false,
+                    span,
+                }));
             }
             return Ok(Expr::Ident(IdentExpr { name, span }));
         }
 
         // AST node type as identifier
         if let Some(name) = self.try_expect_ast_type() {
+            // Check for struct initialization
             if self.check(TokenKind::LBrace) {
                 return self.parse_struct_init(name, span);
+            }
+            // Check for wildcard pattern: TypeName(_)
+            if self.check(TokenKind::LParen) {
+                self.advance(); // consume (
+                // Check if next token is underscore (as identifier)
+                if self.check_ident("_") {
+                    self.advance(); // consume _
+                    self.expect(TokenKind::RParen)?;
+                    // Return a struct init with a special marker for wildcard
+                    return Ok(Expr::StructInit(StructInitExpr {
+                        name,
+                        fields: vec![("_wildcard".to_string(), Expr::Ident(IdentExpr {
+                            name: "_".to_string(),
+                            span,
+                        }))],
+                        span,
+                    }));
+                }
+                // Not a wildcard - this is invalid syntax for AST types
+                // AST types can only be used with {} or (_), not regular calls
+                return Err(ParseError::new(
+                    "AST type must be followed by { } for struct pattern or (_) for wildcard",
+                    self.current_span(),
+                ));
             }
             return Ok(Expr::Ident(IdentExpr { name, span }));
         }

@@ -2310,6 +2310,21 @@ impl BabelGenerator {
     fn gen_matches_pattern(&mut self, scrutinee: &Expr, pattern: &Expr) {
         match pattern {
             Expr::StructInit(init) => {
+                // Check if this is a wildcard pattern TypeName(_)
+                if init.fields.len() == 1 && init.fields[0].0 == "_wildcard" {
+                    // Wildcard pattern - just check the type
+                    let type_name = &init.name;
+
+                    // Use mapping to get the correct Babel type checker
+                    let checker = get_node_mapping(type_name)
+                        .map(|m| m.babel_checker.to_string())
+                        .unwrap_or_else(|| format!("is{}", type_name));
+                    self.emit(&format!("t.{}(", checker));
+                    self.gen_expr(scrutinee);
+                    self.emit(")");
+                    return;
+                }
+
                 // Generate t.isType(scrutinee, { field: value, ... })
                 let type_name = &init.name;
 
