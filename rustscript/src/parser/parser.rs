@@ -108,6 +108,7 @@ impl Parser {
     /// Parse import list: `{ foo, bar, baz }`
     fn parse_import_list(&mut self) -> ParseResult<Vec<String>> {
         self.expect(TokenKind::LBrace)?;
+        self.skip_newlines();  // Allow newlines after {
         let mut imports = Vec::new();
 
         loop {
@@ -117,11 +118,13 @@ impl Parser {
             }
 
             imports.push(self.expect_ident()?);
+            self.skip_newlines();  // Allow newlines after identifier
 
             if !self.check(TokenKind::Comma) {
                 break;
             }
             self.advance(); // consume comma
+            self.skip_newlines();  // Allow newlines after comma
         }
 
         self.expect(TokenKind::RBrace)?;

@@ -15,8 +15,9 @@ impl TestPlugin {
     }
     
     fn transform(node: &Node) {
-        let name = get_name(node);
-        let code = format_code(name);
+        let name = get_component_name(node);
+        let escaped = escape_string(name);
+        let is_comp = is_component_name(name);
     }
 }
 
