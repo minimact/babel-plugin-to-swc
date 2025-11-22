@@ -2035,7 +2035,14 @@ impl BabelGenerator {
     fn gen_literal(&mut self, lit: &Literal) {
         match lit {
             Literal::String(s) => {
-                self.emit(&format!("\"{}\"", s.replace('\\', "\\\\").replace('"', "\\\"")));
+                // Escape special characters for JavaScript strings
+                let escaped = s
+                    .replace('\\', "\\\\")  // Backslash must be first
+                    .replace('"', "\\\"")   // Double quote
+                    .replace('\n', "\\n")   // Newline
+                    .replace('\r', "\\r")   // Carriage return
+                    .replace('\t', "\\t");  // Tab
+                self.emit(&format!("\"{}\"", escaped));
             }
             Literal::Int(n) => {
                 self.emit(&n.to_string());
