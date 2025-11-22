@@ -459,6 +459,7 @@ impl<'a> Lexer<'a> {
             "impl" => TokenKind::Impl,
             "use" => TokenKind::Use,
             "pub" => TokenKind::Pub,
+            "as" => TokenKind::As,
             "self" => TokenKind::Self_,
             "Self" => TokenKind::SelfType,
             "match" => TokenKind::Match,

@@ -20,7 +20,7 @@
 //! ```
 
 use crate::parser::{
-    Program, TopLevelDecl, PluginDecl, PluginItem, WriterDecl,
+    Program, TopLevelDecl, PluginDecl, PluginItem, WriterDecl, ModuleDecl,
     FnDecl, Block, Stmt, Expr, LetStmt, MemberExpr, IdentExpr, CallExpr,
     IfStmt, ExprStmt, Literal, Type, AssignExpr, Pattern,
 };
@@ -88,6 +88,7 @@ impl UnwrapHoister {
         match &mut program.decl {
             TopLevelDecl::Plugin(plugin) => self.visit_plugin(plugin),
             TopLevelDecl::Writer(writer) => self.visit_writer(writer),
+            TopLevelDecl::Module(module) => self.visit_module(module),
             TopLevelDecl::Interface(_) => {} // Interfaces don't need hoisting
         }
     }
@@ -103,6 +104,15 @@ impl UnwrapHoister {
 
     fn visit_writer(&mut self, writer: &mut WriterDecl) {
         for item in &mut writer.body {
+            match item {
+                PluginItem::Function(func) => self.visit_function(func),
+                _ => {}
+            }
+        }
+    }
+
+    fn visit_module(&mut self, module: &mut ModuleDecl) {
+        for item in &mut module.items {
             match item {
                 PluginItem::Function(func) => self.visit_function(func),
                 _ => {}

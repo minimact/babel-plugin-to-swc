@@ -26,6 +26,7 @@ impl TypeChecker {
             TopLevelDecl::Plugin(plugin) => self.check_plugin(plugin),
             TopLevelDecl::Writer(writer) => self.check_writer(writer),
             TopLevelDecl::Interface(_) => {} // Interfaces are type declarations, not code
+            TopLevelDecl::Module(module) => self.check_module(module),
         }
 
         if self.errors.is_empty() {
@@ -56,6 +57,18 @@ impl TypeChecker {
         self.env.push_scope();
 
         for item in &writer.body {
+            if let PluginItem::Function(f) = item {
+                self.check_function(f);
+            }
+        }
+
+        self.env.pop_scope();
+    }
+
+    fn check_module(&mut self, module: &ModuleDecl) {
+        self.env.push_scope();
+
+        for item in &module.items {
             if let PluginItem::Function(f) = item {
                 self.check_function(f);
             }

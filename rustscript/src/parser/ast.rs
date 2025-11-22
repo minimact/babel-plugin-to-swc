@@ -11,11 +11,18 @@ pub struct Program {
     pub span: Span,
 }
 
-/// Use statement: `use fs;` or `use json;`
+/// Use statement: `use fs;` or `use "./helpers.rsc";` or `use "./helpers.rsc" { foo, bar };`
 #[derive(Debug, Clone)]
 pub struct UseStmt {
-    /// Module name (e.g., "fs", "json")
-    pub module: String,
+    /// Module path (e.g., "fs", "./helpers.rsc", "../utils/types.rsc")
+    pub path: String,
+
+    /// Optional alias: `use "./helpers.rsc" as h;`
+    pub alias: Option<String>,
+
+    /// Specific imports: `use "./helpers.rsc" { foo, bar };`
+    pub imports: Vec<String>,
+
     pub span: Span,
 }
 
@@ -25,6 +32,14 @@ pub enum TopLevelDecl {
     Plugin(PluginDecl),
     Writer(WriterDecl),
     Interface(InterfaceDecl),
+    Module(ModuleDecl),
+}
+
+/// Module declaration (standalone module without plugin/writer)
+#[derive(Debug, Clone)]
+pub struct ModuleDecl {
+    pub items: Vec<PluginItem>,
+    pub span: Span,
 }
 
 /// Plugin declaration: `plugin Name { ... }`

@@ -49,7 +49,8 @@ impl Parser {
         } else if self.check(TokenKind::Writer) {
             TopLevelDecl::Writer(self.parse_writer()?)
         } else {
-            return Err(self.error("Expected 'plugin' or 'writer' declaration"));
+            // No plugin/writer keyword - treat as standalone module
+            TopLevelDecl::Module(self.parse_module()?)
         };
 
         Ok(Program {
@@ -59,17 +60,72 @@ impl Parser {
         })
     }
 
-    /// Parse use statement: `use fs;`
+    /// Parse use statement: `use fs;` or `use "./helpers.rsc";` or `use "./helpers.rsc" as h { foo, bar };`
     fn parse_use_stmt(&mut self) -> ParseResult<UseStmt> {
         let start_span = self.current_span();
         self.expect(TokenKind::Use)?;
-        let module = self.expect_ident()?;
+
+        // Parse module path (string literal for files, identifier for built-ins)
+        let path = if self.check(TokenKind::StringLit(String::new())) {
+            // File path: use "./helpers.rsc";
+            if let Some(Token { kind: TokenKind::StringLit(s), .. }) = self.peek() {
+                let path = s.clone();
+                self.advance();
+                path
+            } else {
+                return Err(self.error("Expected string literal"));
+            }
+        } else {
+            // Built-in module: use fs;
+            self.expect_ident()?
+        };
+
+        // Optional: as alias
+        let alias = if self.check(TokenKind::As) {
+            self.advance();
+            Some(self.expect_ident()?)
+        } else {
+            None
+        };
+
+        // Optional: { imports }
+        let imports = if self.check(TokenKind::LBrace) {
+            self.parse_import_list()?
+        } else {
+            vec![]
+        };
+
         self.expect(TokenKind::Semicolon)?;
 
         Ok(UseStmt {
-            module,
+            path,
+            alias,
+            imports,
             span: start_span,
         })
+    }
+
+    /// Parse import list: `{ foo, bar, baz }`
+    fn parse_import_list(&mut self) -> ParseResult<Vec<String>> {
+        self.expect(TokenKind::LBrace)?;
+        let mut imports = Vec::new();
+
+        loop {
+            // Allow trailing commas and empty lists
+            if self.check(TokenKind::RBrace) {
+                break;
+            }
+
+            imports.push(self.expect_ident()?);
+
+            if !self.check(TokenKind::Comma) {
+                break;
+            }
+            self.advance(); // consume comma
+        }
+
+        self.expect(TokenKind::RBrace)?;
+        Ok(imports)
     }
 
     /// Parse plugin declaration
@@ -86,6 +142,19 @@ impl Parser {
         Ok(PluginDecl {
             name,
             body,
+            span: start_span,
+        })
+    }
+
+    /// Parse module declaration (standalone module without plugin/writer keyword)
+    fn parse_module(&mut self) -> ParseResult<ModuleDecl> {
+        let start_span = self.current_span();
+
+        // Parse module items (functions, structs, enums) until EOF
+        let items = self.parse_plugin_body()?;
+
+        Ok(ModuleDecl {
+            items,
             span: start_span,
         })
     }

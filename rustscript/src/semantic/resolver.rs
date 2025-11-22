@@ -30,6 +30,7 @@ impl Resolver {
             TopLevelDecl::Plugin(plugin) => self.resolve_plugin(plugin),
             TopLevelDecl::Writer(writer) => self.resolve_writer(writer),
             TopLevelDecl::Interface(_) => {} // Interfaces don't need resolution
+            TopLevelDecl::Module(module) => self.resolve_module(module),
         }
 
         if self.errors.is_empty() {
@@ -42,20 +43,26 @@ impl Resolver {
     /// Resolve a use statement
     fn resolve_use(&mut self, use_stmt: &UseStmt) {
         // Define the module in the environment
-        // Valid modules: fs, json
+        // Valid modules: fs, json, or file paths starting with "./" or "../"
         let valid_modules = ["fs", "json"];
 
-        if valid_modules.contains(&use_stmt.module.as_str()) {
+        // Check if it's a built-in module or a file path
+        let is_file_module = use_stmt.path.starts_with("./") || use_stmt.path.starts_with("../");
+
+        if is_file_module || valid_modules.contains(&use_stmt.path.as_str()) {
+            // For now, just register the module name (or alias if provided)
+            let module_name = use_stmt.alias.clone().unwrap_or_else(|| use_stmt.path.clone());
+
             self.env.define(
-                use_stmt.module.clone(),
+                module_name.clone(),
                 TypeInfo::Module {
-                    name: use_stmt.module.clone(),
+                    name: module_name,
                 },
             );
         } else {
             self.errors.push(SemanticError::new(
                 "RS007",
-                format!("Unknown module: {}", use_stmt.module),
+                format!("Unknown module: {}", use_stmt.path),
                 use_stmt.span,
             ));
         }
@@ -137,6 +144,37 @@ impl Resolver {
         }
 
         for item in &writer.body {
+            if let PluginItem::Function(f) = item {
+                self.resolve_function(f);
+            }
+        }
+
+        self.env.pop_scope();
+    }
+
+    fn resolve_module(&mut self, module: &ModuleDecl) {
+        // Modules don't define themselves in scope (they're imported via use statements)
+        // Just resolve their contents
+        self.env.push_scope();
+
+        // First pass: declare structs and enums
+        for item in &module.items {
+            match item {
+                PluginItem::Struct(s) => self.declare_struct(s),
+                PluginItem::Enum(e) => self.declare_enum(e),
+                _ => {}
+            }
+        }
+
+        // Second pass: declare functions
+        for item in &module.items {
+            if let PluginItem::Function(f) = item {
+                self.declare_function(f);
+            }
+        }
+
+        // Third pass: resolve function bodies
+        for item in &module.items {
             if let PluginItem::Function(f) = item {
                 self.resolve_function(f);
             }

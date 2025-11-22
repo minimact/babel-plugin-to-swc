@@ -25,6 +25,7 @@ impl OwnershipChecker {
             TopLevelDecl::Plugin(plugin) => self.check_plugin(plugin),
             TopLevelDecl::Writer(writer) => self.check_writer(writer),
             TopLevelDecl::Interface(_) => {} // Interfaces don't have ownership semantics
+            TopLevelDecl::Module(module) => self.check_module(module),
         }
 
         (
@@ -43,6 +44,14 @@ impl OwnershipChecker {
 
     fn check_writer(&mut self, writer: &WriterDecl) {
         for item in &writer.body {
+            if let PluginItem::Function(f) = item {
+                self.check_function(f);
+            }
+        }
+    }
+
+    fn check_module(&mut self, module: &ModuleDecl) {
+        for item in &module.items {
             if let PluginItem::Function(f) = item {
                 self.check_function(f);
             }

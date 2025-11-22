@@ -149,12 +149,16 @@ impl BabelGenerator {
 
     /// Generate JavaScript code for a Babel plugin
     pub fn generate(&mut self, program: &Program) -> String {
+        // Generate use statements (require) at the top
+        self.gen_use_statements(&program.uses);
+
         match &program.decl {
             TopLevelDecl::Plugin(plugin) => self.gen_plugin(plugin),
             TopLevelDecl::Writer(writer) => self.gen_writer(writer),
             TopLevelDecl::Interface(_iface) => {
                 // TODO: Generate TypeScript interface
             }
+            TopLevelDecl::Module(module) => self.gen_module(module),
         }
         std::mem::take(&mut self.output)
     }
@@ -173,6 +177,106 @@ impl BabelGenerator {
         self.emit_indent();
         self.emit(s);
         self.emit("\n");
+    }
+
+    /// Generate require() statements for use declarations
+    fn gen_use_statements(&mut self, uses: &[UseStmt]) {
+        if uses.is_empty() {
+            return;
+        }
+
+        self.emit_line("// Module imports");
+
+        for use_stmt in uses {
+            self.gen_use_statement(use_stmt);
+        }
+
+        self.emit_line("");
+    }
+
+    /// Generate a single require() statement
+    fn gen_use_statement(&mut self, use_stmt: &UseStmt) {
+        let is_file_module = use_stmt.path.starts_with("./") || use_stmt.path.starts_with("../");
+
+        if is_file_module {
+            // File module: convert .rsc to .js
+            let js_path = use_stmt.path.replace(".rsc", ".js");
+
+            // Determine the variable name
+            let var_name = if let Some(alias) = &use_stmt.alias {
+                alias.clone()
+            } else if !use_stmt.imports.is_empty() {
+                // If we have specific imports, we'll use destructuring
+                String::new() // Will be handled below
+            } else {
+                // Extract module name from path (e.g., "./helpers.rsc" -> "helpers")
+                self.extract_module_name_from_path(&use_stmt.path)
+            };
+
+            if !use_stmt.imports.is_empty() {
+                // Destructuring import: const { foo, bar } = require('./helpers.js');
+                let imports = use_stmt.imports.join(", ");
+
+                if var_name.is_empty() {
+                    // Only destructuring, no alias
+                    self.emit_line(&format!("const {{ {} }} = require('{}');", imports, js_path));
+                } else {
+                    // Both alias and destructuring (questionable design, but we support it)
+                    self.emit_line(&format!("const {} = require('{}');", var_name, js_path));
+                    self.emit_line(&format!("const {{ {} }} = {};", imports, var_name));
+                }
+            } else {
+                // Simple import: const helpers = require('./helpers.js');
+                self.emit_line(&format!("const {} = require('{}');", var_name, js_path));
+            }
+        } else {
+            // Built-in module
+            self.gen_builtin_module(use_stmt);
+        }
+    }
+
+    /// Generate require() for built-in modules (fs, json, path)
+    fn gen_builtin_module(&mut self, use_stmt: &UseStmt) {
+        match use_stmt.path.as_str() {
+            "fs" => {
+                let var_name = use_stmt.alias.as_ref().unwrap_or(&use_stmt.path);
+                self.emit_line(&format!("const {} = require('fs');", var_name));
+            }
+            "json" => {
+                // JSON is built-in to JavaScript, no require needed
+                // But we might use it as a namespace for json::stringify, etc.
+                let var_name = use_stmt.alias.as_ref().unwrap_or(&use_stmt.path);
+                self.emit_line(&format!("const {} = {{", var_name));
+                self.indent += 1;
+                self.emit_line("stringify: (obj) => JSON.stringify(obj, null, 2),");
+                self.emit_line("parse: (str) => JSON.parse(str)");
+                self.indent -= 1;
+                self.emit_line("};");
+            }
+            "path" => {
+                let var_name = use_stmt.alias.as_ref().unwrap_or(&use_stmt.path);
+                self.emit_line(&format!("const {} = require('path');", var_name));
+            }
+            other => {
+                // Unknown module - just try to require it
+                let var_name = use_stmt.alias.as_ref().unwrap_or(&use_stmt.path);
+                self.emit_line(&format!("const {} = require('{}');", var_name, other));
+            }
+        }
+    }
+
+    /// Extract module name from file path
+    /// "./helpers.rsc" -> "helpers"
+    /// "./utils/types.rsc" -> "types"
+    /// "../foo/bar.rsc" -> "bar"
+    fn extract_module_name_from_path(&self, path: &str) -> String {
+        // Remove .rsc extension
+        let without_ext = path.trim_end_matches(".rsc");
+
+        // Get the last component after '/'
+        let name = without_ext.split('/').last().unwrap_or(without_ext);
+
+        name.to_string()
     }
 
     fn gen_plugin(&mut self, plugin: &PluginDecl) {
@@ -270,6 +374,52 @@ impl BabelGenerator {
         self.emit_line("}");
         self.emit_line("");
         self.emit(&format!("module.exports = {};\n", writer.name));
+    }
+
+    fn gen_module(&mut self, module: &ModuleDecl) {
+        // Generate standalone module with exports
+        self.emit_line("// Generated by RustScript compiler");
+        self.emit_line("// Do not edit manually");
+        self.emit_line("");
+
+        // Collect exported items
+        let mut exports = Vec::new();
+
+        // Generate all items
+        for item in &module.items {
+            match item {
+                PluginItem::Function(f) => {
+                    self.gen_helper_function(f);
+                    if f.is_pub {
+                        exports.push(f.name.clone());
+                    }
+                }
+                PluginItem::Struct(s) => {
+                    self.gen_struct_class(s);
+                    // Structs are always exported if defined at module level
+                    exports.push(s.name.clone());
+                }
+                PluginItem::Enum(_e) => {
+                    // TODO: Generate enum
+                }
+                PluginItem::Impl(_impl) => {
+                    // Impl blocks don't export anything directly
+                }
+            }
+        }
+
+        // Generate module.exports
+        if !exports.is_empty() {
+            self.emit_line("");
+            self.emit_line("module.exports = {");
+            self.indent += 1;
+            for (i, name) in exports.iter().enumerate() {
+                let comma = if i < exports.len() - 1 { "," } else { "" };
+                self.emit_line(&format!("{}{}", name, comma));
+            }
+            self.indent -= 1;
+            self.emit_line("};");
+        }
     }
 
     fn gen_struct_class(&mut self, s: &StructDecl) {
