@@ -43,8 +43,8 @@ impl Resolver {
     /// Resolve a use statement
     fn resolve_use(&mut self, use_stmt: &UseStmt) {
         // Define the module in the environment
-        // Valid modules: fs, json, parser, or file paths starting with "./" or "../"
-        let valid_modules = ["fs", "json", "parser"];
+        // Valid modules: fs, json, parser, codegen, or file paths starting with "./" or "../"
+        let valid_modules = ["fs", "json", "parser", "codegen"];
 
         // Check if it's a built-in module or a file path
         let is_file_module = use_stmt.path.starts_with("./") || use_stmt.path.starts_with("../");

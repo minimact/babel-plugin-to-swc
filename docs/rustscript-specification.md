@@ -1,7 +1,7 @@
 # RustScript Language Specification
 
-**Version:** 0.5.0
-**Status:** Draft (Module System Complete)
+**Version:** 0.7.0
+**Status:** Draft (Parser & Codegen Modules Added)
 **Target Platforms:** Babel (JavaScript) & SWC (Rust/WASM)
 
 ---
@@ -523,6 +523,12 @@ use "./helpers.rsc" { get_name, escape_string, ComponentInfo };
 
 RustScript provides standard library modules:
 
+- **fs** - File system operations (read, write, exists)
+- **json** - JSON serialization and deserialization
+- **path** - Path manipulation utilities
+- **parser** - Runtime AST parsing (Code → AST)
+- **codegen** - AST to code conversion (AST → Code)
+
 #### fs Module (File System)
 
 ```rustscript
@@ -624,6 +630,289 @@ let dir = Path::new("/src/utils/helpers.rsc").parent();
 let name = Path::new("/src/utils/helpers.rsc").file_name();
 let ext = Path::new("/src/utils/helpers.rsc").extension();
 ```
+
+#### parser Module (Runtime AST Parsing)
+
+The `parser` module provides dynamic parsing capabilities for analyzing imported files at runtime. This enables cross-file analysis, such as inspecting custom hooks or components from external files.
+
+```rustscript
+use parser;
+
+// Parse a TypeScript/JavaScript file
+let ast = parser::parse_file("./useCounter.tsx")?;
+
+// Parse code from a string
+let code = "function foo() { return 42; }";
+let ast = parser::parse(code)?;
+
+// Parse with specific syntax
+let ast = parser::parse_with_syntax(code, "TypeScript")?;
+
+// Analyze the parsed AST
+for stmt in &ast.body {
+    if let Statement::FunctionDeclaration(ref func) = stmt {
+        // Process function...
+    }
+}
+```
+
+**Babel Compilation:**
+```javascript
+const babel = require('@babel/core');
+const fs = require('fs');
+const parser = {
+  parse_file: (path) => {
+    try {
+      const code = fs.readFileSync(path, 'utf-8');
+      const ast = babel.parseSync(code, {
+        filename: path,
+        presets: ['@babel/preset-typescript'],
+        plugins: ['@babel/plugin-syntax-jsx'],
+      });
+      return { ok: true, value: ast };
+    } catch (error) {
+      return { ok: false, error: error.message };
+    }
+  },
+  parse: (code) => {
+    try {
+      const ast = babel.parseSync(code, {
+        presets: ['@babel/preset-typescript'],
+        plugins: ['@babel/plugin-syntax-jsx'],
+      });
+      return { ok: true, value: ast };
+    } catch (error) {
+      return { ok: false, error: error.message };
+    }
+  },
+  parse_with_syntax: (code, syntax) => {
+    try {
+      let options = {};
+      if (syntax === 'TypeScript') {
+        options = {
+          presets: ['@babel/preset-typescript'],
+          plugins: ['@babel/plugin-syntax-jsx'],
+        };
+      } else if (syntax === 'JSX') {
+        options = {
+          plugins: ['@babel/plugin-syntax-jsx'],
+        };
+      }
+      const ast = babel.parseSync(code, options);
+      return { ok: true, value: ast };
+    } catch (error) {
+      return { ok: false, error: error.message };
+    }
+  },
+};
+```
+
+**SWC Compilation:**
+```rust
+use swc_common::{FileName, SourceMap};
+use swc_ecma_parser::{Parser, StringInput, Syntax, TsConfig, EsConfig};
+use std::sync::Arc;
+
+mod parser {
+    use super::*;
+
+    pub fn parse_file(path: &str) -> Result<Program, String> {
+        let source_map = Arc::new(SourceMap::default());
+        let code = std::fs::read_to_string(path)
+            .map_err(|e| format!("Failed to read file: {}", e))?;
+        let file = source_map.new_source_file(
+            FileName::Real(path.into()),
+            code,
+        );
+        let syntax = Syntax::Typescript(TsConfig {
+            tsx: true,
+            decorators: false,
+            ..Default::default()
+        });
+        let mut parser = Parser::new(syntax, StringInput::from(&*file), None);
+        parser.parse_program()
+            .map_err(|e| format!("Parse error: {:?}", e))
+    }
+
+    pub fn parse(code: &str) -> Result<Program, String> {
+        let source_map = Arc::new(SourceMap::default());
+        let file = source_map.new_source_file(
+            FileName::Anon,
+            code.to_string(),
+        );
+        let syntax = Syntax::Typescript(TsConfig {
+            tsx: true,
+            decorators: false,
+            ..Default::default()
+        });
+        let mut parser = Parser::new(syntax, StringInput::from(&*file), None);
+        parser.parse_program()
+            .map_err(|e| format!("Parse error: {:?}", e))
+    }
+
+    pub fn parse_with_syntax(code: &str, syntax_type: &str) -> Result<Program, String> {
+        let source_map = Arc::new(SourceMap::default());
+        let file = source_map.new_source_file(
+            FileName::Anon,
+            code.to_string(),
+        );
+        let syntax = match syntax_type {
+            "TypeScript" => Syntax::Typescript(TsConfig {
+                tsx: true,
+                decorators: false,
+                ..Default::default()
+            }),
+            "JSX" => Syntax::Es(EsConfig {
+                jsx: true,
+                ..Default::default()
+            }),
+            _ => Syntax::Es(EsConfig::default()),
+        };
+        let mut parser = Parser::new(syntax, StringInput::from(&*file), None);
+        parser.parse_program()
+            .map_err(|e| format!("Parse error: {:?}", e))
+    }
+}
+```
+
+**Notes:**
+- All parser functions return `Result<Program, String>` for error handling
+- Use the `?` operator for automatic error propagation
+- The parser module is designed for read-only AST analysis (no modifications)
+- See [rustscript-parser-module.md](./rustscript-parser-module.md) for detailed documentation and usage examples
+
+---
+
+#### codegen Module (AST to Code Conversion)
+
+The `codegen` module provides the inverse of parsing: converting AST nodes back to source code strings. This is useful for code generation, templating, debugging, and extracting code snippets.
+
+```rustscript
+use codegen;
+
+// Convert any AST node to source code
+let code = codegen::generate(expr);
+
+// With formatting options
+let options = CodegenOptions {
+    minified: true,
+    quotes: QuoteStyle::Single,
+};
+let code = codegen::generate_with_options(expr, options);
+```
+
+**Babel Compilation:**
+```javascript
+const generate = require('@babel/generator').default;
+
+// Simple generation
+const code = generate(expr).code;
+
+// With options
+const code = generate(expr, {
+    minified: true,
+    quotes: "single"
+}).code;
+```
+
+**SWC Compilation:**
+```rust
+use swc_ecma_codegen::{text_writer::JsWriter, Emitter, Config as CodegenConfig};
+use swc_common::SourceMap;
+use std::sync::Arc;
+
+// Helper functions are generated automatically
+fn codegen_to_string<N: swc_ecma_visit::Node>(node: &N) -> String {
+    let mut buf = vec![];
+    {
+        let cm = Arc::new(SourceMap::default());
+        let mut emitter = Emitter {
+            cfg: CodegenConfig::default(),
+            cm: cm.clone(),
+            comments: None,
+            wr: Box::new(JsWriter::new(cm.clone(), "\n", &mut buf, None)),
+        };
+        node.emit_with(&mut emitter).unwrap();
+    }
+    String::from_utf8(buf).unwrap()
+}
+
+fn codegen_to_string_with_config<N: swc_ecma_visit::Node>(node: &N, cfg: CodegenConfig) -> String {
+    let mut buf = vec![];
+    {
+        let cm = Arc::new(SourceMap::default());
+        let mut emitter = Emitter {
+            cfg,
+            cm: cm.clone(),
+            comments: None,
+            wr: Box::new(JsWriter::new(cm.clone(), "\n", &mut buf, None)),
+        };
+        node.emit_with(&mut emitter).unwrap();
+    }
+    String::from_utf8(buf).unwrap()
+}
+
+// Usage
+let code = codegen_to_string(expr);
+```
+
+**CodegenOptions Struct:**
+```rustscript
+struct CodegenOptions {
+    minified: bool,      // Minify output (remove unnecessary whitespace)
+    compact: bool,       // Compact output (some whitespace)
+    quotes: QuoteStyle,  // Single or Double quotes
+    semicolons: bool,    // Include semicolons
+}
+
+enum QuoteStyle {
+    Single,
+    Double,
+}
+```
+
+**Use Cases:**
+
+1. **Code Extraction** - Save generated code snippets:
+```rustscript
+fn extract_function_code(func: &FunctionDeclaration) -> Str {
+    codegen::generate(func)
+}
+```
+
+2. **Template Generation** - Build code dynamically:
+```rustscript
+fn generate_wrapper(inner_expr: &Expr) -> Str {
+    let wrapper = build_wrapper_node(inner_expr);
+    codegen::generate(wrapper)
+}
+```
+
+3. **Debug Logging** - Readable AST output:
+```rustscript
+fn debug_expr(expr: &Expr) {
+    let code = codegen::generate(expr);
+    println!("Expression: {}", code);
+}
+```
+
+4. **Code Comparison** - Normalize and compare:
+```rustscript
+fn expressions_equal(a: &Expr, b: &Expr) -> bool {
+    let code_a = codegen::generate(a);
+    let code_b = codegen::generate(b);
+    code_a == code_b
+}
+```
+
+**Notes:**
+- The codegen module generates syntactically valid JavaScript/TypeScript code
+- Formatting may differ between Babel and SWC targets
+- Comments and source maps are not preserved in the generated code
+- This is a one-way operation (Code → AST is parsing, AST → Code is codegen)
+- See [rustscript-codegen-module.md](./rustscript-codegen-module.md) for detailed documentation and usage examples
+
+---
 
 ### 6.6 Example: Multi-File Plugin
 
@@ -1454,22 +1743,88 @@ fn escape_string(s: &Str) -> Str;
 
 ### 13.1 Result Type
 
+RustScript uses the `Result<T, E>` type for error handling, which compiles to different representations in Babel and SWC.
+
 ```rustscript
 fn parse_value(s: &Str) -> Result<i32, Str> {
-    // ...
+    if s.is_empty() {
+        return Err("Empty string");
+    }
+    Ok(42)
+}
+```
+
+**Babel Compilation:**
+```javascript
+function parse_value(s) {
+  if (s.length === 0) {
+    return { ok: false, error: "Empty string" };
+  }
+  return { ok: true, value: 42 };
+}
+```
+
+**SWC Compilation:**
+```rust
+fn parse_value(s: &String) -> Result<i32, String> {
+    if s.is_empty() {
+        return Err("Empty string".to_string());
+    }
+    Ok(42)
 }
 ```
 
 ### 13.2 The `?` Operator
 
+The `?` operator provides automatic error propagation, early-returning on errors.
+
 ```rustscript
-fn process() -> Result<(), Str> {
-    let value = parse_value("42")?;  // Early return on error
+fn process_file(path: &Str) -> Result<(), Str> {
+    let ast = parser::parse_file(path)?;  // Early return on error
+    // Use ast...
     Ok(())
 }
 ```
 
-**Note:** In Babel output, this compiles to explicit error checking with throws.
+**Babel Compilation:**
+```javascript
+function process_file(path) {
+  const __result = parser.parse_file(path);
+  if (!__result.ok) {
+    return { ok: false, error: __result.error };
+  }
+  const ast = __result.value;
+  // Use ast...
+  return { ok: true, value: undefined };
+}
+```
+
+**SWC Compilation:**
+```rust
+fn process_file(path: &String) -> Result<(), String> {
+    let ast = parser::parse_file(path)?;  // Native Rust ? operator
+    // Use ast...
+    Ok(())
+}
+```
+
+**Result Representation:**
+- **Babel (JavaScript)**: `{ ok: boolean, value?: T, error?: E }`
+- **SWC (Rust)**: Native `Result<T, E>` enum
+
+### 13.3 Ok() and Err() Constructors
+
+```rustscript
+fn validate(input: &Str) -> Result<Str, Str> {
+    if input.len() > 0 {
+        Ok(input.clone())
+    } else {
+        Err("Input is empty")
+    }
+}
+```
+
+Both `Ok()` and `Err()` compile to appropriate Result representations in each target platform.
 
 ---
 

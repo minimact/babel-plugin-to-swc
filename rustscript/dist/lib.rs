@@ -4,21 +4,55 @@
 use swc_common::{Span, DUMMY_SP};
 use swc_ecma_ast::*;
 use swc_ecma_visit::{VisitMut, VisitMutWith};
+use swc_ecma_codegen::{text_writer::JsWriter, Emitter, Config as CodegenConfig};
+use swc_common::SourceMap;
+use std::sync::Arc;
 
-pub struct test {
+pub struct CodegenTest {
     // Plugin state
 }
 
-impl test {
+impl CodegenTest {
     pub fn new() -> Self {
         Self {}
     }
     
-    fn test() {
-        let x = ();
-        Ok(());
+    fn transform_expr(expr: &Expr) {
+        let code = codegen_to_string(expr);
+        let formatted = format!("Generated: {}", code);
     }
 }
 
-impl VisitMut for test {
+impl VisitMut for CodegenTest {
+}
+
+// Codegen module helper functions
+fn codegen_to_string<N: swc_ecma_visit::Node>(node: &N) -> String {
+    let mut buf = vec![];
+    {
+        let cm = Arc::new(SourceMap::default());
+        let mut emitter = Emitter {
+            cfg: CodegenConfig::default(),
+            cm: cm.clone(),
+            comments: None,
+            wr: Box::new(JsWriter::new(cm.clone(), "\n", &mut buf, None)),
+        };
+        node.emit_with(&mut emitter).unwrap();
+    }
+    String::from_utf8(buf).unwrap()
+}
+
+fn codegen_to_string_with_config<N: swc_ecma_visit::Node>(node: &N, cfg: CodegenConfig) -> String {
+    let mut buf = vec![];
+    {
+        let cm = Arc::new(SourceMap::default());
+        let mut emitter = Emitter {
+            cfg,
+            cm: cm.clone(),
+            comments: None,
+            wr: Box::new(JsWriter::new(cm.clone(), "\n", &mut buf, None)),
+        };
+        node.emit_with(&mut emitter).unwrap();
+    }
+    String::from_utf8(buf).unwrap()
 }

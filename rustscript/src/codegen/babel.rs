@@ -51,6 +51,8 @@ pub struct BabelGenerator {
     var_kinds: std::collections::HashMap<String, VarKind>,
     /// Counter for generating unique loop index variables
     loop_index_counter: usize,
+    /// Whether the codegen module is used (requires @babel/generator import)
+    uses_codegen: bool,
 }
 
 impl BabelGenerator {
@@ -63,6 +65,7 @@ impl BabelGenerator {
             traverse_counter: 0,
             var_kinds: std::collections::HashMap::new(),
             loop_index_counter: 0,
+            uses_codegen: false,
         }
     }
 
@@ -149,9 +152,7 @@ impl BabelGenerator {
 
     /// Generate JavaScript code for a Babel plugin
     pub fn generate(&mut self, program: &Program) -> String {
-        // Generate use statements (require) at the top
-        self.gen_use_statements(&program.uses);
-
+        // First, generate the plugin body to determine what imports are needed
         match &program.decl {
             TopLevelDecl::Plugin(plugin) => self.gen_plugin(plugin),
             TopLevelDecl::Writer(writer) => self.gen_writer(writer),
@@ -160,7 +161,32 @@ impl BabelGenerator {
             }
             TopLevelDecl::Module(module) => self.gen_module(module),
         }
-        std::mem::take(&mut self.output)
+
+        // Now prepend the imports based on what was used
+        let body = std::mem::take(&mut self.output);
+        let mut imports = String::new();
+
+        // Generate use statements (require)
+        if !program.uses.is_empty() {
+            let mut temp_gen = BabelGenerator::new();
+            temp_gen.gen_use_statements(&program.uses);
+            imports.push_str(&temp_gen.output);
+        }
+
+        // If codegen module was used, add the @babel/generator import
+        if self.uses_codegen {
+            if !imports.is_empty() && !imports.trim_end().ends_with('\n') {
+                imports.push('\n');
+            }
+            if imports.is_empty() || !imports.contains("// Module imports") {
+                imports.push_str("// Module imports\n");
+            }
+            imports.push_str("const generate = require('@babel/generator').default;\n\n");
+        }
+
+        // Combine imports and body
+        imports.push_str(&body);
+        imports
     }
 
     fn emit(&mut self, s: &str) {
@@ -350,6 +376,10 @@ impl BabelGenerator {
 
                 self.indent -= 1;
                 self.emit_line("};");
+            }
+            "codegen" => {
+                // Codegen module - no require needed, we inject @babel/generator automatically
+                // when codegen functions are used
             }
             other => {
                 // Unknown module - just try to require it
@@ -1568,6 +1598,16 @@ impl BabelGenerator {
                         self.emit("undefined");
                         return;
                     }
+
+                    // Check for codegen::generate() and codegen::generate_with_options()
+                    if mem.is_path {
+                        if let Expr::Ident(module_ident) = mem.object.as_ref() {
+                            if module_ident.name == "codegen" {
+                                self.gen_codegen_call(&mem.property, &call.args);
+                                return;
+                            }
+                        }
+                    }
                 }
                 // Also check as a standalone identifier (no parens in name)
                 if let Expr::Ident(ident) = call.callee.as_ref() {
@@ -2137,6 +2177,126 @@ impl BabelGenerator {
         self.emit("`");
         self.emit(&result);
         self.emit("`");
+    }
+
+    /// Generate code for codegen::generate() and codegen::generate_with_options()
+    fn gen_codegen_call(&mut self, function_name: &str, args: &[Expr]) {
+        // Mark that we use the codegen module
+        self.uses_codegen = true;
+
+        match function_name {
+            "generate" => {
+                // codegen::generate(node) -> generate(node).code
+                // We use the @babel/generator package
+                if args.is_empty() {
+                    self.emit("\"\"");
+                    return;
+                }
+
+                self.emit("generate(");
+                self.gen_expr(&args[0]);
+                self.emit(").code");
+            }
+            "generate_with_options" => {
+                // codegen::generate_with_options(node, options) -> generate(node, options).code
+                if args.is_empty() {
+                    self.emit("\"\"");
+                    return;
+                }
+
+                self.emit("generate(");
+                self.gen_expr(&args[0]);
+
+                // If there's a second argument (options), convert it
+                if args.len() > 1 {
+                    self.emit(", ");
+                    self.gen_codegen_options(&args[1]);
+                }
+
+                self.emit(").code");
+            }
+            _ => {
+                // Unknown codegen function, emit as-is
+                self.emit(&format!("codegen.{}(", function_name));
+                for (i, arg) in args.iter().enumerate() {
+                    if i > 0 {
+                        self.emit(", ");
+                    }
+                    self.gen_expr(arg);
+                }
+                self.emit(")");
+            }
+        }
+    }
+
+    /// Convert RustScript CodegenOptions struct to Babel generator options
+    fn gen_codegen_options(&mut self, options_expr: &Expr) {
+        // Expected to be a StructInit for CodegenOptions
+        if let Expr::StructInit(init) = options_expr {
+            if init.name == "CodegenOptions" {
+                self.emit("{");
+                let mut first = true;
+
+                for (field_name, field_value) in &init.fields {
+                    if !first {
+                        self.emit(", ");
+                    }
+                    first = false;
+
+                    // Map RustScript field names to Babel generator options
+                    match field_name.as_str() {
+                        "compact" => {
+                            self.emit("compact: ");
+                            self.gen_expr(field_value);
+                        }
+                        "minified" => {
+                            self.emit("minified: ");
+                            self.gen_expr(field_value);
+                        }
+                        "quotes" => {
+                            // quotes: QuoteStyle::Single -> quotes: "single"
+                            self.emit("quotes: ");
+                            if let Expr::Member(mem) = field_value {
+                                if let Expr::Ident(enum_name) = mem.object.as_ref() {
+                                    if enum_name.name == "QuoteStyle" {
+                                        let quote_val = match mem.property.as_str() {
+                                            "Single" => "\"single\"",
+                                            "Double" => "\"double\"",
+                                            _ => "\"double\"",
+                                        };
+                                        self.emit(quote_val);
+                                    } else {
+                                        self.gen_expr(field_value);
+                                    }
+                                } else {
+                                    self.gen_expr(field_value);
+                                }
+                            } else {
+                                self.gen_expr(field_value);
+                            }
+                        }
+                        "semicolons" => {
+                            // Note: Babel doesn't have a direct semicolons option
+                            // We could emit it anyway for future compatibility
+                            self.emit("semicolons: ");
+                            self.gen_expr(field_value);
+                        }
+                        _ => {
+                            // Pass through unknown options
+                            self.emit(field_name);
+                            self.emit(": ");
+                            self.gen_expr(field_value);
+                        }
+                    }
+                }
+
+                self.emit("}");
+                return;
+            }
+        }
+
+        // Fallback: just emit the expression as-is
+        self.gen_expr(options_expr);
     }
 
     /// Recursively generate type checks for a pattern

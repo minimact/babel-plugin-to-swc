@@ -22,6 +22,8 @@ pub struct SwcGenerator {
     uses_json: bool,
     /// Whether parser module is used (needs helper functions)
     uses_parser: bool,
+    /// Whether codegen module is used (needs swc_ecma_codegen imports)
+    uses_codegen: bool,
 }
 
 impl SwcGenerator {
@@ -36,6 +38,7 @@ impl SwcGenerator {
             captured_vars: std::collections::HashSet::new(),
             uses_json: false,
             uses_parser: false,
+            uses_codegen: false,
         }
     }
 
@@ -44,13 +47,16 @@ impl SwcGenerator {
         // Check what std types are used
         let (uses_hashmap, uses_hashset) = self.detect_std_collections(program);
 
-        // Check if json or parser modules are used (need to set this before struct generation)
+        // Check if json, parser, or codegen modules are used (need to set this before struct generation)
         for use_stmt in &program.uses {
             if use_stmt.path == "json" {
                 self.uses_json = true;
             }
             if use_stmt.path == "parser" {
                 self.uses_parser = true;
+            }
+            if use_stmt.path == "codegen" {
+                self.uses_codegen = true;
             }
         }
 
@@ -97,6 +103,12 @@ impl SwcGenerator {
                     self.emit_line("use swc_ecma_parser::{Parser, StringInput, Syntax, TsConfig, EsConfig};");
                     self.emit_line("use std::sync::Arc;");
                 }
+                "codegen" => {
+                    // Codegen module for converting AST to code
+                    self.emit_line("use swc_ecma_codegen::{text_writer::JsWriter, Emitter, Config as CodegenConfig};");
+                    self.emit_line("use swc_common::SourceMap;");
+                    self.emit_line("use std::sync::Arc;");
+                }
                     other => {
                         // For unknown modules, emit a use statement as-is
                         self.emit_line(&format!("use {};", other));
@@ -132,6 +144,13 @@ impl SwcGenerator {
             self.emit_line("");
             self.emit_line("// Parser module helper functions");
             self.gen_parser_module_helpers();
+        }
+
+        // Emit codegen module helper functions if used
+        if self.uses_codegen {
+            self.emit_line("");
+            self.emit_line("// Codegen module helper functions");
+            self.gen_codegen_module_helpers();
         }
 
         std::mem::take(&mut self.output)
@@ -630,6 +649,92 @@ impl SwcGenerator {
         self.emit_line("}");
     }
 
+    /// Generate code for codegen::generate() and codegen::generate_with_options()
+    fn gen_codegen_call(&mut self, function_name: &str, args: &[Expr]) {
+        match function_name {
+            "generate" => {
+                // codegen::generate(node) -> codegen_to_string(node)
+                if args.is_empty() {
+                    self.emit("String::new()");
+                    return;
+                }
+
+                self.emit("codegen_to_string(");
+                self.gen_expr(&args[0]);
+                self.emit(")");
+            }
+            "generate_with_options" => {
+                // codegen::generate_with_options(node, options) -> codegen_to_string_with_config(node, config)
+                if args.is_empty() {
+                    self.emit("String::new()");
+                    return;
+                }
+
+                self.emit("codegen_to_string_with_config(");
+                self.gen_expr(&args[0]);
+
+                // If there's a second argument (options), convert it
+                if args.len() > 1 {
+                    self.emit(", ");
+                    self.gen_codegen_config(&args[1]);
+                } else {
+                    self.emit(", CodegenConfig::default()");
+                }
+
+                self.emit(")");
+            }
+            _ => {
+                // Unknown codegen function, emit as-is
+                self.emit(&format!("codegen::{}(", function_name));
+                for (i, arg) in args.iter().enumerate() {
+                    if i > 0 {
+                        self.emit(", ");
+                    }
+                    self.gen_expr(arg);
+                }
+                self.emit(")");
+            }
+        }
+    }
+
+    /// Convert RustScript CodegenOptions struct to SWC codegen Config
+    fn gen_codegen_config(&mut self, options_expr: &Expr) {
+        // Expected to be a StructInit for CodegenOptions
+        if let Expr::StructInit(init) = options_expr {
+            if init.name == "CodegenOptions" {
+                self.emit("CodegenConfig { ");
+
+                for (field_name, field_value) in &init.fields {
+                    // Map RustScript field names to SWC codegen Config fields
+                    match field_name.as_str() {
+                        "minified" => {
+                            self.emit("minify: ");
+                            self.gen_expr(field_value);
+                            self.emit(", ");
+                        }
+                        "compact" | "semicolons" => {
+                            // SWC doesn't have direct equivalents for these
+                            // We can add them as comments or ignore
+                        }
+                        "quotes" => {
+                            // SWC doesn't have a quotes option in the same way
+                            // Could potentially use it if we extend the config
+                        }
+                        _ => {
+                            // Pass through unknown options
+                        }
+                    }
+                }
+
+                self.emit("..Default::default() }");
+                return;
+            }
+        }
+
+        // Fallback: just use default config
+        self.emit("CodegenConfig::default()");
+    }
+
     /// Generate helper functions for the parser module
     fn gen_parser_module_helpers(&mut self) {
         self.emit_line("mod parser {");
@@ -729,6 +834,54 @@ impl SwcGenerator {
         self.indent -= 1;
         self.emit_line("}");
 
+        self.indent -= 1;
+        self.emit_line("}");
+    }
+
+    /// Generate helper functions for the codegen module
+    fn gen_codegen_module_helpers(&mut self) {
+        // Generate a helper function that converts an AST node to a string
+        self.emit_line("fn codegen_to_string<N: swc_ecma_visit::Node>(node: &N) -> String {");
+        self.indent += 1;
+        self.emit_line("let mut buf = vec![];");
+        self.emit_line("{");
+        self.indent += 1;
+        self.emit_line("let cm = Arc::new(SourceMap::default());");
+        self.emit_line("let mut emitter = Emitter {");
+        self.indent += 1;
+        self.emit_line("cfg: CodegenConfig::default(),");
+        self.emit_line("cm: cm.clone(),");
+        self.emit_line("comments: None,");
+        self.emit_line("wr: Box::new(JsWriter::new(cm.clone(), \"\\n\", &mut buf, None)),");
+        self.indent -= 1;
+        self.emit_line("};");
+        self.emit_line("node.emit_with(&mut emitter).unwrap();");
+        self.indent -= 1;
+        self.emit_line("}");
+        self.emit_line("String::from_utf8(buf).unwrap()");
+        self.indent -= 1;
+        self.emit_line("}");
+        self.emit_line("");
+
+        // Generate helper function with config
+        self.emit_line("fn codegen_to_string_with_config<N: swc_ecma_visit::Node>(node: &N, cfg: CodegenConfig) -> String {");
+        self.indent += 1;
+        self.emit_line("let mut buf = vec![];");
+        self.emit_line("{");
+        self.indent += 1;
+        self.emit_line("let cm = Arc::new(SourceMap::default());");
+        self.emit_line("let mut emitter = Emitter {");
+        self.indent += 1;
+        self.emit_line("cfg,");
+        self.emit_line("cm: cm.clone(),");
+        self.emit_line("comments: None,");
+        self.emit_line("wr: Box::new(JsWriter::new(cm.clone(), \"\\n\", &mut buf, None)),");
+        self.indent -= 1;
+        self.emit_line("};");
+        self.emit_line("node.emit_with(&mut emitter).unwrap();");
+        self.indent -= 1;
+        self.emit_line("}");
+        self.emit_line("String::from_utf8(buf).unwrap()");
         self.indent -= 1;
         self.emit_line("}");
     }
@@ -1891,6 +2044,16 @@ impl SwcGenerator {
                             self.gen_expr(&mem.object);
                             self.emit(".clone()");
                             return;
+                        }
+                    }
+
+                    // Check for codegen::generate() and codegen::generate_with_options()
+                    if mem.is_path {
+                        if let Expr::Ident(module_ident) = mem.object.as_ref() {
+                            if module_ident.name == "codegen" {
+                                self.gen_codegen_call(&mem.property, &call.args);
+                                return;
+                            }
                         }
                     }
                 }
