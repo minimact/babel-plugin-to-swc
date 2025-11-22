@@ -47,11 +47,16 @@ pub struct SemanticResult {
 
 /// Run all semantic analysis passes
 pub fn analyze(program: &Program) -> SemanticResult {
+    analyze_with_base_dir(program, std::path::PathBuf::from("."))
+}
+
+/// Run all semantic analysis passes with a specific base directory for module resolution
+pub fn analyze_with_base_dir(program: &Program, base_dir: std::path::PathBuf) -> SemanticResult {
     let mut errors = Vec::new();
     let mut warnings = Vec::new();
 
     // Pass 1: Name resolution
-    let mut resolver = Resolver::new();
+    let mut resolver = Resolver::with_base_dir(base_dir);
     if let Err(e) = resolver.resolve(program) {
         errors.extend(e);
     }

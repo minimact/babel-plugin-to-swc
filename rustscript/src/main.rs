@@ -4,7 +4,7 @@ use clap::{Parser as ClapParser, Subcommand};
 use std::fs;
 use std::path::PathBuf;
 
-use rustscript::{Lexer, Parser, analyze};
+use rustscript::{Lexer, Parser, analyze_with_base_dir};
 
 #[cfg(feature = "codegen")]
 use rustscript::{generate, Target, lower};
@@ -124,7 +124,9 @@ fn main() {
                 }
             };
 
-            let result = analyze(&program);
+            // Get base directory from file path
+            let base_dir = file.parent().unwrap_or_else(|| std::path::Path::new(".")).to_path_buf();
+            let result = analyze_with_base_dir(&program, base_dir);
 
             // Print errors
             for error in &result.errors {
@@ -182,7 +184,8 @@ fn main() {
             };
 
             // Semantic analysis
-            let result = analyze(&program);
+            let base_dir = file.parent().unwrap_or_else(|| std::path::Path::new(".")).to_path_buf();
+            let result = analyze_with_base_dir(&program, base_dir);
             if !result.errors.is_empty() {
                 for error in &result.errors {
                     eprintln!(

@@ -4,24 +4,216 @@
 use swc_common::{Span, DUMMY_SP};
 use swc_ecma_ast::*;
 use swc_ecma_visit::{VisitMut, VisitMutWith};
+use std::collections::{HashMap, HashSet};
+use std::fs;
+use std::path::Path;
+use serde::{Serialize, Deserialize};
+use serde_json;
 
-pub struct MatchesTest {
-    // Plugin state
+use swc_ecma_visit::Visit;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TranspilerOutput {
+    pub csharp: String,
+    pub templates: String,
+    pub hooks: String,
 }
 
-impl MatchesTest {
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ComponentInfo {
+    pub name: String,
+    pub props: Vec<PropInfo>,
+    pub use_state: Vec<StateInfo>,
+    pub use_client_state: Vec<StateInfo>,
+    pub use_effect: Vec<EffectInfo>,
+    pub use_ref: Vec<RefInfo>,
+    pub custom_hooks: Vec<CustomHookInfo>,
+    pub event_handlers: Vec<EventHandlerInfo>,
+    pub local_variables: Vec<LocalVarInfo>,
+    pub helper_functions: Vec<HelperFunctionInfo>,
+    pub render_body: Option<Box<String>>,
+    pub templates: HashMap<String, Template>,
+    pub dependencies: HashMap<String, Vec<String>>,
+    pub external_imports: HashSet<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PropInfo {
+    pub name: String,
+    pub prop_type: String,
+    pub optional: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StateInfo {
+    pub name: String,
+    pub setter: Option<String>,
+    pub initial_value: String,
+    pub state_type: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EffectInfo {
+    pub dependencies: Vec<String>,
+    pub is_client_side: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RefInfo {
+    pub name: String,
+    pub initial_value: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CustomHookInfo {
+    pub name: String,
+    pub namespace: String,
+    pub args: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EventHandlerInfo {
+    pub name: String,
+    pub params: Vec<String>,
+    pub is_async: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LocalVarInfo {
+    pub name: String,
+    pub var_type: String,
+    pub initial_value: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HelperFunctionInfo {
+    pub name: String,
+    pub params: Vec<ParamInfo>,
+    pub return_type: String,
+    pub is_async: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ParamInfo {
+    pub name: String,
+    pub param_type: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Template {
+    pub path: String,
+    pub template: String,
+    pub bindings: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HookSignature {
+    pub name: String,
+    pub hook_type: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HexPathGenerator {
+    pub counter: i32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct State {
+    pub csharp: CodeBuilder,
+    pub templates: HashMap<String, Template>,
+    pub hooks: Vec<HookSignature>,
+    pub hex_path_gen: HexPathGenerator,
+    pub current_component: Option<ComponentInfo>,
+    pub components: Vec<ComponentInfo>,
+    pub external_imports: HashSet<String>,
+    pub is_hot_reload: bool,
+}
+
+pub struct MinimactTranspiler {
+    output: String,
+    indent_level: usize,
+}
+
+impl MinimactTranspiler {
     pub fn new() -> Self {
-        Self {}
-    }
-    
-    fn test(expr: &CallExpr) {
-        if {
-            let __matched = matches!(expr, Expr::Call(_));
-            __matched
-        } {
+        Self {
+            output: String::new(),
+            indent_level: 0,
         }
     }
+    
+    fn append(&mut self, s: &str) {
+        self.output.push_str(s);
+    }
+    
+    fn newline(&mut self) {
+        self.output.push('\n');
+    }
+    
+    fn indent(&mut self) {
+        self.indent_level += 1;
+    }
+    
+    fn dedent(&mut self) {
+        self.indent_level -= 1;
+    }
+    
+    pub fn finish(self) -> String {
+        self.output
+    }
+    
+    fn escape_csharp_string(s: &String) -> String {
+        s.clone();
+    }
+    
+    fn is_component_name(name: &String) -> bool {
+        let first = name.chars().next();
+        if let Some(c) = first {
+            c.is_uppercase();
+        } else {
+            false;
+        }
+    }
+    
+    fn get_component_name(node: &Node, default: Option<String>) -> Option<String> {
+        Some("Component".to_string());
+    }
+    
+    fn ts_type_to_csharp_type(type_ann: &String) -> String {
+        match type_ann.as_str() {
+            "string" => "string".to_string(),
+            "number" => "int".to_string(),
+            "boolean" => "bool".to_string(),
+            _ => "dynamic".to_string(),
+        }
+    }
+    
+    fn infer_type(expr: &String) -> String {
+        "dynamic".to_string();
+    }
+    
+    fn expr_to_csharp(expr: &String) -> String {
+        "null".to_string();
+    }
+    
+    fn init() -> State {
+        State { csharp: String::new(), templates: HashMap::new(), hooks: vec![], hex_path_gen: HexPathGenerator { counter: 0 }, current_component: None, components: vec![], external_imports: HashSet::new(), is_hot_reload: false };
+    }
+    
+    fn finish() -> TranspilerOutput {
+        let csharp_code = "// Generated C# code".to_string();
+        let all_templates = HashMap::new();
+        TranspilerOutput { csharp: csharp_code, templates: serde_json::to_string_pretty(&all_templates).unwrap(), hooks: "[]".to_string() };
+    }
 }
 
-impl VisitMut for MatchesTest {
+impl Visit for MinimactTranspiler {
+    
+    fn visit_mut_fn_decl(&mut self, n: &FnDecl) {
+        let name = "TestComponent".to_string();
+        if !is_component_name(&name) {
+            return;
+        }
+        let component = ComponentInfo { name: name.clone(), props: vec![], use_state: vec![], use_client_state: vec![], use_effect: vec![], use_ref: vec![], custom_hooks: vec![], event_handlers: vec![], local_variables: vec![], helper_functions: vec![], render_body: None, templates: HashMap::new(), dependencies: HashMap::new(), external_imports: HashSet::new() };
+    }
 }

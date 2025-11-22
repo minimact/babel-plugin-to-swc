@@ -1,21 +1,45 @@
 //! Name resolution pass for RustScript
 
 use std::collections::HashMap;
+use std::path::PathBuf;
+use std::fs;
 use crate::parser::*;
+use crate::{Lexer, Parser, Span};
 use crate::semantic::{SemanticError, TypeEnv, TypeInfo, types::ast_type_to_type_info};
 use crate::mapping::get_node_mapping;
+
+/// Exported symbols from a module
+#[derive(Debug, Clone)]
+struct ModuleExports {
+    functions: HashMap<String, TypeInfo>,
+    structs: HashMap<String, TypeInfo>,
+    enums: HashMap<String, TypeInfo>,
+}
 
 /// Name resolver - resolves all identifiers and builds the type environment
 pub struct Resolver {
     env: TypeEnv,
     errors: Vec<SemanticError>,
+    /// Cache of loaded modules (path -> exports)
+    module_cache: HashMap<PathBuf, ModuleExports>,
+    /// Track which modules are currently being resolved (for circular dependency detection)
+    resolving_stack: Vec<PathBuf>,
+    /// Base directory for resolving relative imports
+    base_dir: PathBuf,
 }
 
 impl Resolver {
     pub fn new() -> Self {
+        Self::with_base_dir(PathBuf::from("."))
+    }
+
+    pub fn with_base_dir(base_dir: PathBuf) -> Self {
         Self {
             env: TypeEnv::new(),
             errors: Vec::new(),
+            module_cache: HashMap::new(),
+            resolving_stack: Vec::new(),
+            base_dir,
         }
     }
 
@@ -49,8 +73,46 @@ impl Resolver {
         // Check if it's a built-in module or a file path
         let is_file_module = use_stmt.path.starts_with("./") || use_stmt.path.starts_with("../");
 
-        if is_file_module || valid_modules.contains(&use_stmt.path.as_str()) {
-            // Register the module name (or alias if provided)
+        if is_file_module {
+            // Load and resolve the module file
+            match self.load_module(&use_stmt.path, use_stmt.span) {
+                Ok(exports) => {
+                    // If there are specific imports, resolve them
+                    if !use_stmt.imports.is_empty() {
+                        for import_name in &use_stmt.imports {
+                            // Check if the symbol exists in the module
+                            let type_info = exports.functions.get(import_name)
+                                .or_else(|| exports.structs.get(import_name))
+                                .or_else(|| exports.enums.get(import_name))
+                                .cloned();
+
+                            if let Some(ty) = type_info {
+                                self.env.define(import_name.clone(), ty);
+                            } else {
+                                self.errors.push(SemanticError::new(
+                                    "RS006",
+                                    format!("Module '{}' does not export '{}'", use_stmt.path, import_name),
+                                    use_stmt.span,
+                                ));
+                            }
+                        }
+                    } else {
+                        // Import the whole module
+                        let module_name = use_stmt.alias.clone().unwrap_or_else(|| use_stmt.path.clone());
+                        self.env.define(
+                            module_name.clone(),
+                            TypeInfo::Module {
+                                name: module_name,
+                            },
+                        );
+                    }
+                }
+                Err(err) => {
+                    self.errors.push(err);
+                }
+            }
+        } else if valid_modules.contains(&use_stmt.path.as_str()) {
+            // Built-in module - register it
             if use_stmt.alias.is_some() || use_stmt.imports.is_empty() {
                 let module_name = use_stmt.alias.clone().unwrap_or_else(|| use_stmt.path.clone());
                 self.env.define(
@@ -61,12 +123,12 @@ impl Resolver {
                 );
             }
 
-            // Register specific imports as unknown types (we don't know what they are yet)
-            // They could be functions, structs, or other values
+            // For built-in modules, we don't know what specific symbols they export
+            // So we mark specific imports as Unknown for now
             for import_name in &use_stmt.imports {
                 self.env.define(
                     import_name.clone(),
-                    TypeInfo::Unknown,  // We don't know the type yet
+                    TypeInfo::Unknown,
                 );
             }
         } else {
@@ -75,6 +137,146 @@ impl Resolver {
                 format!("Unknown module: {}", use_stmt.path),
                 use_stmt.span,
             ));
+        }
+    }
+
+    /// Load a module file and extract its exports
+    fn load_module(&mut self, module_path: &str, import_span: Span) -> Result<ModuleExports, SemanticError> {
+        // Resolve the file path relative to base_dir
+        let resolved_path = self.base_dir.join(module_path);
+        let canonical_path = resolved_path.canonicalize().unwrap_or(resolved_path.clone());
+
+        // Check for circular dependencies
+        if self.resolving_stack.contains(&canonical_path) {
+            return Err(SemanticError::new(
+                "RS008",
+                format!("Circular dependency detected: {}", module_path),
+                import_span,
+            ));
+        }
+
+        // Check cache first
+        if let Some(exports) = self.module_cache.get(&canonical_path) {
+            return Ok(exports.clone());
+        }
+
+        // Load the file
+        let source = fs::read_to_string(&resolved_path).map_err(|e| {
+            SemanticError::new(
+                "RS009",
+                format!("Failed to load module '{}': {}", module_path, e),
+                import_span,
+            )
+        })?;
+
+        // Parse the module
+        let mut lexer = Lexer::new(&source);
+        let tokens = lexer.tokenize();
+        let mut parser = Parser::new(tokens);
+        let program = parser.parse().map_err(|e| {
+            SemanticError::new(
+                "RS010",
+                format!("Failed to parse module '{}': {}", module_path, e.message),
+                import_span,
+            )
+        })?;
+
+        // Mark as currently resolving
+        self.resolving_stack.push(canonical_path.clone());
+
+        // Extract exports from the module
+        let exports = self.extract_exports(&program);
+
+        // Remove from resolving stack
+        self.resolving_stack.pop();
+
+        // Cache the exports
+        self.module_cache.insert(canonical_path, exports.clone());
+
+        Ok(exports)
+    }
+
+    /// Extract all exported symbols from a module
+    fn extract_exports(&mut self, program: &Program) -> ModuleExports {
+        let mut exports = ModuleExports {
+            functions: HashMap::new(),
+            structs: HashMap::new(),
+            enums: HashMap::new(),
+        };
+
+        // Determine what to export based on the top-level declaration
+        match &program.decl {
+            TopLevelDecl::Plugin(plugin) => {
+                self.extract_exports_from_items(&plugin.body, &mut exports);
+            }
+            TopLevelDecl::Writer(writer) => {
+                self.extract_exports_from_items(&writer.body, &mut exports);
+            }
+            TopLevelDecl::Module(module) => {
+                self.extract_exports_from_items(&module.items, &mut exports);
+            }
+            TopLevelDecl::Interface(_) => {
+                // Interfaces don't export symbols
+            }
+        }
+
+        exports
+    }
+
+    /// Extract exports from a list of plugin items
+    fn extract_exports_from_items(&mut self, items: &[PluginItem], exports: &mut ModuleExports) {
+        for item in items {
+            match item {
+                PluginItem::Function(f) => {
+                    let params: Vec<TypeInfo> = f.params.iter()
+                        .map(|p| ast_type_to_type_info(&p.ty))
+                        .collect();
+                    let ret = f.return_type.as_ref()
+                        .map(ast_type_to_type_info)
+                        .unwrap_or(TypeInfo::Unit);
+
+                    exports.functions.insert(
+                        f.name.clone(),
+                        TypeInfo::Function {
+                            params,
+                            ret: Box::new(ret),
+                        },
+                    );
+                }
+                PluginItem::Struct(s) => {
+                    let mut fields = HashMap::new();
+                    for field in &s.fields {
+                        let ty = ast_type_to_type_info(&field.ty);
+                        fields.insert(field.name.clone(), ty);
+                    }
+                    exports.structs.insert(
+                        s.name.clone(),
+                        TypeInfo::Struct {
+                            name: s.name.clone(),
+                            fields,
+                        },
+                    );
+                }
+                PluginItem::Enum(e) => {
+                    let mut variants = HashMap::new();
+                    for variant in &e.variants {
+                        let fields = variant.fields.as_ref().map(|types| {
+                            types.iter().map(ast_type_to_type_info).collect()
+                        });
+                        variants.insert(variant.name.clone(), fields);
+                    }
+                    exports.enums.insert(
+                        e.name.clone(),
+                        TypeInfo::Enum {
+                            name: e.name.clone(),
+                            variants,
+                        },
+                    );
+                }
+                _ => {
+                    // Other items (visitor, impl, traverse) don't export symbols
+                }
+            }
         }
     }
 
@@ -528,7 +730,7 @@ impl Resolver {
                 if self.env.lookup(&ident.name).is_none() {
                     // Check for special names and built-in macros
                     let is_special = matches!(ident.name.as_str(),
-                        "self" | "Self" | "matches!" | "format!" | "format" | "vec!" | "Some" | "None" | "Ok" | "Err" | "String" | "HashMap" | "HashSet" | "Vec" | "Option" | "Result" | "_"
+                        "self" | "Self" | "matches!" | "format!" | "format" | "vec!" | "Some" | "None" | "Ok" | "Err" | "String" | "HashMap" | "HashSet" | "Vec" | "Option" | "Result" | "Box" | "CodeBuilder" | "_"
                     );
                     // Check if it's a known AST node type (used in matches!)
                     let is_ast_type = get_node_mapping(&ident.name).is_some();

@@ -96,6 +96,19 @@ impl TypeInfo {
     /// Check if types are compatible for assignment
     pub fn is_assignable_to(&self, target: &TypeInfo) -> bool {
         match (self, target) {
+            // Structs with the same name are compatible (nominal typing)
+            // Must come before general equality check to avoid comparing field hashmaps
+            (TypeInfo::Struct { name: n1, .. }, TypeInfo::Struct { name: n2, .. }) => n1 == n2,
+
+            // Struct can be assigned to AstNode with the same name (nominal typing)
+            (TypeInfo::Struct { name, .. }, TypeInfo::AstNode(node_name)) => name == node_name,
+
+            // Enums with the same name are compatible (nominal typing)
+            (TypeInfo::Enum { name: n1, .. }, TypeInfo::Enum { name: n2, .. }) => n1 == n2,
+
+            // Enum can be assigned to AstNode with the same name (nominal typing)
+            (TypeInfo::Enum { name, .. }, TypeInfo::AstNode(node_name)) => name == node_name,
+
             // Same types are always assignable
             (a, b) if a == b => true,
 
