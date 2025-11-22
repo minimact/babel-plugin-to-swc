@@ -50,15 +50,25 @@ impl Resolver {
         let is_file_module = use_stmt.path.starts_with("./") || use_stmt.path.starts_with("../");
 
         if is_file_module || valid_modules.contains(&use_stmt.path.as_str()) {
-            // For now, just register the module name (or alias if provided)
-            let module_name = use_stmt.alias.clone().unwrap_or_else(|| use_stmt.path.clone());
+            // Register the module name (or alias if provided)
+            if use_stmt.alias.is_some() || use_stmt.imports.is_empty() {
+                let module_name = use_stmt.alias.clone().unwrap_or_else(|| use_stmt.path.clone());
+                self.env.define(
+                    module_name.clone(),
+                    TypeInfo::Module {
+                        name: module_name,
+                    },
+                );
+            }
 
-            self.env.define(
-                module_name.clone(),
-                TypeInfo::Module {
-                    name: module_name,
-                },
-            );
+            // Register specific imports as unknown types (we don't know what they are yet)
+            // They could be functions, structs, or other values
+            for import_name in &use_stmt.imports {
+                self.env.define(
+                    import_name.clone(),
+                    TypeInfo::Unknown,  // We don't know the type yet
+                );
+            }
         } else {
             self.errors.push(SemanticError::new(
                 "RS007",
