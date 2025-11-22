@@ -4,8 +4,12 @@
 module.exports = function({ types: t }) {
 
   function get_name(node) {
-    const id = (/* ? */ node.id);
-    Ok(id.name);
+    const __result = node.id;
+    if (!__result.ok) {
+      return { ok: false, error: __result.error };
+    }
+    const id = __result.value;
+    return { ok: true, value: id.name };
   }
 
   let state = {};

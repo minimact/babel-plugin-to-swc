@@ -20,6 +20,8 @@ pub struct SwcGenerator {
     captured_vars: std::collections::HashSet<String>,
     /// Whether json serialization is needed (adds Serialize, Deserialize derives)
     uses_json: bool,
+    /// Whether parser module is used (needs helper functions)
+    uses_parser: bool,
 }
 
 impl SwcGenerator {
@@ -33,6 +35,7 @@ impl SwcGenerator {
             type_env: TypeEnvironment::new(),
             captured_vars: std::collections::HashSet::new(),
             uses_json: false,
+            uses_parser: false,
         }
     }
 
@@ -41,11 +44,13 @@ impl SwcGenerator {
         // Check what std types are used
         let (uses_hashmap, uses_hashset) = self.detect_std_collections(program);
 
-        // Check if json module is used (need to set this before struct generation)
+        // Check if json or parser modules are used (need to set this before struct generation)
         for use_stmt in &program.uses {
             if use_stmt.path == "json" {
                 self.uses_json = true;
-                break;
+            }
+            if use_stmt.path == "parser" {
+                self.uses_parser = true;
             }
         }
 
@@ -86,6 +91,12 @@ impl SwcGenerator {
                 "path" => {
                     self.emit_line("use std::path::{Path, PathBuf};");
                 }
+                "parser" => {
+                    // Parser module for runtime AST parsing
+                    self.emit_line("use swc_common::{FileName, SourceMap};");
+                    self.emit_line("use swc_ecma_parser::{Parser, StringInput, Syntax, TsConfig, EsConfig};");
+                    self.emit_line("use std::sync::Arc;");
+                }
                     other => {
                         // For unknown modules, emit a use statement as-is
                         self.emit_line(&format!("use {};", other));
@@ -114,6 +125,13 @@ impl SwcGenerator {
                 self.emit(&visitor);
                 self.emit_line("");
             }
+        }
+
+        // Emit parser module helper functions if used
+        if self.uses_parser {
+            self.emit_line("");
+            self.emit_line("// Parser module helper functions");
+            self.gen_parser_module_helpers();
         }
 
         std::mem::take(&mut self.output)
@@ -608,6 +626,109 @@ impl SwcGenerator {
         self.gen_block(&f.body);
 
         self.type_env.pop_scope();
+        self.indent -= 1;
+        self.emit_line("}");
+    }
+
+    /// Generate helper functions for the parser module
+    fn gen_parser_module_helpers(&mut self) {
+        self.emit_line("mod parser {");
+        self.indent += 1;
+        self.emit_line("use super::*;");
+        self.emit_line("");
+
+        // parser::parse_file
+        self.emit_line("pub fn parse_file(path: &str) -> Result<Program, String> {");
+        self.indent += 1;
+        self.emit_line("let source_map = Arc::new(SourceMap::default());");
+        self.emit_line("let code = std::fs::read_to_string(path)");
+        self.indent += 1;
+        self.emit_line(".map_err(|e| format!(\"Failed to read file: {}\", e))?;");
+        self.indent -= 1;
+        self.emit_line("let file = source_map.new_source_file(");
+        self.indent += 1;
+        self.emit_line("FileName::Real(path.into()),");
+        self.emit_line("code,");
+        self.indent -= 1;
+        self.emit_line(");");
+        self.emit_line("let syntax = Syntax::Typescript(TsConfig {");
+        self.indent += 1;
+        self.emit_line("tsx: true,");
+        self.emit_line("decorators: false,");
+        self.emit_line("..Default::default()");
+        self.indent -= 1;
+        self.emit_line("});");
+        self.emit_line("let mut parser = Parser::new(syntax, StringInput::from(&*file), None);");
+        self.emit_line("parser.parse_program()");
+        self.indent += 1;
+        self.emit_line(".map_err(|e| format!(\"Parse error: {:?}\", e))");
+        self.indent -= 1;
+        self.indent -= 1;
+        self.emit_line("}");
+        self.emit_line("");
+
+        // parser::parse
+        self.emit_line("pub fn parse(code: &str) -> Result<Program, String> {");
+        self.indent += 1;
+        self.emit_line("let source_map = Arc::new(SourceMap::default());");
+        self.emit_line("let file = source_map.new_source_file(");
+        self.indent += 1;
+        self.emit_line("FileName::Anon,");
+        self.emit_line("code.to_string(),");
+        self.indent -= 1;
+        self.emit_line(");");
+        self.emit_line("let syntax = Syntax::Typescript(TsConfig {");
+        self.indent += 1;
+        self.emit_line("tsx: true,");
+        self.emit_line("decorators: false,");
+        self.emit_line("..Default::default()");
+        self.indent -= 1;
+        self.emit_line("});");
+        self.emit_line("let mut parser = Parser::new(syntax, StringInput::from(&*file), None);");
+        self.emit_line("parser.parse_program()");
+        self.indent += 1;
+        self.emit_line(".map_err(|e| format!(\"Parse error: {:?}\", e))");
+        self.indent -= 1;
+        self.indent -= 1;
+        self.emit_line("}");
+        self.emit_line("");
+
+        // parser::parse_with_syntax
+        self.emit_line("pub fn parse_with_syntax(code: &str, syntax_type: &str) -> Result<Program, String> {");
+        self.indent += 1;
+        self.emit_line("let source_map = Arc::new(SourceMap::default());");
+        self.emit_line("let file = source_map.new_source_file(");
+        self.indent += 1;
+        self.emit_line("FileName::Anon,");
+        self.emit_line("code.to_string(),");
+        self.indent -= 1;
+        self.emit_line(");");
+        self.emit_line("let syntax = match syntax_type {");
+        self.indent += 1;
+        self.emit_line("\"TypeScript\" => Syntax::Typescript(TsConfig {");
+        self.indent += 1;
+        self.emit_line("tsx: true,");
+        self.emit_line("decorators: false,");
+        self.emit_line("..Default::default()");
+        self.indent -= 1;
+        self.emit_line("}),");
+        self.emit_line("\"JSX\" => Syntax::Es(EsConfig {");
+        self.indent += 1;
+        self.emit_line("jsx: true,");
+        self.emit_line("..Default::default()");
+        self.indent -= 1;
+        self.emit_line("}),");
+        self.emit_line("_ => Syntax::Es(EsConfig::default()),");
+        self.indent -= 1;
+        self.emit_line("};");
+        self.emit_line("let mut parser = Parser::new(syntax, StringInput::from(&*file), None);");
+        self.emit_line("parser.parse_program()");
+        self.indent += 1;
+        self.emit_line(".map_err(|e| format!(\"Parse error: {:?}\", e))");
+        self.indent -= 1;
+        self.indent -= 1;
+        self.emit_line("}");
+
         self.indent -= 1;
         self.emit_line("}");
     }

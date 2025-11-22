@@ -5,7 +5,7 @@ module.exports = function({ types: t }) {
 
   function test_unit() {
     const x = undefined;
-    Ok(undefined);
+    return { ok: true, value: undefined };
   }
 
   let state = {};

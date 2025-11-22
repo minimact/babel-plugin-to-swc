@@ -103,6 +103,7 @@ def main():
         "block_expr",
         "tuple_destruct",
         "closure_block",
+        "parser_module",
     ]
 
     print("Testing codegen output...")

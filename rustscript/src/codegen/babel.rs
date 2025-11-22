@@ -257,6 +257,100 @@ impl BabelGenerator {
                 let var_name = use_stmt.alias.as_ref().unwrap_or(&use_stmt.path);
                 self.emit_line(&format!("const {} = require('path');", var_name));
             }
+            "parser" => {
+                // Parser module for runtime AST parsing
+                let var_name = use_stmt.alias.as_ref().unwrap_or(&use_stmt.path);
+                self.emit_line("const babel = require('@babel/core');");
+                self.emit_line("const fs = require('fs');");
+                self.emit_line(&format!("const {} = {{", var_name));
+                self.indent += 1;
+
+                // parser::parse_file(path: &Str) -> Result<Program, Str>
+                self.emit_line("parse_file: (path) => {");
+                self.indent += 1;
+                self.emit_line("try {");
+                self.indent += 1;
+                self.emit_line("const code = fs.readFileSync(path, 'utf-8');");
+                self.emit_line("const ast = babel.parseSync(code, {");
+                self.indent += 1;
+                self.emit_line("filename: path,");
+                self.emit_line("presets: ['@babel/preset-typescript'],");
+                self.emit_line("plugins: ['@babel/plugin-syntax-jsx'],");
+                self.indent -= 1;
+                self.emit_line("});");
+                self.emit_line("return { ok: true, value: ast };");
+                self.indent -= 1;
+                self.emit_line("} catch (error) {");
+                self.indent += 1;
+                self.emit_line("return { ok: false, error: error.message };");
+                self.indent -= 1;
+                self.emit_line("}");
+                self.indent -= 1;
+                self.emit_line("},");
+
+                // parser::parse(code: &Str) -> Result<Program, Str>
+                self.emit_line("parse: (code) => {");
+                self.indent += 1;
+                self.emit_line("try {");
+                self.indent += 1;
+                self.emit_line("const ast = babel.parseSync(code, {");
+                self.indent += 1;
+                self.emit_line("presets: ['@babel/preset-typescript'],");
+                self.emit_line("plugins: ['@babel/plugin-syntax-jsx'],");
+                self.indent -= 1;
+                self.emit_line("});");
+                self.emit_line("return { ok: true, value: ast };");
+                self.indent -= 1;
+                self.emit_line("} catch (error) {");
+                self.indent += 1;
+                self.emit_line("return { ok: false, error: error.message };");
+                self.indent -= 1;
+                self.emit_line("}");
+                self.indent -= 1;
+                self.emit_line("},");
+
+                // parser::parse_with_syntax(code: &Str, syntax: Syntax) -> Result<Program, Str>
+                self.emit_line("parse_with_syntax: (code, syntax) => {");
+                self.indent += 1;
+                self.emit_line("try {");
+                self.indent += 1;
+                self.emit_line("let options = {};");
+                self.emit_line("if (syntax === 'TypeScript') {");
+                self.indent += 1;
+                self.emit_line("options = {");
+                self.indent += 1;
+                self.emit_line("presets: ['@babel/preset-typescript'],");
+                self.emit_line("plugins: ['@babel/plugin-syntax-jsx'],");
+                self.indent -= 1;
+                self.emit_line("};");
+                self.indent -= 1;
+                self.emit_line("} else if (syntax === 'JSX') {");
+                self.indent += 1;
+                self.emit_line("options = {");
+                self.indent += 1;
+                self.emit_line("plugins: ['@babel/plugin-syntax-jsx'],");
+                self.indent -= 1;
+                self.emit_line("};");
+                self.indent -= 1;
+                self.emit_line("} else {");
+                self.indent += 1;
+                self.emit_line("options = {};");
+                self.indent -= 1;
+                self.emit_line("}");
+                self.emit_line("const ast = babel.parseSync(code, options);");
+                self.emit_line("return { ok: true, value: ast };");
+                self.indent -= 1;
+                self.emit_line("} catch (error) {");
+                self.indent += 1;
+                self.emit_line("return { ok: false, error: error.message };");
+                self.indent -= 1;
+                self.emit_line("}");
+                self.indent -= 1;
+                self.emit_line("},");
+
+                self.indent -= 1;
+                self.emit_line("};");
+            }
             other => {
                 // Unknown module - just try to require it
                 let var_name = use_stmt.alias.as_ref().unwrap_or(&use_stmt.path);
@@ -526,16 +620,53 @@ impl BabelGenerator {
     fn gen_stmt(&mut self, stmt: &Stmt) {
         match stmt {
             Stmt::Let(let_stmt) => {
-                self.emit_indent();
-                if let_stmt.mutable {
-                    self.emit("let ");
+                // Check if the initializer uses the ? operator (Try expression)
+                if let Expr::Try(inner) = &let_stmt.init {
+                    // Generate proper Result unwrapping in JavaScript
+                    // const result = func();
+                    // if (!result.ok) { return { ok: false, error: result.error }; }
+                    // const varName = result.value;
+
+                    let temp_var = "__result";
+
+                    // Step 1: Call the function and store in temp variable
+                    self.emit_indent();
+                    self.emit(&format!("const {} = ", temp_var));
+                    self.gen_expr(inner);
+                    self.emit(";\n");
+
+                    // Step 2: Check if result is error and early return
+                    self.emit_indent();
+                    self.emit(&format!("if (!{}.ok) {{\n", temp_var));
+                    self.indent += 1;
+                    self.emit_indent();
+                    self.emit(&format!("return {{ ok: false, error: {}.error }};\n", temp_var));
+                    self.indent -= 1;
+                    self.emit_indent();
+                    self.emit("}\n");
+
+                    // Step 3: Extract the value
+                    self.emit_indent();
+                    if let_stmt.mutable {
+                        self.emit("let ");
+                    } else {
+                        self.emit("const ");
+                    }
+                    self.gen_pattern(&let_stmt.pattern);
+                    self.emit(&format!(" = {}.value;\n", temp_var));
                 } else {
-                    self.emit("const ");
+                    // Normal let statement
+                    self.emit_indent();
+                    if let_stmt.mutable {
+                        self.emit("let ");
+                    } else {
+                        self.emit("const ");
+                    }
+                    self.gen_pattern(&let_stmt.pattern);
+                    self.emit(" = ");
+                    self.gen_expr(&let_stmt.init);
+                    self.emit(";\n");
                 }
-                self.gen_pattern(&let_stmt.pattern);
-                self.emit(" = ");
-                self.gen_expr(&let_stmt.init);
-                self.emit(";\n");
 
                 // Track var_kind for the new variable (only for simple identifier patterns)
                 // If initializing from another variable, copy its var_kind
@@ -567,6 +698,35 @@ impl BabelGenerator {
                 self.emit(";\n");
             }
             Stmt::Expr(expr_stmt) => {
+                // Check if this is Ok(value) or Err(error) as an implicit return
+                if let Expr::Call(call) = &expr_stmt.expr {
+                    if let Expr::Ident(ident) = call.callee.as_ref() {
+                        if ident.name == "Ok" {
+                            // Convert Ok(value) to return { ok: true, value: value }
+                            self.emit_indent();
+                            self.emit("return { ok: true, value: ");
+                            if let Some(arg) = call.args.first() {
+                                self.gen_expr(arg);
+                            } else {
+                                self.emit("undefined");
+                            }
+                            self.emit(" };\n");
+                            return;
+                        } else if ident.name == "Err" {
+                            // Convert Err(error) to return { ok: false, error: error }
+                            self.emit_indent();
+                            self.emit("return { ok: false, error: ");
+                            if let Some(arg) = call.args.first() {
+                                self.gen_expr(arg);
+                            } else {
+                                self.emit("undefined");
+                            }
+                            self.emit(" };\n");
+                            return;
+                        }
+                    }
+                }
+                // Regular expression statement
                 self.emit_indent();
                 self.gen_expr(&expr_stmt.expr);
                 self.emit(";\n");
@@ -712,6 +872,33 @@ impl BabelGenerator {
             Stmt::Return(ret) => {
                 self.emit_indent();
                 if let Some(value) = &ret.value {
+                    // Check if this is returning Ok(value) - convert to Result object
+                    if let Expr::Call(call) = value {
+                        if let Expr::Ident(ident) = call.callee.as_ref() {
+                            if ident.name == "Ok" {
+                                // Convert Ok(value) to { ok: true, value: value }
+                                self.emit("return { ok: true, value: ");
+                                if let Some(arg) = call.args.first() {
+                                    self.gen_expr(arg);
+                                } else {
+                                    self.emit("undefined");
+                                }
+                                self.emit(" };\n");
+                                return;
+                            } else if ident.name == "Err" {
+                                // Convert Err(error) to { ok: false, error: error }
+                                self.emit("return { ok: false, error: ");
+                                if let Some(arg) = call.args.first() {
+                                    self.gen_expr(arg);
+                                } else {
+                                    self.emit("undefined");
+                                }
+                                self.emit(" };\n");
+                                return;
+                            }
+                        }
+                    }
+                    // Regular return
                     self.emit("return ");
                     self.gen_expr(value);
                     self.emit(";\n");
