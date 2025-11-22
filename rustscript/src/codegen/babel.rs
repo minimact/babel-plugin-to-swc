@@ -382,24 +382,26 @@ impl BabelGenerator {
                 } else {
                     self.emit("const ");
                 }
-                self.emit(&let_stmt.name);
+                self.gen_pattern(&let_stmt.pattern);
                 self.emit(" = ");
                 self.gen_expr(&let_stmt.init);
                 self.emit(";\n");
 
-                // Track var_kind for the new variable
+                // Track var_kind for the new variable (only for simple identifier patterns)
                 // If initializing from another variable, copy its var_kind
-                if let Expr::Ident(ident) = &let_stmt.init {
-                    if let Some(var_kind) = self.get_var_kind(&ident.name).cloned() {
-                        self.var_kinds.insert(let_stmt.name.clone(), var_kind);
-                    }
-                } else if let Expr::Call(call) = &let_stmt.init {
-                    // Check for .clone() calls
-                    if let Expr::Member(mem) = call.callee.as_ref() {
-                        if mem.property == "clone" && call.args.is_empty() {
-                            if let Expr::Ident(obj) = mem.object.as_ref() {
-                                if let Some(var_kind) = self.get_var_kind(&obj.name).cloned() {
-                                    self.var_kinds.insert(let_stmt.name.clone(), var_kind);
+                if let Pattern::Ident(name) = &let_stmt.pattern {
+                    if let Expr::Ident(ident) = &let_stmt.init {
+                        if let Some(var_kind) = self.get_var_kind(&ident.name).cloned() {
+                            self.var_kinds.insert(name.clone(), var_kind);
+                        }
+                    } else if let Expr::Call(call) = &let_stmt.init {
+                        // Check for .clone() calls
+                        if let Expr::Member(mem) = call.callee.as_ref() {
+                            if mem.property == "clone" && call.args.is_empty() {
+                                if let Expr::Ident(obj) = mem.object.as_ref() {
+                                    if let Some(var_kind) = self.get_var_kind(&obj.name).cloned() {
+                                        self.var_kinds.insert(name.clone(), var_kind);
+                                    }
                                 }
                             }
                         }
@@ -494,17 +496,33 @@ impl BabelGenerator {
                     None
                 };
 
+                // Extract variable name from pattern (only works for simple identifiers)
+                let var_name = if let Pattern::Ident(name) = &for_stmt.pattern {
+                    name.clone()
+                } else {
+                    // For complex patterns, generate a temporary name
+                    "_item".to_string()
+                };
+
                 if let Some((from_path, array_prop)) = loop_item_info {
                     // Generate indexed for loop to track which item we're on
                     let index_var = self.next_loop_index();
 
                     self.emit_indent();
                     self.gen_expr(&for_stmt.iter);
-                    self.emit(&format!(".forEach(({}, {}) => {{\n", for_stmt.var, index_var));
+                    self.emit(&format!(".forEach(({}, {}) => {{\n", var_name, index_var));
                     self.indent += 1;
 
                     // Register the loop variable as a loop item
-                    self.register_loop_item(&for_stmt.var, &from_path, &array_prop, &index_var);
+                    self.register_loop_item(&var_name, &from_path, &array_prop, &index_var);
+
+                    // If pattern is complex, destructure it
+                    if !matches!(&for_stmt.pattern, Pattern::Ident(_)) {
+                        self.emit_indent();
+                        self.emit("const ");
+                        self.gen_pattern(&for_stmt.pattern);
+                        self.emit(&format!(" = {};\n", var_name));
+                    }
 
                     self.gen_block(&for_stmt.body);
 
@@ -513,7 +531,9 @@ impl BabelGenerator {
                 } else {
                     // Standard for-of loop
                     self.emit_indent();
-                    self.emit(&format!("for (const {} of ", for_stmt.var));
+                    self.emit("for (const ");
+                    self.gen_pattern(&for_stmt.pattern);
+                    self.emit(" of ");
                     self.gen_expr(&for_stmt.iter);
                     self.emit(") {\n");
                     self.indent += 1;
@@ -573,7 +593,10 @@ impl BabelGenerator {
                 // Create traverse context with state variables
                 let mut state_vars = std::collections::HashSet::new();
                 for let_stmt in &inline.state {
-                    state_vars.insert(let_stmt.name.clone());
+                    // Only track simple identifier patterns as state vars
+                    if let Pattern::Ident(name) = &let_stmt.pattern {
+                        state_vars.insert(name.clone());
+                    }
                 }
 
                 // Determine the path variable for traverse call
@@ -607,11 +630,14 @@ impl BabelGenerator {
                     self.emit("state: {\n");
                     self.indent += 1;
                     for let_stmt in &inline.state {
-                        self.emit_indent();
-                        self.emit(&let_stmt.name);
-                        self.emit(": ");
-                        self.gen_expr(&let_stmt.init);
-                        self.emit(",\n");
+                        // Only emit simple identifier patterns
+                        if let Pattern::Ident(name) = &let_stmt.pattern {
+                            self.emit_indent();
+                            self.emit(name);
+                            self.emit(": ");
+                            self.gen_expr(&let_stmt.init);
+                            self.emit(",\n");
+                        }
                     }
                     self.indent -= 1;
                     self.emit_indent();
@@ -888,6 +914,76 @@ impl BabelGenerator {
         self.emit_line("}");
     }
 
+    fn gen_pattern(&mut self, pattern: &Pattern) {
+        match pattern {
+            Pattern::Ident(name) => {
+                self.emit(name);
+            }
+            Pattern::Tuple(patterns) => {
+                self.emit("[");
+                for (i, pat) in patterns.iter().enumerate() {
+                    if i > 0 {
+                        self.emit(", ");
+                    }
+                    self.gen_pattern(pat);
+                }
+                self.emit("]");
+            }
+            Pattern::Array(patterns) => {
+                self.emit("[");
+                for (i, pat) in patterns.iter().enumerate() {
+                    if i > 0 {
+                        self.emit(", ");
+                    }
+                    self.gen_pattern(pat);
+                }
+                self.emit("]");
+            }
+            Pattern::Object(props) => {
+                self.emit("{");
+                for (i, prop) in props.iter().enumerate() {
+                    if i > 0 {
+                        self.emit(", ");
+                    }
+                    match prop {
+                        ObjectPatternProp::KeyValue { key, value } => {
+                            self.emit(key);
+                            self.emit(": ");
+                            self.gen_pattern(value);
+                        }
+                        ObjectPatternProp::Shorthand(name) => {
+                            self.emit(name);
+                        }
+                        ObjectPatternProp::Rest(name) => {
+                            self.emit("...");
+                            self.emit(name);
+                        }
+                        ObjectPatternProp::Or(_) => {
+                            // Or patterns in object props don't make sense in JS
+                            self.emit("_");
+                        }
+                    }
+                }
+                self.emit("}");
+            }
+            Pattern::Wildcard => {
+                self.emit("_");
+            }
+            Pattern::Rest(inner) => {
+                self.emit("...");
+                self.gen_pattern(inner);
+            }
+            Pattern::Literal(lit) => {
+                // Literals in destructuring don't make sense in JS, emit placeholder
+                self.gen_literal(lit);
+            }
+            Pattern::Struct { .. } | Pattern::Variant { .. } | Pattern::Or(_) => {
+                // Complex patterns that require match/if-let - emit placeholder
+                self.emit("_");
+            }
+        }
+    }
+
     fn gen_pattern_condition(&mut self, pattern: &Pattern, scrutinee: &Expr) {
         match pattern {
             Pattern::Literal(lit) => {
@@ -929,6 +1025,10 @@ impl BabelGenerator {
                     let field_access = format!("{}.{}", self.expr_to_string(scrutinee), field_name);
                     self.gen_pattern_condition_str(field_pattern, &field_access);
                 }
+            }
+            Pattern::Tuple(_) | Pattern::Array(_) | Pattern::Object(_) | Pattern::Rest(_) => {
+                // Complex patterns that aren't fully supported in condition checks
+                self.emit("true");
             }
             Pattern::Variant { name, inner: _ } => {
                 // Variant pattern matching for Option/Result types
@@ -1530,6 +1630,23 @@ impl BabelGenerator {
                     self.gen_expr(end);
                 }
             }
+            Expr::Block(block) => {
+                // Block expression: generate an IIFE
+                self.emit("(() => {\n");
+                self.indent += 1;
+                self.gen_block(block);
+                self.indent -= 1;
+                self.emit_indent();
+                self.emit("})()");
+            }
+            Expr::Try(inner) => {
+                // Try operator: expr?
+                // In JavaScript, we can't easily emulate this without async/throw semantics
+                // For now, just emit the inner expression with a comment
+                self.emit("(/* ? */ ");
+                self.gen_expr(inner);
+                self.emit(")");
+            }
             Expr::Paren(inner) => {
                 self.emit("(");
                 self.gen_expr(inner);
@@ -1554,6 +1671,9 @@ impl BabelGenerator {
             }
             Literal::Null => {
                 self.emit("null");
+            }
+            Literal::Unit => {
+                self.emit("undefined");
             }
         }
     }

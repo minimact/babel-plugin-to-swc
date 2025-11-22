@@ -267,6 +267,12 @@ impl SwcGenerator {
             Expr::Closure(closure) => {
                 self.detect_collections_in_expr(&closure.body, uses_hashmap, uses_hashset);
             }
+            Expr::Block(block) => {
+                self.detect_collections_in_block(block, uses_hashmap, uses_hashset);
+            }
+            Expr::Try(inner) => {
+                self.detect_collections_in_expr(inner, uses_hashmap, uses_hashset);
+            }
             Expr::VecInit(vec_init) => {
                 for elem in &vec_init.elements {
                     self.detect_collections_in_expr(elem, uses_hashmap, uses_hashset);
@@ -761,15 +767,17 @@ impl SwcGenerator {
                 } else {
                     self.emit("let ");
                 }
-                self.emit(&let_stmt.name);
+                self.gen_pattern(&let_stmt.pattern);
                 // Don't emit type annotations for internal temp variables
                 // The type environment tracking is what matters
                 self.emit(" = ");
                 self.gen_expr(&let_stmt.init);
                 self.emit(";\n");
 
-                // Track the variable's type in the environment
-                self.type_env.define(&let_stmt.name, var_type);
+                // Track the variable's type in the environment (only for simple identifiers)
+                if let Pattern::Ident(name) = &let_stmt.pattern {
+                    self.type_env.define(name, var_type);
+                }
             }
             Stmt::Const(const_stmt) => {
                 self.emit_indent();
@@ -952,19 +960,23 @@ impl SwcGenerator {
             }
             Stmt::For(for_stmt) => {
                 self.emit_indent();
-                self.emit(&format!("for {} in ", for_stmt.var));
+                self.emit("for ");
+                self.gen_pattern(&for_stmt.pattern);
+                self.emit(" in ");
                 self.gen_expr(&for_stmt.iter);
                 self.emit(" {\n");
                 self.indent += 1;
 
-                // Infer the type of the loop variable from the iterator
+                // Infer the type of the loop variable from the iterator (only for simple identifiers)
                 self.type_env.push_scope();
                 let iter_type = self.infer_type(&for_stmt.iter);
                 let elem_type = self.get_element_type(&iter_type);
-                #[cfg(debug_assertions)]
-                eprintln!("[swc] for {} in {:?} -> iter_type={:?}, elem_type={:?}",
-                    for_stmt.var, for_stmt.iter, iter_type, elem_type);
-                self.type_env.define(&for_stmt.var, elem_type);
+                if let Pattern::Ident(var_name) = &for_stmt.pattern {
+                    #[cfg(debug_assertions)]
+                    eprintln!("[swc] for {} in {:?} -> iter_type={:?}, elem_type={:?}",
+                        var_name, for_stmt.iter, iter_type, elem_type);
+                    self.type_env.define(var_name, elem_type);
+                }
 
                 self.gen_block(&for_stmt.body);
 
@@ -1145,12 +1157,15 @@ impl SwcGenerator {
 
                 // Add local state fields
                 for let_stmt in &inline.state {
-                    let ty = if let Some(ref ty) = let_stmt.ty {
-                        self.type_to_rust(ty)
-                    } else {
-                        "i32".to_string() // Default type, should be inferred
-                    };
-                    struct_def.push_str(&format!("    {}: {},\n", let_stmt.name, ty));
+                    // Only add simple identifier patterns as state fields
+                    if let Pattern::Ident(name) = &let_stmt.pattern {
+                        let ty = if let Some(ref ty) = let_stmt.ty {
+                            self.type_to_rust(ty)
+                        } else {
+                            "i32".to_string() // Default type, should be inferred
+                        };
+                        struct_def.push_str(&format!("    {}: {},\n", name, ty));
+                    }
                 }
                 struct_def.push_str("}\n\n");
 
@@ -1194,7 +1209,9 @@ impl SwcGenerator {
                     }
                     // Also mark local state variables
                     for let_stmt in &inline.state {
-                        body_gen.captured_vars.insert(let_stmt.name.clone());
+                        if let Pattern::Ident(name) = &let_stmt.pattern {
+                            body_gen.captured_vars.insert(name.clone());
+                        }
                     }
                     body_gen.gen_block(&method.body);
                     struct_def.push_str(&body_gen.output);
@@ -1226,11 +1243,13 @@ impl SwcGenerator {
 
                 // Initialize local state
                 for let_stmt in &inline.state {
-                    self.emit_indent();
-                    self.emit(&let_stmt.name);
-                    self.emit(": ");
-                    self.gen_expr(&let_stmt.init);
-                    self.emit(",\n");
+                    if let Pattern::Ident(name) = &let_stmt.pattern {
+                        self.emit_indent();
+                        self.emit(name);
+                        self.emit(": ");
+                        self.gen_expr(&let_stmt.init);
+                        self.emit(",\n");
+                    }
                 }
                 self.indent -= 1;
                 self.emit_indent();
@@ -1476,6 +1495,34 @@ impl SwcGenerator {
             Pattern::Literal(lit) => self.gen_literal(lit),
             Pattern::Ident(name) => self.emit(name),
             Pattern::Wildcard => self.emit("_"),
+            Pattern::Tuple(patterns) => {
+                self.emit("(");
+                for (i, pat) in patterns.iter().enumerate() {
+                    if i > 0 {
+                        self.emit(", ");
+                    }
+                    self.gen_pattern(pat);
+                }
+                self.emit(")");
+            }
+            Pattern::Array(patterns) => {
+                self.emit("[");
+                for (i, pat) in patterns.iter().enumerate() {
+                    if i > 0 {
+                        self.emit(", ");
+                    }
+                    self.gen_pattern(pat);
+                }
+                self.emit("]");
+            }
+            Pattern::Object(_) => {
+                // Rust doesn't have object destructuring, use wildcard
+                self.emit("_");
+            }
+            Pattern::Rest(_) => {
+                // Rest patterns in Rust use ..
+                self.emit("..");
+            }
             Pattern::Struct { name, fields } => {
                 self.emit(name);
                 self.emit(" { ");
@@ -1928,6 +1975,20 @@ impl SwcGenerator {
                     self.gen_expr(end);
                 }
             }
+            Expr::Block(block) => {
+                // Block expression
+                self.emit("{\n");
+                self.indent += 1;
+                self.gen_block(block);
+                self.indent -= 1;
+                self.emit_indent();
+                self.emit("}");
+            }
+            Expr::Try(inner) => {
+                // Try operator: expr?
+                self.gen_expr(inner);
+                self.emit("?");
+            }
             Expr::Paren(inner) => {
                 self.emit("(");
                 self.gen_expr(inner);
@@ -1952,6 +2013,9 @@ impl SwcGenerator {
             }
             Literal::Null => {
                 self.emit("None");
+            }
+            Literal::Unit => {
+                self.emit("()");
             }
         }
     }
@@ -2000,7 +2064,6 @@ impl SwcGenerator {
         self.emit("}");
     }
 
-    /// Generate SWC pattern checking code
     fn gen_swc_pattern_check(&mut self, scrutinee: &Expr, pattern: &Expr, depth: usize) {
         match pattern {
             Expr::StructInit(init) => {

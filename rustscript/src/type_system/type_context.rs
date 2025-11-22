@@ -763,15 +763,7 @@ pub fn get_typed_field_mapping(parent_swc_type: &str, field: &str) -> Option<Typ
             read_conversion: ".to_string()",
             write_conversion: ".into()",
         }),
-        ("ArrayPat", "elements") => Some(TypedFieldMapping {
-            rustscript_field: "elements",
-            swc_field: "elems",
-            needs_deref: false,
-            result_type_rs: "Vec<Option<Pat>>",
-            result_type_swc: "Vec<Option<Pat>>",
-            read_conversion: "",
-            write_conversion: "",
-        }),
+        // Duplicate ArrayPat entry removed - already handled above at line 675
         ("ObjectPat", "properties") => Some(TypedFieldMapping {
             rustscript_field: "properties",
             swc_field: "props",

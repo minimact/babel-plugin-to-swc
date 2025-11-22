@@ -139,15 +139,24 @@ impl SwcPatternGenerator {
         } else {
             self.output.push_str("let ");
         }
-        self.output.push_str(&stmt.name);
-        self.output.push_str(" = ");
 
-        // Generate the initializer with type context
-        self.gen_expr_typed(&stmt.init);
-        self.output.push_str(";\n");
+        // Generate pattern (only simple identifiers supported)
+        if let Pattern::Ident(name) = &stmt.pattern {
+            self.output.push_str(name);
+            self.output.push_str(" = ");
 
-        // Record the variable's type
-        self.env.define(&stmt.name, init_type);
+            // Generate the initializer with type context
+            self.gen_expr_typed(&stmt.init);
+            self.output.push_str(";\n");
+
+            // Record the variable's type
+            self.env.define(name, init_type);
+        } else {
+            // For complex patterns, just emit a placeholder
+            self.output.push_str("_ = ");
+            self.gen_expr_typed(&stmt.init);
+            self.output.push_str(";\n");
+        }
     }
 
     /// Generate an expression with type awareness
@@ -226,6 +235,9 @@ impl SwcPatternGenerator {
                     }
                     Literal::Null => {
                         self.output.push_str("None");
+                    }
+                    Literal::Unit => {
+                        self.output.push_str("()");
                     }
                 }
             }
