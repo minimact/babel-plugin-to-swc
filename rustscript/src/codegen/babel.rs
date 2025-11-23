@@ -1344,7 +1344,7 @@ impl BabelGenerator {
                 // Literals in destructuring don't make sense in JS, emit placeholder
                 self.gen_literal(lit);
             }
-            Pattern::Ref(inner) => {
+            Pattern::Ref { pattern: inner, .. } => {
                 // JavaScript doesn't have ref - just emit the inner pattern
                 self.gen_pattern(inner);
             }
@@ -1422,7 +1422,7 @@ impl BabelGenerator {
                     }
                 }
             }
-            Pattern::Ref(inner) => {
+            Pattern::Ref { pattern: inner, .. } => {
                 // ref doesn't affect the condition - check the inner pattern
                 self.gen_pattern_condition(inner, scrutinee);
             }

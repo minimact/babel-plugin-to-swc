@@ -1864,7 +1864,7 @@ impl SwcGenerator {
                     self.gen_pattern(p);
                 }
             }
-            Pattern::Ref(inner) => {
+            Pattern::Ref { pattern: inner, .. } => {
                 // Preserve ref in Rust
                 self.emit("ref ");
                 self.gen_pattern(inner);

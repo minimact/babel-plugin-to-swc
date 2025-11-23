@@ -392,7 +392,7 @@ impl TypeChecker {
             Pattern::Variant { .. } => {
                 // Variant patterns not yet implemented
             }
-            Pattern::Ref(inner) => {
+            Pattern::Ref { pattern: inner, .. } => {
                 // ref pattern - define variables from the inner pattern
                 // The type remains the same (ref doesn't change the type in our IR)
                 self.define_pattern_in_env(inner, type_info);

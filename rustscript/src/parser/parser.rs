@@ -552,9 +552,21 @@ impl Parser {
         } else if self.check(TokenKind::Const) {
             self.parse_const_stmt()
         } else if self.check(TokenKind::If) {
-            self.parse_if_stmt()
+            // Check if this if is followed by a postfix operator (., ?, etc.)
+            // If so, parse as expression to allow chaining
+            // Otherwise, parse as statement
+            if self.peek_if_continues_expr() {
+                self.parse_expr_stmt()  // if ... .method() is an expression
+            } else {
+                self.parse_if_stmt()    // regular if statement
+            }
         } else if self.check(TokenKind::Match) {
-            self.parse_match_stmt()
+            // Check if match is followed by a postfix operator
+            if self.peek_if_continues_expr() {
+                self.parse_expr_stmt()
+            } else {
+                self.parse_match_stmt()
+            }
         } else if self.check(TokenKind::For) {
             self.parse_for_stmt()
         } else if self.check(TokenKind::While) {
@@ -791,7 +803,12 @@ impl Parser {
         }
 
         // Identifier, struct pattern, or variant pattern
-        let name = self.expect_ident()?;
+        // Try AST types first (e.g., Literal, Expression), then regular identifiers
+        let name = if let Some(ast_type) = self.try_expect_ast_type() {
+            ast_type
+        } else {
+            self.expect_ident()?
+        };
 
         // Check for path-qualified pattern: Type::Variant
         if self.check(TokenKind::ColonColon) {
@@ -2149,6 +2166,83 @@ impl Parser {
 
     // === Helper methods ===
 
+    /// Peek ahead to check if an if/match continues as an expression (e.g., followed by . or ?)
+    /// This helps determine if it should be parsed as expression or statement
+    fn peek_if_continues_expr(&self) -> bool {
+        let mut pos = self.pos + 1; // skip 'if' or 'match'
+        let mut brace_depth = 0;
+        let mut seen_first_brace = false;
+        let max_lookahead = 1000; // Safety limit
+        let start_pos = pos;
+
+        // Skip to the end of the if/match construct
+        // We need to track braces carefully - the first { we see is the then-block,
+        // and we need to find its matching }
+        while pos < self.tokens.len() && (pos - start_pos) < max_lookahead {
+            match &self.tokens[pos].kind {
+                TokenKind::LBrace => {
+                    brace_depth += 1;
+                    seen_first_brace = true;
+                },
+                TokenKind::RBrace => {
+                    brace_depth -= 1;
+                    // Only stop when we've closed all the braces we opened
+                    if seen_first_brace && brace_depth == 0 {
+                        // This closes the then-block. Check for else
+                        pos += 1;
+                        // Skip newlines
+                        while pos < self.tokens.len() && matches!(self.tokens[pos].kind, TokenKind::Newline) {
+                            pos += 1;
+                        }
+                        // If there's an else, continue scanning the else block
+                        if pos < self.tokens.len() && matches!(self.tokens[pos].kind, TokenKind::Else) {
+                            pos += 1; // skip 'else'
+                            // Check if else is followed by if (else-if) or a block
+                            while pos < self.tokens.len() && matches!(self.tokens[pos].kind, TokenKind::Newline) {
+                                pos += 1;
+                            }
+                            if pos < self.tokens.len() && matches!(self.tokens[pos].kind, TokenKind::If) {
+                                // else if - need to scan another if construct
+                                // This will be handled in the next iterations
+                                seen_first_brace = false;
+                                continue;
+                            }
+                            // else block - reset and continue
+                            seen_first_brace = false;
+                            continue;
+                        }
+                        // No else, we're done
+                        break;
+                    }
+                }
+                _ => {}
+            }
+            pos += 1;
+        }
+
+        // If we hit the limit, assume it's a statement
+        if (pos - start_pos) >= max_lookahead {
+            return false;
+        }
+
+        // Skip newlines
+        while pos < self.tokens.len() && matches!(self.tokens[pos].kind, TokenKind::Newline) {
+            pos += 1;
+        }
+
+        // Check if followed by postfix operators that continue the expression
+        if pos < self.tokens.len() {
+            matches!(self.tokens[pos].kind,
+                TokenKind::Dot |        // .method()
+                TokenKind::Question |   // ?
+                TokenKind::LBracket |   // [index]
+                TokenKind::As           // as Type
+            )
+        } else {
+            false
+        }
+    }
+
     fn peek(&self) -> Option<&Token> {
         self.tokens.get(self.pos)
     }
@@ -2262,6 +2356,11 @@ impl Parser {
             TokenKind::JSXAttribute => "JSXAttribute",
             TokenKind::JSXText => "JSXText",
             TokenKind::JSXExpressionContainer => "JSXExpressionContainer",
+            // Type keywords that can also be variant names (e.g. Expression::BooleanLiteral)
+            TokenKind::Bool => "Bool",
+            TokenKind::Str => "String",
+            TokenKind::I32 => "Number",
+            TokenKind::F64 => "Float",
             _ => return None,
         };
         self.advance();

@@ -673,7 +673,7 @@ impl Resolver {
                     self.resolve_pattern(inner_pat);
                 }
             }
-            Pattern::Ref(inner) => {
+            Pattern::Ref { pattern: inner, .. } => {
                 // ref pattern - resolve the inner pattern
                 self.resolve_pattern(inner);
             }
@@ -722,7 +722,7 @@ impl Resolver {
                     self.define_pattern(first, type_info);
                 }
             }
-            Pattern::Ref(inner) => {
+            Pattern::Ref { pattern: inner, .. } => {
                 // ref pattern - define variables from the inner pattern
                 // The type remains the same (ref doesn't change the type in our IR)
                 self.define_pattern(inner, type_info);
