@@ -1187,6 +1187,10 @@ impl Parser {
                     });
                 } else if self.match_token(TokenKind::ColonColon) {
                     // Path expression like fs::write or HashMap::new
+                    // Check for turbofish syntax (not supported)
+                    if self.check(TokenKind::Lt) {
+                        return Err(self.error("Turbofish syntax (`::<Type>`) is not supported. Use type annotations instead: `let result: Type = expr.method()`"));
+                    }
                     let method = self.expect_ident()?;
                     let span = self.current_span();
                     expr = Expr::Member(MemberExpr {
@@ -1755,8 +1759,16 @@ impl Parser {
                 }
             } else if self.match_token(TokenKind::ColonColon) {
                 // Static method call like HashMap::new or Expr::CallExpression
+                // Check for turbofish syntax (not supported)
+                if self.check(TokenKind::Lt) {
+                    return Err(self.error("Turbofish syntax (`::<Type>`) is not supported. Use type annotations instead: `let result: Type = expr.method()`"));
+                }
+
                 let method = if let Some(ast_type) = self.try_expect_ast_type() {
                     ast_type
+                } else if self.check(TokenKind::Lt) {
+                    // Double-check for < after AST type check failed
+                    return Err(self.error("Turbofish syntax (`::<Type>`) is not supported. Use type annotations instead: `let result: Type = expr.method()`"));
                 } else {
                     self.expect_ident()?
                 };
