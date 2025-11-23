@@ -195,7 +195,19 @@ impl Parser {
                 PluginItem::Struct(self.parse_struct()?)
             } else if self.check(TokenKind::Enum) {
                 PluginItem::Enum(self.parse_enum()?)
-            } else if self.check(TokenKind::Fn) || self.check(TokenKind::Pub) {
+            } else if self.check(TokenKind::Pub) {
+                // Handle pub struct, pub enum, pub fn
+                self.advance(); // consume 'pub'
+                if self.check(TokenKind::Struct) {
+                    PluginItem::Struct(self.parse_struct()?)
+                } else if self.check(TokenKind::Enum) {
+                    PluginItem::Enum(self.parse_enum()?)
+                } else if self.check(TokenKind::Fn) {
+                    PluginItem::Function(self.parse_function()?)
+                } else {
+                    return Err(self.error("Expected struct, enum, or fn after 'pub'"));
+                }
+            } else if self.check(TokenKind::Fn) {
                 PluginItem::Function(self.parse_function()?)
             } else if self.check(TokenKind::Impl) {
                 PluginItem::Impl(self.parse_impl()?)
@@ -224,6 +236,10 @@ impl Parser {
             }
 
             let field_span = self.current_span();
+            // Skip 'pub' if present on field
+            if self.check(TokenKind::Pub) {
+                self.advance();
+            }
             let field_name = self.expect_ident()?;
             self.expect(TokenKind::Colon)?;
             let ty = self.parse_type()?;
@@ -1705,6 +1721,13 @@ impl Parser {
                 // Try operator: expr?
                 let span = self.current_span();
                 expr = Expr::Try(Box::new(expr));
+            } else if self.match_token(TokenKind::As) {
+                // Type cast: expr as Type
+                // For now, we'll parse the type but ignore it in codegen
+                // since JavaScript doesn't have type casts
+                let _target_type = self.parse_type()?;
+                // Keep the expression as-is, the cast is just for type checking
+                // expr remains unchanged
             } else {
                 break;
             }
@@ -2116,8 +2139,16 @@ impl Parser {
             }
 
             let field_name = self.expect_ident()?;
-            self.expect(TokenKind::Colon)?;
-            let value = self.parse_expr()?;
+            let value = if self.check(TokenKind::Colon) {
+                self.advance(); // consume ':'
+                self.parse_expr()?
+            } else {
+                // Field shorthand: { field } means { field: field }
+                Expr::Ident(IdentExpr {
+                    name: field_name.clone(),
+                    span: self.current_span(),
+                })
+            };
             fields.push((field_name, value));
 
             self.skip_newlines();
