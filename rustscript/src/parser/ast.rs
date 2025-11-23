@@ -115,9 +115,26 @@ pub struct EnumVariant {
 pub struct FnDecl {
     pub is_pub: bool,
     pub name: String,
+    pub type_params: Vec<GenericParam>,  // <F, T>
     pub params: Vec<Param>,
     pub return_type: Option<Type>,
+    pub where_clause: Vec<WherePredicate>,  // where F: Fn(...)
     pub body: Block,
+    pub span: Span,
+}
+
+/// Generic type parameter (for Rust-style generics)
+#[derive(Debug, Clone)]
+pub struct GenericParam {
+    pub name: String,
+    pub span: Span,
+}
+
+/// Where clause predicate
+#[derive(Debug, Clone)]
+pub struct WherePredicate {
+    pub target: String,  // The type parameter name (e.g., "F")
+    pub bound: Type,     // The trait bound (e.g., Fn(...) -> Str)
     pub span: Span,
 }
 
@@ -162,6 +179,11 @@ pub enum Type {
     Optional(Box<Type>),
     /// Unit type: ()
     Unit,
+    /// Function trait: Fn(T1, T2) -> R
+    FnTrait {
+        params: Vec<Type>,
+        return_type: Box<Type>,
+    },
 }
 
 // =============================================================================

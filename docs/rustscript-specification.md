@@ -1,7 +1,7 @@
 # RustScript Language Specification
 
-**Version:** 0.7.0
-**Status:** Draft (Parser & Codegen Modules Added)
+**Version:** 0.8.0
+**Status:** Draft (Generic Functions Added)
 **Target Platforms:** Babel (JavaScript) & SWC (Rust/WASM)
 
 ---
@@ -33,14 +33,14 @@ plugin      fn          let         const       if          else
 match       return      true        false       null        for
 in          while       break       continue    struct      enum
 impl        use         pub         mut         self        Self
-traverse    using       writer
+traverse    using       writer      where
 ```
 
 ### 2.2 Reserved Keywords (Future Use)
 
 ```
-async       await       trait       where       type        as
-loop        mod         crate       super       dyn         static
+async       await       trait       type        as          loop
+mod         crate       super       dyn         static
 ```
 
 ### 2.3 Operators
@@ -257,6 +257,68 @@ fn function_name(param: Type, param2: &mut Type) -> ReturnType {
 pub fn public_function() { }    // Exported
 fn private_function() { }       // Internal
 ```
+
+#### 4.2.1 Generic Functions
+
+Generic functions allow type parameters and trait bounds using Rust syntax:
+
+```rustscript
+// Simple generic function
+fn identity<T>(value: T) -> T {
+    value
+}
+
+// Generic with trait bound (where clause)
+pub fn map_expression<F>(expr: &Expression, mapper: F) -> Str
+where
+    F: Fn(&Expression, bool) -> Str
+{
+    mapper(expr, false)
+}
+
+// Multiple type parameters and constraints
+fn transform<F, G>(input: Str, f: F, g: G) -> Str
+where
+    F: Fn(Str) -> Str,
+    G: Fn(Str) -> Str
+{
+    g(f(input))
+}
+```
+
+**Compilation Model:**
+
+Generic functions use **syntactic passthrough** - the parser recognizes the syntax, but generics are treated as metadata for code generation rather than enforced by a constraint solver.
+
+```javascript
+// Babel: Generics are stripped entirely
+export function mapExpression(expr, mapper) {
+    return mapper(expr, false);
+}
+```
+
+```rust
+// SWC: Generics preserved exactly
+pub fn map_expression<F>(expr: &Expr, mapper: F) -> String
+where
+    F: Fn(&Expr, bool) -> String
+{
+    mapper(expr, false)
+}
+```
+
+**Supported Syntax:**
+
+- Type parameters: `<F, T, U>`
+- Where clauses: `where F: Fn(...) -> R`
+- Function trait types: `Fn(T1, T2) -> R`
+- Reference parameters in traits: `Fn(&Type, bool) -> Str`
+
+**Limitations:**
+
+- No generic constraint checking (Marathon philosophy: syntax without semantic solver)
+- Type parameters are not tracked in the type system
+- Generics only work on functions, not on structs or enums
 
 ### 4.3 Variable Declaration
 
@@ -2189,11 +2251,12 @@ fn swc_specific() {
 
 ### 17.1 Planned Features
 
-- Generic functions
 - Derive macros for common patterns
 - LSP support for editor integration
 - Source maps for debugging
 - Advanced module features (re-exports, wildcards)
+- Generic constraints on structs and enums
+- Full trait system with trait bounds
 
 ### 17.2 Ecosystem
 

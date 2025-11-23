@@ -635,6 +635,15 @@ impl SwcGenerator {
 
     fn gen_helper_function(&mut self, f: &FnDecl) {
         let pub_str = if f.is_pub { "pub " } else { "" };
+
+        // Generate type parameters: <F, T>
+        let type_params = if !f.type_params.is_empty() {
+            let params: Vec<String> = f.type_params.iter().map(|p| p.name.clone()).collect();
+            format!("<{}>", params.join(", "))
+        } else {
+            String::new()
+        };
+
         let params: Vec<String> = f.params.iter().map(|p| {
             format!("{}: {}", p.name, self.type_to_rust(&p.ty))
         }).collect();
@@ -643,7 +652,17 @@ impl SwcGenerator {
             .map(|t| format!(" -> {}", self.type_to_rust(t)))
             .unwrap_or_default();
 
-        self.emit_line(&format!("{}fn {}({}){} {{", pub_str, f.name, params.join(", "), ret_type));
+        // Generate where clause
+        let where_clause = if !f.where_clause.is_empty() {
+            let predicates: Vec<String> = f.where_clause.iter().map(|p| {
+                format!("    {}: {}", p.target, self.type_to_rust(&p.bound))
+            }).collect();
+            format!("\nwhere\n{}", predicates.join(",\n"))
+        } else {
+            String::new()
+        };
+
+        self.emit_line(&format!("{}fn {}{}({}){}{} {{", pub_str, f.name, type_params, params.join(", "), ret_type, where_clause));
         self.indent += 1;
 
         // Track parameter types in the environment
@@ -1066,6 +1085,11 @@ impl SwcGenerator {
                 format!("Option<{}>", self.type_to_rust(inner))
             }
             Type::Unit => "()".to_string(),
+            Type::FnTrait { params, return_type } => {
+                let param_types: Vec<String> = params.iter().map(|t| self.type_to_rust(t)).collect();
+                let ret = self.type_to_rust(return_type);
+                format!("Fn({}) -> {}", param_types.join(", "), ret)
+            }
         }
     }
 
@@ -1831,6 +1855,7 @@ impl SwcGenerator {
             Type::Tuple(_) => TypeContext::unknown(),
             Type::Optional(inner) => self.type_from_ast(inner),
             Type::Unit => TypeContext::unknown(),
+            Type::FnTrait { .. } => TypeContext::unknown(),
         }
     }
 

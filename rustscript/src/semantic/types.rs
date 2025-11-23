@@ -447,5 +447,10 @@ pub fn ast_type_to_type_info(ty: &crate::parser::Type) -> TypeInfo {
             TypeInfo::Option(Box::new(ast_type_to_type_info(inner)))
         }
         crate::parser::Type::Unit => TypeInfo::Unit,
+        crate::parser::Type::FnTrait { .. } => {
+            // Function trait types are treated as unknown for type checking purposes
+            // They're mainly syntactic for the Rust target
+            TypeInfo::Unknown
+        }
     }
 }

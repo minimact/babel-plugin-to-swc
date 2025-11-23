@@ -354,6 +354,26 @@ impl Parser {
         self.expect(TokenKind::Fn)?;
         let name = self.expect_ident()?;
 
+        // Parse generic type parameters: <F, T>
+        let type_params = if self.match_token(TokenKind::Lt) {
+            let mut params = Vec::new();
+            loop {
+                let param_span = self.current_span();
+                let param_name = self.expect_ident()?;
+                params.push(GenericParam {
+                    name: param_name,
+                    span: param_span,
+                });
+                if !self.match_token(TokenKind::Comma) {
+                    break;
+                }
+            }
+            self.expect(TokenKind::Gt)?;
+            params
+        } else {
+            Vec::new()
+        };
+
         self.expect(TokenKind::LParen)?;
         let params = self.parse_params()?;
         self.expect(TokenKind::RParen)?;
@@ -364,13 +384,48 @@ impl Parser {
             None
         };
 
+        // Skip newlines before checking for where clause
+        self.skip_newlines();
+
+        // Parse where clause: where F: Fn(...)
+        let where_clause = if self.check_ident("where") {
+            self.advance();
+            self.skip_newlines();
+            let mut predicates = Vec::new();
+            loop {
+                let pred_span = self.current_span();
+                let target = self.expect_ident()?;
+                self.expect(TokenKind::Colon)?;
+                let bound = self.parse_type()?;
+                predicates.push(WherePredicate {
+                    target,
+                    bound,
+                    span: pred_span,
+                });
+                self.skip_newlines();
+                if !self.match_token(TokenKind::Comma) {
+                    break;
+                }
+                self.skip_newlines();
+                // Allow trailing comma before block
+                if self.check(TokenKind::LBrace) {
+                    break;
+                }
+            }
+            predicates
+        } else {
+            Vec::new()
+        };
+
         let body = self.parse_block()?;
 
         Ok(FnDecl {
             is_pub,
             name,
+            type_params,
             params,
             return_type,
+            where_clause,
             body,
             span: start_span,
         })
@@ -513,6 +568,29 @@ impl Parser {
 
         // Get the type name
         let name = self.expect_type_name()?;
+
+        // Check for Fn trait type: Fn(T1, T2) -> R
+        if name == "Fn" {
+            self.expect(TokenKind::LParen)?;
+            let mut params = Vec::new();
+            if !self.check(TokenKind::RParen) {
+                loop {
+                    params.push(self.parse_type()?);
+                    if !self.match_token(TokenKind::Comma) {
+                        break;
+                    }
+                }
+            }
+            self.expect(TokenKind::RParen)?;
+
+            let return_type = if self.match_token(TokenKind::Arrow) {
+                Box::new(self.parse_type()?)
+            } else {
+                Box::new(Type::Unit)
+            };
+
+            return Ok(Type::FnTrait { params, return_type });
+        }
 
         // Check for type arguments
         if self.match_token(TokenKind::Lt) {
