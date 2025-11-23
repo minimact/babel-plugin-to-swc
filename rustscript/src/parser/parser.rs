@@ -280,7 +280,12 @@ impl Parser {
             }
 
             let variant_span = self.current_span();
-            let variant_name = self.expect_ident()?;
+            // Allow AST type keywords as variant names (e.g., BinaryExpression, CallExpression)
+            let variant_name = if let Some(ast_type) = self.try_expect_ast_type() {
+                ast_type
+            } else {
+                self.expect_ident()?
+            };
 
             let fields = if self.check(TokenKind::LParen) {
                 self.advance();
@@ -1949,9 +1954,13 @@ impl Parser {
             }
         }
 
-        // Closure
+        // Closure: |params| body or || body
         if self.check(TokenKind::Pipe) {
             return self.parse_closure(span);
+        }
+        // Empty closure: || body (lexed as Or token)
+        if self.check(TokenKind::Or) {
+            return self.parse_empty_closure(span);
         }
 
         // Literal
@@ -2181,6 +2190,26 @@ impl Parser {
 
         Ok(Expr::Closure(ClosureExpr {
             params,
+            body: Box::new(body),
+            span,
+        }))
+    }
+
+    /// Parse empty closure: || body
+    /// The || is lexed as a single Or token
+    fn parse_empty_closure(&mut self, span: Span) -> ParseResult<Expr> {
+        self.expect(TokenKind::Or)?; // consume ||
+
+        // Closure body can be either an expression or a block
+        let body = if self.check(TokenKind::LBrace) {
+            let block = self.parse_block()?;
+            Expr::Block(block)
+        } else {
+            self.parse_expr()?
+        };
+
+        Ok(Expr::Closure(ClosureExpr {
+            params: Vec::new(), // empty params
             body: Box::new(body),
             span,
         }))
