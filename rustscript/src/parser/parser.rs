@@ -647,12 +647,17 @@ impl Parser {
         let mut else_if_branches = Vec::new();
         let mut else_branch = None;
 
+        self.skip_newlines();
         while self.match_token(TokenKind::Else) {
-            if self.match_token(TokenKind::If) {
-                // Note: else-if with let not supported yet, just regular condition
-                let cond = self.parse_expr_no_struct()?;
-                let block = self.parse_block()?;
-                else_if_branches.push((cond, block));
+            if self.check(TokenKind::If) {
+                // else if - parse recursively as a nested if statement
+                let nested_if = self.parse_if_stmt()?;
+                // Wrap in a block
+                else_branch = Some(Block {
+                    stmts: vec![nested_if],
+                    span: start_span,
+                });
+                break;
             } else {
                 else_branch = Some(self.parse_block()?);
                 break;
@@ -725,11 +730,20 @@ impl Parser {
     /// Parse pattern
     fn parse_pattern(&mut self) -> ParseResult<Pattern> {
 
-        // Check for ref pattern: ref x
+        // Check for ref pattern: ref x or ref mut x
         if self.check_ident("ref") {
             self.advance();
+            let is_mut = if self.check(TokenKind::Mut) {
+                self.advance();
+                true
+            } else {
+                false
+            };
             let inner = self.parse_pattern()?;
-            return Ok(Pattern::Ref(Box::new(inner)));
+            return Ok(Pattern::Ref {
+                is_mut,
+                pattern: Box::new(inner),
+            });
         }
 
         // Check for wildcard
@@ -1707,6 +1721,16 @@ impl Parser {
     fn parse_primary(&mut self) -> ParseResult<Expr> {
         let span = self.current_span();
 
+        // If expression (can be used as a value)
+        if self.check(TokenKind::If) {
+            return self.parse_if_expr();
+        }
+
+        // Match expression
+        if self.check(TokenKind::Match) {
+            return self.parse_match_expr();
+        }
+
         // Block expression
         if self.check(TokenKind::LBrace) {
             let block = self.parse_block()?;
@@ -1985,6 +2009,82 @@ impl Parser {
             body: Box::new(body),
             span,
         }))
+    }
+
+    /// Parse if expression (can be used as value)
+    fn parse_if_expr(&mut self) -> ParseResult<Expr> {
+        let start_span = self.current_span();
+        self.expect(TokenKind::If)?;
+
+        // Check for if-let pattern: `if let Pattern = expr`
+        let (pattern, condition) = if self.match_token(TokenKind::Let) {
+            let pat = self.parse_pattern()?;
+            self.expect(TokenKind::Eq)?;
+            let expr = self.parse_expr_no_struct()?;
+            (Some(pat), expr)
+        } else {
+            // Use parse_expr_no_struct to avoid ambiguity with block
+            (None, self.parse_expr_no_struct()?)
+        };
+
+        let then_branch = self.parse_block()?;
+
+        // Parse else or else-if branches
+        let else_branch = if self.match_token(TokenKind::Else) {
+            if self.check(TokenKind::If) {
+                // else if - parse as nested if expression inside a block
+                let else_if_expr = self.parse_if_expr()?;
+                Some(Block {
+                    stmts: vec![Stmt::Expr(ExprStmt {
+                        expr: else_if_expr,
+                        span: start_span,
+                    })],
+                    span: start_span,
+                })
+            } else {
+                // else block
+                Some(self.parse_block()?)
+            }
+        } else {
+            None
+        };
+
+        Ok(Expr::If(Box::new(IfExpr {
+            condition,
+            pattern,
+            then_branch,
+            else_branch,
+            span: start_span,
+        })))
+    }
+
+    /// Parse match expression (can be used as value)
+    fn parse_match_expr(&mut self) -> ParseResult<Expr> {
+        let start_span = self.current_span();
+        self.expect(TokenKind::Match)?;
+
+        // Parse scrutinee - must not consume the { that starts match arms
+        let scrutinee = self.parse_match_scrutinee()?;
+
+        self.expect(TokenKind::LBrace)?;
+
+        let mut arms = Vec::new();
+        loop {
+            self.skip_newlines();
+            if self.check(TokenKind::RBrace) {
+                break;
+            }
+            arms.push(self.parse_match_arm()?);
+            self.skip_newlines();
+        }
+
+        self.expect(TokenKind::RBrace)?;
+
+        Ok(Expr::Match(Box::new(MatchExpr {
+            scrutinee,
+            arms,
+            span: start_span,
+        })))
     }
 
     /// Parse struct initialization

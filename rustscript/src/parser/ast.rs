@@ -395,8 +395,11 @@ pub enum Pattern {
     Rest(Box<Pattern>),
     /// Or pattern: pattern1 | pattern2
     Or(Vec<Pattern>),
-    /// Ref pattern: ref x (creates a reference binding)
-    Ref(Box<Pattern>),
+    /// Ref pattern: ref x or ref mut x (creates a reference binding)
+    Ref {
+        is_mut: bool,
+        pattern: Box<Pattern>,
+    },
 }
 
 /// Object pattern property
@@ -665,6 +668,8 @@ pub struct VecInitExpr {
 #[derive(Debug, Clone)]
 pub struct IfExpr {
     pub condition: Expr,
+    /// Optional pattern for if-let: `if let Some(x) = expr`
+    pub pattern: Option<Pattern>,
     pub then_branch: Block,
     pub else_branch: Option<Block>,
     pub span: Span,
