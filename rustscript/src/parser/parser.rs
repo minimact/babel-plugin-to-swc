@@ -563,7 +563,11 @@ impl Parser {
         self.skip_newlines();
 
 
-        if self.check(TokenKind::Let) {
+        if self.check(TokenKind::Fn) {
+            // Nested function declaration
+            let func = self.parse_function()?;
+            Ok(Stmt::Function(func))
+        } else if self.check(TokenKind::Let) {
             self.parse_let_stmt()
         } else if self.check(TokenKind::Const) {
             self.parse_const_stmt()
@@ -2370,7 +2374,44 @@ impl Parser {
                 self.advance();
                 Ok(name)
             }
-            _ => Err(self.error("Expected identifier")),
+            Some(Token { kind, .. }) => {
+                // Check if it's a keyword that was used where an identifier is expected
+                let keyword_name = match kind {
+                    TokenKind::Fn => Some("fn"),
+                    TokenKind::Let => Some("let"),
+                    TokenKind::Const => Some("const"),
+                    TokenKind::Mut => Some("mut"),
+                    TokenKind::If => Some("if"),
+                    TokenKind::Else => Some("else"),
+                    TokenKind::For => Some("for"),
+                    TokenKind::In => Some("in"),
+                    TokenKind::While => Some("while"),
+                    TokenKind::Loop => Some("loop"),
+                    TokenKind::Return => Some("return"),
+                    TokenKind::Break => Some("break"),
+                    TokenKind::Continue => Some("continue"),
+                    TokenKind::Match => Some("match"),
+                    TokenKind::Struct => Some("struct"),
+                    TokenKind::Enum => Some("enum"),
+                    TokenKind::Impl => Some("impl"),
+                    TokenKind::Pub => Some("pub"),
+                    TokenKind::Use => Some("use"),
+                    TokenKind::Plugin => Some("plugin"),
+                    TokenKind::Writer => Some("writer"),
+                    TokenKind::Traverse => Some("traverse"),
+                    _ => None,
+                };
+
+                if let Some(keyword) = keyword_name {
+                    Err(self.error(&format!(
+                        "Expected identifier, found keyword '{}' (keywords cannot be used as variable names)",
+                        keyword
+                    )))
+                } else {
+                    Err(self.error("Expected identifier"))
+                }
+            }
+            None => Err(self.error("Expected identifier, found end of file")),
         }
     }
 

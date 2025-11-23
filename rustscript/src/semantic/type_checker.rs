@@ -384,6 +384,33 @@ impl TypeChecker {
                     }
                 }
             }
+
+            Stmt::Function(fn_decl) => {
+                // Nested function declaration
+                // Define the function in the current scope
+                let param_types: Vec<TypeInfo> = fn_decl.params.iter()
+                    .map(|p| ast_type_to_type_info(&p.ty))
+                    .collect();
+                let ret_type = fn_decl.return_type.as_ref()
+                    .map(ast_type_to_type_info)
+                    .unwrap_or(TypeInfo::Unit);
+                let fn_type = TypeInfo::Function {
+                    params: param_types,
+                    ret: Box::new(ret_type),
+                };
+                self.env.define(fn_decl.name.clone(), fn_type);
+
+                // Type check the function body in a new scope
+                self.env.push_scope();
+                // Define parameters
+                for param in &fn_decl.params {
+                    let param_type = ast_type_to_type_info(&param.ty);
+                    self.env.define(param.name.clone(), param_type);
+                }
+                // Check the body
+                self.check_block(&fn_decl.body);
+                self.env.pop_scope();
+            }
         }
     }
 

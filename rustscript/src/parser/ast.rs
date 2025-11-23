@@ -315,6 +315,7 @@ pub enum Stmt {
     Break(BreakStmt),
     Continue(ContinueStmt),
     Traverse(TraverseStmt),
+    Function(FnDecl),  // Nested function declaration
 }
 
 /// Let statement: `let [mut] name [: Type] = expr;`

@@ -151,6 +151,11 @@ impl OwnershipChecker {
                     }
                 }
             }
+
+            Stmt::Function(fn_decl) => {
+                // Check nested function
+                self.check_function(fn_decl);
+            }
         }
     }
 

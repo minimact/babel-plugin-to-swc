@@ -948,6 +948,25 @@ impl BabelGenerator {
             Stmt::Traverse(traverse_stmt) => {
                 self.gen_traverse_stmt(traverse_stmt);
             }
+            Stmt::Function(fn_decl) => {
+                // Generate nested function
+                self.emit_indent();
+                self.emit("function ");
+                self.emit(&fn_decl.name);
+                self.emit("(");
+                for (i, param) in fn_decl.params.iter().enumerate() {
+                    if i > 0 {
+                        self.emit(", ");
+                    }
+                    self.emit(&param.name);
+                }
+                self.emit(") {\n");
+                self.indent += 1;
+                self.gen_block(&fn_decl.body);
+                self.indent -= 1;
+                self.emit_indent();
+                self.emit("}\n");
+            }
         }
     }
 
