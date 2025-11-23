@@ -890,19 +890,60 @@ impl Parser {
                 self.expect_ident()?
             };
 
-            // Path-qualified patterns are always variant patterns
+            // Path-qualified patterns can be tuple variants, struct variants, or unit variants
             if self.check(TokenKind::LParen) {
-                // Path::Variant(inner)
+                // Path::Variant(inner) - tuple variant
                 self.advance();
                 let inner = if self.check(TokenKind::RParen) {
                     None
                 } else {
-                    Some(Box::new(self.parse_pattern()?))
+                    // Parse tuple elements
+                    let mut elements = vec![];
+                    loop {
+                        elements.push(self.parse_pattern()?);
+                        if !self.match_token(TokenKind::Comma) {
+                            break;
+                        }
+                        // Allow trailing comma
+                        if self.check(TokenKind::RParen) {
+                            break;
+                        }
+                    }
+                    // If single element, just use that pattern; otherwise wrap in tuple
+                    if elements.len() == 1 {
+                        Some(Box::new(elements.into_iter().next().unwrap()))
+                    } else {
+                        Some(Box::new(Pattern::Tuple(elements)))
+                    }
                 };
                 self.expect(TokenKind::RParen)?;
                 Ok(Pattern::Variant { name: variant_name, inner })
+            } else if self.check(TokenKind::LBrace) {
+                // Path::Variant { field: pattern } - struct variant
+                self.advance();
+                let mut fields = Vec::new();
+                loop {
+                    self.skip_newlines();
+                    if self.check(TokenKind::RBrace) {
+                        break;
+                    }
+                    let field_name = self.expect_ident()?;
+                    // Support shorthand: { x, y } instead of { x: x, y: y }
+                    let field_pattern = if self.match_token(TokenKind::Colon) {
+                        self.parse_pattern()?
+                    } else {
+                        Pattern::Ident(field_name.clone())
+                    };
+                    fields.push((field_name, field_pattern));
+
+                    if !self.match_token(TokenKind::Comma) {
+                        break;
+                    }
+                }
+                self.expect(TokenKind::RBrace)?;
+                Ok(Pattern::Struct { name: variant_name, fields })
             } else {
-                // Path::Variant (unit variant)
+                // Path::Variant - unit variant
                 Ok(Pattern::Variant { name: variant_name, inner: None })
             }
         } else if self.check(TokenKind::LBrace) {
@@ -1853,14 +1894,27 @@ impl Parser {
                     self.expect_ident()?
                 };
                 let span = self.current_span();
-                expr = Expr::Member(MemberExpr {
-                    object: Box::new(expr),
-                    property: method,
-                    optional: false,
-                    computed: false,
-                    is_path: true,
-                    span,
-                });
+
+                // Check if this is a struct variant construction: Type::Variant { field: value }
+                if self.check(TokenKind::LBrace) {
+                    // Get the full path as a string (e.g., "Message::Move")
+                    let path = if let Expr::Ident(ident) = &expr {
+                        format!("{}::{}", ident.name, method)
+                    } else {
+                        // For complex paths, just use the method name
+                        method.clone()
+                    };
+                    expr = self.parse_struct_init(path, span)?;
+                } else {
+                    expr = Expr::Member(MemberExpr {
+                        object: Box::new(expr),
+                        property: method,
+                        optional: false,
+                        computed: false,
+                        is_path: true,
+                        span,
+                    });
+                }
             } else if self.match_token(TokenKind::Question) {
                 // Try operator: expr?
                 let span = self.current_span();
@@ -2049,17 +2103,31 @@ impl Parser {
             }
         }
 
-        // matches! macro
+        // matches! macro: matches!(expr, pattern)
+        // We need to parse the pattern argument specially since it's not an expression
         if self.match_token(TokenKind::Matches) {
             self.expect(TokenKind::LParen)?;
-            let args = self.parse_args()?;
+            // First arg: expression to match
+            let expr_arg = self.parse_expr()?;
+            self.expect(TokenKind::Comma)?;
+            self.skip_newlines();
+            // Second arg: pattern - parse as pattern, then convert to pseudo-expression
+            // This is a hack: we represent the pattern as an expression for now
+            // The semantic analyzer will need to handle this specially
+            let pattern = self.parse_pattern()?;
+            // Convert pattern to a placeholder expression
+            // We'll use a string literal to represent the pattern
+            let pattern_arg = Expr::Ident(IdentExpr {
+                name: format!("_pattern_{:?}", pattern),
+                span: self.current_span(),
+            });
             self.expect(TokenKind::RParen)?;
             return Ok(Expr::Call(CallExpr {
                 callee: Box::new(Expr::Ident(IdentExpr {
                     name: "matches!".to_string(),
                     span,
                 })),
-                args,
+                args: vec![expr_arg, pattern_arg],
                 type_args: Vec::new(),
                 optional: false,
                 span,
