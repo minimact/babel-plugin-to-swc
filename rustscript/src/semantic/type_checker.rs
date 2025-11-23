@@ -392,6 +392,11 @@ impl TypeChecker {
             Pattern::Variant { .. } => {
                 // Variant patterns not yet implemented
             }
+            Pattern::Ref(inner) => {
+                // ref pattern - define variables from the inner pattern
+                // The type remains the same (ref doesn't change the type in our IR)
+                self.define_pattern_in_env(inner, type_info);
+            }
         }
     }
 
@@ -656,6 +661,11 @@ impl TypeChecker {
             }
 
             Expr::Paren(inner) => self.infer_expr(inner),
+
+            Expr::Tuple(elements) => {
+                let element_types: Vec<_> = elements.iter().map(|e| self.infer_expr(e)).collect();
+                TypeInfo::Tuple(element_types)
+            }
 
             Expr::Block(block) => {
                 // Type of a block is the type of its last expression (if any)

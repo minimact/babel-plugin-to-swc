@@ -1864,6 +1864,11 @@ impl SwcGenerator {
                     self.gen_pattern(p);
                 }
             }
+            Pattern::Ref(inner) => {
+                // Preserve ref in Rust
+                self.emit("ref ");
+                self.gen_pattern(inner);
+            }
         }
     }
 
@@ -2314,6 +2319,17 @@ impl SwcGenerator {
             Expr::Paren(inner) => {
                 self.emit("(");
                 self.gen_expr(inner);
+                self.emit(")");
+            }
+            Expr::Tuple(elements) => {
+                // Tuples stay as tuples in Rust
+                self.emit("(");
+                for (i, elem) in elements.iter().enumerate() {
+                    if i > 0 {
+                        self.emit(", ");
+                    }
+                    self.gen_expr(elem);
+                }
                 self.emit(")");
             }
         }

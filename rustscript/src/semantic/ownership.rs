@@ -251,6 +251,12 @@ impl OwnershipChecker {
                 self.check_expr(inner);
             }
 
+            Expr::Tuple(elements) => {
+                for elem in elements {
+                    self.check_expr(elem);
+                }
+            }
+
             Expr::Block(block) => {
                 for stmt in &block.stmts {
                     self.check_stmt(stmt);
@@ -299,6 +305,9 @@ impl OwnershipChecker {
             Expr::Paren(inner) => {
                 self.check_needs_clone(inner, span);
             }
+
+            // Tuple expressions produce owned values (newly created tuple)
+            Expr::Tuple(_) => {}
 
             // Block expressions produce owned values
             Expr::Block(_) => {}

@@ -1344,6 +1344,10 @@ impl BabelGenerator {
                 // Literals in destructuring don't make sense in JS, emit placeholder
                 self.gen_literal(lit);
             }
+            Pattern::Ref(inner) => {
+                // JavaScript doesn't have ref - just emit the inner pattern
+                self.gen_pattern(inner);
+            }
             Pattern::Struct { .. } | Pattern::Variant { .. } | Pattern::Or(_) => {
                 // Complex patterns that require match/if-let - emit placeholder
                 self.emit("_");
@@ -1417,6 +1421,10 @@ impl BabelGenerator {
                         self.emit(&format!("{} !== null", scrutinee_str));
                     }
                 }
+            }
+            Pattern::Ref(inner) => {
+                // ref doesn't affect the condition - check the inner pattern
+                self.gen_pattern_condition(inner, scrutinee);
             }
         }
     }
@@ -2028,6 +2036,17 @@ impl BabelGenerator {
                 self.emit("(");
                 self.gen_expr(inner);
                 self.emit(")");
+            }
+            Expr::Tuple(elements) => {
+                // Tuples become arrays in JavaScript
+                self.emit("[");
+                for (i, elem) in elements.iter().enumerate() {
+                    if i > 0 {
+                        self.emit(", ");
+                    }
+                    self.gen_expr(elem);
+                }
+                self.emit("]");
             }
         }
     }

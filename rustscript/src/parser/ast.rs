@@ -395,6 +395,8 @@ pub enum Pattern {
     Rest(Box<Pattern>),
     /// Or pattern: pattern1 | pattern2
     Or(Vec<Pattern>),
+    /// Ref pattern: ref x (creates a reference binding)
+    Ref(Box<Pattern>),
 }
 
 /// Object pattern property
@@ -547,6 +549,8 @@ pub enum Expr {
     Block(Block),
     /// Try expression: expr?
     Try(Box<Expr>),
+    /// Tuple expression: (expr1, expr2, ...)
+    Tuple(Vec<Expr>),
 }
 
 /// Literal values

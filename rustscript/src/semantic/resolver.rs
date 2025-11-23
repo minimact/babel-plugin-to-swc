@@ -673,6 +673,10 @@ impl Resolver {
                     self.resolve_pattern(inner_pat);
                 }
             }
+            Pattern::Ref(inner) => {
+                // ref pattern - resolve the inner pattern
+                self.resolve_pattern(inner);
+            }
             Pattern::Literal(_) | Pattern::Wildcard => {}
         }
     }
@@ -717,6 +721,11 @@ impl Resolver {
                 if let Some(first) = patterns.first() {
                     self.define_pattern(first, type_info);
                 }
+            }
+            Pattern::Ref(inner) => {
+                // ref pattern - define variables from the inner pattern
+                // The type remains the same (ref doesn't change the type in our IR)
+                self.define_pattern(inner, type_info);
             }
             Pattern::Struct { .. } | Pattern::Variant { .. } | Pattern::Literal(_) | Pattern::Wildcard => {
                 // No variables to define
@@ -852,6 +861,12 @@ impl Resolver {
 
             Expr::Paren(inner) => {
                 self.resolve_expr(inner);
+            }
+
+            Expr::Tuple(elements) => {
+                for elem in elements {
+                    self.resolve_expr(elem);
+                }
             }
 
             Expr::Block(block) => {

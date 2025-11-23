@@ -725,6 +725,13 @@ impl Parser {
     /// Parse pattern
     fn parse_pattern(&mut self) -> ParseResult<Pattern> {
 
+        // Check for ref pattern: ref x
+        if self.check_ident("ref") {
+            self.advance();
+            let inner = self.parse_pattern()?;
+            return Ok(Pattern::Ref(Box::new(inner)));
+        }
+
         // Check for wildcard
         if self.check_ident("_") {
             self.advance();
@@ -772,8 +779,33 @@ impl Parser {
         // Identifier, struct pattern, or variant pattern
         let name = self.expect_ident()?;
 
+        // Check for path-qualified pattern: Type::Variant
+        if self.check(TokenKind::ColonColon) {
+            self.advance(); // consume ::
 
-        if self.check(TokenKind::LBrace) {
+            // Try to parse as AST type first, then fall back to regular identifier
+            let variant_name = if let Some(ast_type) = self.try_expect_ast_type() {
+                ast_type
+            } else {
+                self.expect_ident()?
+            };
+
+            // Path-qualified patterns are always variant patterns
+            if self.check(TokenKind::LParen) {
+                // Path::Variant(inner)
+                self.advance();
+                let inner = if self.check(TokenKind::RParen) {
+                    None
+                } else {
+                    Some(Box::new(self.parse_pattern()?))
+                };
+                self.expect(TokenKind::RParen)?;
+                Ok(Pattern::Variant { name: variant_name, inner })
+            } else {
+                // Path::Variant (unit variant)
+                Ok(Pattern::Variant { name: variant_name, inner: None })
+            }
+        } else if self.check(TokenKind::LBrace) {
             // Struct pattern: Name { field: pattern, ... }
             self.advance();
             let mut fields = Vec::new();
@@ -1681,7 +1713,7 @@ impl Parser {
             return Ok(Expr::Block(block));
         }
 
-        // Parenthesized expression or unit literal ()
+        // Parenthesized expression, tuple, or unit literal ()
         if self.match_token(TokenKind::LParen) {
             // Check for unit literal ()
             if self.check(TokenKind::RParen) {
@@ -1692,9 +1724,30 @@ impl Parser {
             if self.check(TokenKind::Pipe) {
                 return self.parse_closure(span);
             }
-            let expr = self.parse_expr()?;
-            self.expect(TokenKind::RParen)?;
-            return Ok(Expr::Paren(Box::new(expr)));
+
+            // Parse first expression
+            let first_expr = self.parse_expr()?;
+
+            // Check if this is a tuple (has comma) or just parenthesized expression
+            if self.check(TokenKind::Comma) {
+                // It's a tuple!
+                let mut elements = vec![first_expr];
+
+                while self.match_token(TokenKind::Comma) {
+                    // Allow trailing comma
+                    if self.check(TokenKind::RParen) {
+                        break;
+                    }
+                    elements.push(self.parse_expr()?);
+                }
+
+                self.expect(TokenKind::RParen)?;
+                return Ok(Expr::Tuple(elements));
+            } else {
+                // Just a parenthesized expression
+                self.expect(TokenKind::RParen)?;
+                return Ok(Expr::Paren(Box::new(first_expr)));
+            }
         }
 
         // Closure
