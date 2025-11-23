@@ -10,6 +10,10 @@ pub struct Lexer<'a> {
     line: usize,
     column: usize,
     line_start: usize,
+    /// Depth tracking for context-aware newline handling
+    paren_depth: usize,
+    bracket_depth: usize,
+    brace_depth: usize,
 }
 
 impl<'a> Lexer<'a> {
@@ -21,6 +25,9 @@ impl<'a> Lexer<'a> {
             line: 1,
             column: 1,
             line_start: 0,
+            paren_depth: 0,
+            bracket_depth: 0,
+            brace_depth: 0,
         }
     }
 
@@ -49,13 +56,31 @@ impl<'a> Lexer<'a> {
         let kind = match self.advance() {
             None => TokenKind::Eof,
             Some((_, c)) => match c {
-                // Single-char tokens
-                '(' => TokenKind::LParen,
-                ')' => TokenKind::RParen,
-                '{' => TokenKind::LBrace,
-                '}' => TokenKind::RBrace,
-                '[' => TokenKind::LBracket,
-                ']' => TokenKind::RBracket,
+                // Single-char tokens (track depth for context-aware newlines)
+                '(' => {
+                    self.paren_depth += 1;
+                    TokenKind::LParen
+                }
+                ')' => {
+                    self.paren_depth = self.paren_depth.saturating_sub(1);
+                    TokenKind::RParen
+                }
+                '{' => {
+                    self.brace_depth += 1;
+                    TokenKind::LBrace
+                }
+                '}' => {
+                    self.brace_depth = self.brace_depth.saturating_sub(1);
+                    TokenKind::RBrace
+                }
+                '[' => {
+                    self.bracket_depth += 1;
+                    TokenKind::LBracket
+                }
+                ']' => {
+                    self.bracket_depth = self.bracket_depth.saturating_sub(1);
+                    TokenKind::RBracket
+                }
                 ',' => TokenKind::Comma,
                 ';' => TokenKind::Semicolon,
                 '?' => {
@@ -129,7 +154,7 @@ impl<'a> Lexer<'a> {
                         TokenKind::EqEq
                     } else if self.peek_char() == Some('>') {
                         self.advance();
-                        TokenKind::FatArrow
+                        TokenKind::DDArrow
                     } else {
                         TokenKind::Eq
                     }
@@ -209,11 +234,17 @@ impl<'a> Lexer<'a> {
                 // Char literals - treat as single-character strings
                 '\'' => self.read_char_as_string(),
 
-                // Newlines (track for error reporting)
+                // Newlines (skip if inside delimiters, otherwise create token)
                 '\n' => {
                     self.line += 1;
                     self.line_start = self.current_pos;
                     self.column = 1;
+
+                    // Skip newlines when inside any delimiters
+                    if self.paren_depth > 0 || self.bracket_depth > 0 || self.brace_depth > 0 {
+                        return self.next_token(); // Skip this newline, get next token
+                    }
+
                     TokenKind::Newline
                 }
 
@@ -675,7 +706,7 @@ mod tests {
         let mut lexer = Lexer::new("-> =>");
         let tokens = lexer.tokenize();
         assert!(matches!(tokens[0].kind, TokenKind::Arrow));
-        assert!(matches!(tokens[1].kind, TokenKind::FatArrow));
+        assert!(matches!(tokens[1].kind, TokenKind::DDArrow));
     }
 
     #[test]

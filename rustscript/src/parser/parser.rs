@@ -745,7 +745,7 @@ impl Parser {
     fn parse_match_arm(&mut self) -> ParseResult<MatchArm> {
         let start_span = self.current_span();
         let pattern = self.parse_pattern()?;
-        self.expect(TokenKind::FatArrow)?;
+        self.expect(TokenKind::DDArrow)?;
         let body = self.parse_expr()?;
 
         // Optional comma
@@ -778,6 +778,26 @@ impl Parser {
             });
         }
 
+        // Parse the base pattern (single pattern without OR)
+        let base_pattern = self.parse_single_pattern()?;
+
+        // Check for OR pattern: pattern | pattern | ...
+        if self.match_token(TokenKind::Pipe) {
+            let mut patterns = vec![base_pattern];
+            loop {
+                patterns.push(self.parse_single_pattern()?);
+                if !self.match_token(TokenKind::Pipe) {
+                    break;
+                }
+            }
+            return Ok(Pattern::Or(patterns));
+        }
+
+        Ok(base_pattern)
+    }
+
+    /// Parse a single pattern (not including OR)
+    fn parse_single_pattern(&mut self) -> ParseResult<Pattern> {
         // Check for wildcard
         if self.check_ident("_") {
             self.advance();
@@ -886,16 +906,6 @@ impl Parser {
             };
             self.expect(TokenKind::RParen)?;
             Ok(Pattern::Variant { name, inner })
-        } else if self.match_token(TokenKind::Pipe) {
-            // Or pattern
-            let mut patterns = vec![Pattern::Ident(name)];
-            loop {
-                patterns.push(self.parse_pattern()?);
-                if !self.match_token(TokenKind::Pipe) {
-                    break;
-                }
-            }
-            Ok(Pattern::Or(patterns))
         } else {
             // Check if this is a unit variant like None
             if name == "None" || name == "true" || name == "false" {
