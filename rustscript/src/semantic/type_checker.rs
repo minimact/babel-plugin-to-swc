@@ -781,6 +781,17 @@ impl TypeChecker {
                 // For now, just return the inner type (simplified)
                 inner_type
             }
+
+            Expr::Return(value) => {
+                // Return expression never produces a value (it diverges)
+                if let Some(ref expr) = value {
+                    self.infer_expr(expr);
+                }
+                TypeInfo::Unit  // Never type, but using Unit for now
+            }
+
+            Expr::Break => TypeInfo::Unit,  // Diverges
+            Expr::Continue => TypeInfo::Unit,  // Diverges
         }
     }
 

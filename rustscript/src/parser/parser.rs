@@ -1845,6 +1845,26 @@ impl Parser {
             return self.parse_match_expr();
         }
 
+        // Return expression: return or return expr
+        if self.match_token(TokenKind::Return) {
+            let value = if self.check(TokenKind::Comma) || self.check(TokenKind::Semicolon) || self.check(TokenKind::RBrace) {
+                None
+            } else {
+                Some(Box::new(self.parse_expr()?))
+            };
+            return Ok(Expr::Return(value));
+        }
+
+        // Break expression
+        if self.match_token(TokenKind::Break) {
+            return Ok(Expr::Break);
+        }
+
+        // Continue expression
+        if self.match_token(TokenKind::Continue) {
+            return Ok(Expr::Continue);
+        }
+
         // Block expression
         if self.check(TokenKind::LBrace) {
             let block = self.parse_block()?;

@@ -555,6 +555,12 @@ pub enum Expr {
     Try(Box<Expr>),
     /// Tuple expression: (expr1, expr2, ...)
     Tuple(Vec<Expr>),
+    /// Return expression: return expr
+    Return(Option<Box<Expr>>),
+    /// Break expression: break
+    Break,
+    /// Continue expression: continue
+    Continue,
 }
 
 /// Literal values

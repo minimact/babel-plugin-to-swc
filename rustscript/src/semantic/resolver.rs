@@ -937,6 +937,15 @@ impl Resolver {
                 self.resolve_expr(inner);
             }
 
+            Expr::Return(value) => {
+                if let Some(ref expr) = value {
+                    self.resolve_expr(expr);
+                }
+            }
+
+            Expr::Break => {}
+            Expr::Continue => {}
+
             Expr::Literal(_) => {}
         }
     }

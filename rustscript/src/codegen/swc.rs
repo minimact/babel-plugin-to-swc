@@ -2356,6 +2356,22 @@ impl SwcGenerator {
                 }
                 self.emit(")");
             }
+
+            Expr::Return(value) => {
+                self.emit("return");
+                if let Some(ref expr) = value {
+                    self.emit(" ");
+                    self.gen_expr(expr);
+                }
+            }
+
+            Expr::Break => {
+                self.emit("break");
+            }
+
+            Expr::Continue => {
+                self.emit("continue");
+            }
         }
     }
 
