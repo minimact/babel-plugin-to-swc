@@ -902,6 +902,11 @@ impl Parser {
             let inner = if self.check(TokenKind::RParen) {
                 None
             } else {
+                // Skip 'mut' keyword if present (e.g., Some(mut x))
+                // Mutability is ignored for transpilation purposes
+                if self.check(TokenKind::Mut) {
+                    self.advance();
+                }
                 Some(Box::new(self.parse_pattern()?))
             };
             self.expect(TokenKind::RParen)?;
@@ -1187,7 +1192,43 @@ impl Parser {
                         span,
                     });
                 } else if self.match_token(TokenKind::LBracket) {
-                    let index = self.parse_expr()?;
+                    // Index access or range slice (same logic as in parse_call)
+                    // Check for open-start range: [..end]
+                    let index = if self.check(TokenKind::DotDot) {
+                        self.advance(); // consume ..
+                        let end = if self.check(TokenKind::RBracket) {
+                            None
+                        } else {
+                            Some(Box::new(self.parse_expr()?))
+                        };
+                        Expr::Range(RangeExpr {
+                            start: None,
+                            end,
+                            inclusive: false,
+                            span: self.current_span(),
+                        })
+                    } else {
+                        // Parse first expression
+                        let start_expr = self.parse_expr()?;
+
+                        // Check for range: start..end
+                        if self.match_token(TokenKind::DotDot) {
+                            let end = if self.check(TokenKind::RBracket) {
+                                None
+                            } else {
+                                Some(Box::new(self.parse_expr()?))
+                            };
+                            Expr::Range(RangeExpr {
+                                start: Some(Box::new(start_expr)),
+                                end,
+                                inclusive: false,
+                                span: self.current_span(),
+                            })
+                        } else {
+                            // Regular index access
+                            start_expr
+                        }
+                    };
                     self.expect(TokenKind::RBracket)?;
                     let span = self.current_span();
                     expr = Expr::Index(IndexExpr {
