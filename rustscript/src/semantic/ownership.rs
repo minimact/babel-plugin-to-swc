@@ -272,6 +272,12 @@ impl OwnershipChecker {
                 self.check_expr(inner);
             }
 
+            Expr::Matches(matches_expr) => {
+                // Check the scrutinee expression
+                self.check_expr(&matches_expr.scrutinee);
+                // Pattern doesn't need ownership checking
+            }
+
             Expr::Return(value) => {
                 if let Some(ref expr) = value {
                     self.check_expr(expr);

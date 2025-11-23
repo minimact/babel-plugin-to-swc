@@ -2371,6 +2371,15 @@ impl SwcGenerator {
                 self.emit(")");
             }
 
+            Expr::Matches(matches_expr) => {
+                // Generate matches! macro in Rust
+                self.emit("matches!(");
+                self.gen_expr(&matches_expr.scrutinee);
+                self.emit(", ");
+                self.gen_pattern(&matches_expr.pattern);
+                self.emit(")");
+            }
+
             Expr::Return(value) => {
                 self.emit("return");
                 if let Some(ref expr) = value {

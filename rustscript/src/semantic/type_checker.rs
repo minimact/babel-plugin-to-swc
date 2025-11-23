@@ -782,6 +782,11 @@ impl TypeChecker {
                 inner_type
             }
 
+            Expr::Matches(_) => {
+                // matches! macro always returns bool
+                TypeInfo::Bool
+            }
+
             Expr::Return(value) => {
                 // Return expression never produces a value (it diverges)
                 if let Some(ref expr) = value {

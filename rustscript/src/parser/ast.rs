@@ -566,6 +566,8 @@ pub enum Expr {
     Try(Box<Expr>),
     /// Tuple expression: (expr1, expr2, ...)
     Tuple(Vec<Expr>),
+    /// Matches macro: matches!(expr, pattern)
+    Matches(MatchesExpr),
     /// Return expression: return expr
     Return(Option<Box<Expr>>),
     /// Break expression: break
@@ -698,6 +700,14 @@ pub struct IfExpr {
 pub struct MatchExpr {
     pub scrutinee: Expr,
     pub arms: Vec<MatchArm>,
+    pub span: Span,
+}
+
+/// Matches macro expression: matches!(expr, pattern)
+#[derive(Debug, Clone)]
+pub struct MatchesExpr {
+    pub scrutinee: Box<Expr>,
+    pub pattern: Pattern,
     pub span: Span,
 }
 

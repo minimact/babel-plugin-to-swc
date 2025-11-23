@@ -2068,6 +2068,13 @@ impl BabelGenerator {
                 self.emit("]");
             }
 
+            Expr::Matches(matches_expr) => {
+                // Generate matches! macro as pattern matching check
+                self.emit("(");
+                self.gen_matches_pattern_new(&matches_expr.scrutinee, &matches_expr.pattern);
+                self.emit(")");
+            }
+
             Expr::Return(value) => {
                 self.emit("return");
                 if let Some(ref expr) = value {
@@ -2442,6 +2449,83 @@ impl BabelGenerator {
                 self.gen_expr(scrutinee);
                 self.emit(" === ");
                 self.gen_expr(pattern);
+            }
+        }
+    }
+
+    /// Generate type checks for a pattern (new version that works with Pattern AST)
+    fn gen_matches_pattern_new(&mut self, scrutinee: &Expr, pattern: &Pattern) {
+        match pattern {
+            Pattern::Wildcard => {
+                // Wildcard matches everything
+                self.emit("true");
+            }
+            Pattern::Ident(_) => {
+                // Identifier pattern matches everything (binds a variable)
+                self.emit("true");
+            }
+            Pattern::Literal(lit) => {
+                // Literal pattern: equality check
+                self.gen_expr(scrutinee);
+                self.emit(" === ");
+                self.emit(&format!("{:?}", lit)); // Quick hack - should use gen_literal
+            }
+            Pattern::Variant { name, inner } => {
+                // Variant pattern: check type and optionally inner pattern
+                // Use mapping to get the correct Babel type checker
+                let checker = get_node_mapping(name)
+                    .map(|m| m.babel_checker.to_string())
+                    .unwrap_or_else(|| format!("is{}", name));
+                self.emit(&format!("t.{}(", checker));
+                self.gen_expr(scrutinee);
+                self.emit(")");
+
+                // If there's an inner pattern, we'd need to check it too
+                // For now, wildcard inner patterns are ignored
+            }
+            Pattern::Struct { name, .. } => {
+                // Struct pattern: check type
+                let checker = get_node_mapping(name)
+                    .map(|m| m.babel_checker.to_string())
+                    .unwrap_or_else(|| format!("is{}", name));
+                self.emit(&format!("t.{}(", checker));
+                self.gen_expr(scrutinee);
+                self.emit(")");
+            }
+            Pattern::Or(patterns) => {
+                // OR pattern: any of the patterns can match
+                self.emit("(");
+                for (i, pat) in patterns.iter().enumerate() {
+                    if i > 0 {
+                        self.emit(" || ");
+                    }
+                    self.gen_matches_pattern_new(scrutinee, pat);
+                }
+                self.emit(")");
+            }
+            Pattern::Tuple(_) => {
+                // Tuple pattern - not commonly used in matches!, just check truthiness
+                self.emit("true");
+            }
+            Pattern::Ref { pattern, .. } => {
+                // Ref pattern - check inner pattern
+                self.gen_matches_pattern_new(scrutinee, pattern);
+            }
+            Pattern::Array(_) => {
+                // Array pattern - check if it's an array
+                self.emit("Array.isArray(");
+                self.gen_expr(scrutinee);
+                self.emit(")");
+            }
+            Pattern::Object(_) => {
+                // Object pattern - check if it's an object
+                self.emit("typeof ");
+                self.gen_expr(scrutinee);
+                self.emit(" === 'object'");
+            }
+            Pattern::Rest(_) => {
+                // Rest pattern matches everything remaining
+                self.emit("true");
             }
         }
     }

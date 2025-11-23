@@ -13,7 +13,7 @@ use "./build_member_path.rsc" { build_member_path };
 pub fn extract_bindings_from_condition(expr: &Expression) -> Vec<Str> {
     let mut bindings = HashSet::new();
 
-    traverse(expr, &mut bindings);
+    traverse_expr(expr, &mut bindings);
 
     bindings.into_iter().collect()
 }
@@ -21,24 +21,24 @@ pub fn extract_bindings_from_condition(expr: &Expression) -> Vec<Str> {
 /**
  * Internal: Traverse expression tree and collect bindings
  */
-fn traverse(node: &Expression, bindings: &mut HashSet<Str>) {
+fn traverse_expr(node: &Expression, bindings: &mut HashSet<Str>) {
     match node {
         Expression::Identifier(ref id) => {
             bindings.insert(id.name.clone());
         }
 
         Expression::LogicalExpression(ref logical) => {
-            traverse(&logical.left, bindings);
-            traverse(&logical.right, bindings);
+            traverse_expr(&logical.left, bindings);
+            traverse_expr(&logical.right, bindings);
         }
 
         Expression::UnaryExpression(ref unary) => {
-            traverse(&unary.argument, bindings);
+            traverse_expr(&unary.argument, bindings);
         }
 
         Expression::BinaryExpression(ref binary) => {
-            traverse(&binary.left, bindings);
-            traverse(&binary.right, bindings);
+            traverse_expr(&binary.left, bindings);
+            traverse_expr(&binary.right, bindings);
         }
 
         Expression::MemberExpression(_) => {

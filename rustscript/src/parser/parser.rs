@@ -2104,32 +2104,18 @@ impl Parser {
         }
 
         // matches! macro: matches!(expr, pattern)
-        // We need to parse the pattern argument specially since it's not an expression
         if self.match_token(TokenKind::Matches) {
             self.expect(TokenKind::LParen)?;
             // First arg: expression to match
-            let expr_arg = self.parse_expr()?;
+            let scrutinee = self.parse_expr()?;
             self.expect(TokenKind::Comma)?;
             self.skip_newlines();
-            // Second arg: pattern - parse as pattern, then convert to pseudo-expression
-            // This is a hack: we represent the pattern as an expression for now
-            // The semantic analyzer will need to handle this specially
+            // Second arg: pattern
             let pattern = self.parse_pattern()?;
-            // Convert pattern to a placeholder expression
-            // We'll use a string literal to represent the pattern
-            let pattern_arg = Expr::Ident(IdentExpr {
-                name: format!("_pattern_{:?}", pattern),
-                span: self.current_span(),
-            });
             self.expect(TokenKind::RParen)?;
-            return Ok(Expr::Call(CallExpr {
-                callee: Box::new(Expr::Ident(IdentExpr {
-                    name: "matches!".to_string(),
-                    span,
-                })),
-                args: vec![expr_arg, pattern_arg],
-                type_args: Vec::new(),
-                optional: false,
+            return Ok(Expr::Matches(MatchesExpr {
+                scrutinee: Box::new(scrutinee),
+                pattern,
                 span,
             }));
         }

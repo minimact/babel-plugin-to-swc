@@ -789,7 +789,9 @@ impl Resolver {
                     );
                     // Check if it's a known AST node type (used in matches!)
                     let is_ast_type = get_node_mapping(&ident.name).is_some();
-                    if !is_special && !is_ast_type {
+                    // Check if it's a pattern placeholder from matches! macro
+                    let is_pattern_placeholder = ident.name.starts_with("_pattern_");
+                    if !is_special && !is_ast_type && !is_pattern_placeholder {
                         self.errors.push(SemanticError::new(
                             "RS006",
                             format!("Undefined variable: {}", ident.name),
@@ -947,6 +949,13 @@ impl Resolver {
 
             Expr::Try(inner) => {
                 self.resolve_expr(inner);
+            }
+
+            Expr::Matches(matches_expr) => {
+                // Resolve the scrutinee expression
+                self.resolve_expr(&matches_expr.scrutinee);
+                // The pattern doesn't need resolution (it's a pattern, not an expression)
+                // Pattern variables are only bound within the matches! result context
             }
 
             Expr::Return(value) => {
