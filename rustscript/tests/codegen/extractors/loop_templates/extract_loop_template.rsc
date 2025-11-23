@@ -17,6 +17,14 @@ use "./extract_element_template.rsc" { extract_element_template, ElementTemplate
 use "./extract_key_binding.rsc" { extract_key_binding };
 
 /**
+ * Function wrapper (arrow or regular function)
+ */
+enum Function {
+    ArrowFunctionExpression(ArrowFunctionExpression),
+    FunctionExpression(FunctionExpression),
+}
+
+/**
  * Loop template structure
  */
 pub struct LoopTemplate {
@@ -38,7 +46,11 @@ pub fn extract_loop_template(map_call_expr: &CallExpression) -> Option<LoopTempl
     // Get array binding (the object being mapped)
     // e.g., todos.map(...) → "todos"
     if let Expression::MemberExpression(ref member_expr) = map_call_expr.callee {
-        let array_binding = extract_array_binding(&member_expr.object)?;
+        let array_binding_opt = extract_array_binding(&member_expr.object);
+        if array_binding_opt.is_none() {
+            return None;
+        }
+        let array_binding = array_binding_opt.unwrap();
 
         // Get callback function (arrow function or function expression)
         if map_call_expr.arguments.is_empty() {

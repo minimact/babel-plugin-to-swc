@@ -91,11 +91,22 @@ pub struct EnumDecl {
     pub span: Span,
 }
 
+/// Enum variant fields
+#[derive(Debug, Clone)]
+pub enum EnumVariantFields {
+    /// Tuple variant: Some(T)
+    Tuple(Vec<Type>),
+    /// Struct variant: Error { message: String }
+    Struct(Vec<(String, Type)>),
+    /// Unit variant: None
+    Unit,
+}
+
 /// Enum variant
 #[derive(Debug, Clone)]
 pub struct EnumVariant {
     pub name: String,
-    pub fields: Option<Vec<Type>>,
+    pub fields: EnumVariantFields,
     pub span: Span,
 }
 

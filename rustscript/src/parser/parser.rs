@@ -288,6 +288,7 @@ impl Parser {
             };
 
             let fields = if self.check(TokenKind::LParen) {
+                // Tuple variant: Variant(Type1, Type2)
                 self.advance();
                 let mut types = Vec::new();
                 if !self.check(TokenKind::RParen) {
@@ -297,9 +298,32 @@ impl Parser {
                     }
                 }
                 self.expect(TokenKind::RParen)?;
-                Some(types)
+                EnumVariantFields::Tuple(types)
+            } else if self.check(TokenKind::LBrace) {
+                // Struct variant: Variant { field1: Type1, field2: Type2 }
+                self.advance();
+                let mut named_fields = Vec::new();
+                loop {
+                    self.skip_newlines();
+                    if self.check(TokenKind::RBrace) {
+                        break;
+                    }
+                    let field_name = self.expect_ident()?;
+                    self.expect(TokenKind::Colon)?;
+                    let field_type = self.parse_type()?;
+                    named_fields.push((field_name, field_type));
+
+                    self.skip_newlines();
+                    if !self.match_token(TokenKind::Comma) {
+                        self.skip_newlines();
+                        break;
+                    }
+                }
+                self.expect(TokenKind::RBrace)?;
+                EnumVariantFields::Struct(named_fields)
             } else {
-                None
+                // Unit variant: Variant
+                EnumVariantFields::Unit
             };
 
             variants.push(EnumVariant {

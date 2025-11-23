@@ -607,11 +607,25 @@ impl SwcGenerator {
         self.indent += 1;
         for variant in &e.variants {
             self.emit_indent();
-            if let Some(fields) = &variant.fields {
-                let types: Vec<String> = fields.iter().map(|t| self.type_to_rust(t)).collect();
-                self.emit(&format!("{}({}),\n", variant.name, types.join(", ")));
-            } else {
-                self.emit(&format!("{},\n", variant.name));
+            match &variant.fields {
+                EnumVariantFields::Tuple(fields) => {
+                    let types: Vec<String> = fields.iter().map(|t| self.type_to_rust(t)).collect();
+                    self.emit(&format!("{}({}),\n", variant.name, types.join(", ")));
+                }
+                EnumVariantFields::Struct(named_fields) => {
+                    self.emit(&format!("{} {{\n", variant.name));
+                    self.indent += 1;
+                    for (field_name, field_type) in named_fields {
+                        self.emit_indent();
+                        self.emit(&format!("{}: {},\n", field_name, self.type_to_rust(field_type)));
+                    }
+                    self.indent -= 1;
+                    self.emit_indent();
+                    self.emit("},\n");
+                }
+                EnumVariantFields::Unit => {
+                    self.emit(&format!("{},\n", variant.name));
+                }
             }
         }
         self.indent -= 1;

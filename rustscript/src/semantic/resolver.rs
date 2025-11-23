@@ -260,9 +260,15 @@ impl Resolver {
                 PluginItem::Enum(e) => {
                     let mut variants = HashMap::new();
                     for variant in &e.variants {
-                        let fields = variant.fields.as_ref().map(|types| {
-                            types.iter().map(ast_type_to_type_info).collect()
-                        });
+                        let fields = match &variant.fields {
+                            EnumVariantFields::Tuple(types) => {
+                                Some(types.iter().map(ast_type_to_type_info).collect())
+                            }
+                            EnumVariantFields::Struct(named_fields) => {
+                                Some(named_fields.iter().map(|(_, ty)| ast_type_to_type_info(ty)).collect())
+                            }
+                            EnumVariantFields::Unit => None,
+                        };
                         variants.insert(variant.name.clone(), fields);
                     }
                     exports.enums.insert(
@@ -407,9 +413,15 @@ impl Resolver {
     fn declare_enum(&mut self, e: &EnumDecl) {
         let mut variants = HashMap::new();
         for variant in &e.variants {
-            let fields = variant.fields.as_ref().map(|types| {
-                types.iter().map(ast_type_to_type_info).collect()
-            });
+            let fields = match &variant.fields {
+                EnumVariantFields::Tuple(types) => {
+                    Some(types.iter().map(ast_type_to_type_info).collect())
+                }
+                EnumVariantFields::Struct(named_fields) => {
+                    Some(named_fields.iter().map(|(_, ty)| ast_type_to_type_info(ty)).collect())
+                }
+                EnumVariantFields::Unit => None,
+            };
             variants.insert(variant.name.clone(), fields);
         }
         self.env.define_enum(e.name.clone(), variants);
