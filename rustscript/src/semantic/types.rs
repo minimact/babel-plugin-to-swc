@@ -386,7 +386,7 @@ pub fn ast_type_to_type_info(ty: &crate::parser::Type) -> TypeInfo {
             "i32" => TypeInfo::I32,
             "u32" => TypeInfo::U32,
             "f64" => TypeInfo::F64,
-            "bool" => TypeInfo::Bool,
+            "bool" | "Bool" => TypeInfo::Bool,  // Accept both lowercase and uppercase
             "()" => TypeInfo::Unit,
             _ => TypeInfo::Unknown,
         },
@@ -422,8 +422,18 @@ pub fn ast_type_to_type_info(ty: &crate::parser::Type) -> TypeInfo {
             }
         }
         crate::parser::Type::Named(name) => {
-            // Check if it's an AST node type
-            TypeInfo::AstNode(name.clone())
+            // Check if it's a primitive type name (some may be parsed as Named)
+            match name.as_str() {
+                "bool" | "Bool" => TypeInfo::Bool,
+                "Str" | "String" => TypeInfo::Str,
+                "i32" => TypeInfo::I32,
+                "u32" => TypeInfo::U32,
+                "f64" => TypeInfo::F64,
+                _ => {
+                    // Otherwise, treat as AST node type
+                    TypeInfo::AstNode(name.clone())
+                }
+            }
         }
         crate::parser::Type::Array { element } => {
             TypeInfo::Vec(Box::new(ast_type_to_type_info(element)))

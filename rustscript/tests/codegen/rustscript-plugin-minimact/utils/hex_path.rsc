@@ -24,4 +24,10 @@ impl HexPathGenerator {
             format!("{}/{}", parent, child)
         }
     }
+
+    /// Update this generator with values from another
+    /// Workaround for RustScript's no-direct-mutation rule
+    fn update_from(&mut self, other: &HexPathGenerator) {
+        self.counter = other.counter;
+    }
 }

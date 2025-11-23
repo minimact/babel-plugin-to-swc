@@ -763,7 +763,24 @@ impl Resolver {
             }
 
             Expr::Call(call) => {
-                self.resolve_expr(&call.callee);
+                // Check if callee is an undefined function
+                if let Expr::Ident(ident) = &*call.callee {
+                    if self.env.lookup(&ident.name).is_none() {
+                        let is_special = matches!(ident.name.as_str(),
+                            "self" | "Self" | "matches!" | "format!" | "format" | "vec!" | "Some" | "None" | "Ok" | "Err" | "String" | "HashMap" | "HashSet" | "Vec" | "Option" | "Result" | "Box" | "CodeBuilder" | "_"
+                        );
+                        let is_ast_type = get_node_mapping(&ident.name).is_some();
+                        if !is_special && !is_ast_type {
+                            self.errors.push(SemanticError::new(
+                                "RS006",
+                                format!("Undefined function: {}", ident.name),
+                                ident.span,
+                            ));
+                        }
+                    }
+                } else {
+                    self.resolve_expr(&call.callee);
+                }
                 for arg in &call.args {
                     self.resolve_expr(arg);
                 }
@@ -803,6 +820,10 @@ impl Resolver {
             Expr::If(if_expr) => {
                 self.resolve_expr(&if_expr.condition);
                 self.env.push_scope();
+                // If this is an if-let, define the pattern bindings in the then-branch scope
+                if let Some(ref pattern) = if_expr.pattern {
+                    self.resolve_pattern(pattern);
+                }
                 self.resolve_block(&if_expr.then_branch);
                 self.env.pop_scope();
                 if let Some(ref else_block) = if_expr.else_branch {

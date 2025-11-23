@@ -113,38 +113,72 @@ writer MinimactTranspiler {
 
         // 6. Traverse body to extract hooks and render (line 168-226)
         if let Some(body) = &node.body {
-            // Create local mutable reference for capturing
-            let mut comp = component;
+            // Capture the render body value instead of mutating
+            let mut new_render_body = component.render_body.clone();
+            let mut comp_for_hooks = component.clone();
 
-            traverse(body) capturing [&mut comp] {
+            traverse(body) capturing [&mut comp_for_hooks, &mut new_render_body] {
                 fn visit_variable_declarator(decl: &VariableDeclarator) {
                     if let Some(init) = &decl.init {
                         if matches!(init, Expression::CallExpression(_)) {
-                            extract_hook_from_call(init, &decl.id, &mut comp);
+                            extract_hook_from_call(init, &decl.id, &mut comp_for_hooks);
                         }
                     }
                 }
 
                 fn visit_return_statement(ret: &ReturnStatement) {
                     if let Some(arg) = &ret.argument {
-                        comp.render_body = Some(Box::new(arg.clone()));
+                        new_render_body = Some(Box::new(arg.clone()));
                     }
                 }
             }
 
-            // Reassign back
-            component = comp;
+            // Rebuild component with new render_body instead of mutating
+            component = ComponentInfo {
+                name: component.name.clone(),
+                props: component.props.clone(),
+                use_state: comp_for_hooks.use_state.clone(),
+                use_client_state: comp_for_hooks.use_client_state.clone(),
+                use_effect: comp_for_hooks.use_effect.clone(),
+                use_ref: comp_for_hooks.use_ref.clone(),
+                custom_hooks: comp_for_hooks.custom_hooks.clone(),
+                event_handlers: component.event_handlers.clone(),
+                local_variables: component.local_variables.clone(),
+                helper_functions: component.helper_functions.clone(),
+                render_body: new_render_body,
+                templates: component.templates.clone(),
+                dependencies: component.dependencies.clone(),
+                external_imports: component.external_imports.clone(),
+            };
         }
 
         // 7. Assign hex paths to JSX (line 234-247)
         if component.render_body.is_some() {
-            let mut render_body = component.render_body.unwrap();
-            let mut hex_gen = self.hex_path_gen;
+            let render_body = component.render_body.clone().unwrap();
+            let hex_gen = self.hex_path_gen.clone();
 
             assign_paths_to_jsx(&mut *render_body, "", &mut hex_gen);
 
-            component.render_body = Some(render_body);
-            self.hex_path_gen = hex_gen;
+            // Rebuild instead of mutating
+            component = ComponentInfo {
+                name: component.name.clone(),
+                props: component.props.clone(),
+                use_state: component.use_state.clone(),
+                use_client_state: component.use_client_state.clone(),
+                use_effect: component.use_effect.clone(),
+                use_ref: component.use_ref.clone(),
+                custom_hooks: component.custom_hooks.clone(),
+                event_handlers: component.event_handlers.clone(),
+                local_variables: component.local_variables.clone(),
+                helper_functions: component.helper_functions.clone(),
+                render_body: Some(render_body),
+                templates: component.templates.clone(),
+                dependencies: component.dependencies.clone(),
+                external_imports: component.external_imports.clone(),
+            };
+
+            // Use method call instead of direct field assignment
+            self.hex_path_gen.update_from(&hex_gen);
         }
 
         // 8. Extract templates from JSX
@@ -344,7 +378,7 @@ writer MinimactTranspiler {
                 return;
             }
 
-            let state_var = if let Some(ref elem) = arr_pat.elements[0] {
+            let state_var: Str = if let Some(ref elem) = arr_pat.elements[0] {
                 if let Pattern::Identifier(ref id) = elem {
                     id.name.clone()
                 } else {
@@ -354,7 +388,7 @@ writer MinimactTranspiler {
                 return;
             };
 
-            let setter_var = if arr_pat.elements.len() > 1 {
+            let setter_var: Option<Str> = if arr_pat.elements.len() > 1 {
                 if let Some(ref elem) = arr_pat.elements[1] {
                     if let Pattern::Identifier(ref id) = elem {
                         Some(id.name.clone())
@@ -369,14 +403,14 @@ writer MinimactTranspiler {
             };
 
             // Get initial value
-            let initial_value = if call.arguments.len() > 0 {
+            let initial_value: Str = if call.arguments.len() > 0 {
                 expr_to_csharp(&call.arguments[0])
             } else {
                 "null".to_string()
             };
 
             // ✅ Use infer_type from type_conversion.rsc
-            let state_type = if call.arguments.len() > 0 {
+            let state_type: Str = if call.arguments.len() > 0 {
                 infer_type(&call.arguments[0])
             } else {
                 "dynamic".to_string()

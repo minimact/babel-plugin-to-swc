@@ -106,6 +106,32 @@ impl TypeChecker {
         }
     }
 
+    /// Infer the type of a block
+    /// A block's type is the type of its final expression (if any), or Unit
+    fn infer_block(&mut self, block: &Block) -> TypeInfo {
+        // Check all statements except potentially the last
+        for stmt in &block.stmts {
+            match stmt {
+                // If any statement is a return/break/continue, the block has type Never
+                Stmt::Return(_) => return TypeInfo::Never,
+                Stmt::Break(_) => return TypeInfo::Never,
+                Stmt::Continue(_) => return TypeInfo::Never,
+                _ => self.check_stmt(stmt),
+            }
+        }
+
+        // If the last statement is an expression statement (no semicolon),
+        // the block evaluates to that expression's type
+        // Otherwise, the block evaluates to Unit
+        if let Some(last_stmt) = block.stmts.last() {
+            if let Stmt::Expr(expr_stmt) = last_stmt {
+                return self.infer_expr(&expr_stmt.expr);
+            }
+        }
+
+        TypeInfo::Unit
+    }
+
     fn check_stmt(&mut self, stmt: &Stmt) {
         match stmt {
             Stmt::Let(let_stmt) => {
@@ -570,15 +596,35 @@ impl TypeChecker {
 
             Expr::If(if_expr) => {
                 self.infer_expr(&if_expr.condition);
+
+                // Infer type from the then branch
                 self.env.push_scope();
-                self.check_block(&if_expr.then_branch);
+                let then_type = self.infer_block(&if_expr.then_branch);
                 self.env.pop_scope();
+
+                // If there's an else branch, infer its type too
                 if let Some(ref else_block) = if_expr.else_branch {
                     self.env.push_scope();
-                    self.check_block(else_block);
+                    let else_type = self.infer_block(else_block);
                     self.env.pop_scope();
+
+                    // If both branches have the same type, use that
+                    // If one is Never (!), use the other branch's type
+                    // Otherwise, use Unit
+                    if then_type == else_type {
+                        then_type
+                    } else if matches!(then_type, TypeInfo::Never) {
+                        else_type
+                    } else if matches!(else_type, TypeInfo::Never) {
+                        then_type
+                    } else {
+                        TypeInfo::Unit
+                    }
+                } else {
+                    // No else branch means the if-expression can be skipped entirely
+                    // So it always evaluates to Unit
+                    TypeInfo::Unit
                 }
-                TypeInfo::Unit
             }
 
             Expr::Match(match_expr) => {
