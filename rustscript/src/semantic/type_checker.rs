@@ -109,11 +109,16 @@ impl TypeChecker {
     /// Infer the type of a block
     /// A block's type is the type of its final expression (if any), or Unit
     fn infer_block(&mut self, block: &Block) -> TypeInfo {
+        println!("DEBUG infer_block: block has {} statements", block.stmts.len());
+
         // Check all statements except potentially the last
         for stmt in &block.stmts {
             match stmt {
                 // If any statement is a return/break/continue, the block has type Never
-                Stmt::Return(_) => return TypeInfo::Never,
+                Stmt::Return(_) => {
+                    eprintln!("DEBUG infer_block: found Return, returning Never");
+                    return TypeInfo::Never;
+                }
                 Stmt::Break(_) => return TypeInfo::Never,
                 Stmt::Continue(_) => return TypeInfo::Never,
                 _ => self.check_stmt(stmt),
@@ -122,10 +127,24 @@ impl TypeChecker {
 
         // If the last statement is an expression statement (no semicolon),
         // the block evaluates to that expression's type
-        // Otherwise, the block evaluates to Unit
+        // If/match statements can also be expressions
         if let Some(last_stmt) = block.stmts.last() {
-            if let Stmt::Expr(expr_stmt) = last_stmt {
-                return self.infer_expr(&expr_stmt.expr);
+            match last_stmt {
+                Stmt::Expr(expr_stmt) => {
+                    return self.infer_expr(&expr_stmt.expr);
+                }
+                Stmt::If(if_stmt) => {
+                    // Treat if statement as expression
+                    let if_expr = Box::new(IfExpr {
+                        condition: if_stmt.condition.clone(),
+                        pattern: if_stmt.pattern.clone(),
+                        then_branch: if_stmt.then_branch.clone(),
+                        else_branch: if_stmt.else_branch.clone(),
+                        span: if_stmt.span,
+                    });
+                    return self.infer_expr(&Expr::If(if_expr));
+                }
+                _ => {}
             }
         }
 
@@ -133,6 +152,7 @@ impl TypeChecker {
     }
 
     fn check_stmt(&mut self, stmt: &Stmt) {
+        eprintln!("DEBUG check_stmt: checking statement variant {:?}", std::mem::discriminant(stmt));
         match stmt {
             Stmt::Let(let_stmt) => {
                 // If there's a type annotation, use it as the expected type for bidirectional inference
@@ -595,23 +615,26 @@ impl TypeChecker {
             }
 
             Expr::If(if_expr) => {
+                eprintln!("DEBUG Expr::If: inferring if expression");
                 self.infer_expr(&if_expr.condition);
 
                 // Infer type from the then branch
                 self.env.push_scope();
                 let then_type = self.infer_block(&if_expr.then_branch);
+                eprintln!("DEBUG Expr::If: then_type = {:?}", then_type);
                 self.env.pop_scope();
 
                 // If there's an else branch, infer its type too
                 if let Some(ref else_block) = if_expr.else_branch {
                     self.env.push_scope();
                     let else_type = self.infer_block(else_block);
+                    eprintln!("DEBUG Expr::If: else_type = {:?}", else_type);
                     self.env.pop_scope();
 
                     // If both branches have the same type, use that
                     // If one is Never (!), use the other branch's type
                     // Otherwise, use Unit
-                    if then_type == else_type {
+                    let result_type = if then_type == else_type {
                         then_type
                     } else if matches!(then_type, TypeInfo::Never) {
                         else_type
@@ -619,10 +642,13 @@ impl TypeChecker {
                         then_type
                     } else {
                         TypeInfo::Unit
-                    }
+                    };
+                    eprintln!("DEBUG Expr::If: result_type = {:?}", result_type);
+                    result_type
                 } else {
                     // No else branch means the if-expression can be skipped entirely
                     // So it always evaluates to Unit
+                    eprintln!("DEBUG Expr::If: no else branch, returning Unit");
                     TypeInfo::Unit
                 }
             }
@@ -716,18 +742,7 @@ impl TypeChecker {
             Expr::Block(block) => {
                 // Type of a block is the type of its last expression (if any)
                 self.env.push_scope();
-                let mut result_type = TypeInfo::Unit;
-                for stmt in &block.stmts {
-                    match stmt {
-                        Stmt::Expr(expr_stmt) => {
-                            // Last expression statement determines block type
-                            result_type = self.infer_expr(&expr_stmt.expr);
-                        }
-                        _ => {
-                            self.check_stmt(stmt);
-                        }
-                    }
-                }
+                let result_type = self.infer_block(block);
                 self.env.pop_scope();
                 result_type
             }
