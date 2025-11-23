@@ -206,6 +206,9 @@ impl<'a> Lexer<'a> {
                 // String literals
                 '"' => self.read_string(),
 
+                // Char literals - treat as single-character strings
+                '\'' => self.read_char_as_string(),
+
                 // Newlines (track for error reporting)
                 '\n' => {
                     self.line += 1;
@@ -314,6 +317,69 @@ impl<'a> Lexer<'a> {
             }
         }
         TokenKind::StringLit(string)
+    }
+
+    fn read_char_as_string(&mut self) -> TokenKind {
+        // Read a char literal 'x' and treat it as a single-character string "x"
+        match self.advance() {
+            None => return TokenKind::Error("Unterminated char literal".to_string()),
+            Some((_, '\\')) => {
+                // Handle escape sequences
+                match self.advance() {
+                    Some((_, 'n')) => {
+                        if !self.expect_char('\'') {
+                            return TokenKind::Error("Unterminated char literal".to_string());
+                        }
+                        TokenKind::StringLit("\n".to_string())
+                    }
+                    Some((_, 't')) => {
+                        if !self.expect_char('\'') {
+                            return TokenKind::Error("Unterminated char literal".to_string());
+                        }
+                        TokenKind::StringLit("\t".to_string())
+                    }
+                    Some((_, 'r')) => {
+                        if !self.expect_char('\'') {
+                            return TokenKind::Error("Unterminated char literal".to_string());
+                        }
+                        TokenKind::StringLit("\r".to_string())
+                    }
+                    Some((_, '\\')) => {
+                        if !self.expect_char('\'') {
+                            return TokenKind::Error("Unterminated char literal".to_string());
+                        }
+                        TokenKind::StringLit("\\".to_string())
+                    }
+                    Some((_, '\'')) => {
+                        if !self.expect_char('\'') {
+                            return TokenKind::Error("Unterminated char literal".to_string());
+                        }
+                        TokenKind::StringLit("'".to_string())
+                    }
+                    Some((_, c)) => {
+                        TokenKind::Error(format!("Invalid escape sequence in char literal: \\{}", c))
+                    }
+                    None => TokenKind::Error("Unterminated escape sequence in char literal".to_string()),
+                }
+            }
+            Some((_, '\'')) => {
+                TokenKind::Error("Empty char literal".to_string())
+            }
+            Some((_, c)) => {
+                // Regular character
+                if !self.expect_char('\'') {
+                    return TokenKind::Error("Unterminated char literal".to_string());
+                }
+                TokenKind::StringLit(c.to_string())
+            }
+        }
+    }
+
+    fn expect_char(&mut self, expected: char) -> bool {
+        match self.advance() {
+            Some((_, c)) if c == expected => true,
+            _ => false,
+        }
     }
 
     fn read_number(&mut self, first: char) -> TokenKind {

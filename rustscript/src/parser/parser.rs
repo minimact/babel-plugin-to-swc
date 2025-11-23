@@ -1692,15 +1692,63 @@ impl Parser {
                     span,
                 });
             } else if self.match_token(TokenKind::LBracket) {
-                // Index access
-                let index = self.parse_expr()?;
-                self.expect(TokenKind::RBracket)?;
-                let span = self.current_span();
-                expr = Expr::Index(IndexExpr {
-                    object: Box::new(expr),
-                    index: Box::new(index),
-                    span,
-                });
+                // Index access or range slice
+                // Check for open-start range: [..end]
+                if self.check(TokenKind::DotDot) {
+                    self.advance(); // consume ..
+                    let end = if self.check(TokenKind::RBracket) {
+                        None
+                    } else {
+                        Some(Box::new(self.parse_expr()?))
+                    };
+                    self.expect(TokenKind::RBracket)?;
+                    let span = self.current_span();
+                    let range = Expr::Range(RangeExpr {
+                        start: None,
+                        end,
+                        inclusive: false,
+                        span: span.clone(),
+                    });
+                    expr = Expr::Index(IndexExpr {
+                        object: Box::new(expr),
+                        index: Box::new(range),
+                        span,
+                    });
+                } else {
+                    // Parse first expression
+                    let start_expr = self.parse_expr()?;
+
+                    // Check for range: start..end
+                    if self.match_token(TokenKind::DotDot) {
+                        let end = if self.check(TokenKind::RBracket) {
+                            None
+                        } else {
+                            Some(Box::new(self.parse_expr()?))
+                        };
+                        self.expect(TokenKind::RBracket)?;
+                        let span = self.current_span();
+                        let range = Expr::Range(RangeExpr {
+                            start: Some(Box::new(start_expr)),
+                            end,
+                            inclusive: false,
+                            span: span.clone(),
+                        });
+                        expr = Expr::Index(IndexExpr {
+                            object: Box::new(expr),
+                            index: Box::new(range),
+                            span,
+                        });
+                    } else {
+                        // Regular index access
+                        self.expect(TokenKind::RBracket)?;
+                        let span = self.current_span();
+                        expr = Expr::Index(IndexExpr {
+                            object: Box::new(expr),
+                            index: Box::new(start_expr),
+                            span,
+                        });
+                    }
+                }
             } else if self.match_token(TokenKind::ColonColon) {
                 // Static method call like HashMap::new or Expr::CallExpression
                 let method = if let Some(ast_type) = self.try_expect_ast_type() {
