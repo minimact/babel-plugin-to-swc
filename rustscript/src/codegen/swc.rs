@@ -1070,8 +1070,23 @@ impl SwcGenerator {
     }
 
     fn gen_block(&mut self, block: &Block) {
-        for stmt in &block.stmts {
-            self.gen_stmt(stmt);
+        let len = block.stmts.len();
+        for (i, stmt) in block.stmts.iter().enumerate() {
+            let is_last = i == len - 1;
+            self.gen_stmt_with_context(stmt, is_last);
+        }
+    }
+
+    fn gen_stmt_with_context(&mut self, stmt: &Stmt, is_last_in_block: bool) {
+        // If this is the last statement in a block and it's an expression,
+        // don't add a semicolon (it's the block's return value)
+        match stmt {
+            Stmt::Expr(expr_stmt) if is_last_in_block => {
+                self.emit_indent();
+                self.gen_expr(&expr_stmt.expr);
+                self.emit("\n");
+            }
+            _ => self.gen_stmt(stmt),
         }
     }
 
