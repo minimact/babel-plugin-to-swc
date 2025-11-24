@@ -727,7 +727,11 @@ impl BabelGenerator {
 
     fn gen_helper_function(&mut self, f: &FnDecl) {
         self.emit_line("");
-        let params: Vec<String> = f.params.iter().map(|p| p.name.clone()).collect();
+        // Filter out 'self' parameter - JavaScript methods don't have explicit 'this' parameter
+        let params: Vec<String> = f.params.iter()
+            .filter(|p| p.name != "self")
+            .map(|p| p.name.clone())
+            .collect();
         self.emit_line(&format!("function {}({}) {{", f.name, params.join(", ")));
         self.indent += 1;
         self.gen_block_with_implicit_return(&f.body);
@@ -736,7 +740,11 @@ impl BabelGenerator {
     }
 
     fn gen_method(&mut self, f: &FnDecl) {
-        let params: Vec<String> = f.params.iter().map(|p| p.name.clone()).collect();
+        // Filter out 'self' parameter - JavaScript methods don't have explicit 'this' parameter
+        let params: Vec<String> = f.params.iter()
+            .filter(|p| p.name != "self")
+            .map(|p| p.name.clone())
+            .collect();
         self.emit_line(&format!("{}({}) {{", f.name, params.join(", ")));
         self.indent += 1;
         self.gen_block_with_implicit_return(&f.body);

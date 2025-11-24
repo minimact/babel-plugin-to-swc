@@ -67,7 +67,7 @@ module.exports = function({ types: t }) {
   }
   
   
-  function process_function_body(self, body) {
+  function process_function_body(body) {
     let effect_index = 0;
     for (const stmt of body.body) {
       if (stmt.type === "VariableDeclaration") {
@@ -121,7 +121,7 @@ module.exports = function({ types: t }) {
   }
   
   
-  function extract_use_state(self, declarator, call) {
+  function extract_use_state(declarator, call) {
     if (declarator.id.type === "ArrayPattern") {
       const array_pattern = declarator.id;
       if ((array_pattern.elements.length >= 2)) {
@@ -136,7 +136,7 @@ module.exports = function({ types: t }) {
   }
   
   
-  function extract_use_effect(self, call, index) {
+  function extract_use_effect(call, index) {
     let body = "";
     let dependencies = [];
     if ((call.arguments.length > 0)) {
@@ -167,7 +167,7 @@ module.exports = function({ types: t }) {
   }
   
   
-  function extract_use_ref(self, declarator, call) {
+  function extract_use_ref(declarator, call) {
     if (declarator.id.type === "Identifier") {
       const id = declarator.id;
       const initial_value = ((call.arguments.length > 0) ? this.expr_to_csharp(call.arguments[0]) : "null".toString());
@@ -177,7 +177,7 @@ module.exports = function({ types: t }) {
   }
   
   
-  function get_pattern_name(self, pattern) {
+  function get_pattern_name(pattern) {
     const __iflet_4 = pattern;
     if (__iflet_4 !== null && __iflet_4 !== undefined) {
       const pat = __iflet_4;
@@ -193,7 +193,7 @@ module.exports = function({ types: t }) {
   }
   
   
-  function expr_to_csharp(self, expr) {
+  function expr_to_csharp(expr) {
     if (expr.type === "NumericLiteral") {
       const num = expr;
       return num.value.toString();
@@ -214,7 +214,7 @@ module.exports = function({ types: t }) {
   }
   
   
-  function infer_csharp_type(self, expr) {
+  function infer_csharp_type(expr) {
     if (expr.type === "NumericLiteral") {
       const num = expr;
       if ((num.value === num.value.floor())) {
@@ -236,7 +236,7 @@ module.exports = function({ types: t }) {
   }
   
   
-  function function_body_to_csharp(self, body) {
+  function function_body_to_csharp(body) {
     let result = "";
     if (body.type === "BlockStatement") {
       const block = body;
@@ -268,7 +268,7 @@ module.exports = function({ types: t }) {
   }
   
   
-  function is_console_log(self, member) {
+  function is_console_log(member) {
     if (member.object.type === "Identifier") {
       const obj = member.object;
       if (member.property.type === "Identifier") {
@@ -283,7 +283,7 @@ module.exports = function({ types: t }) {
   }
   
   
-  function template_literal_to_csharp(self, expr) {
+  function template_literal_to_csharp(expr) {
     if (expr.type === "TemplateLiteral") {
       const tmpl = expr;
       let result = String.from("$\"");
@@ -303,7 +303,7 @@ module.exports = function({ types: t }) {
   }
   
   
-  function to_csharp_method_name(self, js_name) {
+  function to_csharp_method_name(js_name) {
     let result = "";
     let capitalize_next = true;
     for (const ch of js_name) {
@@ -318,7 +318,7 @@ module.exports = function({ types: t }) {
   }
   
   
-  function jsx_to_vnode(self, jsx) {
+  function jsx_to_vnode(jsx) {
     const tag = this.get_jsx_tag_name(jsx.opening_element.name);
     let attrs = [];
     for (const attr of jsx.opening_element.attributes) {
@@ -395,7 +395,7 @@ module.exports = function({ types: t }) {
   }
   
   
-  function get_jsx_tag_name(self, name) {
+  function get_jsx_tag_name(name) {
     if (name.type === "Identifier") {
       const id = name;
       return id.name;
@@ -405,7 +405,7 @@ module.exports = function({ types: t }) {
   }
   
   
-  function get_jsx_attr_name(self, name) {
+  function get_jsx_attr_name(name) {
     if (name.type === "Identifier") {
       const id = name;
       return id.name;
@@ -415,7 +415,7 @@ module.exports = function({ types: t }) {
   }
   
   
-  function jsx_attr_value_to_csharp(self, value) {
+  function jsx_attr_value_to_csharp(value) {
     if (value.type === "StringLiteral") {
       const s = value;
       return `"${s.value}"`;
@@ -440,7 +440,7 @@ module.exports = function({ types: t }) {
   
   // Exit hook
   
-  function finish(self) {
+  function finish() {
     let lines = [];
     lines += "using Minimact;".toString();
     lines += "using System;".toString();
