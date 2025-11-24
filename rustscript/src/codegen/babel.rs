@@ -51,6 +51,8 @@ pub struct BabelGenerator {
     var_kinds: std::collections::HashMap<String, VarKind>,
     /// Counter for generating unique loop index variables
     loop_index_counter: usize,
+    /// Counter for generating unique if-let temporary variables
+    iflet_counter: usize,
     /// Whether the codegen module is used (requires @babel/generator import)
     uses_codegen: bool,
 }
@@ -65,6 +67,7 @@ impl BabelGenerator {
             traverse_counter: 0,
             var_kinds: std::collections::HashMap::new(),
             loop_index_counter: 0,
+            iflet_counter: 0,
             uses_codegen: false,
         }
     }
@@ -715,7 +718,7 @@ impl BabelGenerator {
         let params: Vec<String> = f.params.iter().map(|p| p.name.clone()).collect();
         self.emit_line(&format!("function {}({}) {{", f.name, params.join(", ")));
         self.indent += 1;
-        self.gen_block(&f.body);
+        self.gen_block_with_implicit_return(&f.body);
         self.indent -= 1;
         self.emit_line("}");
     }
@@ -724,7 +727,7 @@ impl BabelGenerator {
         let params: Vec<String> = f.params.iter().map(|p| p.name.clone()).collect();
         self.emit_line(&format!("{}({}) {{", f.name, params.join(", ")));
         self.indent += 1;
-        self.gen_block(&f.body);
+        self.gen_block_with_implicit_return(&f.body);
         self.indent -= 1;
         self.emit_line("}");
         self.emit_line("");
@@ -787,7 +790,38 @@ impl BabelGenerator {
     }
 
     fn gen_block(&mut self, block: &Block) {
-        for stmt in &block.stmts {
+        self.gen_block_inner(block, false);
+    }
+
+    fn gen_block_with_implicit_return(&mut self, block: &Block) {
+        self.gen_block_inner(block, true);
+    }
+
+    fn gen_block_inner(&mut self, block: &Block, implicit_return: bool) {
+        let num_stmts = block.stmts.len();
+        for (i, stmt) in block.stmts.iter().enumerate() {
+            let is_last = i == num_stmts - 1;
+
+            // If this is the last statement and we want implicit returns
+            if is_last && implicit_return {
+                match stmt {
+                    Stmt::Expr(expr_stmt) => {
+                        // Generate return for implicit return expression
+                        self.emit_indent();
+                        self.emit("return ");
+                        self.gen_expr(&expr_stmt.expr);
+                        self.emit(";\n");
+                        continue;
+                    }
+                    Stmt::If(if_stmt) => {
+                        // Generate if with implicit returns in branches
+                        self.gen_if_stmt_with_implicit_return(if_stmt);
+                        continue;
+                    }
+                    _ => {}
+                }
+            }
+
             self.gen_stmt(stmt);
         }
     }
@@ -1325,6 +1359,42 @@ impl BabelGenerator {
         }
     }
 
+    fn gen_if_stmt_with_implicit_return(&mut self, if_stmt: &IfStmt) {
+        if let Some(pattern) = &if_stmt.pattern {
+            // if-let pattern matching - not supported with implicit return yet
+            self.gen_if_let_stmt(if_stmt, pattern);
+        } else {
+            // Regular if statement with implicit returns in branches
+            self.emit_indent();
+            self.emit("if (");
+            self.gen_expr(&if_stmt.condition);
+            self.emit(") {\n");
+            self.indent += 1;
+            self.gen_block_with_implicit_return(&if_stmt.then_branch);
+            self.indent -= 1;
+
+            for (cond, block) in &if_stmt.else_if_branches {
+                self.emit_indent();
+                self.emit("} else if (");
+                self.gen_expr(cond);
+                self.emit(") {\n");
+                self.indent += 1;
+                self.gen_block_with_implicit_return(block);
+                self.indent -= 1;
+            }
+
+            if let Some(else_block) = &if_stmt.else_branch {
+                self.emit_indent();
+                self.emit("} else {\n");
+                self.indent += 1;
+                self.gen_block_with_implicit_return(else_block);
+                self.indent -= 1;
+            }
+
+            self.emit_line("}");
+        }
+    }
+
     fn gen_if_let_stmt(&mut self, if_stmt: &IfStmt, pattern: &Pattern) {
         // Generate if-let as:
         // const __temp = expr;
@@ -1333,7 +1403,8 @@ impl BabelGenerator {
         //     ...then_branch
         // } else { ...else_branch }
 
-        let temp_var = format!("__iflet_{}", self.indent);
+        let temp_var = format!("__iflet_{}", self.iflet_counter);
+        self.iflet_counter += 1;
 
         // Generate temp variable
         self.emit_indent();
@@ -1463,11 +1534,38 @@ impl BabelGenerator {
             self.gen_pattern_condition(&arm.pattern, &match_stmt.scrutinee);
             self.emit(") {\n");
             self.indent += 1;
-            self.emit_indent();
-            // Match arms should return their value
-            self.emit("return ");
-            self.gen_expr(&arm.body);
-            self.emit(";\n");
+
+            // Extract bindings from pattern
+            self.gen_pattern_bindings(&arm.pattern, &match_stmt.scrutinee);
+
+            // Handle block bodies specially - unwrap them instead of generating IIFE
+            if let Expr::Block(block) = &arm.body {
+                // Generate block statements inline, with last expression as return
+                for (i, stmt) in block.stmts.iter().enumerate() {
+                    let is_last = i == block.stmts.len() - 1;
+                    if is_last {
+                        // Last statement - if it's an expression, return it
+                        if let Stmt::Expr(expr_stmt) = stmt {
+                            self.emit_indent();
+                            self.emit("return ");
+                            self.gen_expr(&expr_stmt.expr);
+                            self.emit(";\n");
+                        } else {
+                            // It's a statement, generate it normally
+                            self.gen_stmt(stmt);
+                        }
+                    } else {
+                        // Not last, generate normally
+                        self.gen_stmt(stmt);
+                    }
+                }
+            } else {
+                // Non-block body, return directly
+                self.emit_indent();
+                self.emit("return ");
+                self.gen_expr(&arm.body);
+                self.emit(";\n");
+            }
             self.indent -= 1;
         }
         self.emit_line("}");
@@ -1624,6 +1722,32 @@ impl BabelGenerator {
             Pattern::Ref { pattern: inner, .. } => {
                 // ref doesn't affect the condition - check the inner pattern
                 self.gen_pattern_condition(inner, scrutinee);
+            }
+        }
+    }
+
+    fn gen_pattern_bindings(&mut self, pattern: &Pattern, scrutinee: &Expr) {
+        // Extract bindings from pattern and emit const declarations
+        match pattern {
+            Pattern::Variant { name: _, inner } => {
+                if let Some(inner_pattern) = inner {
+                    if let Pattern::Ident(binding_name) = inner_pattern.as_ref() {
+                        // Generate: const binding_name = scrutinee;
+                        self.emit_indent();
+                        self.emit("const ");
+                        self.emit(binding_name);
+                        self.emit(" = ");
+                        self.gen_expr(scrutinee);
+                        self.emit(";\n");
+                    }
+                }
+            }
+            Pattern::Ref { pattern: inner, .. } => {
+                // ref doesn't affect bindings - extract from inner pattern
+                self.gen_pattern_bindings(inner, scrutinee);
+            }
+            _ => {
+                // Other patterns don't introduce bindings at this level
             }
         }
     }
@@ -1811,12 +1935,21 @@ impl BabelGenerator {
                             return;
                         }
                         if mem.property == "to_string" && call.args.is_empty() {
-                            // Check if this might be CodeBuilder
+                            // Check if this is CodeBuilder/array vs primitive type
                             // builder.to_string() -> builder.join("")
-                            // We need to be careful not to override all to_string calls
-                            // For now, we'll handle it generically
-                            self.gen_expr(&mem.object);
-                            self.emit(".join(\"\")");
+                            // num.to_string() -> num.toString()
+                            // For primitives (numbers, booleans), use .toString()
+                            // For arrays/strings, use .join("") or keep as-is
+                            let obj_str = self.expr_to_string(&mem.object);
+                            if obj_str.contains("builder") || obj_str.contains("lines") || obj_str.contains("result") && !obj_str.contains(".value") {
+                                // Likely an array/builder
+                                self.gen_expr(&mem.object);
+                                self.emit(".join(\"\")");
+                            } else {
+                                // Likely a primitive (number, boolean, etc.)
+                                self.gen_expr(&mem.object);
+                                self.emit(".toString()");
+                            }
                             return;
                         }
                         if mem.property == "indent" || mem.property == "dedent" {
@@ -1866,6 +1999,22 @@ impl BabelGenerator {
                         self.emit("(");
                         self.gen_expr(&mem.object);
                         self.emit(".length === 0)");
+                        return;
+                    }
+                    // chars() -> just the string itself (or .split('') for actual char array)
+                    if prop == "chars" {
+                        self.gen_expr(&mem.object);
+                        return;
+                    }
+                    // iter() -> just the array itself
+                    if prop == "iter" {
+                        self.gen_expr(&mem.object);
+                        return;
+                    }
+                    // enumerate() on an iterator -> .entries()
+                    if prop == "enumerate" {
+                        self.gen_expr(&mem.object);
+                        self.emit(".entries()");
                         return;
                     }
                     // clone() -> just the value (no-op in JS)
@@ -2181,9 +2330,47 @@ impl BabelGenerator {
                         self.emit(" else if (");
                     }
                     self.gen_pattern_condition(&arm.pattern, &match_expr.scrutinee);
-                    self.emit(") { return ");
-                    self.gen_expr(&arm.body);
-                    self.emit("; }");
+                    self.emit(") { ");
+
+                    // Extract bindings if needed
+                    if let Pattern::Variant { inner: Some(_), .. } = &arm.pattern {
+                        // Save current indent and temporarily use no indent for inline bindings
+                        let saved_indent = self.indent;
+                        self.indent = 0;
+                        self.gen_pattern_bindings(&arm.pattern, &match_expr.scrutinee);
+                        self.indent = saved_indent;
+                        // If there was a binding, we need to separate it from the return
+                        self.emit(" ");
+                    }
+
+                    // Handle block bodies specially - unwrap them instead of generating IIFE
+                    if let Expr::Block(block) = &arm.body {
+                        // Generate block statements inline, with last expression as return
+                        for (i, stmt) in block.stmts.iter().enumerate() {
+                            let is_last = i == block.stmts.len() - 1;
+                            if is_last {
+                                // Last statement - if it's an expression, return it
+                                if let Stmt::Expr(expr_stmt) = stmt {
+                                    self.emit("return ");
+                                    self.gen_expr(&expr_stmt.expr);
+                                    self.emit(";");
+                                } else {
+                                    // It's a statement, generate it normally
+                                    self.gen_stmt(stmt);
+                                }
+                            } else {
+                                // Not last, generate normally
+                                self.gen_stmt(stmt);
+                                self.emit(" ");
+                            }
+                        }
+                    } else {
+                        // Non-block body, return directly
+                        self.emit("return ");
+                        self.gen_expr(&arm.body);
+                        self.emit(";");
+                    }
+                    self.emit(" }");
                 }
                 self.emit(" })()");
             }

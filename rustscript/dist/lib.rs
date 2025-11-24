@@ -7,12 +7,60 @@ use swc_ecma_visit::{VisitMut, VisitMutWith};
 
 use swc_ecma_visit::Visit;
 
-pub struct TestMatch {
+#[derive(Debug, Clone)]
+pub struct State {
+    pub component_name: String,
+    pub use_state: Vec<UseStateInfo>,
+    pub use_effect: Vec<UseEffectInfo>,
+    pub use_ref: Vec<UseRefInfo>,
+    pub event_handlers: Vec<EventHandler>,
+    pub render_jsx: Option<JSXElement>,
+}
+
+
+#[derive(Debug, Clone)]
+pub struct UseStateInfo {
+    pub name: String,
+    pub setter: String,
+    pub initial_value: String,
+    pub csharp_type: String,
+}
+
+
+#[derive(Debug, Clone)]
+pub struct UseEffectInfo {
+    pub index: Number,
+    pub body: String,
+    pub dependencies: Vec<String>,
+}
+
+
+#[derive(Debug, Clone)]
+pub struct UseRefInfo {
+    pub name: String,
+    pub initial_value: String,
+}
+
+
+#[derive(Debug, Clone)]
+pub struct EventHandler {
+    pub name: String,
+    pub body: String,
+}
+
+
+#[derive(Debug, Clone)]
+pub struct TranspilerOutput {
+    pub csharp: String,
+}
+
+
+pub struct MinimalCounterTranspiler {
     output: String,
     indent_level: usize,
 }
 
-impl TestMatch {
+impl MinimalCounterTranspiler {
     pub fn new() -> Self {
         Self {
             output: String::new(),
@@ -40,15 +88,450 @@ impl TestMatch {
         self.output
     }
     
-    fn test_match(expr: &Expr) -> String {
-        match expr {
-            NumericLiteral(num) => "number",
-            StringLiteral(str) => "string",
-            _ => "other",
+    fn init() -> State {
+        State { component_name: String::new(), use_state: vec![], use_effect: vec![], use_ref: vec![], event_handlers: vec![], render_jsx: None }
+    }
+    
+    fn process_function_body(self: &mut Self, body: &BlockStmt) {
+        let mut effect_index = 0;
+        for stmt in &body.stmts {
+            match stmt {
+                VariableDeclaration(var_decl) => {
+                    for declarator in &var_decl.declarations {
+                        if let Some(init) = &declarator.init {
+                            match init {
+                                CallExpression(call) => {
+                                    match &call.callee {
+                                        Identifier(callee) => {
+                                            match callee.name.as_str() {
+                                                "useState" => self.extract_use_state(declarator, call),
+                                                "useEffect" => {
+                                                    self.extract_use_effect(call, effect_index);
+                                                    effect_index += 1
+                                                },
+                                                "useRef" => self.extract_use_ref(declarator, call),
+                                                _ => {
+                                                },
+                                            }
+                                        },
+                                        _ => {
+                                        },
+                                    }
+                                },
+                                _ => {
+                                },
+                            }
+                        }
+                    }
+                },
+                ReturnStatement(ret) => {
+                    if let Some(arg) = &ret.argument {
+                        match arg {
+                            JSXElement(jsx) => {
+                                self.render_jsx = Some(jsx.clone())
+                            },
+                            _ => {
+                            },
+                        }
+                    }
+                },
+                FunctionDeclaration(func) => {
+                    if let Some(id) = &func.id {
+                        let handler_name = self.to_csharp_method_name(&id.name);
+                        let body = self.function_body_to_csharp(&func.body);
+                        self.event_handlers.push(EventHandler { name: handler_name, body: body })
+                    }
+                },
+                _ => {
+                },
+            }
         }
+    }
+    
+    fn extract_use_state(self: &mut Self, declarator: &VariableDeclarator, call: &CallExpr) {
+        match &declarator.name {
+            ArrayPattern(array_pattern) => {
+                if (array_pattern.elements.len() >= 2) {
+                    let state_name = self.get_pattern_name(&array_pattern.elements[0]);
+                    let setter_name = self.get_pattern_name(&array_pattern.elements[1]);
+                    let initial_value = if (call.args.len() > 0) {                     self.expr_to_csharp(&call.args[0]);
+ } else {                     "null".to_string();
+ };
+                    let csharp_type = if (call.args.len() > 0) {                     self.infer_csharp_type(&call.args[0]);
+ } else {                     "dynamic".to_string();
+ };
+                    self.use_state.push(UseStateInfo { name: state_name, setter: setter_name, initial_value: initial_value, csharp_type: csharp_type })
+                }
+            },
+            _ => {
+            },
+        }
+    }
+    
+    fn extract_use_effect(self: &mut Self, call: &CallExpr, index: Number) {
+        let mut body = String::new();
+        let mut dependencies = vec![];
+        if (call.args.len() > 0) {
+            match &call.args[0] {
+                ArrowFunctionExpression(arrow) => {
+                    body = self.function_body_to_csharp(&arrow.body)
+                },
+                _ => {
+                },
+            }
+        }
+        if (call.args.len() > 1) {
+            match &call.args[1] {
+                ArrayExpression(arr) => {
+                    for elem in &arr.elements {
+                        if let Some(expr) = elem {
+                            match expr {
+                                Identifier(id) => {
+                                    dependencies.push(id.name.clone())
+                                },
+                                _ => {
+                                },
+                            }
+                        }
+                    }
+                },
+                _ => {
+                },
+            }
+        }
+        self.use_effect.push(UseEffectInfo { index: index, body: body, dependencies: dependencies })
+    }
+    
+    fn extract_use_ref(self: &mut Self, declarator: &VariableDeclarator, call: &CallExpr) {
+        match &declarator.name {
+            Identifier(id) => {
+                let initial_value = if (call.args.len() > 0) {                 self.expr_to_csharp(&call.args[0]);
+ } else {                 "null".to_string();
+ };
+                self.use_ref.push(UseRefInfo { name: id.name.clone(), initial_value: initial_value })
+            },
+            _ => {
+            },
+        }
+    }
+    
+    fn get_pattern_name(self: &Self, pattern: &Option<Pat>) -> String {
+        if let Some(pat) = pattern {
+            match pat {
+                Identifier(id) => id.name.clone(),
+                _ => String::new(),
+            }
+        } else {
+            String::new()
+        }
+    }
+    
+    fn expr_to_csharp(self: &Self, expr: &Expr) -> String {
+        match expr {
+            NumericLiteral(num) => num.value.to_string(),
+            StringLiteral(s) => format!("\"{}\"", s.value),
+            BooleanLiteral(b) => if b.value {             "true";
+ } else {             "false";
+ }.to_string(),
+            NullLiteral(_) => "null".to_string(),
+            Identifier(id) => id.name.clone(),
+            _ => "null".to_string(),
+        }
+    }
+    
+    fn infer_csharp_type(self: &Self, expr: &Expr) -> String {
+        match expr {
+            NumericLiteral(num) => {
+                if (num.value == num.value.floor()) {
+                    "int".to_string()
+                } else {
+                    "double".to_string()
+                }
+            },
+            StringLiteral(_) => "string".to_string(),
+            BooleanLiteral(_) => "bool".to_string(),
+            ArrayExpression(_) => "List<dynamic>".to_string(),
+            ObjectExpression(_) => "Dictionary<string, dynamic>".to_string(),
+            _ => "dynamic".to_string(),
+        }
+    }
+    
+    fn function_body_to_csharp(self: &Self, body: &FunctionBody) -> String {
+        let mut result = String::new();
+        match body {
+            BlockStatement(block) => {
+                for stmt in &block.body {
+                    match stmt {
+                        ExpressionStatement(expr_stmt) => {
+                            match &expr_stmt.expression {
+                                CallExpression(call) => {
+                                    match &call.callee {
+                                        MemberExpression(member) => {
+                                            let is_log = self.is_console_log(member);
+                                            if is_log {
+                                                result.push_str("        Console.WriteLine(");
+                                                if (call.arguments.len() > 0) {
+                                                    result.push_str(&self.template_literal_to_csharp(&call.arguments[0]))
+                                                }
+                                                result.push_str(");
+")
+                                            }
+                                        },
+                                        _ => {
+                                        },
+                                    }
+                                },
+                                _ => {
+                                },
+                            }
+                        },
+                        _ => {
+                        },
+                    }
+                }
+            },
+            _ => {
+            },
+        }
+        result
+    }
+    
+    fn is_console_log(self: &Self, member: &MemberExpr) -> Bool {
+        match &member.obj {
+            Identifier(obj) => {
+                match &member.prop {
+                    Identifier(prop) => {
+                        ((obj.name == "console") && (prop.name == "log"))
+                    },
+                    _ => false,
+                }
+            },
+            _ => false,
+        }
+    }
+    
+    fn template_literal_to_csharp(self: &Self, expr: &Expr) -> String {
+        match expr {
+            TemplateLiteral(tmpl) => {
+                let mut result = String::from("$\"");
+                for (i, quasi) in tmpl.quasis.iter().enumerate() {
+                    result.push_str(&quasi.value.cooked);
+                    if (i < tmpl.expressions.len()) {
+                        result.push("{");
+                        result.push_str(&self.expr_to_csharp(&tmpl.expressions[i]));
+                        result.push("}")
+                    }
+                }
+                result.push("\"");
+                result
+            },
+            _ => self.expr_to_csharp(expr),
+        }
+    }
+    
+    fn to_csharp_method_name(self: &Self, js_name: &Str) -> String {
+        let mut result = String::new();
+        let mut capitalize_next = true;
+        for ch in js_name.chars() {
+            if capitalize_next {
+                result.push(ch.to_ascii_uppercase());
+                capitalize_next = false
+            } else {
+                result.push(ch)
+            }
+        }
+        result
+    }
+    
+    fn jsx_to_vnode(self: &Self, jsx: &JSXElement) -> String {
+        let tag = self.get_jsx_tag_name(&jsx.opening_element.name);
+        let mut attrs = vec![];
+        for attr in &jsx.opening_element.attributes {
+            match attr {
+                JSXAttribute(attr_node) => {
+                    let name = self.get_jsx_attr_name(&attr_node.name);
+                    let value = if &attr_node.value {                     self.jsx_attr_value_to_csharp(val);
+ } else {                     "\"true\"".to_string();
+ };
+                    if name.starts_with("on") {
+                        attrs.push(format!("                [\"{}n\"] = \"{}\"", name, value.replace("\"", "")))
+                    } else {
+                        if (name == "ref") {
+                            attrs.push(format!("                [\"ref\"] = \"{}\"", value.replace("\"", "")))
+                        } else {
+                            attrs.push(format!("                [\"{}\"] = {}", name, value))
+                        }
+                    }
+                },
+                _ => {
+                },
+            }
+        }
+        let mut children = vec![];
+        for child in &jsx.children {
+            match child {
+                JSXElement(elem) => {
+                    children.push(self.jsx_to_vnode(elem))
+                },
+                JSXText(text) => {
+                    let trimmed = text.value.trim();
+                    if !trimmed.is_empty() {
+                        children.push(format!("\"{}\"", trimmed))
+                    }
+                },
+                JSXExpressionContainer(container) => {
+                    match &container.expression {
+                        Expression(expr) => {
+                            children.push(format!("$\"{{{}}\"", self.expr_to_csharp(expr)))
+                        },
+                        _ => {
+                        },
+                    }
+                },
+                _ => {
+                },
+            }
+        }
+        let mut result = format!("new VElement(\"{}\", ", tag);
+        if (attrs.is_empty() && children.is_empty()) {
+            result.push_str("null, null)")
+        } else {
+            if attrs.is_empty() {
+                result.push_str("null, ");
+                if (children.len() == 1) {
+                    result.push_str(&children[0])
+                } else {
+                    result.push_str("new VNode[]
+            {
+                ");
+                    result.push_str(&children.join(",
+                "));
+                    result.push_str("
+            }")
+                }
+                result.push(")")
+            } else {
+                result.push_str("new Dictionary<string, string>
+            {
+");
+                result.push_str(&attrs.join(",
+"));
+                result.push_str("
+            }, ");
+                if (children.len() == 1) {
+                    result.push_str(&children[0])
+                } else {
+                    if (children.len() > 1) {
+                        result.push_str("new VNode[]
+            {
+                ");
+                        result.push_str(&children.join(",
+                "));
+                        result.push_str("
+            }")
+                    } else {
+                        result.push_str("null")
+                    }
+                }
+                result.push(")")
+            }
+        }
+        result
+    }
+    
+    fn get_jsx_tag_name(self: &Self, name: &JSXElementName) -> String {
+        match name {
+            Identifier(id) => id.name.clone(),
+            _ => "div".to_string(),
+        }
+    }
+    
+    fn get_jsx_attr_name(self: &Self, name: &JSXAttributeName) -> String {
+        match name {
+            Identifier(id) => id.name.clone(),
+            _ => "unknown".to_string(),
+        }
+    }
+    
+    fn jsx_attr_value_to_csharp(self: &Self, value: &JSXAttributeValue) -> String {
+        match value {
+            StringLiteral(s) => format!("\"{}\"", s.value),
+            JSXExpressionContainer(container) => {
+                match &container.expression {
+                    Expression(expr) => self.expr_to_csharp(expr),
+                    _ => "null".to_string(),
+                }
+            },
+            _ => "null".to_string(),
+        }
+    }
+    
+    fn finish(self: &Self) -> TranspilerOutput {
+        let mut lines = vec![];
+        lines.push("using Minimact;".to_string());
+        lines.push("using System;".to_string());
+        lines.push("using System.Collections.Generic;".to_string());
+        lines.push("using System.Linq;".to_string());
+        lines.push("".to_string());
+        lines.push("namespace Generated.Components".to_string());
+        lines.push("{".to_string());
+        lines.push("    [MinimactComponent]".to_string());
+        lines.push(format!("    public class {} : MinimactComponent", self.component_name));
+        lines.push("    {".to_string());
+        for state in &self.use_state {
+            lines.push(format!("        [UseState({})]", state.initial_value));
+            lines.push(format!("        private {} {};", state.csharp_type, state.name));
+            lines.push("".to_string())
+        }
+        for ref_info in &self.use_ref {
+            lines.push(format!("        [UseRef({})]", ref_info.initial_value));
+            lines.push(format!("        private ElementRef {};", ref_info.name));
+            lines.push("".to_string())
+        }
+        for effect in &self.use_effect {
+            let deps = if effect.dependencies.is_empty() {             String::new();
+ } else {             format!("\"{}\"", effect.dependencies.join("\", \""));
+ };
+            lines.push(format!("        [UseEffect({})]", deps));
+            lines.push(format!("        private void Effect_{}()", effect.index));
+            lines.push("        {".to_string());
+            lines.push(effect.body.clone());
+            lines.push("        }".to_string());
+            lines.push("".to_string())
+        }
+        lines.push("        protected override VNode Render()".to_string());
+        lines.push("        {".to_string());
+        if let Some(jsx) = &self.render_jsx {
+            lines.push(format!("            return {};", self.jsx_to_vnode(jsx)))
+        } else {
+            lines.push("            return VNull();".to_string())
+        }
+        lines.push("        }".to_string());
+        lines.push("".to_string());
+        for handler in &self.event_handlers {
+            lines.push(format!("        private void {}()", handler.name));
+            lines.push("        {".to_string());
+            lines.push(handler.body.clone());
+            lines.push("        }".to_string())
+        }
+        lines.push("    }".to_string());
+        lines.push("}".to_string());
+        TranspilerOutput { csharp: lines.join("
+") }
     }
     
 }
 
-impl Visit for TestMatch {
+impl Visit for MinimalCounterTranspiler {
+    
+    fn visit_fn_decl(&mut self, n: &FnDecl) {
+        if let Some(id) = &n.ident {
+            self.component_name = id.sym.clone()
+        } else {
+            return;
+        }
+        if let Some(body) = &n.body {
+            self.process_function_body(body)
+        }
+    }
 }
