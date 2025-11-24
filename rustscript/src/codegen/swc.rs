@@ -460,7 +460,16 @@ impl SwcGenerator {
             match item {
                 PluginItem::PreHook(f) => pre_hook = Some(f),
                 PluginItem::ExitHook(f) => exit_hook = Some(f),
-                PluginItem::Function(f) => methods.push(f),
+                PluginItem::Function(f) => {
+                    // Treat init() and finish() as aliases for pre/exit hooks
+                    if f.name == "init" && pre_hook.is_none() {
+                        pre_hook = Some(f);
+                    } else if f.name == "finish" && exit_hook.is_none() {
+                        exit_hook = Some(f);
+                    } else {
+                        methods.push(f);
+                    }
+                },
                 PluginItem::Struct(s) => structs.push(s),
                 _ => {}
             }

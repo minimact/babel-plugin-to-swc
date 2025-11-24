@@ -525,7 +525,16 @@ impl BabelGenerator {
             match item {
                 PluginItem::PreHook(f) => pre_hook = Some(f),
                 PluginItem::ExitHook(f) => exit_hook = Some(f),
-                PluginItem::Function(f) => methods.push(f),
+                PluginItem::Function(f) => {
+                    // Treat init() and finish() as aliases for pre/exit hooks
+                    if f.name == "init" && pre_hook.is_none() {
+                        pre_hook = Some(f);
+                    } else if f.name == "finish" && exit_hook.is_none() {
+                        exit_hook = Some(f);
+                    } else {
+                        methods.push(f);
+                    }
+                },
                 PluginItem::Struct(s) => structs.push(s),
                 _ => {}
             }
@@ -586,10 +595,10 @@ impl BabelGenerator {
         self.indent += 1;
 
         // Add pre() if present
-        if pre_hook.is_some() {
+        if let Some(pre_fn) = pre_hook {
             self.emit_line("pre(file) {");
             self.indent += 1;
-            self.emit_line("pre(file);");
+            self.emit_line(&format!("{}(file);", pre_fn.name));
             self.indent -= 1;
             self.emit_line("},");
             self.emit_line("");
@@ -600,12 +609,12 @@ impl BabelGenerator {
         self.indent += 1;
 
         // Add exit hook wrapper in Program visitor if present
-        if exit_hook.is_some() {
+        if let Some(exit_fn) = exit_hook {
             self.emit_line("Program: {");
             self.indent += 1;
             self.emit_line("exit(path, state) {");
             self.indent += 1;
-            self.emit_line("exit(path.node, state, builder);");
+            self.emit_line(&format!("{}(path.node, state, builder);", exit_fn.name));
             self.indent -= 1;
             self.emit_line("}");
             self.indent -= 1;

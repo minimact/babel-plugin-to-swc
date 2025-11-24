@@ -84,13 +84,61 @@ impl MinimalCounterTranspiler {
         self.indent_level -= 1;
     }
     
-    pub fn finish(self) -> String {
+    /// Finalize output (from exit hook)
+    pub fn finish(mut self) -> String {
+        let mut lines = vec![];
+        lines.push("using Minimact;".to_string());
+        lines.push("using System;".to_string());
+        lines.push("using System.Collections.Generic;".to_string());
+        lines.push("using System.Linq;".to_string());
+        lines.push("".to_string());
+        lines.push("namespace Generated.Components".to_string());
+        lines.push("{".to_string());
+        lines.push("    [MinimactComponent]".to_string());
+        lines.push(format!("    public class {} : MinimactComponent", self.component_name));
+        lines.push("    {".to_string());
+        for state in &self.use_state {
+            lines.push(format!("        [UseState({})]", state.initial_value));
+            lines.push(format!("        private {} {};", state.csharp_type, state.name));
+            lines.push("".to_string())
+        }
+        for ref_info in &self.use_ref {
+            lines.push(format!("        [UseRef({})]", ref_info.initial_value));
+            lines.push(format!("        private ElementRef {};", ref_info.name));
+            lines.push("".to_string())
+        }
+        for effect in &self.use_effect {
+            let deps = if effect.dependencies.is_empty() { String::new() } else { format!("\"{}\"", effect.dependencies.join("\", \"")) };
+            lines.push(format!("        [UseEffect({})]", deps));
+            lines.push(format!("        private void Effect_{}()", effect.index));
+            lines.push("        {".to_string());
+            lines.push(effect.body.clone());
+            lines.push("        }".to_string());
+            lines.push("".to_string())
+        }
+        lines.push("        protected override VNode Render()".to_string());
+        lines.push("        {".to_string());
+        if let Some(jsx) = &self.render_jsx {
+            lines.push(format!("            return {};", self.jsx_to_vnode(jsx)))
+        } else {
+            lines.push("            return VNull();".to_string())
+        }
+        lines.push("        }".to_string());
+        lines.push("".to_string());
+        for handler in &self.event_handlers {
+            lines.push(format!("        private void {}()", handler.name));
+            lines.push("        {".to_string());
+            lines.push(handler.body.clone());
+            lines.push("        }".to_string())
+        }
+        lines.push("    }".to_string());
+        lines.push("}".to_string());
+        TranspilerOutput { csharp: lines.join("
+") }
         self.output
     }
     
-    fn init() -> State {
-        State { component_name: String::new(), use_state: vec![], use_effect: vec![], use_ref: vec![], event_handlers: vec![], render_jsx: None }
-    }
+    // Note: pre() hook not supported in SWC (no source access)
     
     fn process_function_body(self: &mut Self, body: &BlockStmt) {
         let mut effect_index = 0;
@@ -454,58 +502,6 @@ impl MinimalCounterTranspiler {
             },
             _ => "null".to_string(),
         }
-    }
-    
-    fn finish(self: &Self) -> TranspilerOutput {
-        let mut lines = vec![];
-        lines.push("using Minimact;".to_string());
-        lines.push("using System;".to_string());
-        lines.push("using System.Collections.Generic;".to_string());
-        lines.push("using System.Linq;".to_string());
-        lines.push("".to_string());
-        lines.push("namespace Generated.Components".to_string());
-        lines.push("{".to_string());
-        lines.push("    [MinimactComponent]".to_string());
-        lines.push(format!("    public class {} : MinimactComponent", self.component_name));
-        lines.push("    {".to_string());
-        for state in &self.use_state {
-            lines.push(format!("        [UseState({})]", state.initial_value));
-            lines.push(format!("        private {} {};", state.csharp_type, state.name));
-            lines.push("".to_string())
-        }
-        for ref_info in &self.use_ref {
-            lines.push(format!("        [UseRef({})]", ref_info.initial_value));
-            lines.push(format!("        private ElementRef {};", ref_info.name));
-            lines.push("".to_string())
-        }
-        for effect in &self.use_effect {
-            let deps = if effect.dependencies.is_empty() { String::new() } else { format!("\"{}\"", effect.dependencies.join("\", \"")) };
-            lines.push(format!("        [UseEffect({})]", deps));
-            lines.push(format!("        private void Effect_{}()", effect.index));
-            lines.push("        {".to_string());
-            lines.push(effect.body.clone());
-            lines.push("        }".to_string());
-            lines.push("".to_string())
-        }
-        lines.push("        protected override VNode Render()".to_string());
-        lines.push("        {".to_string());
-        if let Some(jsx) = &self.render_jsx {
-            lines.push(format!("            return {};", self.jsx_to_vnode(jsx)))
-        } else {
-            lines.push("            return VNull();".to_string())
-        }
-        lines.push("        }".to_string());
-        lines.push("".to_string());
-        for handler in &self.event_handlers {
-            lines.push(format!("        private void {}()", handler.name));
-            lines.push("        {".to_string());
-            lines.push(handler.body.clone());
-            lines.push("        }".to_string())
-        }
-        lines.push("    }".to_string());
-        lines.push("}".to_string());
-        TranspilerOutput { csharp: lines.join("
-") }
     }
     
 }

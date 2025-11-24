@@ -67,11 +67,6 @@ module.exports = function({ types: t }) {
   }
   
   
-  function init() {
-    return { component_name: "", use_state: [], use_effect: [], use_ref: [], event_handlers: [], render_jsx: None };
-  }
-  
-  
   function process_function_body(self, body) {
     let effect_index = 0;
     for (const stmt of body.body) {
@@ -437,6 +432,13 @@ module.exports = function({ types: t }) {
     }
   }
   
+  // Pre-hook
+  
+  function init() {
+    return { component_name: "", use_state: [], use_effect: [], use_ref: [], event_handlers: [], render_jsx: None };
+  }
+  
+  // Exit hook
   
   function finish(self) {
     let lines = [];
@@ -492,7 +494,17 @@ module.exports = function({ types: t }) {
   }
   
   return {
+    pre(file) {
+      init(file);
+    },
+    
     visitor: {
+      Program: {
+        exit(path, state) {
+          finish(path.node, state, builder);
+        }
+      },
+      
       FunctionDeclaration(path) {
         const node = path.node;
         const __iflet_6 = node.id;

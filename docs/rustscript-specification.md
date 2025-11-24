@@ -2212,18 +2212,27 @@ This section supports "Read-Only" visitors used for transpilation rather than tr
 
 ### 16.1 Writer Plugin Declaration
 
+Writers use lifecycle hooks to manage state during traversal:
+- **`pub fn pre()` (or `fn init()`)** - Initialize state before traversal begins
+- **`pub fn exit()` (or `fn finish()`)** - Generate output after traversal completes
+- **`pub fn visit_*(...)`** - Read-only visitor methods
+
+**Note:** `init()` and `finish()` are convenient aliases for `pre()` and `exit()` respectively.
+
 ```rustscript
 writer TsxToCSharp {
-    // Internal state
-    builder: CodeBuilder,
+    // Internal state (define as struct fields)
+    struct State {
+        builder: CodeBuilder,
+    }
 
-    // Constructor
-    fn init() -> Self {
-        Self { builder: CodeBuilder::new() }
+    // Pre-hook: Initialize state before traversal
+    pub fn pre() -> State {
+        State { builder: CodeBuilder::new() }
     }
 
     // Read-Only Visitor (Note: `node` is immutable &T, not &mut T)
-    fn visit_jsx_element(node: &JSXElement, ctx: &Context) {
+    pub fn visit_jsx_element(node: &JSXElement) {
         let tag = node.opening_element.name.get_name();
 
         self.builder.append("new ");
@@ -2236,8 +2245,8 @@ writer TsxToCSharp {
         self.builder.append("})");
     }
 
-    // Final Output
-    fn finish(self) -> Str {
+    // Exit-hook: Called after all visitors complete
+    pub fn exit(&self) -> Str {
         self.builder.to_string()
     }
 }
@@ -2246,26 +2255,35 @@ writer TsxToCSharp {
 **Compiles to:**
 
 ```javascript
-// Babel: Wraps the visitor to accumulate a string
-module.exports = function() {
-  const builder = new CodeBuilder();
+// Babel: Writer with pre/exit hooks
+module.exports = function({ types: t }) {
+  let state;
+
   return {
+    pre(file) {
+      // Call the pre hook to initialize state
+      state = { builder: new CodeBuilder() };
+    },
+
     visitor: {
       JSXElement(path) {
          const node = path.node;
          const tag = node.openingElement.name.name;
 
-         builder.append("new ");
-         builder.append(tag);
-         builder.append("({");
+         state.builder.append("new ");
+         state.builder.append(tag);
+         state.builder.append("({");
 
          // ... attribute handling ...
 
-         builder.append("})");
+         state.builder.append("})");
       }
     },
+
     post(file) {
-       file.metadata.output = builder.toString();
+       // Call the exit hook to get output
+       const output = state.builder.toString();
+       file.metadata.output = output;
     }
   }
 }
@@ -2273,16 +2291,18 @@ module.exports = function() {
 
 ```rust
 // SWC: Uses Visit (read-only) instead of VisitMut
-struct TsxToCSharp {
+pub struct TsxToCSharp {
     builder: CodeBuilder,
 }
 
 impl TsxToCSharp {
-    fn new() -> Self {
+    // Called by the pre hook
+    pub fn new() -> Self {
         Self { builder: CodeBuilder::new() }
     }
 
-    fn finish(self) -> String {
+    // Called by the exit hook
+    pub fn finish(self) -> String {
         self.builder.to_string()
     }
 }
@@ -2315,13 +2335,15 @@ impl Visit for TsxToCSharp {
 
 ```rustscript
 writer ReactToOrleans {
-    builder: CodeBuilder,
-
-    fn init() -> Self {
-        Self { builder: CodeBuilder::new() }
+    struct State {
+        builder: CodeBuilder,
     }
 
-    fn visit_function_declaration(node: &FunctionDeclaration, ctx: &Context) {
+    pub fn pre() -> State {
+        State { builder: CodeBuilder::new() }
+    }
+
+    pub fn visit_function_declaration(node: &FunctionDeclaration) {
         self.builder.append("public class ");
         self.builder.append(node.id.name.clone());
         self.builder.append(" : Grain, I");
@@ -2336,7 +2358,7 @@ writer ReactToOrleans {
         self.builder.append("}\n");
     }
 
-    fn visit_call_expression(node: &CallExpression, ctx: &Context) {
+    pub fn visit_call_expression(node: &CallExpression) {
         // Check for useState hooks
         if let Some(name) = get_callee_name(&node.callee) {
             if name == "useState" {
@@ -2356,11 +2378,40 @@ writer ReactToOrleans {
         self.builder.append(" _state;\n");
     }
 
-    fn finish(self) -> Str {
+    pub fn exit(&self) -> Str {
         self.builder.to_string()
     }
 }
 ```
+
+**Alternative with `init/finish` aliases:**
+
+```rustscript
+writer ReactToOrleans {
+    struct State {
+        builder: CodeBuilder,
+    }
+
+    // init() is an alias for pre()
+    fn init() -> State {
+        State { builder: CodeBuilder::new() }
+    }
+
+    pub fn visit_function_declaration(node: &FunctionDeclaration) {
+        self.builder.append("public class ");
+        self.builder.append(node.id.name.clone());
+        self.builder.append(" {\n");
+        self.builder.append("}\n");
+    }
+
+    // finish() is an alias for exit()
+    fn finish(&self) -> Str {
+        self.builder.to_string()
+    }
+}
+```
+
+Both styles compile to the same Babel `pre()` and `post()` hooks and SWC `Visit` trait with lifecycle methods.
 
 ---
 
