@@ -11,32 +11,32 @@ module.exports = function({ types: t }) {
     dedent() { this._indentLevel--; },
     toString() { return this._output.join(''); }
   };
-  
+
   // Pre-hook
-  
+
   function pre(file) {
     builder._filename = file.opts.filename || "unknown";
   }
-  
+
   // Exit hook
-  
+
   function exit(program, state, builder) {
     const output = builder.toString();
             state.file.metadata.collectedIdentifiers = output.trim();
   }
-  
+
   return {
     pre(file) {
       pre(file);
     },
-    
+
     visitor: {
       Program: {
         exit(path, state) {
           exit(path.node, state, builder);
         }
       },
-      
+
       Identifier(path) {
         const node = path.node;
         builder.append(node.name);

@@ -5,35 +5,46 @@ use swc_common::{Span, DUMMY_SP};
 use swc_ecma_ast::*;
 use swc_ecma_visit::{VisitMut, VisitMutWith};
 
-pub struct TestVerbatim {
-    // Plugin state
+use swc_ecma_visit::Visit;
+
+pub struct TestWriterHooks {
+    output: String,
+    indent_level: usize,
 }
 
-impl TestVerbatim {
+impl TestWriterHooks {
     pub fn new() -> Self {
-        Self {}
+        Self {
+            output: String::new(),
+            indent_level: 0,
+        }
     }
     
-    fn test_babel_verbatim() {
-        // Babel-only code omitted
+    fn append(&mut self, s: &str) {
+        self.output.push_str(s);
     }
     
-    fn test_swc_verbatim() {
-        println!("This is SWC-only Rust code");
-        let x: i32 = 42;
+    fn newline(&mut self) {
+        self.output.push('\n');
+    }
+    
+    fn indent(&mut self) {
+        self.indent_level += 1;
+    }
+    
+    fn dedent(&mut self) {
+        self.indent_level -= 1;
+    }
+    
+    pub fn finish(self) -> String {
+        self.output
     }
 }
 
-impl VisitMut for TestVerbatim {
+impl Visit for TestWriterHooks {
     
-    fn visit_mut_jsx_element(&mut self, n: &mut JSXElement) {
-        let tag_name = &n.opening_element.name;
-        // Babel-only code omitted
-        // SWC-specific AST manipulation
-        node.opening.attrs.push(JSXAttr {
-            span: DUMMY_SP,
-            name: JSXAttrName::Ident(Ident::new("key".into(), DUMMY_SP)),
-            value: Some(JSXAttrValue::Lit(Lit::Str("generated-key".into())))
-        });
+    fn visit_mut_ident(&mut self, n: &Ident) {
+        self.builder.append(node.name);
+        self.builder.append(" ")
     }
 }
