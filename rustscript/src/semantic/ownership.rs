@@ -379,10 +379,9 @@ impl OwnershipChecker {
             // Check if target is a member expression (direct property mutation)
             if let Expr::Member(member) = assign.target.as_ref() {
                 // Allow mutations on 'self' (writer/plugin state)
-                if let Expr::Ident(ident) = member.object.as_ref() {
-                    if ident.name == "self" {
-                        return; // self.field = value is allowed
-                    }
+                // This should work for self.field, self.state.field, etc.
+                if self.starts_with_self(&member.object) {
+                    return; // self.* = value is allowed
                 }
 
                 // Direct property mutation on AST nodes is not allowed
@@ -396,6 +395,15 @@ impl OwnershipChecker {
                     .with_hint("AST node mutation can break Babel's scope tracker. Use the clone-and-rebuild pattern: `*node = NodeType { field: new_value, ..node.clone() }`"),
                 );
             }
+        }
+    }
+
+    /// Check if an expression starts with 'self'
+    fn starts_with_self(&self, expr: &Expr) -> bool {
+        match expr {
+            Expr::Ident(ident) => ident.name == "self",
+            Expr::Member(member) => self.starts_with_self(&member.object),
+            _ => false,
         }
     }
 
