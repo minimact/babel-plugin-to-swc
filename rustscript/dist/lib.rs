@@ -7,18 +7,16 @@ use swc_ecma_visit::{VisitMut, VisitMutWith};
 
 use swc_ecma_visit::Visit;
 
-pub struct TestWriterState {
+pub struct TestSemicolons {
     output: String,
     indent_level: usize,
-    component_name: String,
 }
 
-impl TestWriterState {
+impl TestSemicolons {
     pub fn new() -> Self {
         Self {
             output: String::new(),
             indent_level: 0,
-            component_name: Default::default(),
         }
     }
     
@@ -42,13 +40,14 @@ impl TestWriterState {
         self.output
     }
     
-    // Note: pre() hook not supported in SWC (no source access)
-    
-    fn process() {
-        self.component_name = "Test".to_string()
+    fn append_lines() {
+        let mut lines = Vec::new();
+        lines.push("line1".to_string());
+        lines.push("line2".to_string());
+        lines.push("line3".to_string());
     }
     
 }
 
-impl Visit for TestWriterState {
+impl Visit for TestSemicolons {
 }

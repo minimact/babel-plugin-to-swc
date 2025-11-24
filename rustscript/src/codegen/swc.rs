@@ -1245,11 +1245,31 @@ impl SwcGenerator {
 
     fn gen_stmt_with_context(&mut self, stmt: &Stmt, is_last_in_block: bool) {
         // If this is the last statement in a block and it's an expression,
-        // don't add a semicolon (it's the block's return value)
+        // check if it's actually a return value or just a statement
         match stmt {
             Stmt::Expr(expr_stmt) if is_last_in_block => {
+                // Check if this expression produces a meaningful return value
+                // Calls to push(), insert(), etc. return () so they need semicolons
+                let needs_semicolon = match &expr_stmt.expr {
+                    Expr::Call(call) => {
+                        // Check if it's a method call to a mutating method
+                        if let Expr::Member(mem) = call.callee.as_ref() {
+                            matches!(mem.property.as_str(),
+                                "push" | "insert" | "remove" | "clear" | "append" |
+                                "pop" | "push_str" | "extend" | "drain")
+                        } else {
+                            false
+                        }
+                    }
+                    Expr::Assign(_) => true,  // Assignments return ()
+                    _ => false,
+                };
+
                 self.emit_indent();
                 self.gen_expr(&expr_stmt.expr);
+                if needs_semicolon {
+                    self.emit(";");
+                }
                 self.emit("\n");
             }
             _ => self.gen_stmt(stmt),

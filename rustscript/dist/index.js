@@ -13,28 +13,14 @@ module.exports = function({ types: t }) {
   };
   
   
-  class State {
-  constructor(component_name) {
-      this.component_name = component_name;
-    }
-  }
-  
-  
-  function process() {
-    return this.component_name = "Test".toString();
-  }
-  
-  // Pre-hook
-  
-  function init() {
-    return { component_name: "" };
+  function append_lines() {
+    let lines = Vec.new();
+    lines += "line1".toString();
+    lines += "line2".toString();
+    return lines += "line3".toString();
   }
   
   return {
-    pre(file) {
-      init(file);
-    },
-    
     visitor: {
     }
   };
