@@ -7,18 +7,12 @@ use swc_ecma_visit::{VisitMut, VisitMutWith};
 
 use swc_ecma_visit::Visit;
 
-#[derive(Debug, Clone)]
-pub struct State {
-    pub name: Option<String>,
-}
-
-
-pub struct TestOption {
+pub struct TestStringPush {
     output: String,
     indent_level: usize,
 }
 
-impl TestOption {
+impl TestStringPush {
     pub fn new() -> Self {
         Self {
             output: String::new(),
@@ -46,13 +40,14 @@ impl TestOption {
         self.output
     }
     
-    // Note: pre() hook not supported in SWC (no source access)
-    
-    fn set_name(name: String) {
-        self.state.name = Some(name)
+    fn add_char() -> String {
+        let mut s = String::new();
+        s.push("a");
+        s.push("b");
+        s
     }
     
 }
 
-impl Visit for TestOption {
+impl Visit for TestStringPush {
 }

@@ -1793,6 +1793,7 @@ impl BabelGenerator {
                 // Handle special cases
                 match ident.name.as_str() {
                     "self" => self.emit("this"),
+                    "None" => self.emit("null"),
                     // Handle Default::default() which the hoister uses as a placeholder
                     name if name.starts_with("Default::default") => self.emit("undefined"),
                     _ => {
@@ -1856,6 +1857,11 @@ impl BabelGenerator {
                     // Check for format! macro -> template literal
                     if ident.name == "format" && !call.args.is_empty() {
                         self.gen_format_macro(&call.args);
+                        return;
+                    }
+                    // Check for Some(x) -> x (unwrap Option in JavaScript)
+                    if ident.name == "Some" && call.args.len() == 1 {
+                        self.gen_expr(&call.args[0]);
                         return;
                     }
                     // Check for Default::default() -> undefined or appropriate default
@@ -2125,6 +2131,18 @@ impl BabelGenerator {
                             self.gen_expr(&call.args[0]);
                         }
                         self.emit(")");
+                        return;
+                    }
+                    // s.as_str() -> s (no-op in JS, strings are already strings)
+                    if prop == "as_str" {
+                        self.gen_expr(&mem.object);
+                        return;
+                    }
+                    // s.push(ch) -> s += ch (for String::push in Rust)
+                    if prop == "push" && call.args.len() == 1 {
+                        self.gen_expr(&mem.object);
+                        self.emit(" += ");
+                        self.gen_expr(&call.args[0]);
                         return;
                     }
                     // s.push_str(&t) -> s += t

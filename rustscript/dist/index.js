@@ -13,28 +13,14 @@ module.exports = function({ types: t }) {
   };
   
   
-  class State {
-  constructor(name) {
-      this.name = name;
-    }
-  }
-  
-  
-  function set_name(name) {
-    return this.state.name = Some(name);
-  }
-  
-  // Pre-hook
-  
-  function init() {
-    return { name: None };
+  function add_char() {
+    let s = "";
+    s += "a";
+    s += "b";
+    return s;
   }
   
   return {
-    pre(file) {
-      init(file);
-    },
-    
     visitor: {
     }
   };
