@@ -479,17 +479,31 @@ impl SwcGenerator {
         self.emit_line("use swc_ecma_visit::Visit;");
         self.emit_line("");
 
-        // Generate structs
-        for struct_decl in structs {
-            self.gen_struct(struct_decl);
-            self.emit_line("");
+        // Find State struct (if any) to flatten its fields into main struct
+        let state_struct = structs.iter().find(|s| s.name == "State").cloned();
+
+        // Generate other structs (not State, as we'll flatten it)
+        for struct_decl in &structs {
+            if struct_decl.name != "State" {
+                self.gen_struct(struct_decl);
+                self.emit_line("");
+            }
         }
 
-        // Generate the writer struct with CodeBuilder
+        // Generate the writer struct with CodeBuilder + State fields
         self.emit_line(&format!("pub struct {} {{", writer.name));
         self.indent += 1;
         self.emit_line("output: String,");
         self.emit_line("indent_level: usize,");
+
+        // Flatten State struct fields into main struct
+        if let Some(state) = state_struct {
+            for field in &state.fields {
+                let rust_type = self.type_to_rust(&field.ty);
+                self.emit_line(&format!("{}: {},", field.name, rust_type));
+            }
+        }
+
         self.indent -= 1;
         self.emit_line("}");
         self.emit_line("");
@@ -504,6 +518,15 @@ impl SwcGenerator {
         self.indent += 1;
         self.emit_line("output: String::new(),");
         self.emit_line("indent_level: 0,");
+
+        // Initialize State fields with defaults
+        if let Some(state) = state_struct {
+            for field in &state.fields {
+                let default_value = self.get_default_value_for_type(&field.ty);
+                self.emit_line(&format!("{}: {},", field.name, default_value));
+            }
+        }
+
         self.indent -= 1;
         self.emit_line("}");
         self.indent -= 1;
@@ -1180,6 +1203,35 @@ impl SwcGenerator {
                 let ret = self.type_to_rust(return_type);
                 format!("Fn({}) -> {}", param_types.join(", "), ret)
             }
+        }
+    }
+
+    /// Get a default value for initializing a type
+    fn get_default_value_for_type(&self, ty: &Type) -> String {
+        match ty {
+            Type::Primitive(name) => {
+                match name.as_str() {
+                    "Str" => "String::new()".to_string(),
+                    "Number" => "0".to_string(),
+                    "Bool" => "false".to_string(),
+                    "()" => "()".to_string(),
+                    "i32" | "i64" | "u32" | "u64" | "usize" | "isize" => "0".to_string(),
+                    "f32" | "f64" => "0.0".to_string(),
+                    "char" => "'\\0'".to_string(),
+                    _ => "Default::default()".to_string(),
+                }
+            }
+            Type::Container { name, .. } => {
+                match name.as_str() {
+                    "Vec" => "Vec::new()".to_string(),
+                    "HashMap" => "HashMap::new()".to_string(),
+                    "HashSet" => "HashSet::new()".to_string(),
+                    _ => format!("{}::new()", name),
+                }
+            }
+            Type::Optional(_) => "None".to_string(),
+            Type::Array { .. } => "Vec::new()".to_string(),
+            _ => "Default::default()".to_string(),
         }
     }
 

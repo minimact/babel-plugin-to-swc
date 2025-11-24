@@ -7,16 +7,18 @@ use swc_ecma_visit::{VisitMut, VisitMutWith};
 
 use swc_ecma_visit::Visit;
 
-pub struct TestStringPush {
+pub struct TestWriterState {
     output: String,
     indent_level: usize,
+    component_name: String,
 }
 
-impl TestStringPush {
+impl TestWriterState {
     pub fn new() -> Self {
         Self {
             output: String::new(),
             indent_level: 0,
+            component_name: Default::default(),
         }
     }
     
@@ -40,14 +42,13 @@ impl TestStringPush {
         self.output
     }
     
-    fn add_char() -> String {
-        let mut s = String::new();
-        s.push("a");
-        s.push("b");
-        s
+    // Note: pre() hook not supported in SWC (no source access)
+    
+    fn process() {
+        self.component_name = "Test".to_string()
     }
     
 }
 
-impl Visit for TestStringPush {
+impl Visit for TestWriterState {
 }

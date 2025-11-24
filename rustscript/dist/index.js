@@ -13,14 +13,28 @@ module.exports = function({ types: t }) {
   };
   
   
-  function add_char() {
-    let s = "";
-    s += "a";
-    s += "b";
-    return s;
+  class State {
+  constructor(component_name) {
+      this.component_name = component_name;
+    }
+  }
+  
+  
+  function process() {
+    return this.component_name = "Test".toString();
+  }
+  
+  // Pre-hook
+  
+  function init() {
+    return { component_name: "" };
   }
   
   return {
+    pre(file) {
+      init(file);
+    },
+    
     visitor: {
     }
   };
