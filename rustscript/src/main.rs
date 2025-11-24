@@ -264,6 +264,28 @@ fn main() {
                     std::process::exit(1);
                 }
                 println!("Generated Babel plugin: {:?}", babel_path);
+
+                // Validate generated JS syntax with node --check
+                let node_check = std::process::Command::new("node")
+                    .arg("--check")
+                    .arg(&babel_path)
+                    .output();
+
+                match node_check {
+                    Ok(output) if !output.status.success() => {
+                        eprintln!("\n[VALIDATION ERROR] Generated Babel plugin has syntax errors:");
+                        eprintln!("{}", String::from_utf8_lossy(&output.stderr));
+                        eprintln!("\nCodegen produced invalid JavaScript. This is a compiler bug.");
+                        std::process::exit(1);
+                    }
+                    Ok(_) => {
+                        println!("✓ Babel output validated successfully");
+                    }
+                    Err(_) => {
+                        // Node.js not available, skip validation with warning
+                        eprintln!("Warning: Could not validate JS syntax (node not found)");
+                    }
+                }
             }
 
             if let Some(swc_code) = generated.swc {
