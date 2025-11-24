@@ -10,7 +10,7 @@ writer TestWriterState {
         }
     }
 
-    fn process() {
+    fn process(&mut self) {
         self.component_name = "Test".to_string();
     }
 }

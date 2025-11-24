@@ -55,6 +55,8 @@ pub struct BabelGenerator {
     iflet_counter: usize,
     /// Whether the codegen module is used (requires @babel/generator import)
     uses_codegen: bool,
+    /// Track loop nesting depth (for correct return handling in match expressions)
+    loop_depth: usize,
 }
 
 impl BabelGenerator {
@@ -69,6 +71,7 @@ impl BabelGenerator {
             loop_index_counter: 0,
             iflet_counter: 0,
             uses_codegen: false,
+            loop_depth: 0,
         }
     }
 
@@ -1048,6 +1051,7 @@ impl BabelGenerator {
                     self.gen_expr(&for_stmt.iter);
                     self.emit(&format!(".forEach(({}, {}) => {{\n", var_name, index_var));
                     self.indent += 1;
+                    self.loop_depth += 1;
 
                     // Register the loop variable as a loop item
                     self.register_loop_item(&var_name, &from_path, &array_prop, &index_var);
@@ -1062,6 +1066,7 @@ impl BabelGenerator {
 
                     self.gen_block(&for_stmt.body);
 
+                    self.loop_depth -= 1;
                     self.indent -= 1;
                     self.emit_line("});");
                 } else {
@@ -1073,7 +1078,9 @@ impl BabelGenerator {
                     self.gen_expr(&for_stmt.iter);
                     self.emit(") {\n");
                     self.indent += 1;
+                    self.loop_depth += 1;
                     self.gen_block(&for_stmt.body);
+                    self.loop_depth -= 1;
                     self.indent -= 1;
                     self.emit_line("}");
                 }
@@ -1084,14 +1091,18 @@ impl BabelGenerator {
                 self.gen_expr(&while_stmt.condition);
                 self.emit(") {\n");
                 self.indent += 1;
+                self.loop_depth += 1;
                 self.gen_block(&while_stmt.body);
+                self.loop_depth -= 1;
                 self.indent -= 1;
                 self.emit_line("}");
             }
             Stmt::Loop(loop_stmt) => {
                 self.emit_line("while (true) {");
                 self.indent += 1;
+                self.loop_depth += 1;
                 self.gen_block(&loop_stmt.body);
+                self.loop_depth -= 1;
                 self.indent -= 1;
                 self.emit_line("}");
             }
@@ -1549,11 +1560,11 @@ impl BabelGenerator {
 
             // Handle block bodies specially - unwrap them instead of generating IIFE
             if let Expr::Block(block) = &arm.body {
-                // Generate block statements inline, with last expression as return
+                // Generate block statements inline, with last expression as return (unless in loop)
                 for (i, stmt) in block.stmts.iter().enumerate() {
                     let is_last = i == block.stmts.len() - 1;
-                    if is_last {
-                        // Last statement - if it's an expression, return it
+                    if is_last && self.loop_depth == 0 {
+                        // Last statement - if it's an expression and we're not in a loop, return it
                         if let Stmt::Expr(expr_stmt) = stmt {
                             self.emit_indent();
                             self.emit("return ");
@@ -1564,14 +1575,16 @@ impl BabelGenerator {
                             self.gen_stmt(stmt);
                         }
                     } else {
-                        // Not last, generate normally
+                        // Not last, or inside a loop - generate normally
                         self.gen_stmt(stmt);
                     }
                 }
             } else {
-                // Non-block body, return directly
+                // Non-block body, return directly (unless in loop)
                 self.emit_indent();
-                self.emit("return ");
+                if self.loop_depth == 0 {
+                    self.emit("return ");
+                }
                 self.gen_expr(&arm.body);
                 self.emit(";\n");
             }

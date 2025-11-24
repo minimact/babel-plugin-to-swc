@@ -13,11 +13,18 @@ module.exports = function({ types: t }) {
   };
   
   
-  function append_lines() {
-    let lines = Vec.new();
-    lines += "line1".toString();
-    lines += "line2".toString();
-    return lines += "line3".toString();
+  function process_items(items) {
+    let count = 0;
+    for (const item of items) {
+      if (item === "skip") {
+        count += 0;
+      } else if (item === "stop") {
+        count += 1;
+      } else if (true) {
+        count += 2;
+      }
+    }
+    return count;
   }
   
   return {

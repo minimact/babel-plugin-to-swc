@@ -7,12 +7,12 @@ use swc_ecma_visit::{VisitMut, VisitMutWith};
 
 use swc_ecma_visit::Visit;
 
-pub struct TestSemicolons {
+pub struct TestLoopReturn {
     output: String,
     indent_level: usize,
 }
 
-impl TestSemicolons {
+impl TestLoopReturn {
     pub fn new() -> Self {
         Self {
             output: String::new(),
@@ -40,14 +40,25 @@ impl TestSemicolons {
         self.output
     }
     
-    fn append_lines() {
-        let mut lines = Vec::new();
-        lines.push("line1".to_string());
-        lines.push("line2".to_string());
-        lines.push("line3".to_string());
+    fn process_items(items: Vec<String>) -> i32 {
+        let mut count = 0;
+        for item in items {
+            match item.as_str() {
+                "skip" => {
+                    count += 0
+                },
+                "stop" => {
+                    count += 1
+                },
+                _ => {
+                    count += 2
+                },
+            }
+        }
+        count
     }
     
 }
 
-impl Visit for TestSemicolons {
+impl Visit for TestLoopReturn {
 }
