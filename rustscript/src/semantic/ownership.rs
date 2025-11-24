@@ -378,14 +378,22 @@ impl OwnershipChecker {
         if let Expr::Assign(assign) = expr {
             // Check if target is a member expression (direct property mutation)
             if let Expr::Member(member) = assign.target.as_ref() {
-                // Direct property mutation is not allowed
+                // Allow mutations on 'self' (writer/plugin state)
+                if let Expr::Ident(ident) = member.object.as_ref() {
+                    if ident.name == "self" {
+                        return; // self.field = value is allowed
+                    }
+                }
+
+                // Direct property mutation on AST nodes is not allowed
+                let target_name = self.expr_to_string(assign.target.as_ref());
                 self.errors.push(
                     SemanticError::new(
                         "RS002",
-                        "Direct property mutation not allowed",
+                        &format!("Direct property mutation not allowed on '{}'", target_name),
                         member.span,
                     )
-                    .with_hint("replace the entire node instead of mutating properties, use `*node = NodeType { ... }` pattern"),
+                    .with_hint("AST node mutation can break Babel's scope tracker. Use the clone-and-rebuild pattern: `*node = NodeType { field: new_value, ..node.clone() }`"),
                 );
             }
         }

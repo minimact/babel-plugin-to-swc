@@ -9,6 +9,7 @@ pub mod semantic;
 #[cfg(feature = "codegen")]
 pub mod codegen;
 pub mod mapping;
+pub mod autofix;
 // pub mod error;
 // pub mod prelude;
 
@@ -21,3 +22,4 @@ pub use mapping::{
     NodeMapping, FieldMapping, HelperMapping, PatternMapping,
     get_node_mapping, get_field_mapping, get_helper_for_field, get_pattern_check,
 };
+pub use autofix::TokenRewriter;
