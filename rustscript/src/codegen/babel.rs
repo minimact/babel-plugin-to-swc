@@ -901,6 +901,14 @@ impl BabelGenerator {
                         }
                     }
                 }
+                // Check if this is a match expression (which returns a value via IIFE)
+                if matches!(&expr_stmt.expr, Expr::Match(_)) {
+                    self.emit_indent();
+                    self.emit("return ");
+                    self.gen_expr(&expr_stmt.expr);
+                    self.emit(";\n");
+                    return;
+                }
                 // Regular expression statement
                 self.emit_indent();
                 self.gen_expr(&expr_stmt.expr);
@@ -1456,6 +1464,8 @@ impl BabelGenerator {
             self.emit(") {\n");
             self.indent += 1;
             self.emit_indent();
+            // Match arms should return their value
+            self.emit("return ");
             self.gen_expr(&arm.body);
             self.emit(";\n");
             self.indent -= 1;
@@ -1584,7 +1594,7 @@ impl BabelGenerator {
                 self.emit("true");
             }
             Pattern::Variant { name, inner: _ } => {
-                // Variant pattern matching for Option/Result types
+                // Variant pattern matching for Option/Result types and AST nodes
                 let scrutinee_str = self.expr_to_string(scrutinee);
                 match name.as_str() {
                     "Some" => {
@@ -1600,7 +1610,14 @@ impl BabelGenerator {
                         self.emit(&format!("{} && {}.error", scrutinee_str, scrutinee_str));
                     }
                     _ => {
-                        self.emit(&format!("{} !== null", scrutinee_str));
+                        // For other variants (like AST node types), check the type property
+                        // Extract variant name from qualified path (e.g., "Expression::NumericLiteral" -> "NumericLiteral")
+                        let variant_name = if name.contains("::") {
+                            name.split("::").last().unwrap_or(name)
+                        } else {
+                            name.as_str()
+                        };
+                        self.emit(&format!("{}.type === \"{}\"", scrutinee_str, variant_name));
                     }
                 }
             }

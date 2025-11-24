@@ -7,12 +7,12 @@ use swc_ecma_visit::{VisitMut, VisitMutWith};
 
 use swc_ecma_visit::Visit;
 
-pub struct TestIterators {
+pub struct TestMatch {
     output: String,
     indent_level: usize,
 }
 
-impl TestIterators {
+impl TestMatch {
     pub fn new() -> Self {
         Self {
             output: String::new(),
@@ -40,17 +40,15 @@ impl TestIterators {
         self.output
     }
     
-    fn iterate_string(s: &Str) {
-        for ch in s.chars() {
-        }
-    }
-    
-    fn iterate_with_index(items: &Vec<String>) {
-        for (i, item) in items.iter().enumerate() {
+    fn test_match(expr: &Expr) -> String {
+        match expr {
+            NumericLiteral(num) => "number",
+            StringLiteral(str) => "string",
+            _ => "other",
         }
     }
     
 }
 
-impl Visit for TestIterators {
+impl Visit for TestMatch {
 }
