@@ -411,6 +411,11 @@ impl TypeChecker {
                 self.check_block(&fn_decl.body);
                 self.env.pop_scope();
             }
+
+            Stmt::Verbatim(_) => {
+                // Verbatim blocks are opaque to type checking
+                // No analysis performed on raw code
+            }
         }
     }
 

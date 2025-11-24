@@ -156,6 +156,11 @@ impl OwnershipChecker {
                 // Check nested function
                 self.check_function(fn_decl);
             }
+
+            Stmt::Verbatim(_) => {
+                // Verbatim blocks are opaque to ownership checking
+                // No analysis performed on raw code
+            }
         }
     }
 

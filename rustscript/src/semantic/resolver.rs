@@ -657,6 +657,11 @@ impl Resolver {
                 self.resolve_block(&fn_decl.body);
                 self.env.pop_scope();
             }
+
+            Stmt::Verbatim(_) => {
+                // Verbatim blocks are opaque to semantic analysis
+                // No type checking or variable tracking
+            }
         }
     }
 

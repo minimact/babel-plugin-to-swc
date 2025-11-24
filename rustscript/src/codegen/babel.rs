@@ -418,12 +418,30 @@ impl BabelGenerator {
             }
         }
 
-        // Generate helper functions
+        // Generate helper functions (but not hooks)
         for item in &plugin.body {
             if let PluginItem::Function(f) = item {
                 if !f.name.starts_with("visit_") {
                     self.gen_helper_function(f);
                 }
+            }
+        }
+
+        // Generate pre hook function if present
+        for item in &plugin.body {
+            if let PluginItem::PreHook(f) = item {
+                self.emit_line("");
+                self.emit_line("// Pre-transformation hook");
+                self.gen_helper_function(f);
+            }
+        }
+
+        // Generate exit hook function if present
+        for item in &plugin.body {
+            if let PluginItem::ExitHook(f) = item {
+                self.emit_line("");
+                self.emit_line("// Post-transformation hook");
+                self.gen_helper_function(f);
             }
         }
 
@@ -435,8 +453,39 @@ impl BabelGenerator {
         // Generate return with visitor
         self.emit_line("return {");
         self.indent += 1;
+
+        // Add pre() hook if present
+        let has_pre_hook = plugin.body.iter()
+            .any(|item| matches!(item, PluginItem::PreHook(_)));
+
+        if has_pre_hook {
+            self.emit_line("pre(file) {");
+            self.indent += 1;
+            self.emit_line("pre(file);");
+            self.indent -= 1;
+            self.emit_line("},");
+            self.emit_line("");
+        }
+
         self.emit_line("visitor: {");
         self.indent += 1;
+
+        // Add Program exit hook if present
+        let has_exit_hook = plugin.body.iter()
+            .any(|item| matches!(item, PluginItem::ExitHook(_)));
+
+        if has_exit_hook {
+            self.emit_line("Program: {");
+            self.indent += 1;
+            self.emit_line("exit(path, state) {");
+            self.indent += 1;
+            self.emit_line("exit(path.node, state);");
+            self.indent -= 1;
+            self.emit_line("}");
+            self.indent -= 1;
+            self.emit_line("},");
+            self.emit_line("");
+        }
 
         // Generate visitor methods
         let mut first = true;
@@ -528,6 +577,10 @@ impl BabelGenerator {
                 }
                 PluginItem::Impl(_impl) => {
                     // Impl blocks don't export anything directly
+                }
+                PluginItem::PreHook(_) | PluginItem::ExitHook(_) => {
+                    // Hooks are only valid in plugins, not modules
+                    // This should not happen if the parser/semantic analyzer is correct
                 }
             }
         }
@@ -966,6 +1019,24 @@ impl BabelGenerator {
                 self.indent -= 1;
                 self.emit_indent();
                 self.emit("}\n");
+            }
+            Stmt::Verbatim(verbatim) => {
+                // Emit raw code only for JavaScript target
+                match verbatim.target {
+                    VerbatimTarget::JavaScript => {
+                        self.emit_indent();
+                        self.emit(&verbatim.code);
+                        if !verbatim.code.ends_with(';') && !verbatim.code.ends_with('}') {
+                            self.emit(";");
+                        }
+                        self.emit("\n");
+                    }
+                    VerbatimTarget::Rust => {
+                        // Skip - this is SWC-only code
+                        self.emit_indent();
+                        self.emit("/* SWC-only code omitted */\n");
+                    }
+                }
             }
         }
     }

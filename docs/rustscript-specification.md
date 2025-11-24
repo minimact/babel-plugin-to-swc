@@ -1,7 +1,7 @@
 # RustScript Language Specification
 
-**Version:** 0.8.0
-**Status:** Draft (Generic Functions Added)
+**Version:** 0.9.0
+**Status:** Draft (Program Hooks & Verbatim Blocks Added)
 **Target Platforms:** Babel (JavaScript) & SWC (Rust/WASM)
 
 ---
@@ -518,6 +518,203 @@ use utils::helpers::{get_component_name, ComponentInfo};
 use std::fs;
 use std::path;
 ```
+
+### 4.8 Program Hooks
+
+RustScript supports plugin lifecycle hooks that run before and after the visitor traversal:
+
+```rustscript
+plugin MinimactPlugin {
+    /// Pre-hook: runs before any visitors
+    fn pre(file: &File) {
+        // Save original code before React transforms JSX
+        file.metadata.originalCode = file.code;
+    }
+
+    fn visit_jsx_element(node: &mut JSXElement, ctx: &Context) {
+        // Regular visitor method
+    }
+
+    /// Exit hook: runs after all visitors complete
+    fn exit(program: &mut Program, state: &PluginState) {
+        // Post-processing after all transformations
+        generate_metadata_file(state);
+    }
+}
+```
+
+**Compiles to:**
+
+```javascript
+// Babel
+module.exports = function({ types: t }) {
+    // Pre-hook function
+    function pre(file) {
+        file.metadata.originalCode = file.code;
+    }
+
+    // Exit hook function
+    function exit(program, state) {
+        generate_metadata_file(state);
+    }
+
+    return {
+        pre(file) {
+            pre(file);
+        },
+
+        visitor: {
+            Program: {
+                exit(path, state) {
+                    exit(path.node, state);
+                }
+            },
+
+            JSXElement(path) {
+                // ...
+            }
+        }
+    };
+};
+```
+
+```rust
+// SWC: Hooks are not supported in SWC visitor pattern
+// exit() becomes a regular method, pre() is omitted
+impl VisitMut for MinimactPlugin {
+    fn visit_mut_jsx_element(&mut self, n: &mut JSXElement) {
+        // ...
+    }
+}
+```
+
+**Use Cases:**
+
+- **pre()**: Save original source code for format-preserving transformations (Recast)
+- **exit()**: Generate output files, collect metadata, perform final processing
+
+**Limitations:**
+
+- `pre()` only available in Babel (no SWC equivalent)
+- `exit()` becomes a regular method in SWC, not automatically called
+- Hooks receive different parameters than visitor methods
+
+### 4.9 Verbatim Code Blocks
+
+For platform-specific operations (like Recast in Babel or custom Rust code in SWC), RustScript provides verbatim blocks that emit raw code:
+
+```rustscript
+plugin RecastPlugin {
+    fn pre(file: &File) {
+        babel! {
+            // Raw JavaScript - preserved exactly as written
+            file.metadata.originalCode = file.code;
+        }
+    }
+
+    fn visit_jsx_element(node: &mut JSXElement, ctx: &Context) {
+        // Mix RustScript with verbatim blocks
+        let tag_name = &node.opening_element.name;
+
+        babel! {
+            // Babel-specific: Use Recast for format-preserving edits
+            const recast = require('recast');
+            const keyAttr = t.jsxAttribute(
+                t.jsxIdentifier('key'),
+                t.stringLiteral('generated-key')
+            );
+            node.openingElement.attributes.push(keyAttr);
+        }
+
+        swc! {
+            // SWC-specific: Rust AST manipulation
+            node.opening.attrs.push(JSXAttr {
+                span: DUMMY_SP,
+                name: JSXAttrName::Ident(Ident::new("key".into(), DUMMY_SP)),
+                value: Some(JSXAttrValue::Lit(Lit::Str("generated-key".into())))
+            });
+        }
+    }
+
+    fn exit(program: &mut Program, state: &PluginState) {
+        babel! {
+            // Use Recast to generate .keys file with preserved formatting
+            const recast = require('recast');
+            const originalAst = recast.parse(state.file.metadata.originalCode, {
+                parser: require('recast/parsers/babel-ts')
+            });
+
+            // Traverse and modify...
+
+            const output = recast.print(originalAst, {
+                tabWidth: 2,
+                quote: 'single'
+            });
+
+            fs.writeFileSync(keysFilePath, output.code);
+        }
+    }
+}
+```
+
+**Syntax:**
+
+- `babel! { ... }` or `js! { ... }` - JavaScript code (Babel only)
+- `swc! { ... }` or `rust! { ... }` - Rust code (SWC only)
+
+**Compiles to:**
+
+```javascript
+// Babel: babel!/js! blocks are emitted, swc!/rust! blocks are omitted
+function visit_jsx_element(node, ctx) {
+    const tag_name = node.opening_element.name;
+
+    // Verbatim JavaScript
+    const recast = require('recast');
+    const keyAttr = t.jsxAttribute(
+        t.jsxIdentifier('key'),
+        t.stringLiteral('generated-key')
+    );
+    node.openingElement.attributes.push(keyAttr);
+
+    /* SWC-only code omitted */
+}
+```
+
+```rust
+// SWC: swc!/rust! blocks are emitted, babel!/js! blocks are omitted
+fn visit_mut_jsx_element(&mut self, n: &mut JSXElement) {
+    let tag_name = &n.opening_element.name;
+
+    // Babel-only code omitted
+
+    // Verbatim Rust
+    node.opening.attrs.push(JSXAttr {
+        span: DUMMY_SP,
+        name: JSXAttrName::Ident(Ident::new("key".into(), DUMMY_SP)),
+        value: Some(JSXAttrValue::Lit(Lit::Str("generated-key".into())))
+    });
+}
+```
+
+**Characteristics:**
+
+- **Format-preserving**: Whitespace and formatting inside verbatim blocks is preserved exactly
+- **No type checking**: Contents are opaque to RustScript's semantic analysis
+- **Platform-specific**: Each block targets one platform, other platform sees comment
+- **Token-based extraction**: Uses token spans to extract raw source between braces
+
+**Use Cases:**
+
+- Recast integration for format-preserving Babel transformations
+- Platform-specific npm package imports (`require('recast')`)
+- Direct manipulation of Babel or SWC AST types not in the unified AST
+- File I/O operations (`fs.writeFileSync`)
+- Complex JavaScript patterns (object literal configs, etc.)
+
+**Design Philosophy:**
+
+Verbatim blocks embody the "surgical integration" principle: RustScript handles cross-platform AST transformations, verbatim blocks handle platform-specific edge cases. This provides maximum flexibility with minimum abstraction cost.
 
 ---
 

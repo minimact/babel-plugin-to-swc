@@ -1452,6 +1452,24 @@ impl SwcGenerator {
                 self.emit_indent();
                 self.emit("}\n");
             }
+            Stmt::Verbatim(verbatim) => {
+                // Emit raw code only for Rust target
+                match verbatim.target {
+                    VerbatimTarget::Rust => {
+                        self.emit_indent();
+                        self.emit(&verbatim.code);
+                        if !verbatim.code.ends_with(';') && !verbatim.code.ends_with('}') {
+                            self.emit(";");
+                        }
+                        self.emit("\n");
+                    }
+                    VerbatimTarget::JavaScript => {
+                        // Skip - this is Babel-only code
+                        self.emit_indent();
+                        self.emit("// Babel-only code omitted\n");
+                    }
+                }
+            }
         }
     }
 

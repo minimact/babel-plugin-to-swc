@@ -89,7 +89,7 @@ fn main() {
 
             let mut lexer = Lexer::new(&source);
             let tokens = lexer.tokenize();
-            let mut parser = Parser::new(tokens);
+            let mut parser = Parser::new_with_source(tokens, source.clone());
 
             match parser.parse() {
                 Ok(program) => {
@@ -114,7 +114,7 @@ fn main() {
 
             let mut lexer = Lexer::new(&source);
             let tokens = lexer.tokenize();
-            let mut parser = Parser::new(tokens);
+            let mut parser = Parser::new_with_source(tokens, source.clone());
 
             let program = match parser.parse() {
                 Ok(p) => p,
@@ -173,7 +173,7 @@ fn main() {
             // Parse
             let mut lexer = Lexer::new(&source);
             let tokens = lexer.tokenize();
-            let mut parser = Parser::new(tokens);
+            let mut parser = Parser::new_with_source(tokens, source.clone());
 
             let mut program = match parser.parse() {
                 Ok(p) => p,

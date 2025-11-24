@@ -65,6 +65,8 @@ pub enum PluginItem {
     Enum(EnumDecl),
     Function(FnDecl),
     Impl(ImplBlock),
+    PreHook(FnDecl),   // fn pre() hook - runs before visitors
+    ExitHook(FnDecl),  // fn exit() hook - runs after all visitors
 }
 
 /// Struct declaration
@@ -349,6 +351,7 @@ pub enum Stmt {
     Continue(ContinueStmt),
     Traverse(TraverseStmt),
     Function(FnDecl),  // Nested function declaration
+    Verbatim(VerbatimStmt),  // Platform-specific code block
 }
 
 /// Let statement: `let [mut] name [: Type] = expr;`
@@ -489,6 +492,24 @@ pub struct BreakStmt {
 #[derive(Debug, Clone)]
 pub struct ContinueStmt {
     pub span: Span,
+}
+
+/// Verbatim code block: platform-specific raw code
+/// Supports: babel!{}, js!{}, swc!{}, rust!{}
+#[derive(Debug, Clone)]
+pub struct VerbatimStmt {
+    pub target: VerbatimTarget,
+    pub code: String,
+    pub span: Span,
+}
+
+/// Target platform for verbatim code
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum VerbatimTarget {
+    /// JavaScript (Babel) - babel!{} or js!{}
+    JavaScript,
+    /// Rust (SWC) - swc!{} or rust!{}
+    Rust,
 }
 
 /// Traverse statement: `traverse(node) { ... }` or `traverse(node) using Visitor;`

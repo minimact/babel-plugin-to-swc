@@ -7,6 +7,7 @@ use crate::parser::ast::*;
 pub struct Parser {
     tokens: Vec<Token>,
     pos: usize,
+    source: String,  // Source code for extracting verbatim blocks
 }
 
 /// Parse error
@@ -29,7 +30,11 @@ pub type ParseResult<T> = Result<T, ParseError>;
 
 impl Parser {
     pub fn new(tokens: Vec<Token>) -> Self {
-        Self { tokens, pos: 0 }
+        Self { tokens, pos: 0, source: String::new() }
+    }
+
+    pub fn new_with_source(tokens: Vec<Token>, source: String) -> Self {
+        Self { tokens, pos: 0, source }
     }
 
     /// Parse a complete program
@@ -203,12 +208,24 @@ impl Parser {
                 } else if self.check(TokenKind::Enum) {
                     PluginItem::Enum(self.parse_enum()?)
                 } else if self.check(TokenKind::Fn) {
-                    PluginItem::Function(self.parse_function()?)
+                    // Check if this is a special hook (pre or exit)
+                    let func = self.parse_function()?;
+                    match func.name.as_str() {
+                        "pre" => PluginItem::PreHook(func),
+                        "exit" => PluginItem::ExitHook(func),
+                        _ => PluginItem::Function(func),
+                    }
                 } else {
                     return Err(self.error("Expected struct, enum, or fn after 'pub'"));
                 }
             } else if self.check(TokenKind::Fn) {
-                PluginItem::Function(self.parse_function()?)
+                // Check if this is a special hook (pre or exit)
+                let func = self.parse_function()?;
+                match func.name.as_str() {
+                    "pre" => PluginItem::PreHook(func),
+                    "exit" => PluginItem::ExitHook(func),
+                    _ => PluginItem::Function(func),
+                }
             } else if self.check(TokenKind::Impl) {
                 PluginItem::Impl(self.parse_impl()?)
             } else {
@@ -669,6 +686,12 @@ impl Parser {
     fn parse_statement(&mut self) -> ParseResult<Stmt> {
         self.skip_newlines();
 
+        // Check for verbatim blocks: babel!{}, js!{}, swc!{}, rust!{}
+        if self.check_ident("babel") || self.check_ident("js") {
+            return self.parse_verbatim_stmt(VerbatimTarget::JavaScript);
+        } else if self.check_ident("swc") || self.check_ident("rust") {
+            return self.parse_verbatim_stmt(VerbatimTarget::Rust);
+        }
 
         if self.check(TokenKind::Fn) {
             // Nested function declaration
@@ -1473,6 +1496,58 @@ impl Parser {
         self.expect(TokenKind::Continue)?;
         self.expect(TokenKind::Semicolon)?;
         Ok(Stmt::Continue(ContinueStmt { span: start_span }))
+    }
+
+    /// Parse verbatim code block: babel!{}, js!{}, swc!{}, rust!{}
+    /// Captures raw code until matching brace
+    fn parse_verbatim_stmt(&mut self, target: VerbatimTarget) -> ParseResult<Stmt> {
+        let start_span = self.current_span();
+
+        // Consume the target identifier (babel, js, swc, rust)
+        self.advance();
+
+        // Expect !
+        self.expect(TokenKind::Not)?;
+
+        // Expect {
+        let start_brace_span = self.current_span();
+        self.expect(TokenKind::LBrace)?;
+
+        // Track brace depth and find matching closing brace
+        let mut brace_depth = 1;
+        let content_start = start_brace_span.end;
+
+        while brace_depth > 0 && !self.is_at_end() {
+            if let Some(token) = self.peek() {
+                match token.kind {
+                    TokenKind::LBrace => brace_depth += 1,
+                    TokenKind::RBrace => {
+                        brace_depth -= 1;
+                        if brace_depth == 0 {
+                            // Found matching brace - extract source between braces
+                            let content_end = token.span.start;
+                            let code = if !self.source.is_empty() && content_start < content_end {
+                                self.source[content_start..content_end].to_string()
+                            } else {
+                                String::new()
+                            };
+                            self.advance(); // consume closing brace
+                            return Ok(Stmt::Verbatim(VerbatimStmt {
+                                target,
+                                code: code.trim().to_string(),
+                                span: start_span,
+                            }));
+                        }
+                    }
+                    _ => {}
+                }
+                self.advance();
+            } else {
+                break;
+            }
+        }
+
+        Err(ParseError::new("Unclosed verbatim block", start_span))
     }
 
     /// Parse traverse statement
