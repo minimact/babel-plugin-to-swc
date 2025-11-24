@@ -1096,6 +1096,13 @@ impl SwcGenerator {
         // Convert RustScript node names to SWC AST types using mapping module
         // Handle both snake_case and PascalCase inputs
 
+        // Handle primitive type aliases first
+        match name {
+            "Number" => return "i32".to_string(),
+            "Bool" => return "bool".to_string(),
+            _ => {}
+        }
+
         // First try direct lookup (PascalCase)
         if let Some(mapping) = get_node_mapping(name) {
             return mapping.swc.to_string();
@@ -1126,6 +1133,8 @@ impl SwcGenerator {
                 match name.as_str() {
                     "Str" => "String".to_string(),
                     "()" => "()".to_string(),
+                    "Number" => "i32".to_string(),
+                    "Bool" => "bool".to_string(),
                     _ => name.clone(),
                 }
             }
@@ -2411,19 +2420,61 @@ impl SwcGenerator {
                 self.emit("]");
             }
             Expr::If(if_expr) => {
-                self.emit("if ");
-                self.gen_expr(&if_expr.condition);
-                self.emit(" { ");
-                for stmt in &if_expr.then_branch.stmts {
-                    self.gen_stmt(stmt);
+                // Check if this is an if-let expression
+                if let Some(pattern) = &if_expr.pattern {
+                    self.emit("if let ");
+                    self.gen_pattern(pattern);
+                    self.emit(" = ");
+                    self.gen_expr(&if_expr.condition);
+                } else {
+                    self.emit("if ");
+                    self.gen_expr(&if_expr.condition);
                 }
-                self.emit(" }");
-                if let Some(else_block) = &if_expr.else_branch {
-                    self.emit(" else { ");
-                    for stmt in &else_block.stmts {
-                        self.gen_stmt(stmt);
+                self.emit(" {");
+                // Check if this is a simple single-expression if (no semicolons needed)
+                let is_simple = if_expr.then_branch.stmts.len() == 1
+                    && matches!(if_expr.then_branch.stmts[0], Stmt::Expr(_))
+                    && if_expr.else_branch.as_ref().map_or(true, |b| b.stmts.len() == 1 && matches!(b.stmts[0], Stmt::Expr(_)));
+
+                if is_simple {
+                    self.emit(" ");
+                    // For simple if-expressions, just emit the expression without indentation
+                    for stmt in &if_expr.then_branch.stmts {
+                        if let Stmt::Expr(expr_stmt) = stmt {
+                            self.gen_expr(&expr_stmt.expr);
+                        }
                     }
                     self.emit(" }");
+                    if let Some(else_block) = &if_expr.else_branch {
+                        self.emit(" else { ");
+                        for stmt in &else_block.stmts {
+                            if let Stmt::Expr(expr_stmt) = stmt {
+                                self.gen_expr(&expr_stmt.expr);
+                            }
+                        }
+                        self.emit(" }");
+                    }
+                } else {
+                    self.emit("\n");
+                    self.indent += 1;
+                    let then_len = if_expr.then_branch.stmts.len();
+                    for (i, stmt) in if_expr.then_branch.stmts.iter().enumerate() {
+                        self.gen_stmt_with_context(stmt, i == then_len - 1);
+                    }
+                    self.indent -= 1;
+                    self.emit_indent();
+                    self.emit("}");
+                    if let Some(else_block) = &if_expr.else_branch {
+                        self.emit(" else {\n");
+                        self.indent += 1;
+                        let else_len = else_block.stmts.len();
+                        for (i, stmt) in else_block.stmts.iter().enumerate() {
+                            self.gen_stmt_with_context(stmt, i == else_len - 1);
+                        }
+                        self.indent -= 1;
+                        self.emit_indent();
+                        self.emit("}");
+                    }
                 }
             }
             Expr::Match(match_expr) => {

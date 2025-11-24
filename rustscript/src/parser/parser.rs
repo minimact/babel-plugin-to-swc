@@ -991,6 +991,9 @@ impl Parser {
                 self.expect_ident()?
             };
 
+            // Construct full qualified name: Enum::Variant
+            let full_variant_name = format!("{}::{}", name, variant_name);
+
             // Path-qualified patterns can be tuple variants, struct variants, or unit variants
             if self.check(TokenKind::LParen) {
                 // Path::Variant(inner) - tuple variant
@@ -1018,7 +1021,7 @@ impl Parser {
                     }
                 };
                 self.expect(TokenKind::RParen)?;
-                Ok(Pattern::Variant { name: variant_name, inner })
+                Ok(Pattern::Variant { name: full_variant_name, inner })
             } else if self.check(TokenKind::LBrace) {
                 // Path::Variant { field: pattern } - struct variant
                 self.advance();
@@ -1042,10 +1045,10 @@ impl Parser {
                     }
                 }
                 self.expect(TokenKind::RBrace)?;
-                Ok(Pattern::Struct { name: variant_name, fields })
+                Ok(Pattern::Struct { name: full_variant_name, fields })
             } else {
                 // Path::Variant - unit variant
-                Ok(Pattern::Variant { name: variant_name, inner: None })
+                Ok(Pattern::Variant { name: full_variant_name, inner: None })
             }
         } else if self.check(TokenKind::LBrace) {
             // Struct pattern: Name { field: pattern, ... }

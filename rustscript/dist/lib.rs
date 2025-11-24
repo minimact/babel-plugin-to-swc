@@ -29,7 +29,7 @@ pub struct UseStateInfo {
 
 #[derive(Debug, Clone)]
 pub struct UseEffectInfo {
-    pub index: Number,
+    pub index: i32,
     pub body: String,
     pub dependencies: Vec<String>,
 }
@@ -96,13 +96,13 @@ impl MinimalCounterTranspiler {
         let mut effect_index = 0;
         for stmt in &body.stmts {
             match stmt {
-                VariableDeclaration(var_decl) => {
+                Statement::VariableDeclaration(var_decl) => {
                     for declarator in &var_decl.declarations {
                         if let Some(init) = &declarator.init {
                             match init {
-                                CallExpression(call) => {
+                                Expression::CallExpression(call) => {
                                     match &call.callee {
-                                        Identifier(callee) => {
+                                        Expression::Identifier(callee) => {
                                             match callee.name.as_str() {
                                                 "useState" => self.extract_use_state(declarator, call),
                                                 "useEffect" => {
@@ -124,10 +124,10 @@ impl MinimalCounterTranspiler {
                         }
                     }
                 },
-                ReturnStatement(ret) => {
+                Statement::ReturnStatement(ret) => {
                     if let Some(arg) = &ret.argument {
                         match arg {
-                            JSXElement(jsx) => {
+                            Expression::JSXElement(jsx) => {
                                 self.render_jsx = Some(jsx.clone())
                             },
                             _ => {
@@ -135,7 +135,7 @@ impl MinimalCounterTranspiler {
                         }
                     }
                 },
-                FunctionDeclaration(func) => {
+                Statement::FunctionDeclaration(func) => {
                     if let Some(id) = &func.id {
                         let handler_name = self.to_csharp_method_name(&id.name);
                         let body = self.function_body_to_csharp(&func.body);
@@ -150,16 +150,12 @@ impl MinimalCounterTranspiler {
     
     fn extract_use_state(self: &mut Self, declarator: &VariableDeclarator, call: &CallExpr) {
         match &declarator.name {
-            ArrayPattern(array_pattern) => {
+            Pattern::ArrayPattern(array_pattern) => {
                 if (array_pattern.elements.len() >= 2) {
                     let state_name = self.get_pattern_name(&array_pattern.elements[0]);
                     let setter_name = self.get_pattern_name(&array_pattern.elements[1]);
-                    let initial_value = if (call.args.len() > 0) {                     self.expr_to_csharp(&call.args[0]);
- } else {                     "null".to_string();
- };
-                    let csharp_type = if (call.args.len() > 0) {                     self.infer_csharp_type(&call.args[0]);
- } else {                     "dynamic".to_string();
- };
+                    let initial_value = if (call.args.len() > 0) { self.expr_to_csharp(&call.args[0]) } else { "null".to_string() };
+                    let csharp_type = if (call.args.len() > 0) { self.infer_csharp_type(&call.args[0]) } else { "dynamic".to_string() };
                     self.use_state.push(UseStateInfo { name: state_name, setter: setter_name, initial_value: initial_value, csharp_type: csharp_type })
                 }
             },
@@ -168,12 +164,12 @@ impl MinimalCounterTranspiler {
         }
     }
     
-    fn extract_use_effect(self: &mut Self, call: &CallExpr, index: Number) {
+    fn extract_use_effect(self: &mut Self, call: &CallExpr, index: i32) {
         let mut body = String::new();
         let mut dependencies = vec![];
         if (call.args.len() > 0) {
             match &call.args[0] {
-                ArrowFunctionExpression(arrow) => {
+                Expression::ArrowFunctionExpression(arrow) => {
                     body = self.function_body_to_csharp(&arrow.body)
                 },
                 _ => {
@@ -182,11 +178,11 @@ impl MinimalCounterTranspiler {
         }
         if (call.args.len() > 1) {
             match &call.args[1] {
-                ArrayExpression(arr) => {
+                Expression::ArrayExpression(arr) => {
                     for elem in &arr.elements {
                         if let Some(expr) = elem {
                             match expr {
-                                Identifier(id) => {
+                                Expression::Identifier(id) => {
                                     dependencies.push(id.name.clone())
                                 },
                                 _ => {
@@ -204,10 +200,8 @@ impl MinimalCounterTranspiler {
     
     fn extract_use_ref(self: &mut Self, declarator: &VariableDeclarator, call: &CallExpr) {
         match &declarator.name {
-            Identifier(id) => {
-                let initial_value = if (call.args.len() > 0) {                 self.expr_to_csharp(&call.args[0]);
- } else {                 "null".to_string();
- };
+            Pattern::Identifier(id) => {
+                let initial_value = if (call.args.len() > 0) { self.expr_to_csharp(&call.args[0]) } else { "null".to_string() };
                 self.use_ref.push(UseRefInfo { name: id.name.clone(), initial_value: initial_value })
             },
             _ => {
@@ -218,7 +212,7 @@ impl MinimalCounterTranspiler {
     fn get_pattern_name(self: &Self, pattern: &Option<Pat>) -> String {
         if let Some(pat) = pattern {
             match pat {
-                Identifier(id) => id.name.clone(),
+                Pattern::Identifier(id) => id.name.clone(),
                 _ => String::new(),
             }
         } else {
@@ -228,30 +222,28 @@ impl MinimalCounterTranspiler {
     
     fn expr_to_csharp(self: &Self, expr: &Expr) -> String {
         match expr {
-            NumericLiteral(num) => num.value.to_string(),
-            StringLiteral(s) => format!("\"{}\"", s.value),
-            BooleanLiteral(b) => if b.value {             "true";
- } else {             "false";
- }.to_string(),
-            NullLiteral(_) => "null".to_string(),
-            Identifier(id) => id.name.clone(),
+            Expression::NumericLiteral(num) => num.value.to_string(),
+            Expression::StringLiteral(s) => format!("\"{}\"", s.value),
+            Expression::BooleanLiteral(b) => if b.value { "true" } else { "false" }.to_string(),
+            Expression::NullLiteral(_) => "null".to_string(),
+            Expression::Identifier(id) => id.name.clone(),
             _ => "null".to_string(),
         }
     }
     
     fn infer_csharp_type(self: &Self, expr: &Expr) -> String {
         match expr {
-            NumericLiteral(num) => {
+            Expression::NumericLiteral(num) => {
                 if (num.value == num.value.floor()) {
                     "int".to_string()
                 } else {
                     "double".to_string()
                 }
             },
-            StringLiteral(_) => "string".to_string(),
-            BooleanLiteral(_) => "bool".to_string(),
-            ArrayExpression(_) => "List<dynamic>".to_string(),
-            ObjectExpression(_) => "Dictionary<string, dynamic>".to_string(),
+            Expression::StringLiteral(_) => "string".to_string(),
+            Expression::BooleanLiteral(_) => "bool".to_string(),
+            Expression::ArrayExpression(_) => "List<dynamic>".to_string(),
+            Expression::ObjectExpression(_) => "Dictionary<string, dynamic>".to_string(),
             _ => "dynamic".to_string(),
         }
     }
@@ -259,14 +251,14 @@ impl MinimalCounterTranspiler {
     fn function_body_to_csharp(self: &Self, body: &FunctionBody) -> String {
         let mut result = String::new();
         match body {
-            BlockStatement(block) => {
+            FunctionBody::BlockStatement(block) => {
                 for stmt in &block.body {
                     match stmt {
-                        ExpressionStatement(expr_stmt) => {
+                        Statement::ExpressionStatement(expr_stmt) => {
                             match &expr_stmt.expression {
-                                CallExpression(call) => {
+                                Expression::CallExpression(call) => {
                                     match &call.callee {
-                                        MemberExpression(member) => {
+                                        Expression::MemberExpression(member) => {
                                             let is_log = self.is_console_log(member);
                                             if is_log {
                                                 result.push_str("        Console.WriteLine(");
@@ -296,11 +288,11 @@ impl MinimalCounterTranspiler {
         result
     }
     
-    fn is_console_log(self: &Self, member: &MemberExpr) -> Bool {
+    fn is_console_log(self: &Self, member: &MemberExpr) -> bool {
         match &member.obj {
-            Identifier(obj) => {
+            Expression::Identifier(obj) => {
                 match &member.prop {
-                    Identifier(prop) => {
+                    MemberProperty::Identifier(prop) => {
                         ((obj.name == "console") && (prop.name == "log"))
                     },
                     _ => false,
@@ -312,7 +304,7 @@ impl MinimalCounterTranspiler {
     
     fn template_literal_to_csharp(self: &Self, expr: &Expr) -> String {
         match expr {
-            TemplateLiteral(tmpl) => {
+            Expression::TemplateLiteral(tmpl) => {
                 let mut result = String::from("$\"");
                 for (i, quasi) in tmpl.quasis.iter().enumerate() {
                     result.push_str(&quasi.value.cooked);
@@ -348,11 +340,9 @@ impl MinimalCounterTranspiler {
         let mut attrs = vec![];
         for attr in &jsx.opening_element.attributes {
             match attr {
-                JSXAttribute(attr_node) => {
+                JSXAttribute::JSXAttribute(attr_node) => {
                     let name = self.get_jsx_attr_name(&attr_node.name);
-                    let value = if &attr_node.value {                     self.jsx_attr_value_to_csharp(val);
- } else {                     "\"true\"".to_string();
- };
+                    let value = if let Some(val) = &attr_node.value { self.jsx_attr_value_to_csharp(val) } else { "\"true\"".to_string() };
                     if name.starts_with("on") {
                         attrs.push(format!("                [\"{}n\"] = \"{}\"", name, value.replace("\"", "")))
                     } else {
@@ -370,18 +360,18 @@ impl MinimalCounterTranspiler {
         let mut children = vec![];
         for child in &jsx.children {
             match child {
-                JSXElement(elem) => {
+                JSXChild::JSXElement(elem) => {
                     children.push(self.jsx_to_vnode(elem))
                 },
-                JSXText(text) => {
+                JSXChild::JSXText(text) => {
                     let trimmed = text.value.trim();
                     if !trimmed.is_empty() {
                         children.push(format!("\"{}\"", trimmed))
                     }
                 },
-                JSXExpressionContainer(container) => {
+                JSXChild::JSXExpressionContainer(container) => {
                     match &container.expression {
-                        Expression(expr) => {
+                        JSXExpression::Expression(expr) => {
                             children.push(format!("$\"{{{}}\"", self.expr_to_csharp(expr)))
                         },
                         _ => {
@@ -441,24 +431,24 @@ impl MinimalCounterTranspiler {
     
     fn get_jsx_tag_name(self: &Self, name: &JSXElementName) -> String {
         match name {
-            Identifier(id) => id.name.clone(),
+            JSXElementName::Identifier(id) => id.name.clone(),
             _ => "div".to_string(),
         }
     }
     
     fn get_jsx_attr_name(self: &Self, name: &JSXAttributeName) -> String {
         match name {
-            Identifier(id) => id.name.clone(),
+            JSXAttributeName::Identifier(id) => id.name.clone(),
             _ => "unknown".to_string(),
         }
     }
     
     fn jsx_attr_value_to_csharp(self: &Self, value: &JSXAttributeValue) -> String {
         match value {
-            StringLiteral(s) => format!("\"{}\"", s.value),
-            JSXExpressionContainer(container) => {
+            JSXAttributeValue::StringLiteral(s) => format!("\"{}\"", s.value),
+            JSXAttributeValue::JSXExpressionContainer(container) => {
                 match &container.expression {
-                    Expression(expr) => self.expr_to_csharp(expr),
+                    JSXExpression::Expression(expr) => self.expr_to_csharp(expr),
                     _ => "null".to_string(),
                 }
             },
@@ -489,9 +479,7 @@ impl MinimalCounterTranspiler {
             lines.push("".to_string())
         }
         for effect in &self.use_effect {
-            let deps = if effect.dependencies.is_empty() {             String::new();
- } else {             format!("\"{}\"", effect.dependencies.join("\", \""));
- };
+            let deps = if effect.dependencies.is_empty() { String::new() } else { format!("\"{}\"", effect.dependencies.join("\", \"")) };
             lines.push(format!("        [UseEffect({})]", deps));
             lines.push(format!("        private void Effect_{}()", effect.index));
             lines.push("        {".to_string());
