@@ -19,35 +19,35 @@ impl TestWriterHooks {
             indent_level: 0,
         }
     }
-    
+
     fn append(&mut self, s: &str) {
         self.output.push_str(s);
     }
-    
+
     fn newline(&mut self) {
         self.output.push('\n');
     }
-    
+
     fn indent(&mut self) {
         self.indent_level += 1;
     }
-    
+
     fn dedent(&mut self) {
         self.indent_level -= 1;
     }
-    
+
     /// Finalize output (from exit hook)
     pub fn finish(mut self) -> String {
         // Babel-only code omitted
         self.output
     }
-    
+
     // Note: pre() hook not supported in SWC (no source access)
-    
+
 }
 
 impl Visit for TestWriterHooks {
-    
+
     fn visit_ident(&mut self, n: &Ident) {
         self.append(n.sym);
         self.append(" ");

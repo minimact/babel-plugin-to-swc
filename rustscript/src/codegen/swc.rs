@@ -450,15 +450,30 @@ impl SwcGenerator {
     }
 
     fn gen_writer(&mut self, writer: &WriterDecl) {
+        // Separate items by type
+        let mut pre_hook: Option<&FnDecl> = None;
+        let mut exit_hook: Option<&FnDecl> = None;
+        let mut methods = Vec::new();
+        let mut structs = Vec::new();
+
+        for item in &writer.body {
+            match item {
+                PluginItem::PreHook(f) => pre_hook = Some(f),
+                PluginItem::ExitHook(f) => exit_hook = Some(f),
+                PluginItem::Function(f) => methods.push(f),
+                PluginItem::Struct(s) => structs.push(s),
+                _ => {}
+            }
+        }
+
         // For writers, use Visit instead of VisitMut
         self.emit_line("use swc_ecma_visit::Visit;");
         self.emit_line("");
 
         // Generate structs
-        for item in &writer.body {
-            if let PluginItem::Struct(s) = item {
-                self.gen_struct(s);
-            }
+        for struct_decl in structs {
+            self.gen_struct(struct_decl);
+            self.emit_line("");
         }
 
         // Generate the writer struct with CodeBuilder
@@ -515,19 +530,41 @@ impl SwcGenerator {
         self.emit_line("}");
         self.emit_line("");
 
-        self.emit_line("pub fn finish(self) -> String {");
-        self.indent += 1;
-        self.emit_line("self.output");
-        self.indent -= 1;
-        self.emit_line("}");
+        // Generate finish() method
+        if let Some(exit_fn) = exit_hook {
+            // Use exit hook as finish method
+            self.emit_line("/// Finalize output (from exit hook)");
+            self.emit_line("pub fn finish(mut self) -> String {");
+            self.indent += 1;
 
-        // Generate helper functions
-        for item in &writer.body {
-            if let PluginItem::Function(f) = item {
-                if !f.name.starts_with("visit_") {
-                    self.emit_line("");
-                    self.gen_helper_function(f);
-                }
+            // Generate exit hook body
+            self.gen_block(&exit_fn.body);
+
+            // Always return the output at the end
+            self.emit_line("self.output");
+            self.indent -= 1;
+            self.emit_line("}");
+        } else {
+            // Default finish
+            self.emit_line("pub fn finish(self) -> String {");
+            self.indent += 1;
+            self.emit_line("self.output");
+            self.indent -= 1;
+            self.emit_line("}");
+        }
+        self.emit_line("");
+
+        // Emit comment about pre-hook if present (not supported in SWC)
+        if pre_hook.is_some() {
+            self.emit_line("// Note: pre() hook not supported in SWC (no source access)");
+            self.emit_line("");
+        }
+
+        // Generate helper functions (non-visitor methods)
+        for method in &methods {
+            if !method.name.starts_with("visit_") {
+                self.gen_helper_function(method);
+                self.emit_line("");
             }
         }
 
@@ -539,11 +576,9 @@ impl SwcGenerator {
         self.emit_line(&format!("impl Visit for {} {{", writer.name));
         self.indent += 1;
 
-        for item in &writer.body {
-            if let PluginItem::Function(f) = item {
-                if f.name.starts_with("visit_") {
-                    self.gen_visit_method(f);
-                }
+        for method in methods {
+            if method.name.starts_with("visit_") {
+                self.gen_visit_method(method);
             }
         }
 
@@ -961,23 +996,60 @@ impl SwcGenerator {
 
     fn gen_visit_method(&mut self, f: &FnDecl) {
         // For Visit (read-only), parameters are & not &mut
-        let swc_name = self.visitor_name_to_swc(&f.name);
+        let mut swc_name = self.visitor_name_to_swc(&f.name);
+        // Convert visit_mut_ to visit_ for Visit trait
+        if swc_name.starts_with("visit_mut_") {
+            swc_name = swc_name.replace("visit_mut_", "visit_");
+        }
         let swc_type = self.visitor_name_to_swc_type(&f.name);
 
         self.emit_line("");
         self.emit_line(&format!("fn {}(&mut self, n: &{}) {{", swc_name, swc_type));
         self.indent += 1;
 
-        self.gen_block(&f.body);
+        // Set up parameter renames for visitor methods
+        // The first parameter (typically "node") maps to "n"
+        if let Some(first_param) = f.params.first() {
+            self.param_renames.insert(first_param.name.clone(), "n".to_string());
+        }
+
+        // Track the parameter's type in the environment
+        // Both "n" and the original parameter name should map to the swc_type
+        self.type_env.push_scope();
+        let param_ctx = TypeContext {
+            rustscript_type: swc_type.clone(),
+            swc_type: swc_type.clone(),
+            kind: super::type_context::SwcTypeKind::Struct,
+            known_variant: None,
+            needs_deref: false,
+        };
+        self.type_env.define("n", param_ctx.clone());
+        if let Some(first_param) = f.params.first() {
+            self.type_env.define(&first_param.name, param_ctx);
+        }
+
+        // Generate body - for visitor methods, all statements should have semicolons
+        // (they return (), not an implicit value)
+        for stmt in &f.body.stmts {
+            self.gen_stmt(stmt);
+        }
+
+        // Clear environment and renames
+        self.type_env.pop_scope();
+        self.param_renames.clear();
 
         self.indent -= 1;
         self.emit_line("}");
     }
 
     fn visitor_name_to_swc(&self, name: &str) -> String {
-        // Use mapping module: visit_call_expression -> visit_mut_call_expr
+        // Use mapping module: visit_call_expression -> visit_mut_call_expr or visit_call_expr
         if let Some(mapping) = get_node_mapping_by_visitor(name) {
-            return mapping.swc_visitor.to_string();
+            // For writers (Visit trait), use visit_ prefix instead of visit_mut_
+            let visitor_name = mapping.swc_visitor.to_string();
+            // Check if this is being called in a Visit context (not VisitMut)
+            // For now, we'll just return the mapping as-is and handle it in gen_visit_method
+            return visitor_name;
         }
         // Fallback for unknown visitor methods
         let stripped = name.strip_prefix("visit_").unwrap_or(name);
@@ -2208,6 +2280,15 @@ impl SwcGenerator {
                             self.emit(".key.as_ref() { Expr::Ident(i) => i.sym.clone(), _ => \"\".into() } }");
                             return;
                         }
+                    }
+                }
+
+                // Special case: self.builder in writers becomes just "self"
+                if let Expr::Ident(obj_ident) = mem.object.as_ref() {
+                    if obj_ident.name == "self" && mem.property == "builder" {
+                        // In writer context, self.builder -> self (writer has methods directly)
+                        self.emit("self");
+                        return;
                     }
                 }
 
